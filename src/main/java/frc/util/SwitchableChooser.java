@@ -1,6 +1,5 @@
 package frc.util;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 import org.littletonrobotics.junction.Logger;

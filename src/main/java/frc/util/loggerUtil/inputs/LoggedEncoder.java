@@ -44,7 +44,7 @@ public class LoggedEncoder implements StructSerializable {
     }
 
     public void updateFrom(FlywheelSim sim) {
-        this.position.mut_acc(sim.getAngularVelocityRadPerSec() * Robot.defaultPeriodSecs);
+        this.position.mut_acc(sim.getAngularVelocityRadPerSec() * Robot.kDefaultPeriod);
         this.velocity.mut_replace(sim.getAngularVelocityRadPerSec(), RadiansPerSecond);
     }
 

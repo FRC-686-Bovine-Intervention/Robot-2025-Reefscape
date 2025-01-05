@@ -19,7 +19,7 @@ public class ApriltagCameraIOPhotonVision implements ApriltagCameraIO {
         this.camMeta = cam;
         photonCam = new PhotonCamera(cam.hardwareName);
 
-        photonPoseEstimator = new PhotonPoseEstimator(FieldConstants.apriltagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, photonCam, Transform3d.kZero);
+        photonPoseEstimator = new PhotonPoseEstimator(FieldConstants.apriltagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, Transform3d.kZero);
         photonPoseEstimator.setMultiTagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.CLOSEST_TO_REFERENCE_POSE);
     }
 
