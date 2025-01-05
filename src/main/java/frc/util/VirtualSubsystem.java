@@ -18,7 +18,7 @@ import frc.robot.Robot;
  */
 public abstract class VirtualSubsystem {
   private static List<VirtualSubsystem> subsystems = new ArrayList<>();
-  private static final Watchdog watchdog = new Watchdog(Robot.kDefaultPeriod, () -> {});
+  private static final Watchdog watchdog = new Watchdog(Robot.defaultPeriodSecs, () -> {});
 
   public VirtualSubsystem() {
     subsystems.add(this);

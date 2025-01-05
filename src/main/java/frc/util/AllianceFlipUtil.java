@@ -8,6 +8,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -20,7 +22,7 @@ public class AllianceFlipUtil {
         CenterPointFlip,
         MirrorFlip,
     }
-    public static final FieldFlipType defaultFlipType = FieldFlipType.MirrorFlip;
+    public static final FieldFlipType defaultFlipType = FieldFlipType.CenterPointFlip;
 
     public static Translation2d apply(Translation2d translation) {
         return apply(translation, defaultFlipType);
@@ -72,6 +74,20 @@ public class AllianceFlipUtil {
         return new Pose2d(flip(pose.getTranslation(), flipType), flip(pose.getRotation(), flipType));
     }
 
+    public static Transform2d apply(Transform2d pose) {
+        return apply(pose, defaultFlipType);
+    }
+    public static Transform2d apply(Transform2d pose, FieldFlipType flipType) {
+        if(!shouldFlip()) return pose;
+        return flip(pose, flipType);
+    }
+    public static Transform2d flip(Transform2d pose) {
+        return flip(pose, defaultFlipType);
+    }
+    public static Transform2d flip(Transform2d pose, FieldFlipType flipType) {
+        return new Transform2d(flip(pose.getTranslation(), flipType), flip(pose.getRotation(), flipType));
+    }
+
     public static Translation3d apply(Translation3d translation) {
         return apply(translation, defaultFlipType);
     }
@@ -121,6 +137,20 @@ public class AllianceFlipUtil {
     public static Pose3d flip(Pose3d pose, FieldFlipType flipType) {
         return new Pose3d(flip(pose.getTranslation(), flipType), flip(pose.getRotation(), flipType));
     }
+    
+    public static Transform3d apply(Transform3d pose) {
+        return apply(pose, defaultFlipType);
+    }
+    public static Transform3d apply(Transform3d pose, FieldFlipType flipType) {
+        if(!shouldFlip()) return pose;
+        return flip(pose, flipType);
+    }
+    public static Transform3d flip(Transform3d pose) {
+        return flip(pose, defaultFlipType);
+    }
+    public static Transform3d flip(Transform3d pose, FieldFlipType flipType) {
+        return new Transform3d(flip(pose.getTranslation(), flipType), flip(pose.getRotation(), flipType));
+    }
 
     public static ChassisSpeeds applyFieldRelative(ChassisSpeeds speeds) {
         return applyFieldRelative(speeds, defaultFlipType);
@@ -154,7 +184,7 @@ public class AllianceFlipUtil {
         return DriverStation.getAlliance().equals(Optional.of(Alliance.Red));
     }
 
-    private static abstract class FlippedGeometry<T> {
+    public static class FlippedGeometry<T> {
         private final T blue;
         private final T red;
 
@@ -184,114 +214,109 @@ public class AllianceFlipUtil {
                 return getBlue();
             }
         }
-    }
 
-    public static class FlippedTranslation2d extends FlippedGeometry<Translation2d> {
-        private FlippedTranslation2d(Translation2d blue, Translation2d red) {
-            super(blue, red);
-        }
-
-        public static FlippedTranslation2d fromBlue(Translation2d blue) {
+        public static FlippedGeometry<Translation2d> fromBlue(Translation2d blue) {
             return fromBlue(blue, defaultFlipType);
         }
-        public static FlippedTranslation2d fromBlue(Translation2d blue, FieldFlipType flipType) {
-            return new FlippedTranslation2d(blue, flip(blue, flipType));
+        public static FlippedGeometry<Translation2d> fromBlue(Translation2d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Translation2d>(blue, flip(blue, flipType));
         }
-        public static FlippedTranslation2d fromRed(Translation2d red) {
+        public static FlippedGeometry<Translation2d> fromRed(Translation2d red) {
             return fromRed(red, defaultFlipType);
         }
-        public static FlippedTranslation2d fromRed(Translation2d red, FieldFlipType flipType) {
-            return new FlippedTranslation2d(flip(red, flipType), red);
-        }
-    }
-    public static class FlippedRotation2d extends FlippedGeometry<Rotation2d> {
-        private FlippedRotation2d(Rotation2d blue, Rotation2d red) {
-            super(blue, red);
+        public static FlippedGeometry<Translation2d> fromRed(Translation2d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Translation2d>(flip(red, flipType), red);
         }
 
-        public static FlippedRotation2d fromBlue(Rotation2d blue) {
+        public static FlippedGeometry<Rotation2d> fromBlue(Rotation2d blue) {
             return fromBlue(blue, defaultFlipType);
         }
-        public static FlippedRotation2d fromBlue(Rotation2d blue, FieldFlipType flipType) {
-            return new FlippedRotation2d(blue, flip(blue, flipType));
+        public static FlippedGeometry<Rotation2d> fromBlue(Rotation2d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Rotation2d>(blue, flip(blue, flipType));
         }
-        public static FlippedRotation2d fromRed(Rotation2d red) {
+        public static FlippedGeometry<Rotation2d> fromRed(Rotation2d red) {
             return fromRed(red, defaultFlipType);
         }
-        public static FlippedRotation2d fromRed(Rotation2d red, FieldFlipType flipType) {
-            return new FlippedRotation2d(flip(red, flipType), red);
-        }
-    }
-    public static class FlippedPose2d extends FlippedGeometry<Pose2d> {
-        private FlippedPose2d(Pose2d blue, Pose2d red) {
-            super(blue, red);
+        public static FlippedGeometry<Rotation2d> fromRed(Rotation2d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Rotation2d>(flip(red, flipType), red);
         }
 
-        public static FlippedPose2d fromBlue(Pose2d blue) {
+        public static FlippedGeometry<Pose2d> fromBlue(Pose2d blue) {
             return fromBlue(blue, defaultFlipType);
         }
-        public static FlippedPose2d fromBlue(Pose2d blue, FieldFlipType flipType) {
-            return new FlippedPose2d(blue, flip(blue, flipType));
+        public static FlippedGeometry<Pose2d> fromBlue(Pose2d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Pose2d>(blue, flip(blue, flipType));
         }
-        public static FlippedPose2d fromRed(Pose2d red) {
+        public static FlippedGeometry<Pose2d> fromRed(Pose2d red) {
             return fromRed(red, defaultFlipType);
         }
-        public static FlippedPose2d fromRed(Pose2d red, FieldFlipType flipType) {
-            return new FlippedPose2d(flip(red, flipType), red);
-        }
-    }
-    public static class FlippedTranslation3d extends FlippedGeometry<Translation3d> {
-        private FlippedTranslation3d(Translation3d blue, Translation3d red) {
-            super(blue, red);
+        public static FlippedGeometry<Pose2d> fromRed(Pose2d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Pose2d>(flip(red, flipType), red);
         }
 
-        public static FlippedTranslation3d fromBlue(Translation3d blue) {
+        public static FlippedGeometry<Transform2d> fromBlue(Transform2d blue) {
             return fromBlue(blue, defaultFlipType);
         }
-        public static FlippedTranslation3d fromBlue(Translation3d blue, FieldFlipType flipType) {
-            return new FlippedTranslation3d(blue, flip(blue, flipType));
+        public static FlippedGeometry<Transform2d> fromBlue(Transform2d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Transform2d>(blue, flip(blue, flipType));
         }
-        public static FlippedTranslation3d fromRed(Translation3d red) {
+        public static FlippedGeometry<Transform2d> fromRed(Transform2d red) {
             return fromRed(red, defaultFlipType);
         }
-        public static FlippedTranslation3d fromRed(Translation3d red, FieldFlipType flipType) {
-            return new FlippedTranslation3d(flip(red, flipType), red);
-        }
-    }
-    public static class FlippedRotation3d extends FlippedGeometry<Rotation3d> {
-        private FlippedRotation3d(Rotation3d blue, Rotation3d red) {
-            super(blue, red);
+        public static FlippedGeometry<Transform2d> fromRed(Transform2d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Transform2d>(flip(red, flipType), red);
         }
 
-        public static FlippedRotation3d fromBlue(Rotation3d blue) {
+        public static FlippedGeometry<Translation3d> fromBlue(Translation3d blue) {
             return fromBlue(blue, defaultFlipType);
         }
-        public static FlippedRotation3d fromBlue(Rotation3d blue, FieldFlipType flipType) {
-            return new FlippedRotation3d(blue, flip(blue, flipType));
+        public static FlippedGeometry<Translation3d> fromBlue(Translation3d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Translation3d>(blue, flip(blue, flipType));
         }
-        public static FlippedRotation3d fromRed(Rotation3d red) {
+        public static FlippedGeometry<Translation3d> fromRed(Translation3d red) {
             return fromRed(red, defaultFlipType);
         }
-        public static FlippedRotation3d fromRed(Rotation3d red, FieldFlipType flipType) {
-            return new FlippedRotation3d(flip(red, flipType), red);
-        }
-    }
-    public static class FlippedPose3d extends FlippedGeometry<Pose3d> {
-        private FlippedPose3d(Pose3d blue, Pose3d red) {
-            super(blue, red);
+        public static FlippedGeometry<Translation3d> fromRed(Translation3d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Translation3d>(flip(red, flipType), red);
         }
 
-        public static FlippedPose3d fromBlue(Pose3d blue) {
+        public static FlippedGeometry<Rotation3d> fromBlue(Rotation3d blue) {
             return fromBlue(blue, defaultFlipType);
         }
-        public static FlippedPose3d fromBlue(Pose3d blue, FieldFlipType flipType) {
-            return new FlippedPose3d(blue, flip(blue, flipType));
+        public static FlippedGeometry<Rotation3d> fromBlue(Rotation3d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Rotation3d>(blue, flip(blue, flipType));
         }
-        public static FlippedPose3d fromRed(Pose3d red) {
+        public static FlippedGeometry<Rotation3d> fromRed(Rotation3d red) {
             return fromRed(red, defaultFlipType);
         }
-        public static FlippedPose3d fromRed(Pose3d red, FieldFlipType flipType) {
-            return new FlippedPose3d(flip(red, flipType), red);
+        public static FlippedGeometry<Rotation3d> fromRed(Rotation3d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Rotation3d>(flip(red, flipType), red);
+        }
+
+        public static FlippedGeometry<Pose3d> fromBlue(Pose3d blue) {
+            return fromBlue(blue, defaultFlipType);
+        }
+        public static FlippedGeometry<Pose3d> fromBlue(Pose3d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Pose3d>(blue, flip(blue, flipType));
+        }
+        public static FlippedGeometry<Pose3d> fromRed(Pose3d red) {
+            return fromRed(red, defaultFlipType);
+        }
+        public static FlippedGeometry<Pose3d> fromRed(Pose3d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Pose3d>(flip(red, flipType), red);
+        }
+
+        public static FlippedGeometry<Transform3d> fromBlue(Transform3d blue) {
+            return fromBlue(blue, defaultFlipType);
+        }
+        public static FlippedGeometry<Transform3d> fromBlue(Transform3d blue, FieldFlipType flipType) {
+            return new FlippedGeometry<Transform3d>(blue, flip(blue, flipType));
+        }
+        public static FlippedGeometry<Transform3d> fromRed(Transform3d red) {
+            return fromRed(red, defaultFlipType);
+        }
+        public static FlippedGeometry<Transform3d> fromRed(Transform3d red, FieldFlipType flipType) {
+            return new FlippedGeometry<Transform3d>(flip(red, flipType), red);
         }
     }
 }

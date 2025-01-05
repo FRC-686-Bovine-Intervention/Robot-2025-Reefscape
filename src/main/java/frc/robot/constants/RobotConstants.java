@@ -42,7 +42,7 @@ public final class RobotConstants {
 
     public static final Distance centerToBumperCorner = Meters.of(new Translation2d(robotLength, robotWidth).getNorm());
 
-    public static final double rioUpdatePeriodSecs = Robot.kDefaultPeriod;
+    public static final double rioUpdatePeriodSecs = Robot.defaultPeriodSecs;
     public static final Time rioUpdatePeriod = Seconds.of(rioUpdatePeriodSecs);
     public static final Frequency rioUpdateFrequency = rioUpdatePeriod.asFrequency();
     public static final double rioUpdateFrequencyHz = rioUpdateFrequency.in(Hertz);

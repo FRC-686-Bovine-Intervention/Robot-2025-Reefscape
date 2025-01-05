@@ -19,7 +19,7 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.util.AllianceFlipUtil;
-import frc.util.AllianceFlipUtil.FlippedPose2d;
+import frc.util.AllianceFlipUtil.FlippedGeometry;
 
 public class AutoCommons {
 
@@ -31,7 +31,7 @@ public class AutoCommons {
         return path.getPoint(path.numPoints() - 1).position;
     }
 
-    public static Command setOdometryFlipped(FlippedPose2d pose, Drive drive) {
+    public static Command setOdometryFlipped(FlippedGeometry<Pose2d> pose, Drive drive) {
         return Commands.runOnce(() -> RobotState.getInstance().setPose(drive.getGyroRotation(), drive.getModulePositions(), pose.getOurs()));
     }
 

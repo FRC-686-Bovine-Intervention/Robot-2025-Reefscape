@@ -1,8 +1,8 @@
 package frc.robot;
 
 public enum RobotType {
-    ROBOT_2024_COMP,
-    ROBOT_2024_PRAC,
+    ROBOT_2025_COMP,
+    ROBOT_2025_PRAC,
     ;
     private static final boolean isReplay = false;
     public static Mode getMode() {
@@ -13,9 +13,9 @@ public enum RobotType {
     }
 
     public static enum Mode {
-        REAL    (RobotType.ROBOT_2024_PRAC),
-        SIM     (RobotType.ROBOT_2024_COMP),
-        REPLAY  (RobotType.ROBOT_2024_PRAC),
+        REAL    (RobotType.ROBOT_2025_PRAC),
+        SIM     (RobotType.ROBOT_2025_COMP),
+        REPLAY  (RobotType.ROBOT_2025_PRAC),
         ;
         private final RobotType defaultRobotType;
         Mode(RobotType defaultType) {

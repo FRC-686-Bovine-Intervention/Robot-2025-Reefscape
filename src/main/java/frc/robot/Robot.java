@@ -4,69 +4,216 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.constants.FieldConstants;
+import frc.robot.subsystems.leds.Leds;
+import frc.util.Perspective;
+import frc.util.VirtualSubsystem;
+import frc.util.robotStructure.Mechanism3d;
 
-public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
+public class Robot extends LoggedRobot {
+    public Robot() {
+        Leds.getInstance();
+        // WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+        System.out.println("[Init Robot] Recording AdvantageKit Metadata");
+        Logger.recordMetadata("Robot", RobotType.getRobot().name());
+        Logger.recordMetadata("Mode", RobotType.getMode().name());
+        Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+        Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+        Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+        Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+        Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+        Logger.recordMetadata("GitDirty", 
+            switch(BuildConstants.DIRTY) {
+                case 0 -> "All changes committed";
+                case 1 -> "Uncomitted changes";
+                default -> "Unknown";
+            }
+        );
 
-  private final RobotContainer m_robotContainer;
+        // Set up data receivers & replay source
+        System.out.println("[Init Robot] Configuring AdvantageKit for " + RobotType.getMode().name() + " " + RobotType.getRobot().name());
+        switch (RobotType.getMode()) {
+            // Running on a real robot, log to a USB stick
+            case REAL:
+                Logger.addDataReceiver(new WPILOGWriter("/media/sda1/"));
+                Logger.addDataReceiver(new NT4Publisher());
+            break;
 
-  public Robot() {
-    m_robotContainer = new RobotContainer();
-  }
+            // Running a physics simulator, log to local folder
+            case SIM:
+                new PowerDistribution(1, ModuleType.kRev);
+                Logger.addDataReceiver(new WPILOGWriter("logs/sim"));
+                Logger.addDataReceiver(new NT4Publisher());
+            break;
 
-  @Override
-  public void robotPeriodic() {
-    CommandScheduler.getInstance().run();
-  }
+            // Replaying a log, set up replay source
+            case REPLAY:
+                setUseTiming(false); // Run as fast as possible
+                String logPath = LogFileUtil.findReplayLog();
+                Logger.setReplaySource(new WPILOGReader(logPath));
+                Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+            break;
+        }
 
-  @Override
-  public void disabledInit() {}
+        System.out.println("[Init Robot] Starting AdvantageKit");
+        Logger.start();
 
-  @Override
-  public void disabledPeriodic() {}
+        System.out.println("[Init Robot] Starting Command Logger");
+        Map<String, Integer> commandCounts = new HashMap<>();
+        BiConsumer<Command, Boolean> logCommandFunction =
+        (Command command, Boolean active) -> {
+            String name = command.getName();
+            int count = commandCounts.getOrDefault(name, 0) + (active ? 1 : -1);
+            commandCounts.put(name, count);
+            // Logger.recordOutput(
+            //         "Commands/Unique/" + name + "_" + Integer.toHexString(command.hashCode()), active.booleanValue());
+            // if(command.getRequirements().size() == 0) {
+            //   Logger.recordOutput("Commands/No Requirements/" + name, count > 0);
+            // }
+            for(Subsystem subsystem : command.getRequirements()) {
+                Logger.recordOutput("Commands/" + subsystem.getName(), (count > 0 ? name : "none"));
+                // Logger.recordOutput("Commands/" + subsystem.getName() + "/" + name, count > 0);
+            }
+        };
 
-  @Override
-  public void disabledExit() {}
+        CommandScheduler.getInstance()
+            .onCommandInitialize(
+                (Command command) -> {
+                    logCommandFunction.accept(command, true);
+                }
+            )
+        ;
+        CommandScheduler.getInstance()
+            .onCommandFinish(
+                (Command command) -> {
+                    logCommandFunction.accept(command, false);
+                }
+            )
+        ;
+        CommandScheduler.getInstance()
+            .onCommandInterrupt(
+                (Command command) -> {
+                    logCommandFunction.accept(command, false);
+                }
+            )
+        ;
 
-  @Override
-  public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+        System.out.println("[Init Robot] Instantiating RobotContainer");
+        new RobotContainer();
 
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
+        SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
+        Perspective.getCurrent();
+        Shuffleboard.selectTab("Teleoperated");
+        System.out.println("[ROBOT] aifnwaifjawioefjiwjfewifaefjawpiefjawjpfoajwioefpjawioefjaiewojf");
     }
-  }
 
-  @Override
-  public void autonomousPeriodic() {}
+    @Override
+    public void robotPeriodic() {
+        GameState.getInstance().periodic();
+        VirtualSubsystem.periodicAll();
+        CommandScheduler.getInstance().run();
+        VirtualSubsystem.postCommandPeriodicAll();
+        RobotState.getInstance().log();
+        Mechanism3d.logAscopeComponents();
+        Logger.recordOutput("FIELD", new Pose3d[]{
+            FieldConstants.Reef.rack0Level2Left.getOurs(),
+            FieldConstants.Reef.rack0Level2Right.getOurs(),
+            FieldConstants.Reef.rack0Level3Left.getOurs(),
+            FieldConstants.Reef.rack0Level3Right.getOurs(),
+            FieldConstants.Reef.rack0Level4Left.getOurs(),
+            FieldConstants.Reef.rack0Level4Right.getOurs(),
 
-  @Override
-  public void autonomousExit() {}
+            FieldConstants.Reef.rack1Level2Left.getOurs(),
+            FieldConstants.Reef.rack1Level2Right.getOurs(),
+            FieldConstants.Reef.rack1Level3Left.getOurs(),
+            FieldConstants.Reef.rack1Level3Right.getOurs(),
+            FieldConstants.Reef.rack1Level4Left.getOurs(),
+            FieldConstants.Reef.rack1Level4Right.getOurs(),
 
-  @Override
-  public void teleopInit() {
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
+            FieldConstants.Reef.rack2Level2Left.getOurs(),
+            FieldConstants.Reef.rack2Level2Right.getOurs(),
+            FieldConstants.Reef.rack2Level3Left.getOurs(),
+            FieldConstants.Reef.rack2Level3Right.getOurs(),
+            FieldConstants.Reef.rack2Level4Left.getOurs(),
+            FieldConstants.Reef.rack2Level4Right.getOurs(),
+
+            FieldConstants.Reef.rack3Level2Left.getOurs(),
+            FieldConstants.Reef.rack3Level2Right.getOurs(),
+            FieldConstants.Reef.rack3Level3Left.getOurs(),
+            FieldConstants.Reef.rack3Level3Right.getOurs(),
+            FieldConstants.Reef.rack3Level4Left.getOurs(),
+            FieldConstants.Reef.rack3Level4Right.getOurs(),
+
+            FieldConstants.Reef.rack4Level2Left.getOurs(),
+            FieldConstants.Reef.rack4Level2Right.getOurs(),
+            FieldConstants.Reef.rack4Level3Left.getOurs(),
+            FieldConstants.Reef.rack4Level3Right.getOurs(),
+            FieldConstants.Reef.rack4Level4Left.getOurs(),
+            FieldConstants.Reef.rack4Level4Right.getOurs(),
+
+            FieldConstants.Reef.rack5Level2Left.getOurs(),
+            FieldConstants.Reef.rack5Level2Right.getOurs(),
+            FieldConstants.Reef.rack5Level3Left.getOurs(),
+            FieldConstants.Reef.rack5Level3Right.getOurs(),
+            FieldConstants.Reef.rack5Level4Left.getOurs(),
+            FieldConstants.Reef.rack5Level4Right.getOurs(),
+        });
     }
-  }
 
-  @Override
-  public void teleopPeriodic() {}
+    @Override
+    public void disabledInit() {}
 
-  @Override
-  public void teleopExit() {}
+    @Override
+    public void disabledPeriodic() {}
 
-  @Override
-  public void testInit() {
-    CommandScheduler.getInstance().cancelAll();
-  }
+    @Override
+    public void disabledExit() {}
 
-  @Override
-  public void testPeriodic() {}
+    @Override
+    public void autonomousInit() {}
 
-  @Override
-  public void testExit() {}
+    @Override
+    public void autonomousPeriodic() {}
+
+    @Override
+    public void autonomousExit() {}
+
+    @Override
+    public void teleopInit() {}
+
+    @Override
+    public void teleopPeriodic() {}
+
+    @Override
+    public void teleopExit() {}
+
+    @Override
+    public void testInit() {
+        CommandScheduler.getInstance().cancelAll();
+    }
+
+    @Override
+    public void testPeriodic() {}
+
+    @Override
+    public void testExit() {}
 }

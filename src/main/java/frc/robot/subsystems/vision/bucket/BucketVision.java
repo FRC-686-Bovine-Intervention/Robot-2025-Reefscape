@@ -274,7 +274,7 @@ public class BucketVision extends VirtualSubsystem {
                 new Translation3d(
                     fieldPos.getMeasureX(),
                     fieldPos.getMeasureY(),
-                    FieldConstants.bucketHeight
+                    Meters.zero()
                 ),
                 new Rotation3d(
                     Degrees.of(180),

@@ -1,133 +1,172 @@
 package frc.robot.constants;
 
-import static edu.wpi.first.units.Units.Feet;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.Filesystem;
-import frc.util.AllianceFlipUtil.FlippedPose2d;
+import frc.util.AllianceFlipUtil.FlippedGeometry;
 
 public final class FieldConstants {
-    public static final Distance fieldLength = Inches.of(648);
-    public static final Distance fieldWidth =  Inches.of(324);
+    public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
+    public static final Distance fieldWidth =  Inches.of(26*12 + 5);
 
     public static final AprilTagFieldLayout apriltagLayout;
     static {
         AprilTagFieldLayout a = null;
         try {
-            a = new AprilTagFieldLayout(Filesystem.getDeployDirectory() + "/Bunnybots2024ApriltagLayout.json");
+            a = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
         } catch(Exception e) {
             e.printStackTrace();
         }
         apriltagLayout = a;
     }
 
-    public static final Distance bucketRadius = Inches.of(6);
-    public static final Distance bucketHeight = Inches.of(14.5);
 
-    public static final Distance bucket3Y = Inches.of(227.778477);
-    public static final Distance bucket2Y = Inches.of(262.168859);
-    public static final Distance bucket1Y = Inches.of(300.114098);
+    public static final class Reef {
+        private static final Distance level23Radius = Meters.of(0.779254);
+        public static final Angle level23Angle = Degrees.of(35);
+        private static final Rotation3d level23Rotation = new Rotation3d(
+            Degrees.zero(),
+            level23Angle,
+            Degrees.zero()
+        );
 
-    public static final Distance stackingGridOuterEdgeX = Inches.of(27.5);
-    public static final Distance stackingGridOuterEdgeY = Inches.of(182.5);
-    public static final Distance stackingGridInnerEdgeY = Inches.of(186);
-    public static final Distance denWallInnerEdgeY = Inches.of(102.5);
-    public static final Distance yardBottomOuterEdgeY = Inches.of(146.5);
-    public static final Distance yardTopOuterEdgeY = Inches.of(201.5);
-    public static final Distance yardRightOuterEdgeX = Inches.of(203.09);
-    public static final Distance yardLeftOuterEdgeX = Inches.of(148.09);
-    public static final Distance topObsticalBottomEdgeY = Inches.of(260);
-    public static final Distance topObsticalTopEdgeY = Inches.of(284);
+        public static final Distance level2Height = Meters.of(0.792953);
+        private static final Transform3d level2 = new Transform3d(
+            new Translation3d(
+                level23Radius,
+                Meters.zero(),
+                level2Height
+            ),
+            level23Rotation
+        );
+        public static final Distance level3Height = Meters.of(1.196053);
+        private static final Transform3d level3 = new Transform3d(
+            new Translation3d(
+                level23Radius,
+                Meters.zero(),
+                level3Height
+            ),
+            level23Rotation
+        );
+        public static final Distance level4Height = Meters.of(1.828663);
+        private static final Distance level4Radius = Meters.of(0.780750);
+        public static final Angle level4Angle = Degrees.of(90);
+        private static final Transform3d level4 = new Transform3d(
+            new Translation3d(
+                level4Radius,
+                Meters.zero(),
+                level4Height
+            ),
+            new Rotation3d(
+                Degrees.zero(),
+                level4Angle,
+                Degrees.zero()
+            )
+        );
 
-    // Den Entry
-    public static final Distance denPreEntryX = yardRightOuterEdgeX.plus(RobotConstants.centerToFrontBumper);
-    public static final Distance denEntryX = yardLeftOuterEdgeX.minus(RobotConstants.centerToFrontBumper);
-    // | Source Entry
-    public static final Distance denSourceEntryY = denWallInnerEdgeY.plus(yardBottomOuterEdgeY).div(2);
-    public static final FlippedPose2d denSourcePreEntry = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            denPreEntryX,
-            denSourceEntryY
-        ),
-        Rotation2d.k180deg
-    ));
-    public static final FlippedPose2d denSourceEntry = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            denEntryX,
-            denSourceEntryY
-        ),
-        Rotation2d.k180deg
-    ));
-    // | Field Entry
-    public static final Distance denFieldEntryY = yardTopOuterEdgeY.plus(topObsticalBottomEdgeY).div(2);
-    public static final FlippedPose2d denFieldPreEntry = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            denPreEntryX,
-            denFieldEntryY
-        ),
-        Rotation2d.k180deg
-    ));
-    public static final FlippedPose2d denFieldEntry = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            denEntryX,
-            denFieldEntryY
-        ),
-        Rotation2d.k180deg
-    ));
-    public static final Distance denEntryDecisionY = denSourceEntryY.plus(denFieldEntryY).div(2);
+        private static final Transform3d left = new Transform3d(
+            new Translation3d(
+                Meters.zero(),
+                Meters.of(+0.164308),
+                Meters.zero()
+            ),
+            Rotation3d.kZero
+        );
+        private static final Transform3d right = new Transform3d(
+            new Translation3d(
+                Meters.zero(),
+                Meters.of(-0.164309),
+                Meters.zero()
+            ),
+            Rotation3d.kZero
+        );
 
-    // High Goal Score
-    public static final Distance highGoalScoreX = Inches.of(7.5).plus(RobotConstants.centerToFrontBumper);
-    public static final Distance highGoalPreScoreX = highGoalScoreX.plus(Feet.one());
-    // | Stacking Side
-    public static final Distance highGoalStackingSideY = Inches.of(155.5);
-    public static final FlippedPose2d highGoalScoreStackingSide = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            highGoalScoreX,
-            highGoalStackingSideY
-        ),
-        Rotation2d.k180deg
-    ));
-    public static final FlippedPose2d highGoalPreScoreStackingSide = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            highGoalPreScoreX,
-            highGoalStackingSideY
-        ),
-        Rotation2d.k180deg
-    ));
-    // | Source Side
-    public static final Distance highGoalSourceSideY = Inches.of(129.5);
-    public static final FlippedPose2d highGoalScoreSourceSide = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            highGoalScoreX,
-            highGoalSourceSideY
-        ),
-        Rotation2d.k180deg
-    ));
-    public static final FlippedPose2d highGoalPreScoreSourceSide = FlippedPose2d.fromBlue(new Pose2d(
-        new Translation2d(
-            highGoalPreScoreX,
-            highGoalSourceSideY
-        ),
-        Rotation2d.k180deg
-    ));
+        public static final FlippedGeometry<Translation2d> reefCenter = FlippedGeometry.fromBlue(
+            new Translation2d(
+                Meters.of(4.489325),
+                Meters.of(4.114777)
+            )
+        );
+        private static final Rotation2d rackDelta = new Rotation2d(
+            Degrees.of(30)
+        );
+        private static final Pose2d rack0Origin = new Pose2d(
+            reefCenter.getBlue(),
+            rackDelta.times(0)
+        );
+        private static final Pose2d rack1Origin = new Pose2d(
+            reefCenter.getBlue(),
+            rackDelta.times(1)
+        );
+        private static final Pose2d rack2Origin = new Pose2d(
+            reefCenter.getBlue(),
+            rackDelta.times(2)
+        );
+        private static final Pose2d rack3Origin = new Pose2d(
+            reefCenter.getBlue(),
+            rackDelta.times(3)
+        );
+        private static final Pose2d rack4Origin = new Pose2d(
+            reefCenter.getBlue(),
+            rackDelta.times(4)
+        );
+        private static final Pose2d rack5Origin = new Pose2d(
+            reefCenter.getBlue(),
+            rackDelta.times(5)
+        );
 
-    // Stacking Score
-    public static final Distance stackingScoreX = stackingGridOuterEdgeX.plus(RobotConstants.centerToFrontBumper);
-    public static final Distance stackingMinY = stackingGridInnerEdgeY.plus(bucketRadius);
-    public static final Distance stackingMaxY = fieldWidth.minus(RobotConstants.centerToSideBumper);
-    
-    // Yard Score
-    public static final FlippedPose2d yardFieldScore = FlippedPose2d.fromRed(new Pose2d(
-        new Translation2d(
-            yardRightOuterEdgeX.plus(RobotConstants.centerToFrontBumper),
-            yardBottomOuterEdgeY.plus(yardTopOuterEdgeY).div(2)
-        ),
-        Rotation2d.k180deg
-    ));
+        public static final FlippedGeometry<Pose3d> rack0Level2Left = FlippedGeometry.fromBlue(new Pose3d(rack0Origin).transformBy(level2).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack0Level2Right = FlippedGeometry.fromBlue(new Pose3d(rack0Origin).transformBy(level2).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack0Level3Left = FlippedGeometry.fromBlue(new Pose3d(rack0Origin).transformBy(level3).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack0Level3Right = FlippedGeometry.fromBlue(new Pose3d(rack0Origin).transformBy(level3).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack0Level4Left = FlippedGeometry.fromBlue(new Pose3d(rack0Origin).transformBy(level4).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack0Level4Right = FlippedGeometry.fromBlue(new Pose3d(rack0Origin).transformBy(level4).transformBy(right));
+
+        public static final FlippedGeometry<Pose3d> rack1Level2Left = FlippedGeometry.fromBlue(new Pose3d(rack1Origin).transformBy(level2).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack1Level2Right = FlippedGeometry.fromBlue(new Pose3d(rack1Origin).transformBy(level2).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack1Level3Left = FlippedGeometry.fromBlue(new Pose3d(rack1Origin).transformBy(level3).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack1Level3Right = FlippedGeometry.fromBlue(new Pose3d(rack1Origin).transformBy(level3).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack1Level4Left = FlippedGeometry.fromBlue(new Pose3d(rack1Origin).transformBy(level4).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack1Level4Right = FlippedGeometry.fromBlue(new Pose3d(rack1Origin).transformBy(level4).transformBy(right));
+
+        public static final FlippedGeometry<Pose3d> rack2Level2Left = FlippedGeometry.fromBlue(new Pose3d(rack2Origin).transformBy(level2).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack2Level2Right = FlippedGeometry.fromBlue(new Pose3d(rack2Origin).transformBy(level2).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack2Level3Left = FlippedGeometry.fromBlue(new Pose3d(rack2Origin).transformBy(level3).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack2Level3Right = FlippedGeometry.fromBlue(new Pose3d(rack2Origin).transformBy(level3).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack2Level4Left = FlippedGeometry.fromBlue(new Pose3d(rack2Origin).transformBy(level4).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack2Level4Right = FlippedGeometry.fromBlue(new Pose3d(rack2Origin).transformBy(level4).transformBy(right));
+        
+        public static final FlippedGeometry<Pose3d> rack3Level2Left = FlippedGeometry.fromBlue(new Pose3d(rack3Origin).transformBy(level2).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack3Level2Right = FlippedGeometry.fromBlue(new Pose3d(rack3Origin).transformBy(level2).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack3Level3Left = FlippedGeometry.fromBlue(new Pose3d(rack3Origin).transformBy(level3).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack3Level3Right = FlippedGeometry.fromBlue(new Pose3d(rack3Origin).transformBy(level3).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack3Level4Left = FlippedGeometry.fromBlue(new Pose3d(rack3Origin).transformBy(level4).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack3Level4Right = FlippedGeometry.fromBlue(new Pose3d(rack3Origin).transformBy(level4).transformBy(right));
+        
+        public static final FlippedGeometry<Pose3d> rack4Level2Left = FlippedGeometry.fromBlue(new Pose3d(rack4Origin).transformBy(level2).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack4Level2Right = FlippedGeometry.fromBlue(new Pose3d(rack4Origin).transformBy(level2).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack4Level3Left = FlippedGeometry.fromBlue(new Pose3d(rack4Origin).transformBy(level3).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack4Level3Right = FlippedGeometry.fromBlue(new Pose3d(rack4Origin).transformBy(level3).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack4Level4Left = FlippedGeometry.fromBlue(new Pose3d(rack4Origin).transformBy(level4).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack4Level4Right = FlippedGeometry.fromBlue(new Pose3d(rack4Origin).transformBy(level4).transformBy(right));
+
+        public static final FlippedGeometry<Pose3d> rack5Level2Left = FlippedGeometry.fromBlue(new Pose3d(rack5Origin).transformBy(level2).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack5Level2Right = FlippedGeometry.fromBlue(new Pose3d(rack5Origin).transformBy(level2).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack5Level3Left = FlippedGeometry.fromBlue(new Pose3d(rack5Origin).transformBy(level3).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack5Level3Right = FlippedGeometry.fromBlue(new Pose3d(rack5Origin).transformBy(level3).transformBy(right));
+        public static final FlippedGeometry<Pose3d> rack5Level4Left = FlippedGeometry.fromBlue(new Pose3d(rack5Origin).transformBy(level4).transformBy(left));
+        public static final FlippedGeometry<Pose3d> rack5Level4Right = FlippedGeometry.fromBlue(new Pose3d(rack5Origin).transformBy(level4).transformBy(right));
+    }
 }
