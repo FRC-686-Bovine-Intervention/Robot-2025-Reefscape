@@ -116,10 +116,11 @@ public class AllianceFlipUtil {
     public static Rotation3d flip(Rotation3d rotation) {
         return flip(rotation, defaultFlipType);
     }
+    private static final Rotation3d rev = new Rotation3d(Rotation2d.k180deg);
     public static Rotation3d flip(Rotation3d rotation, FieldFlipType flipType) {
         switch(flipType) {
             default:
-            case CenterPointFlip: return null;
+            case CenterPointFlip: return rotation.rotateBy(rev);
             case MirrorFlip:      return null;
         }
     }

@@ -4,12 +4,12 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
@@ -44,6 +43,7 @@ import frc.robot.subsystems.vision.bucket.BucketVisionConstants;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
+import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
     // Subsystems
@@ -130,7 +130,7 @@ public class RobotContainer {
             .addChild(VisionConstants.backRightModuleMount)
             .addChild(VisionConstants.flagStickMount)
         ;
-        // Mechanism3d.registerMechs(arm.mech, puncher.mech, intake.leftClaw, intake.rightClaw);
+        Mechanism3d.registerMechs();
 
         driveJoystick = driveController.leftStick
             .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
@@ -168,29 +168,29 @@ public class RobotContainer {
             drive.translationSubsystem.fieldRelative(joystickTranslational)
                 .withName("Driver Control Field Relative")
         );
-        // drive.rotationalSubsystem.setDefaultCommand(
-        //     drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)))
-        //         .withName("Robot spin")
-        // );
+        drive.rotationalSubsystem.setDefaultCommand(
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)))
+                .withName("Robot spin")
+        );
     }
 
     private void configureControls() {
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
-        var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
-        new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
-            drive.rotationalSubsystem.headingFromJoystick(
-                flickStick,
-                new Rotation2d[]{
-                    // Cardinals
-                    Rotation2d.kZero,
-                    Rotation2d.kCCW_90deg,
-                    Rotation2d.k180deg,
-                    Rotation2d.kCW_90deg,
-                },
-                () -> RobotConstants.intakeForward
-            )
-            .withName("Flick Stick")
-        );
+        // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
+        // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
+        // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
+        //     drive.rotationalSubsystem.headingFromJoystick(
+        //         flickStick,
+        //         new Rotation2d[]{
+        //             // Cardinals
+        //             Rotation2d.kZero,
+        //             Rotation2d.kCCW_90deg,
+        //             Rotation2d.k180deg,
+        //             Rotation2d.kCW_90deg,
+        //         },
+        //         () -> RobotConstants.intakeForward
+        //     )
+        //     .withName("Flick Stick")
+        // );
     }
 
     private void configureNotifications() {}

@@ -132,14 +132,6 @@ public final class DriveConstants {
     public static final double driveWheelGearReduction = 4.71;
     public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
 
-    public static final double[] driveRealKps = {0.7, 0.4, 0.7, 0.7};
-    public static final double[] driveRealKds = {3.5, 2.5, 3.7, 3.5};
-
-    public static final double driveSnapKp = 1.5;
-    public static final double driveSnapKi = 0;
-    public static final double driveSnapKd = 0;
-
-
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
     public static final AngularVelocity maxTurnRate = RadiansPerSecond.of(maxDriveSpeed.in(MetersPerSecond) / driveBaseRadius.in(Meters));

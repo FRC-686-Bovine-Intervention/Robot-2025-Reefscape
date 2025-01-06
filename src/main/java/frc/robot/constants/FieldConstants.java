@@ -32,6 +32,36 @@ public final class FieldConstants {
         apriltagLayout = a;
     }
 
+    public static final class Coral {
+        public static final Distance length = Inches.of(11.875);
+        public static final Distance radius = Inches.of(2);
+
+        public static final Transform3d rackPlacement = new Transform3d(
+            new Translation3d(
+                length.div(2).minus(Inches.of(2)),
+                Inches.zero(),
+                Inches.zero()
+            ),
+            Rotation3d.kZero
+        );
+        public static final Transform3d standUp = new Transform3d(
+            new Translation3d(
+                Inches.zero(),
+                Inches.zero(),
+                length.div(2)
+            ),
+            new Rotation3d(
+                Degrees.zero(),
+                Degrees.of(-90),
+                Degrees.zero()
+            )
+        );
+    }
+
+    public static final class Algae {
+        public static final Distance radius = Inches.of(0);
+    }
+
 
     public static final class Reef {
         private static final Distance level23Radius = Meters.of(0.779254);
@@ -45,7 +75,7 @@ public final class FieldConstants {
         public static final Distance level2Height = Meters.of(0.792953);
         private static final Transform3d level2 = new Transform3d(
             new Translation3d(
-                level23Radius,
+                level23Radius.unaryMinus(),
                 Meters.zero(),
                 level2Height
             ),
@@ -54,7 +84,7 @@ public final class FieldConstants {
         public static final Distance level3Height = Meters.of(1.196053);
         private static final Transform3d level3 = new Transform3d(
             new Translation3d(
-                level23Radius,
+                level23Radius.unaryMinus(),
                 Meters.zero(),
                 level3Height
             ),
@@ -65,7 +95,7 @@ public final class FieldConstants {
         public static final Angle level4Angle = Degrees.of(90);
         private static final Transform3d level4 = new Transform3d(
             new Translation3d(
-                level4Radius,
+                level4Radius.unaryMinus(),
                 Meters.zero(),
                 level4Height
             ),
@@ -96,11 +126,11 @@ public final class FieldConstants {
         public static final FlippedGeometry<Translation2d> reefCenter = FlippedGeometry.fromBlue(
             new Translation2d(
                 Meters.of(4.489325),
-                Meters.of(4.114777)
+                Meters.of(4.025877)
             )
         );
         private static final Rotation2d rackDelta = new Rotation2d(
-            Degrees.of(30)
+            Degrees.of(60)
         );
         private static final Pose2d rack0Origin = new Pose2d(
             reefCenter.getBlue(),

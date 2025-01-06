@@ -1,7 +1,6 @@
 package frc.robot.constants;
 
 import frc.util.hardwareID.PnuematicsControl;
-import frc.util.hardwareID.PnuematicsControl.SolenoidPort;
 import frc.util.hardwareID.can.CANBus;
 import frc.util.hardwareID.can.CANDevice;
 import frc.util.hardwareID.rioPorts.DIOPort;
@@ -44,18 +43,6 @@ public class HardwareDevices {
     // | Back Right
     public static final CANDevice backRightDriveMotorID = canivore.id(4);
     public static final CANDevice backRightTurnMotorID = rio.id(4);
-
-    // Arm
-    public static final CANDevice armMotorID = canivore.id(5);
-    public static final CANDevice armEncoderID = canivore.id(5);
-
-    // Intake
-    public static final CANDevice intakeMotorID = rio.id(6);
-    public static final CANDevice intakeSensorID = rio.id(6);
-    public static final SolenoidPort intakePistonID = pnuematicsHub.solenoidPort(0);
-    
-    // Puncher
-    public static final SolenoidPort puncherPistonID = pnuematicsHub.solenoidPort(1);
 
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);
