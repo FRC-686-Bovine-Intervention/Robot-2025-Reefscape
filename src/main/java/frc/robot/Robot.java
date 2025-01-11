@@ -17,8 +17,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,7 +33,6 @@ import frc.util.robotStructure.Mechanism3d;
 public class Robot extends LoggedRobot {
     public Robot() {
         Leds.getInstance();
-        // WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
         System.out.println("[Init Robot] Recording AdvantageKit Metadata");
         Logger.recordMetadata("Robot", RobotType.getRobot().name());
         Logger.recordMetadata("Mode", RobotType.getMode().name());
@@ -119,6 +118,8 @@ public class Robot extends LoggedRobot {
 
         System.out.println("[Init Robot] Instantiating RobotContainer");
         new RobotContainer();
+        System.out.println("[Init Robot] Starting Deploy Webserver");
+        WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
         Perspective.getCurrent();
