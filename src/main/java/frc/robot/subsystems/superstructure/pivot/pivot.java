@@ -8,7 +8,7 @@ public class Pivot extends SubsystemBase {
 
     // Declare variables
     private final PivotIOFalcon pivotIO = new PivotIOFalcon();
-    private int goal = 0;
+    private double goal = 0;
     private final double zero = 0;
 
     public Pivot (int goal) {
@@ -48,7 +48,7 @@ public class Pivot extends SubsystemBase {
                 execute();
             }
             public void execute () {
-                double goal = rads;
+                double goal = rads + zero;
                 pivotIO.setPivotPosition(goal);
             }
             public void end () {
