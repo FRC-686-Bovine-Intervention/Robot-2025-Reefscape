@@ -51,7 +51,7 @@ public class Pivot extends SubsystemBase {
                 double goal = rads + zero;
                 pivotIO.setPivotPosition(goal);
             }
-            public void end () {
+            public void end (boolean interrupted) {
                 pivotIO.stop();
             }
         };
