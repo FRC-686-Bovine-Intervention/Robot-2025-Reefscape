@@ -31,6 +31,7 @@ import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
+import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -51,6 +52,7 @@ public class RobotContainer {
     public final ApriltagVision apriltagVision;
     public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
+    public final ObjectiveTracker objectiveTracker;
 
     // Controllers
     private final XboxController driveController = new XboxController(0);
@@ -122,6 +124,7 @@ public class RobotContainer {
             break;
         }
         manualOverrides = new ManualOverrides();
+        objectiveTracker = new ObjectiveTracker();
 
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
@@ -191,6 +194,12 @@ public class RobotContainer {
         //     )
         //     .withName("Flick Stick")
         // );
+
+        driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, -1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(-1, 0)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(1, 0)));
     }
 
     private void configureNotifications() {}
