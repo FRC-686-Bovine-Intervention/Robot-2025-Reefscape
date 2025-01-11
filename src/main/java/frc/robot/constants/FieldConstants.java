@@ -15,7 +15,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import frc.util.AllianceFlipUtil.FlippedGeometry;
+import frc.util.flipping.Flipped;
 
 public final class FieldConstants {
     public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
@@ -64,7 +64,7 @@ public final class FieldConstants {
 
 
     public static final class Reef {
-        public static final FlippedGeometry<Translation2d> reefCenter = FlippedGeometry.fromBlue(
+        public static final Flipped<Translation2d> reefCenter = Flipped.fromBlue(
             new Translation2d(
                 Meters.of(4.489325),
                 Meters.of(4.025877)
@@ -128,7 +128,7 @@ public final class FieldConstants {
         }
 
         public static final class Node {
-            public final FlippedGeometry<Pose3d> pose;
+            public final Flipped<Pose3d> pose;
             public final Rack rack;
             public final Level level;
             public final Side side;
@@ -137,7 +137,7 @@ public final class FieldConstants {
                 this.rack = rack;
                 this.level = level;
                 this.side = side;
-                this.pose = FlippedGeometry.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
             }
         }
 
