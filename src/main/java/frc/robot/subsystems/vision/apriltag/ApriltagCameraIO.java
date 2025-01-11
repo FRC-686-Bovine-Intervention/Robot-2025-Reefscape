@@ -11,48 +11,75 @@ public interface ApriltagCameraIO {
 
     public class ApriltagCameraIOInputs implements LoggableInputs {
         public boolean isConnected;
-        public double timestamp;
-        public ApriltagCameraTarget[] targets = new ApriltagCameraTarget[0];
-        public Pose3d estimatedRobotPose = new Pose3d();
+        public ApriltagCameraFrame[] frames;
+        // public double timestamp;
+        // public ApriltagCameraTarget[] targets = new ApriltagCameraTarget[0];
+        // public Pose3d estimatedRobotPose = new Pose3d();
 
         @Override
         public void toLog(LogTable table) {
             table.put("IsConnected", isConnected);
-            table.put("Timestamp", timestamp);
-            table.put("EstimatedRobotPose", estimatedRobotPose);
-            var targetsTable = table.getSubtable("Targets");
-            targetsTable.put("length", targets.length);
-            for (int i = 0; i < targets.length ; i++) {
-                var target = targets[i];
-                var targetTable = targetsTable.getSubtable(Integer.toString(i));
-                targetTable.put("TagID", target.tagID);
-                targetTable.put("BestCameraToTag", target.bestCameraToTag);
-                targetTable.put("AltCameraToTag", target.altCameraToTag);
-                targetTable.put("PoseAmbiguity", target.poseAmbiguity);
-                targetTable.put("Corners", target.corners);
+            var framesTable = table.getSubtable("Frames");
+            framesTable.put("length", frames.length);
+            for (int frameI = 0; frameI < frames.length; frameI++) {
+                var frame = frames[frameI];
+                var frameTable = framesTable.getSubtable(Integer.toString(frameI));
+                frameTable.put("Timestamp", frame.timestamp);
+                frameTable.put("EstimatedRobotPose", frame.estimatedRobotPose);
+                var targetsTable = frameTable.getSubtable("Targets");
+                targetsTable.put("length", frame.targets.length);
+                for (int targetI = 0; targetI < frame.targets.length ; targetI++) {
+                    var target = frame.targets[targetI];
+                    var targetTable = targetsTable.getSubtable(Integer.toString(targetI));
+                    targetTable.put("TagID", target.tagID);
+                    targetTable.put("BestCameraToTag", target.bestCameraToTag);
+                    targetTable.put("AltCameraToTag", target.altCameraToTag);
+                    targetTable.put("PoseAmbiguity", target.poseAmbiguity);
+                    targetTable.put("Corners", target.corners);
+                }
             }
         }
         @Override
         public void fromLog(LogTable table) {
             this.isConnected = table.get("IsConnected", isConnected);
-            this.timestamp = table.get("Timestamp", timestamp);
-            this.estimatedRobotPose = table.get("EstimatedRobotPose", estimatedRobotPose);
-            var targetsTable = table.getSubtable("Targets");
-            this.targets = new ApriltagCameraTarget[targetsTable.get("length", 0)];
-            for (int i = 0; i < targets.length ; i++) {
-                var targetTable = targetsTable.getSubtable(Integer.toString(i));
-                targets[i] = new ApriltagCameraTarget(
-                    targetTable.get("TagID", -1),
-                    targetTable.get("BestCameraToTag", Transform3d.kZero),
-                    targetTable.get("AltCameraToTag", Transform3d.kZero),
-                    targetTable.get("PoseAmbiguity", -1),
-                    targetTable.get("Corners", new Translation2d[0])
+            var framesTable = table.getSubtable("Frames");
+            this.frames = new ApriltagCameraFrame[framesTable.get("length", 0)];
+            for (int frameI = 0; frameI < frames.length; frameI++) {
+                var frameTable = framesTable.getSubtable(Integer.toString(frameI));
+                var targetsTable = frameTable.getSubtable("Targets");
+                var targets = new ApriltagCameraTarget[targetsTable.get("length", 0)];
+                for (int targetI = 0; targetI < targets.length; targetI++) {
+                    var targetTable = targetsTable.getSubtable(Integer.toString(targetI));
+                    targets[targetI] = new ApriltagCameraTarget(
+                        targetTable.get("TagID", -1),
+                        targetTable.get("BestCameraToTag", Transform3d.kZero),
+                        targetTable.get("AltCameraToTag", Transform3d.kZero),
+                        targetTable.get("PoseAmbiguity", -1),
+                        targetTable.get("Corners", new Translation2d[0])
+                    );
+                }
+                frames[frameI] = new ApriltagCameraFrame(
+                    frameTable.get("Timestamp", -1),
+                    frameTable.get("EstimatedRobotPose", Pose3d.kZero),
+                    targets
                 );
             }
         }
     }
 
     public default void updateInputs(ApriltagCameraIOInputs inputs) {}
+
+    public static class ApriltagCameraFrame {
+        public final double timestamp;
+        public final Pose3d estimatedRobotPose;
+        public final ApriltagCameraTarget[] targets;
+
+        public ApriltagCameraFrame(double timestamp, Pose3d estimatedRobotPose, ApriltagCameraTarget[] targets) {
+            this.timestamp = timestamp;
+            this.estimatedRobotPose = estimatedRobotPose;
+            this.targets = targets;
+        }
+    }
 
     public static class ApriltagCameraTarget {
         public final int tagID;

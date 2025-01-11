@@ -36,10 +36,10 @@ public class ApriltagCameraIOLimelight implements ApriltagCameraIO {
 
         double latencySeconds = (result.latency_capture + result.latency_pipeline + result.latency_jsonParse) / 1000.0;
         var timestamp = Timer.getTimestamp() - latencySeconds;
-        inputs.timestamp = timestamp;
+        // inputs.timestamp = timestamp;
 
-        inputs.targets = Arrays.stream(result.targets_Fiducials).map(ApriltagCameraIOLimelight::targetFromLLTarget).toArray(ApriltagCameraTarget[]::new);
-        inputs.estimatedRobotPose = result.getBotPose3d_wpiBlue();
+        // inputs.targets = Arrays.stream(result.targets_Fiducials).map(ApriltagCameraIOLimelight::targetFromLLTarget).toArray(ApriltagCameraTarget[]::new);
+        // inputs.estimatedRobotPose = result.getBotPose3d_wpiBlue();
     }
 
     private static ApriltagCameraTarget targetFromLLTarget(LimelightTarget_Fiducial limelightTarget) {

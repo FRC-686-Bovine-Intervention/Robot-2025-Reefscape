@@ -35,9 +35,7 @@ public class ApriltagCamera {
 
     public static class ApriltagCameraResult {
         public final ApriltagCameraConstants camMeta;
-        public final double timestamp;
-        public final ApriltagCameraTarget[] targets;
-        public final Pose3d estimatedRobotPose;
+        public final ApriltagCameraFrame[] frames;
 
         private ApriltagCameraResult(ApriltagCameraConstants camMeta, double timestamp, ApriltagCameraTarget[] targets, Pose3d estimatedRobotPose) {
             this.camMeta = camMeta;
