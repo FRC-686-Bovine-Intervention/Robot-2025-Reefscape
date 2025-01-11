@@ -7,7 +7,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 
 public class PivotIOFalcon implements PivotIO {
     private final TalonFX leftMotor = new TalonFX(0);
