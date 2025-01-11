@@ -1,4 +1,4 @@
-package frc.util;
+package frc.util.flipping;
 
 import static edu.wpi.first.units.Units.Meters;
 
@@ -24,6 +24,20 @@ public class AllianceFlipUtil {
     }
     public static final FieldFlipType defaultFlipType = FieldFlipType.CenterPointFlip;
 
+    public static <T extends Flippable<T>> T apply(T flippable) {
+        return apply(flippable, defaultFlipType);
+    }
+    public static <T extends Flippable<T>> T apply(T flippable, FieldFlipType flipType) {
+        if(!shouldFlip()) return flippable;
+        return flip(flippable, flipType);
+    }
+    public static <T extends Flippable<T>> T flip(T flippable) {
+        return flip(flippable, defaultFlipType);
+    }
+    public static <T extends Flippable<T>> T flip(T flippable, FieldFlipType flipType) {
+        return flippable.flip(flipType);
+    }
+    
     public static Translation2d apply(Translation2d translation) {
         return apply(translation, defaultFlipType);
     }
@@ -183,141 +197,5 @@ public class AllianceFlipUtil {
 
     public static boolean shouldFlip() {
         return DriverStation.getAlliance().equals(Optional.of(Alliance.Red));
-    }
-
-    public static class FlippedGeometry<T> {
-        private final T blue;
-        private final T red;
-
-        private FlippedGeometry(T blue, T red) {
-            this.blue = blue;
-            this.red = red;
-        }
-
-        public T getBlue() {
-            return blue;
-        }
-        public T getRed() {
-            return red;
-        }
-
-        public T getOurs() {
-            if(shouldFlip()) {
-                return getRed();
-            } else {
-                return getBlue();
-            }
-        }
-        public T getTheirs() {
-            if(!shouldFlip()) {
-                return getRed();
-            } else {
-                return getBlue();
-            }
-        }
-
-        public static FlippedGeometry<Translation2d> fromBlue(Translation2d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Translation2d> fromBlue(Translation2d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Translation2d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Translation2d> fromRed(Translation2d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Translation2d> fromRed(Translation2d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Translation2d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Rotation2d> fromBlue(Rotation2d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Rotation2d> fromBlue(Rotation2d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Rotation2d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Rotation2d> fromRed(Rotation2d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Rotation2d> fromRed(Rotation2d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Rotation2d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Pose2d> fromBlue(Pose2d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Pose2d> fromBlue(Pose2d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Pose2d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Pose2d> fromRed(Pose2d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Pose2d> fromRed(Pose2d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Pose2d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Transform2d> fromBlue(Transform2d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Transform2d> fromBlue(Transform2d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Transform2d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Transform2d> fromRed(Transform2d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Transform2d> fromRed(Transform2d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Transform2d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Translation3d> fromBlue(Translation3d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Translation3d> fromBlue(Translation3d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Translation3d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Translation3d> fromRed(Translation3d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Translation3d> fromRed(Translation3d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Translation3d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Rotation3d> fromBlue(Rotation3d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Rotation3d> fromBlue(Rotation3d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Rotation3d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Rotation3d> fromRed(Rotation3d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Rotation3d> fromRed(Rotation3d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Rotation3d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Pose3d> fromBlue(Pose3d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Pose3d> fromBlue(Pose3d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Pose3d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Pose3d> fromRed(Pose3d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Pose3d> fromRed(Pose3d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Pose3d>(flip(red, flipType), red);
-        }
-
-        public static FlippedGeometry<Transform3d> fromBlue(Transform3d blue) {
-            return fromBlue(blue, defaultFlipType);
-        }
-        public static FlippedGeometry<Transform3d> fromBlue(Transform3d blue, FieldFlipType flipType) {
-            return new FlippedGeometry<Transform3d>(blue, flip(blue, flipType));
-        }
-        public static FlippedGeometry<Transform3d> fromRed(Transform3d red) {
-            return fromRed(red, defaultFlipType);
-        }
-        public static FlippedGeometry<Transform3d> fromRed(Transform3d red, FieldFlipType flipType) {
-            return new FlippedGeometry<Transform3d>(flip(red, flipType), red);
-        }
     }
 }
