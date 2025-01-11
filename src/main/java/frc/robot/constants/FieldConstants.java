@@ -88,7 +88,7 @@ public final class FieldConstants {
         }
 
         public static enum Level {
-            Level1(Meters.of(0.592953),Degrees.of(35),Meters.of(0.779254)),
+            Level1(Meters.of(0.592953), Degrees.of(35), Meters.of(0.779254)),
             Level2(Meters.of(0.792953), Degrees.of(35), Meters.of(0.779254)),
             Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254)),
             Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750)),
@@ -111,30 +111,19 @@ public final class FieldConstants {
         }
 
         public static enum Side {
-            Left(
-                new Transform3d(
-                    new Translation3d(
-                        Meters.zero(),
-                        Meters.of(+0.164308),
-                        Meters.zero()
-                    ),
-                    Rotation3d.kZero
-                )
-            ),
-            Right(
-                new Transform3d(
-                    new Translation3d(
-                        Meters.zero(),
-                        Meters.of(-0.164309),
-                        Meters.zero()
-                    ),
-                    Rotation3d.kZero
-                )
-            ),
+            Left(Meters.of(+0.164308)),
+            Right(Meters.of(-0.164309)),
             ;
             private final Transform3d transform;
-            Side(Transform3d transform) {
-                this.transform = transform;
+            Side(Distance yOffset) {
+                this.transform = new Transform3d(
+                    new Translation3d(
+                        Meters.zero(),
+                        yOffset,
+                        Meters.zero()
+                    ),
+                    Rotation3d.kZero
+                );
             }
         }
 
