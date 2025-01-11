@@ -38,8 +38,8 @@ public class PivotIOFalcon implements PivotIO {
     }
 
     // Set position based on profile
-    public void setPivotPosition (double goal) {
-        leftMotor.setControl(profile.withPosition(Units.radiansToRotations(goal)));
+    public void setPivotPosition (Angle position) {
+        leftMotor.setControl(profile.withPosition(position));
     }
 
     // Immediately stop

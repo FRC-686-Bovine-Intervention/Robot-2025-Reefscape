@@ -1,44 +1,23 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.superstructure.pivot.PivotIO.PivotIOInputsAutoLogged;
 
 public class Pivot extends SubsystemBase {
 
     // Declare variables
-    private final PivotIOFalcon pivotIO = new PivotIOFalcon();
-    private double goal = 0;
-    private final double zero = 0;
+    private final PivotIO io;
+    private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    public Pivot (int goal) {
-        this.goal = goal;
+    public Pivot (PivotIO io) {
+        this.io = io;
     }
-
-    // Get input and convert to degrees, then send to IO
-    public Command pivotToDegrees (double degrees) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-            }
-            @Override
-            public void initialize () {
-                execute();
-            }
-            public void execute () {
-                double goal = Units.degreesToRadians(degrees) + zero;
-                pivotIO.setPivotPosition(goal);  
-            }
-            public void end (boolean interrupted) {
-                pivotIO.stop();
-            }
-
-        };
-    }
+    
 
     // Get input and directly send to IO
-    public Command pivotTo (double rads) {
+    public Command pivotTo (Angle angle) {
         var subsystem = this;
         return new Command() {
             {
@@ -48,11 +27,10 @@ public class Pivot extends SubsystemBase {
                 execute();
             }
             public void execute () {
-                double goal = rads + zero;
-                pivotIO.setPivotPosition(goal);
+                io.setPivotPosition(angle);
             }
             public void end (boolean interrupted) {
-                pivotIO.stop();
+                io.stop();
             }
         };
     }

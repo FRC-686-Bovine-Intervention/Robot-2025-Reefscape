@@ -1,6 +1,8 @@
 package frc.robot.subsystems.superstructure.pivot;
 
 import org.littletonrobotics.junction.AutoLog;
+
+import edu.wpi.first.units.measure.Angle;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
 
 public interface PivotIO {
@@ -12,5 +14,7 @@ public interface PivotIO {
 
     public default void setPivotVoltage (double voltage) {    }
 
-    public default void setPivotPosition (double position) {    }
+    public default void setPivotPosition (Angle position) {    }
+
+    public default void stop () {   }
 }
