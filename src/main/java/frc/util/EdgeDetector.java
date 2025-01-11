@@ -24,6 +24,12 @@ public class EdgeDetector {
         prevVal = value;
     }
 
+    public void reset(boolean value) {
+        risingEdge = false;
+        fallingEdge = false;
+        prevVal = value;
+    }
+
     public boolean getValue() {
         return prevVal;
     }

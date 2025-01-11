@@ -43,6 +43,7 @@ import frc.robot.subsystems.vision.bucket.BucketVisionConstants;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
+import frc.util.loggerUtil.LoggedDashboardCommand;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
