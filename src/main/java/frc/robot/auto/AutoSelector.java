@@ -42,7 +42,6 @@ public class AutoSelector extends VirtualSubsystem {
         responseChoosers = new ArrayList<>();
         configPublisher = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(key).getStringTopic("Configuration").publish();
         addDefaultRoutine(idleRoutine);
-        new SwitchableChooser(key + "/aaaaaaaa");
     }
 
     private void populateQuestions(AutoRoutine routine) {
