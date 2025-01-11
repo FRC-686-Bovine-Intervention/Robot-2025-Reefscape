@@ -6,9 +6,11 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.vision.VisionConstants.CameraConstants;
+import frc.util.rust.iter.Iterator;
 
 public class ApriltagCameraIOPhotonVision implements ApriltagCameraIO {
     private final PhotonCamera photonCam;
@@ -47,7 +49,8 @@ public class ApriltagCameraIOPhotonVision implements ApriltagCameraIO {
             photonTarget.getFiducialId(),
             photonTarget.getBestCameraToTarget(),
             photonTarget.getAlternateCameraToTarget(),
-            photonTarget.getPoseAmbiguity()
+            photonTarget.getPoseAmbiguity(),
+            Iterator.of(photonTarget.getDetectedCorners()).map((corner) -> new Translation2d(corner.x, corner.y)).collect_array(Translation2d[]::new)
         );
     }
 }

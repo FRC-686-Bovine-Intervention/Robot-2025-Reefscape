@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision.apriltag;
 
 import java.util.Arrays;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
 import frc.robot.subsystems.vision.apriltag.LimelightHelpers.LimelightTarget_Fiducial;
@@ -46,7 +47,8 @@ public class ApriltagCameraIOLimelight implements ApriltagCameraIO {
             (int) limelightTarget.fiducialID,
             GeomUtil.toTransform3d(limelightTarget.getTargetPose_CameraSpace()),
             GeomUtil.toTransform3d(limelightTarget.getTargetPose_CameraSpace()),
-            0
+            0,
+            new Translation2d[0]
         );
     }
 }

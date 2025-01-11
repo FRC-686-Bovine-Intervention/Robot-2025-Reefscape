@@ -14,7 +14,7 @@ import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCame
 public class ApriltagCamera {
     private final ApriltagCameraConstants camMeta;
     private final ApriltagCameraIO io;
-    private final ApriltagCameraIOInputsAutoLogged inputs = new ApriltagCameraIOInputsAutoLogged();
+    private final ApriltagCameraIOInputs inputs = new ApriltagCameraIOInputs();
 
     private final Alert notConnectedAlert;
 
