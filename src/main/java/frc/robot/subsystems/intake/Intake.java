@@ -21,7 +21,8 @@ public class Intake extends SubsystemBase{
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
     //These two need to be set
-    public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Slow Intake", Volts.of(4));
+    public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(4));
+    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(-4));
     public static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold", Volts.of(2));
 
     //Needs gamepiece pose & rotation
@@ -49,8 +50,7 @@ public class Intake extends SubsystemBase{
     //NEEDS REVIEW: Should motor direction be set in initialize?
     private Command genCommand(
         String name,
-        Supplier<Measure<VoltageUnit>> voltage,
-        boolean forward
+        Supplier<Measure<VoltageUnit>> voltage
     ) {
         var subsystem = this;
         return new Command() {
@@ -61,7 +61,7 @@ public class Intake extends SubsystemBase{
 
             @Override
             public void initialize() {
-                io.setMotorDirection(forward);;
+
             }
 
             @Override
@@ -81,32 +81,28 @@ public class Intake extends SubsystemBase{
     public Command stop(){
         return genCommand(
             "Stop", 
-            Volts::zero, 
-            true
+            Volts::zero
         );
     }
 
     public Command idle() {
         return genCommand(
             "Idle",
-            holdVoltage,
-            true
+            holdVoltage
         );
     }
 
     public Command eject() {
         return genCommand(
             "Eject",
-            intakeVoltage,
-            false
+            ejectVoltage
         );
     }
 
     public Command intake(){
         return genCommand(
             "Intake",
-            intakeVoltage,
-            true           
+            intakeVoltage          
         );
     }
     // END OF REVIEW NEEDED

@@ -22,10 +22,4 @@ public class IntakeIOTalon implements IntakeIO{
         //Value needs review
         motor.set(ControlMode.PercentOutput, volts.in(Volts) / 12);
     }
-
-    //Method of setting motor direction needs review
-    @Override
-    public void setMotorDirection(boolean forward){
-        motor.setInverted(!forward);
-    }
 }
