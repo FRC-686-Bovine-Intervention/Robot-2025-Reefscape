@@ -6,7 +6,6 @@ import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.superstructure.elevator.ElevatorIO.ElevatorIOInputs;
 
 public class Elevator extends SubsystemBase{
     private final ElevatorIO io;
