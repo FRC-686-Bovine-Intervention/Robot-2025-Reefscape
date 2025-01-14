@@ -1,18 +1,30 @@
 package frc.robot.subsystems.intake;
 
+import java.util.function.Supplier;
+import static edu.wpi.first.units.Units.Volts;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.robotStructure.GamepiecePose;
 
 public class Intake extends SubsystemBase{
     private final IntakeIO io;
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
+    //These two need to be set
+    public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Slow Intake", Volts.of(4));
+    public static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold", Volts.of(2));
+
+    //Needs gamepiece pose & rotation
     public final GamepiecePose gamepiecePose = new GamepiecePose(
         new Transform3d(
             new Translation3d(
@@ -21,6 +33,7 @@ public class Intake extends SubsystemBase{
             new Rotation3d()
         )
     );
+    //END OF NEEDS GAMEPIECE POSE
 
     public Intake(IntakeIO io){
         this.io = io;
@@ -32,4 +45,69 @@ public class Intake extends SubsystemBase{
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Intake", inputs);
     }
+
+    //NEEDS REVIEW: Should motor direction be set in initialize?
+    private Command genCommand(
+        String name,
+        Supplier<Measure<VoltageUnit>> voltage,
+        boolean forward
+    ) {
+        var subsystem = this;
+        return new Command() {
+            {
+                setName(name);
+                addRequirements(subsystem);
+            }
+
+            @Override
+            public void initialize() {
+                io.setMotorDirection(forward);;
+            }
+
+            @Override
+            public void execute() {
+                io.setMotorVoltage(voltage.get());
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                io.setMotorVoltage(Volts.zero());
+            }
+        };
+    }
+    //END OF REVIEW NEEDED
+
+    //NEEDS REVIEW: (are these commands we want?, do we need more?)
+    public Command stop(){
+        return genCommand(
+            "Stop", 
+            Volts::zero, 
+            true
+        );
+    }
+
+    public Command idle() {
+        return genCommand(
+            "Idle",
+            holdVoltage,
+            true
+        );
+    }
+
+    public Command eject() {
+        return genCommand(
+            "Eject",
+            intakeVoltage,
+            false
+        );
+    }
+
+    public Command intake(){
+        return genCommand(
+            "Intake",
+            intakeVoltage,
+            true           
+        );
+    }
+    // END OF REVIEW NEEDED
 }

@@ -44,6 +44,8 @@ public class HardwareDevices {
     public static final CANDevice backRightDriveMotorID = canivore.id(4);
     public static final CANDevice backRightTurnMotorID = rio.id(4);
 
+    // Intake: NEEDS TO BE SET
+    public static final CANDevice intakeMotorID = null;
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);
     public static final DIOPort button1 = DIOPort.port(0);

@@ -7,14 +7,14 @@ import edu.wpi.first.units.VoltageUnit;
 import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public interface IntakeIO {
-    
     @AutoLog
     public static class IntakeIOInputs {
         public LoggedMotor motor = new LoggedMotor();
-        public boolean sensorDetect = false;
     }
 
     public default void updateInputs(IntakeIOInputs inputs) {}
     
     public default void setMotorVoltage(Measure<VoltageUnit> volts) {}
+
+    public default void setMotorDirection(boolean forward){}
 }
