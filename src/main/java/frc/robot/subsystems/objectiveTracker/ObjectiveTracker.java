@@ -15,11 +15,23 @@ import frc.util.VirtualSubsystem;
 import frc.util.rust.iter.Iterator;
 
 public class ObjectiveTracker extends VirtualSubsystem {
+    private final NodeSelectorIO selectorIO;
+    private final NodeSelectorIOInputsAutoLogged selectorInputs =
+        new NodeSelectorIOInputsAutoLogged();
+
     private final ArrayList<Node> placedCoral = new ArrayList<>(36);
     private Node selectedNode = FieldConstants.Reef.nodes[0];
 
+    public ObjectiveTracker(NodeSelectorIO selectorIO) {
+        System.out.println("[Init] Creating ObjectiveTracker");
+        this.selectorIO = selectorIO;
+    }
+
     @Override
     public void periodic() {
+        selectorIO.updateInputs(selectorInputs);
+        Logger.processInputs("NodeSelector", selectorInputs);
+        
         Logger.recordOutput("Selected Coral", selectedNode.pose.getOurs());
         Logger.recordOutput("Placed Coral", Iterator.of(placedCoral).map((node) -> node.pose.getOurs().transformBy(Coral.rackPlacement)).collect_array(Pose3d[]::new));
     }

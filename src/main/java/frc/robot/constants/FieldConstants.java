@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
+import java.nio.ByteBuffer;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,6 +17,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.util.struct.Struct;
+import edu.wpi.first.util.struct.StructSerializable;
 import frc.util.flipping.Flipped;
 
 public final class FieldConstants {
@@ -127,17 +131,57 @@ public final class FieldConstants {
             }
         }
 
-        public static final class Node {
-            public final Flipped<Pose3d> pose;
+        public static final class Node implements StructSerializable {
             public final Rack rack;
             public final Level level;
             public final Side side;
+            public final Flipped<Pose3d> pose;
 
-            Node(Rack rack, Level level, Side side) {
+            public Node(Rack rack, Level level, Side side) {
                 this.rack = rack;
                 this.level = level;
                 this.side = side;
                 this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+            }
+
+            public static final NodeStruct struct = new NodeStruct();
+
+            public static class NodeStruct implements Struct<Node> {
+                @Override
+                public Class<Node> getTypeClass() {
+                    return Node.class;
+                }
+
+                @Override
+                public String getTypeName() {
+                    return "Node";
+                }
+
+                @Override
+                public int getSize() {
+                    return kSizeInt8 * 3;
+                }
+
+                @Override
+                public String getSchema() {
+                    return "int Rack;int Side;int Level;";
+                }
+
+                @Override
+                public Node unpack(ByteBuffer bb) {
+                    var rackIdx = bb.getInt();
+                    var levelIdx = bb.getInt();
+                    var sideIdx = bb.getInt();
+                    var node = new Node(Rack.values()[rackIdx], Level.values()[levelIdx], Side.values()[sideIdx]);
+                    return node;
+                }
+
+                @Override
+                public void pack(ByteBuffer bb, Node value) {
+                    bb.putInt(value.rack.ordinal());
+                    bb.putInt(value.level.ordinal());
+                    bb.putInt(value.side.ordinal());
+                }
             }
         }
 
@@ -155,7 +199,11 @@ public final class FieldConstants {
         }
 
         public static final Node getNode(Rack rack, Level level, Side side) {
-            return nodes[(rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal())];
+            return getNode(rack.ordinal(), level.ordinal(), side.ordinal());
+        }
+
+        public static final Node getNode(int rack, int level, int side) {
+            return nodes[(rack * Level.values().length * Side.values().length) + (level * Side.values().length) + (side)];
         }
     }
 }
