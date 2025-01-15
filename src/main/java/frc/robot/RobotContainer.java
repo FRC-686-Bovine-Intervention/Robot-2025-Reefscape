@@ -31,6 +31,7 @@ import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
+import frc.robot.subsystems.objectiveTracker.NodeSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
@@ -124,7 +125,7 @@ public class RobotContainer {
             break;
         }
         manualOverrides = new ManualOverrides();
-        objectiveTracker = new ObjectiveTracker();
+        objectiveTracker = new ObjectiveTracker(new NodeSelectorIOServer());
 
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
