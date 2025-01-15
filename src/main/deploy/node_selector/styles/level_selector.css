@@ -1,0 +1,45 @@
+#level_selector_container {
+  --branch-size: 0;
+  --level-button-size: 0;
+
+  height: 100vh;
+
+  display: grid;
+  place-items: center;
+}
+
+#branch {
+  width: fit-content;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+#branch > svg {
+  height: var(--branch-size);
+}
+
+.level_button {
+  position: absolute;
+  width: var(--level-button-size);
+  aspect-ratio: 3 / 2;
+  border-radius: 5px;
+  background: red;
+  color: white;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 100ms;
+  font-size: 1.15em;
+}
+
+.level_button:hover {
+  width: calc(var(--level-button-size) * 1.25);
+}
+
+.level_button.selected {
+  width: calc(var(--level-button-size) * 1.25);
+  background-color: green;
+}
