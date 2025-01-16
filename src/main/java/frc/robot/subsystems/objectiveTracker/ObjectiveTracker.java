@@ -31,20 +31,40 @@ public class ObjectiveTracker extends VirtualSubsystem {
     public void periodic() {
         selectorIO.updateInputs(selectorInputs);
         Logger.processInputs("NodeSelector", selectorInputs);
+
+        if (selectorInputs.node != null) {
+            selectedNode = selectorInputs.node;
+        }
+
+        selectorIO.setSelectedNode(selectedNode);
         
         Logger.recordOutput("Selected Coral", selectedNode.pose.getOurs());
         Logger.recordOutput("Placed Coral", Iterator.of(placedCoral).map((node) -> node.pose.getOurs().transformBy(Coral.rackPlacement)).collect_array(Pose3d[]::new));
     }
 
-    public void moveSelectedNode(int x, int y) {
-        var horiz = Math.floorMod(((selectedNode.rack.ordinal() * Side.values().length) + selectedNode.side.ordinal() + x), (Rack.values().length * Side.values().length));
-        var height = Math.floorMod((selectedNode.level.ordinal() + y), Level.values().length);
+    public void moveSelectedNode(Direction direction) {
+        var horiz = Math.floorMod(((selectedNode.rack.ordinal() * Side.values().length) + selectedNode.side.ordinal() + direction.x), (Rack.values().length * Side.values().length));
+        var height = Math.floorMod((selectedNode.level.ordinal() + direction.y), Level.values().length);
         selectedNode = FieldConstants.Reef.getNode(Rack.values()[horiz / Side.values().length], Level.values()[height], Side.values()[Math.floorMod(horiz, Side.values().length)]);
     }
 
     public void toggleSelectedNode() {
         if (!placedCoral.remove(selectedNode)) {
             placedCoral.add(selectedNode);
+        }
+    }
+
+    public static enum Direction {
+        LEFT(-1, 0),
+        RIGHT(1, 0),
+        UP(0, 1),
+        DOWN(0, -1)
+        ;
+        public int x;
+        public int y;
+        Direction(int x, int y) {
+            this.x = x;
+            this.y = y;
         }
     }
 }

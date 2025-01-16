@@ -47,6 +47,5 @@
 }
 
 .branch_button.selected {
-  width: calc(var(--branch-button-size) * 1.25);
   background-color: green;
 }

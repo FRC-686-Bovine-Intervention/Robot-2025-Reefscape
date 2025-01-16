@@ -40,6 +40,5 @@
 }
 
 .level_button.selected {
-  width: calc(var(--level-button-size) * 1.25);
   background-color: green;
 }

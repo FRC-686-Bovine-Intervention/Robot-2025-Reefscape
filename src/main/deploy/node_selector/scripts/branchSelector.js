@@ -1,3 +1,6 @@
+import { sendSelectedBranch } from "./index.js";
+import { degreesToRadians, rotatePoint } from "./utils.js";
+
 const HUB_SIZE = 400;
 const BRANCH_BUTTON_SIZE = 70;
 const BRANCH_BUTTON_SIDE_OFFSET = 65;
@@ -18,26 +21,49 @@ const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
 const branchButton = document.createElement("div");
 branchButton.classList.add("branch_button");
 
+const reefDOM = [];
+
 for (let i = 0; i < 6; i++) {
-  const angle = degreesToRadians(i * 60);
+  const angle = -degreesToRadians(i * 60);
 
   const [leftX, leftY] = rotatePoint(
     [-x + BRANCH_BUTTON_SIDE_OFFSET, y + BRANCH_BUTTON_NORMAL_OFFSET],
     angle
   );
-  const leftBranch = branchButton.cloneNode();
-  leftBranch.style.setProperty("--x", leftX + "px");
-  leftBranch.style.setProperty("--y", leftY + "px");
-  leftBranch.textContent = i * 2 + 2;
-  branchSelectorContainer.appendChild(leftBranch);
+  const leftBranchButton = branchButton.cloneNode();
+  leftBranchButton.style.setProperty("--x", leftX + "px");
+  leftBranchButton.style.setProperty("--y", leftY + "px");
+  leftBranchButton.textContent = i * 2 + 1;
+  branchSelectorContainer.appendChild(leftBranchButton);
 
   const [rightX, rightY] = rotatePoint(
     [x - BRANCH_BUTTON_SIDE_OFFSET, y + BRANCH_BUTTON_NORMAL_OFFSET],
     angle
   );
-  const rightBranch = branchButton.cloneNode();
-  rightBranch.style.setProperty("--x", rightX + "px");
-  rightBranch.style.setProperty("--y", rightY + "px");
-  rightBranch.textContent = i * 2 + 1;
-  branchSelectorContainer.appendChild(rightBranch);
+  const rightBranchButton = branchButton.cloneNode();
+  rightBranchButton.style.setProperty("--x", rightX + "px");
+  rightBranchButton.style.setProperty("--y", rightY + "px");
+  rightBranchButton.textContent = i * 2 + 2;
+  branchSelectorContainer.appendChild(rightBranchButton);
+
+  reefDOM.push([leftBranchButton, rightBranchButton]);
+
+  leftBranchButton.addEventListener("click", () =>
+    sendSelectedBranch(i, reefDOM[i].indexOf(leftBranchButton))
+  );
+  rightBranchButton.addEventListener("click", () =>
+    sendSelectedBranch(i, reefDOM[i].indexOf(rightBranchButton))
+  );
+}
+
+export function displaySelectedBranch(rack, side) {
+  reefDOM.forEach((arr, i) => {
+    arr.forEach((dom, j) => {
+      if (i === rack && j === side) {
+        dom.classList.add("selected");
+      } else {
+        dom.classList.remove("selected");
+      }
+    });
+  });
 }

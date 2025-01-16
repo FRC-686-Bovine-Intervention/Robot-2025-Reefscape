@@ -143,7 +143,7 @@ public final class FieldConstants {
                 this.side = side;
                 this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
             }
-
+            
             public static final NodeStruct struct = new NodeStruct();
 
             public static class NodeStruct implements Struct<Node> {
@@ -159,7 +159,7 @@ public final class FieldConstants {
 
                 @Override
                 public int getSize() {
-                    return kSizeInt8 * 3;
+                    return kSizeInt32 * 3;
                 }
 
                 @Override

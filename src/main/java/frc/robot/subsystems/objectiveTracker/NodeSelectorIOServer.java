@@ -15,7 +15,7 @@ public class NodeSelectorIOServer implements NodeSelectorIO {
     public NodeSelectorIOServer() {
         System.out.println("[Init] Creating NodeSelectorIOServer");
 
-        var table = NetworkTableInstance.getDefault().getTable("nodeselector");
+        var table = NetworkTableInstance.getDefault().getTable("node_selector");
         nodePublisher = table.getIntegerArrayTopic("node_robot_to_dashboard").publish();
         nodeSubscriber =
             table
@@ -35,7 +35,8 @@ public class NodeSelectorIOServer implements NodeSelectorIO {
         }
     }
 
-    public void setSelected(Node selected) {
+    @Override
+    public void setSelectedNode(Node selected) {
         nodePublisher.set(new long[] {selected.rack.ordinal(), selected.level.ordinal(), selected.side.ordinal()});
     }
 }

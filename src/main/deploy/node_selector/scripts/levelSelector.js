@@ -1,3 +1,6 @@
+import { sendSelectedLevel } from "./index.js";
+import { formatString } from "./utils.js";
+
 const BRANCH_SIZE = 400;
 const LEVEL_BUTTON_SIZE = 100;
 const LEVEL_BUTTON_TEMPLATE_STRING = "L%s";
@@ -14,6 +17,8 @@ levelSelectorContainer.style.setProperty(
 const branch = document.getElementById("branch");
 const svg = branch.querySelector("svg");
 const paths = svg.querySelectorAll("path");
+
+const levelsDOM = [];
 
 paths.forEach((path, i) => {
   const pathLength = path.getTotalLength();
@@ -36,5 +41,21 @@ paths.forEach((path, i) => {
   levelButton.style.setProperty("top", topMostY + "px");
   levelButton.textContent = formatString(LEVEL_BUTTON_TEMPLATE_STRING, i + 1);
 
+  levelButton.addEventListener("click", () => {
+    sendSelectedLevel(i);
+  });
+
   branch.appendChild(levelButton);
+
+  levelsDOM.push(levelButton);
 });
+
+export function displaySelectedLevel(level) {
+  levelsDOM.forEach((dom, i) => {
+    if (i === level) {
+      dom.classList.add("selected");
+    } else {
+      dom.classList.remove("selected");
+    }
+  });
+}
