@@ -12,6 +12,8 @@ public interface PivotIO {
         LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
     }
 
+    public default void updateInputs(PivotIOInputs inputs) {}
+
     public default void setVoltage(double voltage) {}
 
     public default void setPosition(Angle position) {}

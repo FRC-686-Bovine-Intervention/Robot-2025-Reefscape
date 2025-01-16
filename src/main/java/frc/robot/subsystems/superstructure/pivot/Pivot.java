@@ -1,21 +1,29 @@
 package frc.robot.subsystems.superstructure.pivot;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.superstructure.pivot.PivotIO.PivotIOInputsAutoLogged;
 
 public class Pivot extends SubsystemBase {
-
-    // Declare variables
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
     public Pivot(PivotIO io) {
         this.io = io;
     }
+
+    @Override
+    public void periodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("Inputs/Pivot", inputs);
+    }
+
+    public void setPivot(Angle angle) {
+        io.setPosition(angle);
+    }
     
-    // Get input and directly send to IO
     public Command pivotTo(Angle angle) {
         var subsystem = this;
         return new Command() {
@@ -26,7 +34,7 @@ public class Pivot extends SubsystemBase {
                 execute();
             }
             public void execute() {
-                io.setPosition(angle);
+                setPivot(angle);
             }
             public void end(boolean interrupted) {
                 io.stop();
