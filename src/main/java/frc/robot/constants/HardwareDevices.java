@@ -49,6 +49,11 @@ public class HardwareDevices {
     public static final CANDevice pivotRightMotorID = canivore.id(6);
     public static final CANDevice pivotEncoderID = canivore.id(5);
 
+    // Elevator
+    public static final CANDevice elevatorLeftMotorID = canivore.id(7);
+    public static final CANDevice elevatorRightMotorID = canivore.id(8);
+    public static final CANDevice elevatorEncoderID = canivore.id(7);
+
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);
     public static final DIOPort button1 = DIOPort.port(0);
