@@ -60,7 +60,7 @@ public class PivotIOFalcon implements PivotIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(200)
+            .withRotorToSensorRatio(100)
         ;
         motorConfig.SoftwareLimitSwitch
             .withForwardSoftLimitEnable(true)
@@ -84,6 +84,7 @@ public class PivotIOFalcon implements PivotIO {
 
     @Override
     public void updateInputs(PivotIOInputs inputs) {
+        inputs.encoder.updateFrom(cancoder);
         inputs.leftMotor.updateFrom(leftMotor);
         inputs.rightMotor.updateFrom(rightMotor);
 

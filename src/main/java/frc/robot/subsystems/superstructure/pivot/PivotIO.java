@@ -4,10 +4,12 @@ import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.Angle;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
 
 public interface PivotIO {
     @AutoLog
     public static class PivotIOInputs {
+        LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
         LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
     }
