@@ -1,0 +1,66 @@
+{
+    "name": "2025 Sirenia",
+    "sourceUrl": "https://cad.onshape.com/documents/62a21464d34e46bb2b7d9c9b/w/e0c09022af1412aec5851809/e/f2552ef0d3b00617a3783b47",
+    "disableSimplification": false,
+    "rotations": [{ "axis": "x", "degrees": 90 },{ "axis": "z", "degrees": 90 }],
+    "position": [0, 0, 0],
+    "cameras": [
+        {
+            "name": "Front Left",
+            "rotations": [{ "axis": "z", "degrees": 135 }],
+            "position": [0.220594,0.280635,0.234983],
+            "resolution": [1280, 800],
+            "fov": 70
+        },
+        {
+            "name": "Front Right",
+            "rotations": [{ "axis": "z", "degrees": -135 }],
+            "position": [0.220594,-0.280635,0.234983],
+            "resolution": [1280, 800],
+            "fov": 70
+        },
+        {
+            "name": "Back Left",
+            "rotations": [{ "axis": "z", "degrees": 5 },{ "axis": "y", "degrees": -20 }],
+            "position": [-0.208321,0.254315,0.234983],
+            "resolution": [1280, 800],
+            "fov": 70
+        },
+        {
+            "name": "Back Right",
+            "rotations": [{ "axis": "z", "degrees": -5 },{ "axis": "y", "degrees": -20 }],
+            "position": [-0.209274,-0.255268,0.234983],
+            "resolution": [1280, 800],
+            "fov": 70
+        },
+        {
+            "name": "Flag Stick",
+            "rotations": [{ "axis": "y", "degrees": 30 },{ "axis": "z", "degrees": 10 }],
+            "position": [-0.219548,-0.195904,1.147068],
+            "resolution": [1280, 800],
+            "fov": 70
+        }
+    ],
+    "components": [
+        {
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.228600, 0, -0.254000]
+        },
+        {
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.317500, 0, -0.304800]
+        },
+        {
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.304800, 0, -0.304800]
+        },
+        {
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.292100, 0, -0.304800]
+        },
+        {
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [-0.342900, 0, -0.304800]
+        }
+    ]
+}
