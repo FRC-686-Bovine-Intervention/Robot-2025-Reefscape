@@ -5,22 +5,22 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Voltage;
-import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
 
 public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {
-        LoggedMotor leftMotor = new LoggedMotor();
-        LoggedMotor rightMotor = new LoggedMotor();
+        LoggedEncoder encoder = new LoggedEncoder();
+        LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
+        LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
     } 
 
     public default void updateInputs(ElevatorIOInputs inputs) {}
 
     public default void setVoltage(Measure<VoltageUnit> voltage) {}
 
-    public default void setPosition(Measure<DistanceUnit> dist) {}
+    public default void setLength(Measure<DistanceUnit> length) {}
 
     public default void stop() {}
 }

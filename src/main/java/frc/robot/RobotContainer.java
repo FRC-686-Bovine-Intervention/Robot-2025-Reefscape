@@ -5,15 +5,12 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -40,6 +37,9 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
+import frc.robot.subsystems.superstructure.elevator.Elevator;
+import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
+import frc.robot.subsystems.superstructure.elevator.ElevatorIOFalcon;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -54,11 +54,11 @@ import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
 import frc.util.robotStructure.Mechanism3d;
 import frc.util.robotStructure.angle.ArmMech;
-import frc.util.robotStructure.linear.ExtenderMech;
 
 public class RobotContainer {
     // Subsystems
     public final Drive drive;
+    public final Elevator elevator;
     public final ApriltagVision apriltagVision;
     public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
@@ -85,6 +85,7 @@ public class RobotContainer {
                         .map(ModuleIOFalcon550::new)
                         .toArray(ModuleIO[]::new)
                 );
+                elevator = new Elevator(new ElevatorIOFalcon());
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
@@ -117,6 +118,7 @@ public class RobotContainer {
                         .map(ModuleIOSim::new)
                         .toArray(ModuleIO[]::new)
                 );
+                elevator = new Elevator(new ElevatorIO() {});
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -129,6 +131,7 @@ public class RobotContainer {
                     new ModuleIO(){},
                     new ModuleIO(){}
                 );
+                elevator = new Elevator(new ElevatorIO() {});
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -141,42 +144,6 @@ public class RobotContainer {
                 Meters.of(-0.228600),
                 Meters.of(0),
                 Meters.of(0.254000)
-            ),
-            new Rotation3d(
-                Degrees.of(0),
-                Degrees.of(0),
-                Degrees.of(0)
-            )
-        ));
-        var stage2 = new ExtenderMech(new Transform3d(
-            new Translation3d(
-                Meters.of(-0.088900),
-                Meters.of(0),
-                Meters.of(0.050800)
-            ),
-            new Rotation3d(
-                Degrees.of(0),
-                Degrees.of(0),
-                Degrees.of(0)
-            )
-        ));
-        var stage3 = new ExtenderMech(new Transform3d(
-            new Translation3d(
-                Meters.of(0.012700),
-                Meters.of(0),
-                Meters.of(0)
-            ),
-            new Rotation3d(
-                Degrees.of(0),
-                Degrees.of(0),
-                Degrees.of(0)
-            )
-        ));
-        var stage4 = new ExtenderMech(new Transform3d(
-            new Translation3d(
-                Meters.of(0.012700),
-                Meters.of(0),
-                Meters.of(0)
             ),
             new Rotation3d(
                 Degrees.of(0),
@@ -204,16 +171,16 @@ public class RobotContainer {
             .addChild(VisionConstants.backRightModuleMount)
             .addChild(VisionConstants.flagStickMount)
             .addChild(pivot
-                .addChild(stage2
-                    .addChild(stage3
-                        .addChild(stage4
+                .addChild(elevator.stage2Mech
+                    .addChild(elevator.stage3Mech
+                        .addChild(elevator.stage4Mech
                             .addChild(wrist)
                         )
                     )
                 )
             )
         ;
-        Mechanism3d.registerMechs(pivot, stage2, stage3, stage4, wrist);
+        Mechanism3d.registerMechs(pivot, elevator.stage2Mech, elevator.stage3Mech, elevator.stage4Mech, wrist);
 
         driveJoystick = driveController.leftStick
             .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
@@ -274,6 +241,8 @@ public class RobotContainer {
         //     )
         //     .withName("Flick Stick")
         // );
+
+        driveController.b().toggleOnTrue(elevator.voltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 6));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));
