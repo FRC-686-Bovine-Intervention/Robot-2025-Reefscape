@@ -16,7 +16,26 @@
   font-family: "Manrope Variable", sans-serif;
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+}
+
 .container {
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  place-items: center;
+  grid-template-columns: 1fr 2fr 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+#timer_container {
+  height: 100px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

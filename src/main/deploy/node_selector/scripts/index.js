@@ -1,12 +1,16 @@
 import { displaySelectedLevel } from "./levelSelector.js";
 import { displaySelectedBranch } from "./branchSelector.js";
+import { displayTime } from "./timer.js";
 
 import { NT4_Client } from "./NT4.js";
+import { displayErrors, displayInfos, displayWarnings } from "./alerts.js";
 
 const nodeRobotToDashboardTopic = "/node_selector/node_robot_to_dashboard";
 const nodeDashboardToRobotTopic = "/node_selector/node_dashboard_to_robot";
 const matchTimeAdvantagekitToDashboardTopic =
   "/AdvantageKit/DriverStation/MatchTime";
+const autonomousAdvantagekitToDashboardTopic =
+  "/AdvantageKit/DriverStation/Autonomous";
 const alertsSmartdashboardToDashboardTopic = {
   warnings: "/SmartDashboard/Alerts/warnings",
   infos: "/SmartDashboard/Alerts/infos",
@@ -14,6 +18,8 @@ const alertsSmartdashboardToDashboardTopic = {
 };
 
 let selectedNode = [-1, -1, -1];
+let isAuto = false;
+let matchTime = 0;
 
 let client = new NT4_Client(
   window.location.hostname,
@@ -30,16 +36,25 @@ let client = new NT4_Client(
 
       selectedNode = value;
     } else if (topic.name === matchTimeAdvantagekitToDashboardTopic) {
-      console.log(value);
+      matchTime = Math.max(0, value);
+      displayTime(matchTime, isAuto);
+    } else if (topic.name === autonomousAdvantagekitToDashboardTopic) {
+      isAuto = value;
+      displayTime(matchTime, isAuto);
     } else if (topic.name === alertsSmartdashboardToDashboardTopic.infos) {
-      console.log(value);
+      displayInfos(value);
+    } else if (topic.name === alertsSmartdashboardToDashboardTopic.warnings) {
+      displayWarnings(value);
+    } else if (topic.name === alertsSmartdashboardToDashboardTopic.errors) {
+      displayErrors(value);
     }
   }, // New data
   () => {
-    document.body.style.backgroundColor = "";
   }, // Connect
   () => {
-    document.body.style.backgroundColor = "gray";
+    displaySelectedBranch();
+    displaySelectedLevel();
+    displayTime(0, false);
   } // Disconnect
 );
 
@@ -48,6 +63,7 @@ window.onload = () => {
     [
       nodeRobotToDashboardTopic,
       matchTimeAdvantagekitToDashboardTopic,
+      autonomousAdvantagekitToDashboardTopic,
       alertsSmartdashboardToDashboardTopic.infos,
       alertsSmartdashboardToDashboardTopic.warnings,
       alertsSmartdashboardToDashboardTopic.errors,

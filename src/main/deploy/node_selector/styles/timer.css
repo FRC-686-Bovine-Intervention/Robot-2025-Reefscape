@@ -1,0 +1,40 @@
+#timer_container {
+  --percentage-fill: 0;
+  position: relative;
+}
+
+#timer_container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.1);
+  width: calc(var(--percentage-fill) * 100%);
+  z-index: 99;
+}
+
+#timer_container {
+  z-index: 100;
+  font-size: 24px;
+}
+
+#timer_container.auto {
+  background-color: #4c94ff;
+  color: #ffffff;
+}
+
+#timer_container.teleop-1 {
+  background-color: #5d5d5d;
+  color: #ffffff;
+}
+
+#timer_container.teleop-2 {
+  background-color: #FFA500;
+  color: #ffffff;
+}
+
+#timer_container.teleop-3 {
+  background-color: #FF4500;
+  color: #fff;
+}

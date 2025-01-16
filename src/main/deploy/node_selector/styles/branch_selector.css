@@ -1,8 +1,13 @@
 #branch_selector_container {
-  --hub-size: 0;
-  --branch-button-size: 0;
+  --hub-size: 0px;
+  --branch-button-size: 0px;
 
-  height: 100vh;
+  height: calc(var(--hub-size) + (var(--branch-button-size) + 10px) * 2);
+  
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 

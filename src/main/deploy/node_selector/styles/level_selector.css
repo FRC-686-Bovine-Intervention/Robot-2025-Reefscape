@@ -1,11 +1,11 @@
 #level_selector_container {
-  --branch-size: 0;
-  --level-button-size: 0;
+  --branch-size: 0px;
+  --level-button-size: 0px;
 
-  height: 100vh;
-
-  display: grid;
-  place-items: center;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #branch {
