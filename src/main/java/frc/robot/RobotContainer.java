@@ -5,15 +5,12 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -40,6 +37,10 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
+import frc.robot.subsystems.superstructure.pivot.Pivot;
+import frc.robot.subsystems.superstructure.pivot.PivotIO;
+import frc.robot.subsystems.superstructure.pivot.PivotIOFalcon;
+import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -59,6 +60,7 @@ import frc.util.robotStructure.linear.ExtenderMech;
 public class RobotContainer {
     // Subsystems
     public final Drive drive;
+    public final Pivot pivot;
     public final ApriltagVision apriltagVision;
     public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
@@ -85,6 +87,7 @@ public class RobotContainer {
                         .map(ModuleIOFalcon550::new)
                         .toArray(ModuleIO[]::new)
                 );
+                pivot = new Pivot(new PivotIOFalcon());
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
@@ -117,6 +120,7 @@ public class RobotContainer {
                         .map(ModuleIOSim::new)
                         .toArray(ModuleIO[]::new)
                 );
+                pivot = new Pivot(new PivotIOSim());
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -129,6 +133,7 @@ public class RobotContainer {
                     new ModuleIO(){},
                     new ModuleIO(){}
                 );
+                pivot = new Pivot(new PivotIO() {});
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -136,18 +141,6 @@ public class RobotContainer {
         manualOverrides = new ManualOverrides();
         objectiveTracker = new ObjectiveTracker();
 
-        var pivot = new ArmMech(new Transform3d(
-            new Translation3d(
-                Meters.of(-0.228600),
-                Meters.of(0),
-                Meters.of(0.254000)
-            ),
-            new Rotation3d(
-                Degrees.of(0),
-                Degrees.of(0),
-                Degrees.of(0)
-            )
-        ));
         var stage2 = new ExtenderMech(new Transform3d(
             new Translation3d(
                 Meters.of(-0.088900),
@@ -203,7 +196,7 @@ public class RobotContainer {
             .addChild(VisionConstants.backLeftModuleMount)
             .addChild(VisionConstants.backRightModuleMount)
             .addChild(VisionConstants.flagStickMount)
-            .addChild(pivot
+            .addChild(pivot.mech
                 .addChild(stage2
                     .addChild(stage3
                         .addChild(stage4
@@ -213,7 +206,7 @@ public class RobotContainer {
                 )
             )
         ;
-        Mechanism3d.registerMechs(pivot, stage2, stage3, stage4, wrist);
+        Mechanism3d.registerMechs(pivot.mech, stage2, stage3, stage4, wrist);
 
         driveJoystick = driveController.leftStick
             .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
@@ -252,9 +245,11 @@ public class RobotContainer {
                 .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)))
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
                 .withName("Robot spin")
         );
+
+        pivot.setDefaultCommand(pivot.pivotTo(Degrees.zero()));
     }
 
     private void configureControls() {
@@ -274,6 +269,9 @@ public class RobotContainer {
         //     )
         //     .withName("Flick Stick")
         // );
+
+        driveController.b().toggleOnTrue(pivot.voltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 6));
+        driveController.y().toggleOnTrue(pivot.pivotTo(Degrees.of(90)));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));
