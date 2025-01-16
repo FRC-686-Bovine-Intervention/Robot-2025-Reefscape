@@ -1,6 +1,9 @@
 const infosDOM = document.getElementById("infos");
+const infoHeader = document.getElementById("info_header");
 const warningsDOM = document.getElementById("warnings");
+const warningHeader = document.getElementById("warning_header");
 const errorsDOM = document.getElementById("errors");
+const errorHeader = document.getElementById("error_header");
 
 const icons = {
   info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>`,
@@ -33,22 +36,37 @@ const newAlert = {
 };
 
 export function displayInfos(texts) {
+  if (texts.length > 0) {
+    infoHeader.style.display = "block";
+  } else {
+    infoHeader.style.display = "none";
+  }
   infosDOM.innerHTML = "";
   texts
     .map((text) => newAlert.info(text))
-    .forEach((dom) => (infosDOM.appendChild(dom)));
+    .forEach((dom) => infosDOM.appendChild(dom));
 }
 
 export function displayWarnings(texts) {
+  if (texts.length > 0) {
+    warningHeader.style.display = "block";
+  } else {
+    warningHeader.style.display = "none";
+  }
   warningsDOM.innerHTML = "";
   texts
     .map((text) => newAlert.warning(text))
-    .forEach((dom) => (warningsDOM.appendChild(dom)));
+    .forEach((dom) => warningsDOM.appendChild(dom));
 }
 
 export function displayErrors(texts) {
+  if (texts.length > 0) {
+    errorHeader.style.display = "block";
+  } else {
+    errorHeader.style.display = "none";
+  }
   errorsDOM.innerHTML = "";
   texts
     .map((text) => newAlert.error(text))
-    .forEach((dom) => (errorsDOM.appendChild(dom)));
+    .forEach((dom) => errorsDOM.appendChild(dom));
 }

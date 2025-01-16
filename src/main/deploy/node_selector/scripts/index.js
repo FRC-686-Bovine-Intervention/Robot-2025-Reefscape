@@ -1,9 +1,9 @@
 import { displaySelectedLevel } from "./levelSelector.js";
 import { displaySelectedBranch } from "./branchSelector.js";
 import { displayTime } from "./timer.js";
+import { displayErrors, displayInfos, displayWarnings } from "./alerts.js";
 
 import { NT4_Client } from "./NT4.js";
-import { displayErrors, displayInfos, displayWarnings } from "./alerts.js";
 
 const nodeRobotToDashboardTopic = "/node_selector/node_robot_to_dashboard";
 const nodeDashboardToRobotTopic = "/node_selector/node_dashboard_to_robot";
@@ -50,11 +50,21 @@ let client = new NT4_Client(
     }
   }, // New data
   () => {
+    const overlay = document.getElementById("overlay");
+    if (overlay) overlay.remove();
   }, // Connect
   () => {
     displaySelectedBranch();
     displaySelectedLevel();
     displayTime(0, false);
+    displayInfos([]);
+    displayWarnings([]);
+    displayErrors([]);
+    if (!document.getElementById("overlay")) {
+      const overlay = document.createElement("div");
+      overlay.id = "overlay";
+      document.body.appendChild(overlay);
+    }
   } // Disconnect
 );
 

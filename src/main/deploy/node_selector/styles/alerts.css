@@ -11,6 +11,10 @@
   gap: 10px;
 }
 
+.alert_header {
+  display: none;
+}
+
 .alert {
   --background: #d2fbdf;
   --foreground: #6de9a8;
