@@ -40,6 +40,7 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOFalcon;
+import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -118,7 +119,7 @@ public class RobotContainer {
                         .map(ModuleIOSim::new)
                         .toArray(ModuleIO[]::new)
                 );
-                elevator = new Elevator(new ElevatorIO() {});
+                elevator = new Elevator(new ElevatorIOSim());
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -243,6 +244,7 @@ public class RobotContainer {
         // );
 
         driveController.b().toggleOnTrue(elevator.voltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 6));
+        driveController.y().toggleOnTrue(elevator.elevateTo(Meters.of(1)));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));

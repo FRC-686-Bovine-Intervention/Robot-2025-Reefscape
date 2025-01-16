@@ -73,6 +73,8 @@ public class Elevator extends SubsystemBase{
         stage2Mech.set(stageDist);
         stage3Mech.set(stageDist);
         stage4Mech.set(stageDist);
+
+        Logger.recordOutput("Elevator/Total Length", stageDist.times(3));
     }
 
     public void setLength(Measure<DistanceUnit> dist) {

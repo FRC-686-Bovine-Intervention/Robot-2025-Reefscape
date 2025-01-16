@@ -63,7 +63,7 @@ public class ElevatorIOFalcon implements ElevatorIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(200)
+            .withRotorToSensorRatio(100)
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)
@@ -85,6 +85,7 @@ public class ElevatorIOFalcon implements ElevatorIO {
     
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
+        inputs.encoder.updateFrom(cancoder);
         inputs.leftMotor.updateFrom(leftMotor);
         inputs.rightMotor.updateFrom(rightMotor);
 
@@ -110,6 +111,6 @@ public class ElevatorIOFalcon implements ElevatorIO {
 
     @Override
     public void setLength(Measure<DistanceUnit> length) {
-        leftMotor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude())));
+        leftMotor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude() / 3)));
     }
 }
