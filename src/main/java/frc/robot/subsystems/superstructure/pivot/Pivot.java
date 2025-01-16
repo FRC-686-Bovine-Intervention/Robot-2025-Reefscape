@@ -11,25 +11,24 @@ public class Pivot extends SubsystemBase {
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    public Pivot (PivotIO io) {
+    public Pivot(PivotIO io) {
         this.io = io;
     }
     
-
     // Get input and directly send to IO
-    public Command pivotTo (Angle angle) {
+    public Command pivotTo(Angle angle) {
         var subsystem = this;
         return new Command() {
             {
                 addRequirements(subsystem);
             }
-            public void initialize () {
+            public void initialize() {
                 execute();
             }
-            public void execute () {
-                io.setPivotPosition(angle);
+            public void execute() {
+                io.setPosition(angle);
             }
-            public void end (boolean interrupted) {
+            public void end(boolean interrupted) {
                 io.stop();
             }
         };

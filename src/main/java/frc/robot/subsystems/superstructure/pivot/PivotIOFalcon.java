@@ -17,7 +17,7 @@ public class PivotIOFalcon implements PivotIO {
     );
 
     // Initial Configuration
-    public PivotIOFalcon () {
+    public PivotIOFalcon() {
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -27,23 +27,23 @@ public class PivotIOFalcon implements PivotIO {
         rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
     }
 
-    public void updateInputs (PivotIOInputs inputs) {
+    public void updateInputs(PivotIOInputs inputs) {
         inputs.leftMotor.updateFrom(leftMotor);
         inputs.rightMotor.updateFrom(rightMotor);
     }
 
     // Set Voltage
-    public void setPivotVoltage (double voltage) {
+    public void setVoltage(double voltage) {
         leftMotor.setVoltage(voltage);
     }
 
     // Set position based on profile
-    public void setPivotPosition (Angle position) {
+    public void setPosition(Angle position) {
         leftMotor.setControl(profile.withPosition(position));
     }
 
     // Immediately stop
-    public void stop () {
+    public void stop() {
         leftMotor.disable();
     }
 }

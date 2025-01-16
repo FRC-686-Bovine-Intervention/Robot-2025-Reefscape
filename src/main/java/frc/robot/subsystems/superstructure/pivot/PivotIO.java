@@ -12,9 +12,9 @@ public interface PivotIO {
         LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
     }
 
-    public default void setPivotVoltage (double voltage) {    }
+    public default void setVoltage(double voltage) {}
 
-    public default void setPivotPosition (Angle position) {    }
+    public default void setPosition(Angle position) {}
 
-    public default void stop () {   }
+    public default void stop() {}
 }
