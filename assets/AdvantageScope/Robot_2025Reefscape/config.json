@@ -43,24 +43,24 @@
     ],
     "components": [
         {
-            "zeroedRotations": [],
-            "zeroedPosition": [-0.228600, 0, -0.254000]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.228600, 0, -0.254000]
         },
         {
-            "zeroedRotations": [],
-            "zeroedPosition": [0, 0, 0]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.317500, 0, -0.304800]
         },
         {
-            "zeroedRotations": [],
-            "zeroedPosition": [0, 0, 0]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.304800, 0, -0.304800]
         },
         {
-            "zeroedRotations": [],
-            "zeroedPosition": [0, 0, 0]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [0.292100, 0, -0.304800]
         },
         {
-            "zeroedRotations": [],
-            "zeroedPosition": [0, 0, 0]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
+            "zeroedPosition": [-0.342900, 0, -0.304800]
         }
     ]
 }
