@@ -10,7 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drive.Drive;
-import frc.util.MathExtraUtil;
+import frc.util.misc.GeomUtil;
 
 public class AutoDrive {
     public static Command preciseToPose(Pose2d pose, Drive drive) {
@@ -50,6 +50,6 @@ public class AutoDrive {
         };
     }
     public static BooleanSupplier withinTolerance(Pose2d pose, Drive drive) {
-        return () -> MathExtraUtil.isNear(pose, drive.getPose(), Centimeters.of(2), Degrees.of(10));
+        return () -> GeomUtil.isNear(pose, drive.getPose(), Centimeters.of(2), Degrees.of(10));
     }
 }

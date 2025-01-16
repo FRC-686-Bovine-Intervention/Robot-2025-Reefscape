@@ -16,7 +16,9 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import frc.util.flipping.AllianceFlipUtil;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.misc.GeomUtil;
 
 public class Perspective {
 	private Matrix<N2,N2> spectatorToField;
@@ -28,13 +30,13 @@ public class Perspective {
 		return new Vector<N2>(spectatorToField.times(vec));
 	}
 	
-	private static final Matrix<N2,N2> joystickToRobot = MathExtraUtil.rotationMatrix(Rotation2d.kCW_90deg);
-	private static final Perspective posY = new Perspective(MathExtraUtil.rotationMatrix(Rotation2d.kCCW_90deg).times(joystickToRobot));
-	private static final Perspective negY = new Perspective(MathExtraUtil.rotationMatrix(Rotation2d.kCW_90deg).times(joystickToRobot));
-	private static final Perspective posX = new Perspective(MathExtraUtil.rotationMatrix(Rotation2d.kZero).times(joystickToRobot));
-	private static final Perspective negX = new Perspective(MathExtraUtil.rotationMatrix(Rotation2d.k180deg).times(joystickToRobot));
+	private static final Matrix<N2,N2> joystickToRobot = GeomUtil.rotationMatrix(Rotation2d.kCW_90deg);
+	private static final Perspective posY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCCW_90deg).times(joystickToRobot));
+	private static final Perspective negY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCW_90deg).times(joystickToRobot));
+	private static final Perspective posX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kZero).times(joystickToRobot));
+	private static final Perspective negX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.k180deg).times(joystickToRobot));
 	private static final LoggedTunableMeasure<AngleUnit> customTunable = new LoggedTunableMeasure<>("Perspective/Custom", Degrees.zero());
-	private static final Perspective custom = new Perspective(MathExtraUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot));
+	private static final Perspective custom = new Perspective(GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot));
 
 	private static final MappedSwitchableChooser<Perspective> chooser;
 	static {
@@ -61,7 +63,7 @@ public class Perspective {
 					chooser.setSelected(getAlliance());
 				}
 				if (chooser.getSelected() == custom) {
-					custom.spectatorToField = MathExtraUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot);
+					custom.spectatorToField = GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot);
 				}
 				chooser.setActive(chooser.getSelected());
 				comp_wrong_perspective_alert.set(Environment.isCompetition() && getCurrent() != getAlliance());

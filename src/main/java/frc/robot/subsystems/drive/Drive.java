@@ -61,13 +61,13 @@ import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.robot.subsystems.leds.Leds;
-import frc.util.AllianceFlipUtil;
 import frc.util.LazyOptional;
-import frc.util.MathExtraUtil;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
+import frc.util.flipping.AllianceFlipUtil;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
+import frc.util.misc.GeomUtil;
 import frc.util.robotStructure.Root;
 
 public class Drive extends VirtualSubsystem {
@@ -601,8 +601,8 @@ public class Drive extends VirtualSubsystem {
                         drive.setCenterOfRotation(new Translation2d());
                         return;
                     }
-                    var rotateAround = MathExtraUtil.vectorFromRotation(
-                        MathExtraUtil.rotationFromVector(desiredLinear)
+                    var rotateAround = GeomUtil.vectorFromRotation(
+                        GeomUtil.rotationFromVector(desiredLinear)
                         // .plus(Rotation2d.fromDegrees(45 * Math.signum(velo)))
                     );
                     drive.setCenterOfRotation(
@@ -690,7 +690,7 @@ public class Drive extends VirtualSubsystem {
                             preciseTurnTimer.restart();
                             return Optional.empty();
                         }
-                        var joyHeading = MathExtraUtil.rotationFromVector(Perspective.getCurrent().toField(joystick.toVector()));
+                        var joyHeading = GeomUtil.rotationFromVector(Perspective.getCurrent().toField(joystick.toVector()));
                         if(preciseTurnTimer.hasElapsed(preciseTurnTimeThreshold)) {
                             return outputMap(joyHeading);
                         }

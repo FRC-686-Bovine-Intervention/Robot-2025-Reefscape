@@ -23,9 +23,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.Module;
-import frc.util.MathExtraUtil;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
+import frc.util.misc.GeomUtil;
 
 public class WheelRadiusCalibration extends Command {
     private final Drive drive;
@@ -78,7 +78,7 @@ public class WheelRadiusCalibration extends Command {
         prevYaw.mut_replace(yaw);
 
         var volts = Math.min(voltageRampRate.in(Volts.per(Second)) * totalTimer.get(), maxVoltage.in(Volts));
-        Arrays.stream(drive.modules).forEach((module) -> module.runVoltage(Volts.of(volts), MathExtraUtil.rotationFromVector(module.config.positiveRotVec)));
+        Arrays.stream(drive.modules).forEach((module) -> module.runVoltage(Volts.of(volts), GeomUtil.rotationFromVector(module.config.positiveRotVec)));
     }
 
     @Override

@@ -4,12 +4,20 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -31,6 +39,7 @@ import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
+import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -44,6 +53,8 @@ import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
 import frc.util.robotStructure.Mechanism3d;
+import frc.util.robotStructure.angle.ArmMech;
+import frc.util.robotStructure.linear.ExtenderMech;
 
 public class RobotContainer {
     // Subsystems
@@ -51,6 +62,7 @@ public class RobotContainer {
     public final ApriltagVision apriltagVision;
     public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
+    public final ObjectiveTracker objectiveTracker;
 
     // Controllers
     private final XboxController driveController = new XboxController(0);
@@ -122,15 +134,86 @@ public class RobotContainer {
             break;
         }
         manualOverrides = new ManualOverrides();
+        objectiveTracker = new ObjectiveTracker();
 
+        var pivot = new ArmMech(new Transform3d(
+            new Translation3d(
+                Meters.of(-0.228600),
+                Meters.of(0),
+                Meters.of(0.254000)
+            ),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(0),
+                Degrees.of(0)
+            )
+        ));
+        var stage2 = new ExtenderMech(new Transform3d(
+            new Translation3d(
+                Meters.of(-0.088900),
+                Meters.of(0),
+                Meters.of(0.050800)
+            ),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(0),
+                Degrees.of(0)
+            )
+        ));
+        var stage3 = new ExtenderMech(new Transform3d(
+            new Translation3d(
+                Meters.of(0.012700),
+                Meters.of(0),
+                Meters.of(0)
+            ),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(0),
+                Degrees.of(0)
+            )
+        ));
+        var stage4 = new ExtenderMech(new Transform3d(
+            new Translation3d(
+                Meters.of(0.012700),
+                Meters.of(0),
+                Meters.of(0)
+            ),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(0),
+                Degrees.of(0)
+            )
+        ));
+        var wrist = new ArmMech(new Transform3d(
+            new Translation3d(
+                Meters.of(0.635000),
+                Meters.of(0),
+                Meters.of(0)
+            ),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(0),
+                Degrees.of(0)
+            )
+        ));
+        
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
             .addChild(VisionConstants.frontRightModuleMount)
             .addChild(VisionConstants.backLeftModuleMount)
             .addChild(VisionConstants.backRightModuleMount)
             .addChild(VisionConstants.flagStickMount)
+            .addChild(pivot
+                .addChild(stage2
+                    .addChild(stage3
+                        .addChild(stage4
+                            .addChild(wrist)
+                        )
+                    )
+                )
+            )
         ;
-        Mechanism3d.registerMechs();
+        Mechanism3d.registerMechs(pivot, stage2, stage3, stage4, wrist);
 
         driveJoystick = driveController.leftStick
             .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
@@ -191,6 +274,12 @@ public class RobotContainer {
         //     )
         //     .withName("Flick Stick")
         // );
+
+        driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, -1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(-1, 0)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(1, 0)));
     }
 
     private void configureNotifications() {}
