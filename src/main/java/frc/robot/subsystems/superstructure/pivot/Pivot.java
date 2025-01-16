@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.pivot;
 
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.DoubleSupplier;
 
@@ -9,6 +10,9 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -39,8 +43,11 @@ public class Pivot extends SubsystemBase {
         mech.set(inputs.encoder.position);
     }
 
-    public void setPivot(Angle angle) {
+    public void setPivot(Measure<AngleUnit> angle) {
         io.setPosition(angle);
+    }
+    public void setVoltage(Measure<VoltageUnit> voltage) {
+        io.setVoltage(voltage);
     }
     
     public Command pivotTo(Angle angle) {
@@ -73,7 +80,7 @@ public class Pivot extends SubsystemBase {
                 execute();
             }
             public void execute() {
-                io.setVoltage(voltage.getAsDouble());
+                io.setVoltage(Volts.of(voltage.getAsDouble()));
             }
             public void end(boolean interrupted) {
                 io.stop();

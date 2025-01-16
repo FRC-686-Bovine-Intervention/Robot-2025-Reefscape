@@ -3,6 +3,8 @@ package frc.robot.subsystems.superstructure.pivot;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -15,7 +17,9 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
@@ -105,14 +109,14 @@ public class PivotIOFalcon implements PivotIO {
 
     // Set Voltage
     @Override
-    public void setVoltage(double voltage) {
-        leftMotor.setVoltage(voltage);
+    public void setVoltage(Measure<VoltageUnit> voltage) {
+        leftMotor.setVoltage(voltage.in(Volts));
     }
 
     // Set position based on profile
     @Override
-    public void setPosition(Angle position) {
-        leftMotor.setControl(positionRequest.withPosition(position));
+    public void setPosition(Measure<AngleUnit> position) {
+        leftMotor.setControl(positionRequest.withPosition(position.in(Rotations)));
     }
 
     // Immediately stop

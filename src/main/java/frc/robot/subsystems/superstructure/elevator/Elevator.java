@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.robotStructure.linear.ExtenderMech;
@@ -79,6 +80,9 @@ public class Elevator extends SubsystemBase{
 
     public void setLength(Measure<DistanceUnit> dist) {
         io.setLength(dist);
+    }
+    public void setVoltage(Measure<VoltageUnit> voltage) {
+        io.setVoltage(voltage);
     }
 
     public Command elevateTo(Measure<DistanceUnit> dist) {
