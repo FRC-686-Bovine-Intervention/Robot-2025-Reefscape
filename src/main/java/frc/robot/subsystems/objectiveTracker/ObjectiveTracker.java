@@ -34,6 +34,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
         if (selectorInputs.node != null) {
             selectedNode = selectorInputs.node;
+            selectorInputs.node = null;
         }
 
         selectorIO.setSelectedNode(selectedNode);
