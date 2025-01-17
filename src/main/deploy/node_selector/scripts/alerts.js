@@ -1,9 +1,10 @@
 const infosDOM = document.getElementById("infos");
-const infoHeader = document.getElementById("info_header");
 const warningsDOM = document.getElementById("warnings");
-const warningHeader = document.getElementById("warning_header");
 const errorsDOM = document.getElementById("errors");
-const errorHeader = document.getElementById("error_header");
+
+// const infoHeader = document.getElementById("info_header");
+// const warningHeader = document.getElementById("warning_header");
+// const errorHeader = document.getElementById("error_header");
 
 const icons = {
   info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>`,
@@ -11,62 +12,52 @@ const icons = {
   error: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>`,
 };
 
-const newAlert = {
-  info: (text) => {
-    const alert = document.createElement("div");
-    alert.classList.add("alert", "info");
-    alert.innerHTML = icons.info;
-    alert.append(text);
-    return alert;
-  },
-  warning: (text) => {
-    const alert = document.createElement("div");
-    alert.classList.add("alert", "warning");
-    alert.innerHTML = icons.warning;
-    alert.append(text);
-    return alert;
-  },
-  error: (text) => {
-    const alert = document.createElement("div");
-    alert.classList.add("alert", "error");
-    alert.innerHTML = icons.error;
-    alert.append(text);
-    return alert;
-  },
-};
+function alert(type, text) {
+  const alert = document.createElement("div");
+  alert.classList.add("alert", type);
+  alert.innerHTML = icons[type];
+  alert.append(text);
+  return alert;
+}
 
 export function displayInfos(texts) {
   if (texts.length > 0) {
-    infoHeader.style.display = "block";
+    infosDOM.style.display = "block";
+    // infoHeader.style.display = "block";
   } else {
-    infoHeader.style.display = "none";
+    infosDOM.style.display = "none";
+    // infoHeader.style.display = "none";
   }
   infosDOM.innerHTML = "";
   texts
-    .map((text) => newAlert.info(text))
+    .map((text) => alert("info", text))
     .forEach((dom) => infosDOM.appendChild(dom));
 }
 
 export function displayWarnings(texts) {
   if (texts.length > 0) {
-    warningHeader.style.display = "block";
+    warningsDOM.style.display = "block";
+    // warningHeader.style.display = "block";
   } else {
-    warningHeader.style.display = "none";
+    warningsDOM.style.display = "none";
+    // warningHeader.style.display = "none";
   }
   warningsDOM.innerHTML = "";
   texts
-    .map((text) => newAlert.warning(text))
+    .map((text) => alert("warning", text))
     .forEach((dom) => warningsDOM.appendChild(dom));
 }
 
 export function displayErrors(texts) {
   if (texts.length > 0) {
-    errorHeader.style.display = "block";
+    // errorHeader.style.display = "block";
+    errorsDOM.style.display = "block";
   } else {
-    errorHeader.style.display = "none";
+    // errorHeader.style.display = "none";
+    errorsDOM.style.display = "none";
   }
   errorsDOM.innerHTML = "";
   texts
-    .map((text) => newAlert.error(text))
+    .map((text) => alert("error", text))
     .forEach((dom) => errorsDOM.appendChild(dom));
 }

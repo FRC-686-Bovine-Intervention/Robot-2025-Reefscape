@@ -11,15 +11,18 @@
     <link rel="stylesheet" href="styles/alerts.css" />
   </head>
   <body>
+    <div id="timer_container">
+      <p id="timer">00:00.000</p>
+    </div>
     <div class="container">
       <div id="alerts_container">
-        <h1>Alerts</h1>
-        <h2 id="info_header" class="alert_header">Infos</h2>
-        <div class="alerts" id="infos"></div>
-        <h2 id="warning_header" class="alert_header">Warnings</h2>
-        <div class="alerts" id="warnings"></div>
-        <h2 id="error_header" class="alert_header">Errors</h2>
+        <h2>Alerts</h2>
+        <!-- <h3 id="error_header" class="alert_header">Errors</h3> -->
         <div class="alerts" id="errors"></div>
+        <!-- <h3 id="warning_header" class="alert_header">Warnings</h3> -->
+        <div class="alerts" id="warnings"></div>
+        <!-- <h3 id="info_header" class="alert_header">Infos</h3> -->
+        <div class="alerts" id="infos"></div>
       </div>
       <div id="branch_selector_container">
         <div id="hub">
@@ -58,9 +61,6 @@
           </svg>
         </div>
       </div>
-    </div>
-    <div id="timer_container">
-      <p id="timer">00:00.000</p>
     </div>
   </body>
   <script src="./scripts/index.js" type="module"></script>

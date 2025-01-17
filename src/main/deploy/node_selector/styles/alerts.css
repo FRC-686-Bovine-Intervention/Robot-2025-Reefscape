@@ -8,12 +8,15 @@
 #alerts_container, .alerts {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
-.alert_header {
-  display: none;
+#alerts_container > * {
+  margin-bottom: 12px;
 }
+
+/* .alert_header {
+  display: none;
+} */
 
 .alert {
   --background: #d2fbdf;

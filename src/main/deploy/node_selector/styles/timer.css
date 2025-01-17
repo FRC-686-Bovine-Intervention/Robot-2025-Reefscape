@@ -1,6 +1,8 @@
 #timer_container {
   --percentage-fill: 0;
   position: relative;
+  background-color: #5d5d5d;
+  color: #ffffff;
 }
 
 #timer_container::before {
