@@ -2,6 +2,7 @@ import { displaySelectedLevel } from "./levelSelector.js";
 import { displaySelectedBranch } from "./branchSelector.js";
 import { displayTime } from "./timer.js";
 import { displayErrors, displayInfos, displayWarnings } from "./alerts.js";
+import "./keyboardShortcuts.js";
 
 import { NT4_Client } from "./NT4.js";
 
@@ -100,4 +101,8 @@ export function sendSelectedLevel(level) {
       selectedNode[2],
     ]);
   }
+}
+
+export function getSelectedNode() {
+  return selectedNode;
 }

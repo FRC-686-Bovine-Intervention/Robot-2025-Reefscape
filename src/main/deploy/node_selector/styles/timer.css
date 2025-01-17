@@ -5,6 +5,10 @@
   color: #ffffff;
 }
 
+#timer {
+  font-variant-numeric: tabular-nums;
+}
+
 #timer_container::before {
   content: "";
   position: absolute;

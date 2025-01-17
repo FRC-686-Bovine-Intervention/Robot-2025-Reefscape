@@ -14,26 +14,43 @@ const icons = {
   error: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>`,
 };
 
-const moveSidebarRight = document.getElementById("move_sidebar_right");
-const moveSidebarLeft = document.getElementById("move_sidebar_left");
+const moveSidebarRightButton = document.getElementById("move_sidebar_right");
+const moveSidebarLeftButton = document.getElementById("move_sidebar_left");
 
 const container = document.getElementById("container");
-moveSidebarLeft.onclick = moveSidebar;
-moveSidebarRight.onclick = moveSidebar;
+moveSidebarLeftButton.onclick = moveSidebar;
+moveSidebarRightButton.onclick = moveSidebar;
 function moveSidebar() {
+  if (moveSidebarLeftButton.style.display === "none") {
+    moveSidebarRight();
+  } else {
+    moveSidebarLeft();
+  }
+}
+
+function swapPanels() {
   const childNodes = Array.from(container.children);
   [childNodes[0], childNodes[2]] = [childNodes[2], childNodes[0]];
   childNodes.forEach((element) => container.appendChild(element));
-  if (moveSidebarLeft.style.display === "none") {
-    moveSidebarLeft.style.display = "block";
-    moveSidebarRight.style.display = "none";
+}
+
+export function moveSidebarRight() {
+  if (moveSidebarLeftButton.style.display !== "block") {
+    swapPanels();
+    moveSidebarLeftButton.style.display = "block";
+    moveSidebarRightButton.style.display = "none";
     setFlipped(true);
-  } else {
-    moveSidebarLeft.style.display = "none";
-    moveSidebarRight.style.display = "block";
+  }
+}
+
+export function moveSidebarLeft() {
+  if (moveSidebarLeftButton.style.display === "block") {
+    swapPanels();
+    moveSidebarLeftButton.style.display = "none";
+    moveSidebarRightButton.style.display = "block";
     setFlipped(false);
   }
-};
+}
 
 function alert(type, text) {
   const alert = document.createElement("div");
