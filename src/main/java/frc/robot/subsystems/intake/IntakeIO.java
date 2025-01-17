@@ -10,6 +10,8 @@ public interface IntakeIO {
     @AutoLog
     public static class IntakeIOInputs {
         public LoggedMotor motor = new LoggedMotor();
+
+        public boolean sensorDetect = false;
     }
 
     public default void updateInputs(IntakeIOInputs inputs) {}
