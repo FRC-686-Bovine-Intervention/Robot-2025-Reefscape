@@ -15,6 +15,10 @@
   place-items: center;
 }
 
+#branch.flipped {
+  transform: scaleX(-1);
+}
+
 #branch > svg {
   height: var(--branch-size);
 }
@@ -33,6 +37,10 @@
   justify-content: center;
   transition: width 100ms;
   font-size: 1.15em;
+}
+
+#branch.flipped .level_button {
+  transform: translate(-50%, -50%) scaleX(-1);
 }
 
 .level_button:hover {

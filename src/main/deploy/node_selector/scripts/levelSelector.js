@@ -59,3 +59,11 @@ export function displaySelectedLevel(level) {
     }
   });
 }
+
+export function setFlipped(value) {
+  if (value) {
+    branch.classList.add("flipped");
+  } else {
+    branch.classList.remove("flipped");
+  }
+}

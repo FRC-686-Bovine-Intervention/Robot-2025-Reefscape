@@ -1,3 +1,5 @@
+import { setFlipped } from "./levelSelector.js";
+
 const infosDOM = document.getElementById("infos");
 const warningsDOM = document.getElementById("warnings");
 const errorsDOM = document.getElementById("errors");
@@ -12,6 +14,27 @@ const icons = {
   error: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>`,
 };
 
+const moveSidebarRight = document.getElementById("move_sidebar_right");
+const moveSidebarLeft = document.getElementById("move_sidebar_left");
+
+const container = document.getElementById("container");
+moveSidebarLeft.onclick = moveSidebar;
+moveSidebarRight.onclick = moveSidebar;
+function moveSidebar() {
+  const childNodes = Array.from(container.children);
+  [childNodes[0], childNodes[2]] = [childNodes[2], childNodes[0]];
+  childNodes.forEach((element) => container.appendChild(element));
+  if (moveSidebarLeft.style.display === "none") {
+    moveSidebarLeft.style.display = "block";
+    moveSidebarRight.style.display = "none";
+    setFlipped(true);
+  } else {
+    moveSidebarLeft.style.display = "none";
+    moveSidebarRight.style.display = "block";
+    setFlipped(false);
+  }
+};
+
 function alert(type, text) {
   const alert = document.createElement("div");
   alert.classList.add("alert", type);
@@ -22,8 +45,8 @@ function alert(type, text) {
 
 export function displayInfos(texts) {
   if (texts.length > 0) {
-    infosDOM.style.display = "block";
-    // infoHeader.style.display = "block";
+    infosDOM.style.display = "";
+    // infoHeader.style.display = "";
   } else {
     infosDOM.style.display = "none";
     // infoHeader.style.display = "none";
@@ -36,8 +59,8 @@ export function displayInfos(texts) {
 
 export function displayWarnings(texts) {
   if (texts.length > 0) {
-    warningsDOM.style.display = "block";
-    // warningHeader.style.display = "block";
+    warningsDOM.style.display = "";
+    // warningHeader.style.display = "";
   } else {
     warningsDOM.style.display = "none";
     // warningHeader.style.display = "none";
@@ -50,8 +73,8 @@ export function displayWarnings(texts) {
 
 export function displayErrors(texts) {
   if (texts.length > 0) {
-    // errorHeader.style.display = "block";
-    errorsDOM.style.display = "block";
+    // errorHeader.style.display = "";
+    errorsDOM.style.display = "";
   } else {
     // errorHeader.style.display = "none";
     errorsDOM.style.display = "none";

@@ -5,9 +5,10 @@
   padding: 16px;
 }
 
-#alerts_container, .alerts {
+.alerts {
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 #alerts_container > * {
@@ -17,6 +18,19 @@
 /* .alert_header {
   display: none;
 } */
+
+.alerts_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alerts_header > svg {
+  width: 1.5em;
+  height: 1.5em;
+  stroke-width: 2px;
+  cursor: pointer;
+}
 
 .alert {
   --background: #d2fbdf;
@@ -38,7 +52,7 @@
 
 .alert > svg {
   color: var(--icon);
-  min-width: 1.5em;
+  width: 1.5em;
   height: 1.5em;
   stroke-width: 2px;
 }

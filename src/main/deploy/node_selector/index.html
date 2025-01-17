@@ -14,14 +14,18 @@
     <div id="timer_container">
       <p id="timer">00:00.000</p>
     </div>
-    <div class="container">
+    <div id="container">
       <div id="alerts_container">
-        <h2>Alerts</h2>
-        <!-- <h3 id="error_header" class="alert_header">Errors</h3> -->
+        <div class="alerts_header">
+          <h3>Alerts</h3>
+          <svg id="move_sidebar_right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-right-close"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/><path d="m8 9 3 3-3 3"/></svg>
+          <svg id="move_sidebar_left" style="display: none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-right-open"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/><path d="m10 15-3-3 3-3"/></svg>
+        </div>
+        <!-- <h4 id="error_header" style="display: none">Errors</h4> -->
         <div class="alerts" id="errors"></div>
-        <!-- <h3 id="warning_header" class="alert_header">Warnings</h3> -->
+        <!-- <h4 id="warning_header" style="display: none">Warnings</h4> -->
         <div class="alerts" id="warnings"></div>
-        <!-- <h3 id="info_header" class="alert_header">Infos</h3> -->
+        <!-- <h4 id="info_header" style="display: none">Infos</h4> -->
         <div class="alerts" id="infos"></div>
       </div>
       <div id="branch_selector_container">

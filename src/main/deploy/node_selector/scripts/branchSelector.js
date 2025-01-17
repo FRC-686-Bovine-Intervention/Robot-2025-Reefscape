@@ -48,12 +48,10 @@ for (let i = 0; i < 6; i++) {
 
   reefDOM.push([leftBranchButton, rightBranchButton]);
 
-  leftBranchButton.addEventListener("click", () =>
+  leftBranchButton.onclick = () =>
     sendSelectedBranch(i, reefDOM[i].indexOf(leftBranchButton))
-  );
-  rightBranchButton.addEventListener("click", () =>
+  rightBranchButton.onclick = () =>
     sendSelectedBranch(i, reefDOM[i].indexOf(rightBranchButton))
-  );
 }
 
 export function displaySelectedBranch(rack, side) {
