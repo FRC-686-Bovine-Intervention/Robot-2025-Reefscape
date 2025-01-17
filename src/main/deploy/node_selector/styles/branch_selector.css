@@ -25,6 +25,8 @@
 #hub > svg {
   width: var(--hub-size);
   height: calc(var(--hub-size) / cos(30deg));
+  fill: var(--hub-color);
+  stroke: var(--hub-color);
 }
 
 .branch_button {
@@ -34,7 +36,7 @@
   width: var(--branch-button-size);
   aspect-ratio: 1 / 1;
   border-radius: 100%;
-  background: red;
+  background: var(--reef-color);
   color: white;
   cursor: pointer;
   top: 50%;
@@ -52,5 +54,5 @@
 }
 
 .branch_button.selected {
-  background-color: green;
+  background-color: var(--coral-color);
 }

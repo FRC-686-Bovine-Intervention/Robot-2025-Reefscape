@@ -21,6 +21,8 @@
 
 #branch > svg {
   height: var(--branch-size);
+  fill: var(--hub-color);
+  stroke: var(--hub-color);
 }
 
 .level_button {
@@ -28,7 +30,7 @@
   width: var(--level-button-size);
   aspect-ratio: 3 / 2;
   border-radius: 5px;
-  background: red;
+  background: var(--reef-color);
   color: white;
   cursor: pointer;
   transform: translate(-50%, -50%);
@@ -48,5 +50,5 @@
 }
 
 .level_button.selected {
-  background-color: green;
+  background-color: var(--coral-color);
 }

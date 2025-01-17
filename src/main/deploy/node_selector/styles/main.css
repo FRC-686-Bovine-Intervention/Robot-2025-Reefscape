@@ -9,6 +9,12 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+:root {
+  --reef-color: #ac26be;
+  --coral-color: #3ba799;
+  --hub-color: #181418;
+}
+
 * {
   margin: 0;
   padding: 0;
