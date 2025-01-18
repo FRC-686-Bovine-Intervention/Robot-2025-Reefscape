@@ -25,8 +25,8 @@ public class LoggedEncoder implements StructSerializable {
     public final MutAngularVelocity velocity = RadiansPerSecond.mutable(0);
 
     public void updateFrom(TalonFX talon) {
-        this.position.mut_replace(talon.getPosition().getValue());
-        this.velocity.mut_replace(talon.getVelocity().getValue());
+        this.position.mut_replace(talon.getRotorPosition().getValue());
+        this.velocity.mut_replace(talon.getRotorVelocity().getValue());
     }
     public void updateFrom(CANcoder canCoder) {
         this.position.mut_replace(canCoder.getPosition().getValue());

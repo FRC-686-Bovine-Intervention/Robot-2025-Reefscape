@@ -65,6 +65,7 @@ public class PivotIOFalcon implements PivotIO {
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
             .withRotorToSensorRatio(100)
+            .withFeedbackRotorOffset(null)
         ;
         motorConfig.SoftwareLimitSwitch
             .withForwardSoftLimitEnable(true)
