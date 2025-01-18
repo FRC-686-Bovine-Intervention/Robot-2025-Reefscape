@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.robotStructure.angle.ArmMech;
 
-public class Wrist extends SubsystemBase{
+public class Wrist extends SubsystemBase {
     private final WristIO io;
     private final WristIOInputsAutoLogged inputs = new WristIOInputsAutoLogged();
 
