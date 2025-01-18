@@ -18,6 +18,8 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
@@ -103,10 +105,10 @@ public class Superstructure {
         var pivotAngleOffset = Radians.of(Math.asin(ElevatorConstants.pivotOffset.div(pivotToTargetDist).baseUnitMagnitude()));
 
         var pivotAngle = target.getTranslation().getAngle().getMeasure().minus(pivotAngleOffset);
-        var wristAngle = target.getRotation().getMeasure().minus(pivotAngle);
+        var wristAngle = target.getRotation().minus(new Rotation2d(pivotAngle)).getMeasure();
         var pivotToTargetMeters = pivotToTargetDist.in(Meters);
         var elevatorPivotOffsetMeters = ElevatorConstants.pivotOffset.in(Meters);
-        var elevatorHeight = Meters.of(Math.sqrt((pivotToTargetMeters * pivotToTargetMeters) - (elevatorPivotOffsetMeters * elevatorPivotOffsetMeters)));
+        var elevatorHeight = Meters.of(Math.sqrt((pivotToTargetMeters * pivotToTargetMeters) - (elevatorPivotOffsetMeters * elevatorPivotOffsetMeters))).plus(ElevatorConstants.elevatorBase.getMeasureX().unaryMinus());
         var elevatorLength = elevatorHeight.minus(ElevatorConstants.minimumHeight);
 
         return Commands.parallel(
@@ -133,5 +135,54 @@ public class Superstructure {
             elevator.elevateTo(elevatorLength),
             wrist.pivotTo(wristAngle)
         );
+    }
+
+    public Command goToSetpoint(SuperstructureSetpoint setpoint) {
+        return Commands.parallel(
+            pivot.pivotTo(setpoint.pivotAngle),
+            elevator.elevateTo(setpoint.elevatorLength),
+            wrist.pivotTo(setpoint.wristAngle)
+        );
+    }
+
+    public static class SuperstructureSetpoint {
+        public final Angle pivotAngle;
+        public final Distance elevatorLength;
+        public final Angle wristAngle;
+
+        public SuperstructureSetpoint(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
+            this.pivotAngle = pivotAngle;
+            this.elevatorLength = elevatorLength;
+            this.wristAngle = wristAngle;
+        }
+
+        public static SuperstructureSetpoint fromPivotSpace(Pose2d pivotSpacePose) {
+            var pivotToTargetDist = Meters.of(pivotSpacePose.getTranslation().getNorm());
+
+            var pivotAngleOffset = Radians.of(Math.asin(ElevatorConstants.pivotOffset.div(pivotToTargetDist).baseUnitMagnitude()));
+
+            var pivotAngle = pivotSpacePose.getTranslation().getAngle().getMeasure().minus(pivotAngleOffset);
+            var wristAngle = pivotSpacePose.getRotation().minus(new Rotation2d(pivotAngle)).getMeasure();
+            var pivotToTargetMeters = pivotToTargetDist.in(Meters);
+            var elevatorPivotOffsetMeters = ElevatorConstants.pivotOffset.in(Meters);
+            var elevatorHeight = Meters.of(Math.sqrt((pivotToTargetMeters * pivotToTargetMeters) - (elevatorPivotOffsetMeters * elevatorPivotOffsetMeters))).plus(ElevatorConstants.elevatorBase.getMeasureX().unaryMinus());
+            var elevatorLength = elevatorHeight.minus(ElevatorConstants.minimumHeight);
+
+            return new SuperstructureSetpoint(pivotAngle, elevatorLength, wristAngle);
+        }
+
+        public static final Pose2d pivotRobotSpace = new Pose2d(
+            new Translation2d(
+                PivotConstants.pivotX,
+                PivotConstants.pivotZ
+            ),
+            Rotation2d.kZero
+        );
+
+        public static SuperstructureSetpoint fromRobotSpace(Pose2d robotSpacePose) {
+            return fromPivotSpace(robotSpacePose.relativeTo(pivotRobotSpace));
+        }
+
+
     }
 }
