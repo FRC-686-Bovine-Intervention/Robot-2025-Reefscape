@@ -56,6 +56,7 @@ import frc.robot.subsystems.vision.bucket.BucketCamera;
 import frc.robot.subsystems.vision.bucket.BucketCameraIOPhotonVision;
 import frc.robot.subsystems.vision.bucket.BucketVision;
 import frc.robot.subsystems.vision.bucket.BucketVisionConstants;
+import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
@@ -228,6 +229,7 @@ public class RobotContainer {
         );
 
         superstructure.pivot.setDefaultCommand(superstructure.pivot.pivotTo(Degrees.zero()));
+        superstructure.elevator.setDefaultCommand(superstructure.elevator.elevateTo(Meters.zero()));
     }
 
     private void configureControls() {
@@ -254,12 +256,24 @@ public class RobotContainer {
         
         driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
         driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
-        driveController.leftBumper().onTrue(Commands.defer(
-            () -> superstructure.goToLevelForward(objectiveTracker.getSelectedNode().level),
-            Set.of(superstructure.pivot, superstructure.elevator)
-        ));
-        driveController.rightBumper().onTrue(Commands.defer(
-            () -> superstructure.goToLevelBackward(objectiveTracker.getSelectedNode().level),
+        driveController.leftBumper().toggleOnTrue(new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final Command[] commands = new Command[Level.values().length * 2];
+                {
+                    for (var level : Level.values()) {
+                        commands[level.ordinal() * 2] = superstructure.goToLevelForward(level);
+                        commands[level.ordinal() * 2 + 1] = superstructure.goToLevelBackward(level);
+                    }
+                }
+                public Command get() {
+                    var node = objectiveTracker.getSelectedNode();
+                    if (drive.getRotation().minus(node.pose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+                        return commands[node.level.ordinal() * 2];
+                    } else {
+                        return commands[node.level.ordinal() * 2 + 1];
+                    }
+                }
+            },
             Set.of(superstructure.pivot, superstructure.elevator)
         ));
 
