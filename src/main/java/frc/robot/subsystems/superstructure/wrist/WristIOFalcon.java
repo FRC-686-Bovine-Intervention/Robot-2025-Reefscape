@@ -1,9 +1,13 @@
 package frc.robot.subsystems.superstructure.wrist;
 
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -15,11 +19,17 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
+import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
+import frc.util.loggerUtil.tunables.LoggedTunableFF;
+import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
 public class WristIOFalcon implements WristIO {
     private final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
     private final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
+    private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile("Wrist/Profile", DegreesPerSecond.of(180), DegreesPerSecondPerSecond.of(360));
+    private static final LoggedTunableFF ffConsts = new LoggedTunableFF("Wrist/FF", 0, 0, 0, 0);
+    private static final LoggedTunablePID pidConsts = new LoggedTunablePID("Wrist/PID", 0, 0, 0);
     
     public WristIOFalcon() {
         var cancoderConfig = new CANcoderConfiguration();
@@ -35,6 +45,10 @@ public class WristIOFalcon implements WristIO {
             .withRemoteCANcoder(cancoder)
             .withRotorToSensorRatio(WristConstants.motorToMechanism.ratio())
         ;
+        profileConsts.update(motorConfig.MotionMagic);
+        ffConsts.update(motorConfig.Slot0);
+        pidConsts.update(motorConfig.Slot0);
+
         motor.getConfigurator().apply(motorConfig);
     }
 
@@ -42,6 +56,21 @@ public class WristIOFalcon implements WristIO {
     public void updateInputs(WristIOInputs inputs) {
         inputs.encoder.updateFrom(cancoder);
         inputs.motor.updateFrom(motor);
+
+        if (profileConsts.hasChanged(hashCode())) {
+            var config = new MotionMagicConfigs();
+            motor.getConfigurator().refresh(config);
+            profileConsts.update(config);
+            motor.getConfigurator().apply(config);
+        }
+
+        if (ffConsts.hasChanged(hashCode()) | pidConsts.hasChanged(hashCode())) {
+            var config = new Slot0Configs();
+            motor.getConfigurator().refresh(config);
+            ffConsts.update(config);
+            pidConsts.update(config);
+            motor.getConfigurator().apply(config);
+        }
     }
 
     @Override
