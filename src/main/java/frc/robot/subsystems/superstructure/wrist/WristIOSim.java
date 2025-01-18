@@ -17,7 +17,7 @@ public class WristIOSim extends WristIOFalcon {
         0.2,
         Degrees.of(135).unaryMinus().in(Radians),
         Degrees.of(135).in(Radians),
-        true,
+        false,
         0
     );
 

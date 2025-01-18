@@ -63,4 +63,31 @@ public class Wrist extends SubsystemBase{
             }
         };
     }
+
+    public Command pivotTo(Measure<AngleUnit> angle) {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Pivot To");
+            }
+
+            @Override
+            public void initialize() {
+
+            }
+            @Override
+            public void execute() {
+                setAngle(angle);
+            }
+            @Override
+            public void end(boolean interrupted) {
+                io.stop();
+            }
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        };
+    }
 }

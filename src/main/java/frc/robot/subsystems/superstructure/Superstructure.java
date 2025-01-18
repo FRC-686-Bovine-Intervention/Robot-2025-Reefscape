@@ -27,14 +27,17 @@ import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
+import frc.robot.subsystems.superstructure.wrist.Wrist;
 
 public class Superstructure {
     public final Pivot pivot;
     public final Elevator elevator;
+    public final Wrist wrist;
 
-    public Superstructure(Pivot pivot, Elevator elevator) {
+    public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         this.pivot = pivot;
         this.elevator = elevator;
+        this.wrist = wrist;
     }
 
     public Command pivotVoltage(DoubleSupplier voltage) {
@@ -106,7 +109,6 @@ public class Superstructure {
         var elevatorHeight = Meters.of(Math.sqrt((pivotToTargetMeters * pivotToTargetMeters) - (elevatorPivotOffsetMeters * elevatorPivotOffsetMeters)));
         var elevatorLength = elevatorHeight.minus(ElevatorConstants.minimumHeight);
 
-        // wrist.pivotTo(wristAngle);
         return Commands.parallel(
             Commands.run(() -> {
                 Logger.recordOutput("Superstructure/Inverse Kinematics/Target", target);
@@ -128,7 +130,8 @@ public class Superstructure {
                 Logger.recordOutput("Superstructure/Inverse Kinematics/3d Target", new Pose3d(RobotState.getInstance().getPose()).transformBy(PivotConstants.pivotBase).transformBy(transform));
             }),
             pivot.pivotTo(pivotAngle),
-            elevator.elevateTo(elevatorLength)
+            elevator.elevateTo(elevatorLength),
+            wrist.pivotTo(wristAngle)
         );
     }
 }

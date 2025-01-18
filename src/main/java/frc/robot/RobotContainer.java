@@ -12,9 +12,6 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -47,6 +44,10 @@ import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotIO;
 import frc.robot.subsystems.superstructure.pivot.PivotIOFalcon;
 import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
+import frc.robot.subsystems.superstructure.wrist.Wrist;
+import frc.robot.subsystems.superstructure.wrist.WristIO;
+import frc.robot.subsystems.superstructure.wrist.WristIOFalcon;
+import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -61,7 +62,6 @@ import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
 import frc.util.robotStructure.Mechanism3d;
-import frc.util.robotStructure.angle.ArmMech;
 
 public class RobotContainer {
     // Subsystems
@@ -95,7 +95,8 @@ public class RobotContainer {
                 );
                 superstructure = new Superstructure(
                     new Pivot(new PivotIOFalcon()),
-                    new Elevator(new ElevatorIOFalcon())
+                    new Elevator(new ElevatorIOFalcon()),
+                    new Wrist(new WristIOFalcon())
                 );
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
@@ -131,7 +132,8 @@ public class RobotContainer {
                 );
                 superstructure = new Superstructure(
                     new Pivot(new PivotIOSim()),
-                    new Elevator(new ElevatorIOSim())
+                    new Elevator(new ElevatorIOSim()),
+                    new Wrist(new WristIOSim())
                 );
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
@@ -147,7 +149,8 @@ public class RobotContainer {
                 );
                 superstructure = new Superstructure(
                     new Pivot(new PivotIO() {}),
-                    new Elevator(new ElevatorIO() {})
+                    new Elevator(new ElevatorIO() {}),
+                    new Wrist(new WristIO() {})
                 );
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
@@ -156,19 +159,6 @@ public class RobotContainer {
         manualOverrides = new ManualOverrides();
         objectiveTracker = new ObjectiveTracker();
 
-        var wrist = new ArmMech(new Transform3d(
-            new Translation3d(
-                Meters.of(0.635000),
-                Meters.of(0),
-                Meters.of(0)
-            ),
-            new Rotation3d(
-                Degrees.of(0),
-                Degrees.of(0),
-                Degrees.of(0)
-            )
-        ));
-        
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
             .addChild(VisionConstants.frontRightModuleMount)
@@ -179,13 +169,13 @@ public class RobotContainer {
                 .addChild(superstructure.elevator.stage2Mech
                     .addChild(superstructure.elevator.stage3Mech
                         .addChild(superstructure.elevator.stage4Mech
-                            .addChild(wrist)
+                            .addChild(superstructure.wrist.mech)
                         )
                     )
                 )
             )
         ;
-        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, wrist);
+        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech);
 
         driveJoystick = driveController.leftStick
             .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
@@ -230,6 +220,7 @@ public class RobotContainer {
 
         superstructure.pivot.setDefaultCommand(superstructure.pivot.pivotTo(Degrees.zero()));
         superstructure.elevator.setDefaultCommand(superstructure.elevator.elevateTo(Meters.zero()));
+        superstructure.wrist.setDefaultCommand(superstructure.wrist.pivotTo(Degrees.zero()));
     }
 
     private void configureControls() {
@@ -274,7 +265,7 @@ public class RobotContainer {
                     }
                 }
             },
-            Set.of(superstructure.pivot, superstructure.elevator)
+            Set.of(superstructure.pivot, superstructure.elevator, superstructure.wrist)
         ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
