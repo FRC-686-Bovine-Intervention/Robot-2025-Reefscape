@@ -16,13 +16,7 @@ public interface WristIO {
     }
     public default void updateInputs (WristIOInputs inputs) {}
 
-    public default void setVoltage (Measure<VoltageUnit> voltage) {
-    }
-
-    public default void setAngle (Measure<AngleUnit> angle) {
-    }
-
-    public default void stop () {
-        
-    }
+    public default void setVoltage(Measure<VoltageUnit> voltage) {}
+    public default void setAngle(Measure<AngleUnit> angle) {}
+    public default void stop() {}
 }

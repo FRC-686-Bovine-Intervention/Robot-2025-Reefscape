@@ -1,5 +1,7 @@
 package frc.robot.subsystems.superstructure.wrist;
 
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.AngleUnit;
@@ -7,55 +9,58 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.util.robotStructure.angle.ArmMech;
 
 public class Wrist extends SubsystemBase{
-
-    private WristIO io;
+    private final WristIO io;
     private final WristIOInputsAutoLogged inputs = new WristIOInputsAutoLogged();
+
+    public final ArmMech mech = new ArmMech(WristConstants.wristBase);
+
+    public Wrist(WristIO io) {
+        this.io = io;
+    }
 
     @Override
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Wrist", inputs);
+
+        mech.set(inputs.encoder.position);
     }
     
-    public void setVoltage (Measure<VoltageUnit> voltage) {
+    public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
 
-    public void setRotation (Measure<AngleUnit> angle) {
+    public void setAngle(Measure<AngleUnit> angle) {
         io.setAngle(angle);
     }
 
-    public Command voltage (Measure<VoltageUnit> voltage) {
+    public Command voltage(Supplier<Measure<VoltageUnit>> voltage) {
         var subsystem = this;
         return new Command() {
             {
                 addRequirements(subsystem);
-                setName("setVoltageTo");
+                setName("Voltage");
             }
 
             @Override
             public void initialize() {
-                // TODO Auto-generated method stub
-                super.initialize();
+
             }
             @Override
             public void execute() {
-                // TODO Auto-generated method stub
-                super.execute();
+                setVoltage(voltage.get());
             }
             @Override
             public void end(boolean interrupted) {
-                // TODO Auto-generated method stub
-                super.end(interrupted);
+                io.stop();
             }
             @Override
             public boolean isFinished() {
-                // TODO Auto-generated method stub
-                return super.isFinished();
+                return false;
             }
         };
     }
-
 }

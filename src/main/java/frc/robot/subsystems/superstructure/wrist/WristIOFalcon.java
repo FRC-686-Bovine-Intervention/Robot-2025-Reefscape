@@ -14,25 +14,32 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import frc.robot.constants.HardwareDevices;
 
 public class WristIOFalcon implements WristIO {
-    private final CANcoder cancoder = new CANcoder(0);
-    private final TalonFX motor = new TalonFX(0); 
-    private final MotionMagicVoltage profile = new MotionMagicVoltage(0);
+    private final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
+    private final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
+    private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     
     public WristIOFalcon() {
         var cancoderConfig = new CANcoderConfiguration();
+
         cancoder.getConfigurator().apply(cancoderConfig);
-        var motorConfig = new TalonFXConfiguration(); 
-        motorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        motorConfig.Feedback.withRemoteCANcoder(cancoder);
-        motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        motorConfig.Feedback.withRotorToSensorRatio(25);
+
+        var motorConfig = new TalonFXConfiguration();
+        motorConfig.MotorOutput
+            .withInverted(InvertedValue.CounterClockwise_Positive)
+            .withNeutralMode(NeutralModeValue.Brake)
+        ;
+        motorConfig.Feedback
+            .withRemoteCANcoder(cancoder)
+            .withRotorToSensorRatio(WristConstants.motorToMechanism.ratio())
+        ;
         motor.getConfigurator().apply(motorConfig);
     }
 
     @Override
-    public void updateInputs (WristIOInputs inputs) {
+    public void updateInputs(WristIOInputs inputs) {
         inputs.encoder.updateFrom(cancoder);
         inputs.motor.updateFrom(motor);
     }
@@ -43,10 +50,8 @@ public class WristIOFalcon implements WristIO {
     }
 
     @Override
-    public void setAngle (Measure<AngleUnit> angle) {
-        motor.setControl(profile.withPosition(angle.in(Rotations)));
+    public void setAngle(Measure<AngleUnit> angle) {
+        motor.setControl(positionRequest.withPosition(angle.in(Rotations)));
     }
-
-
 }
 

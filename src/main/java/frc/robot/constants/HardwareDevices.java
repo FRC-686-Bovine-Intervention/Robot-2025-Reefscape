@@ -44,6 +44,10 @@ public class HardwareDevices {
     public static final CANDevice backRightDriveMotorID = canivore.id(4);
     public static final CANDevice backRightTurnMotorID = rio.id(4);
 
+    // Wrist
+    public static final CANDevice wristMotorID = canivore.id(9);
+    public static final CANDevice wristEncoderID = canivore.id(9);
+
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);
     public static final DIOPort button1 = DIOPort.port(0);
