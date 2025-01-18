@@ -47,7 +47,7 @@ public class Wrist extends SubsystemBase{
 
             @Override
             public void initialize() {
-
+                execute();
             }
             @Override
             public void execute() {
@@ -55,6 +55,33 @@ public class Wrist extends SubsystemBase{
             }
             @Override
             public void end(boolean interrupted) {
+                io.stop();
+            }
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        };
+    }
+
+    public Command angle(Supplier<Measure<AngleUnit>> angle) {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Angle");
+            }
+
+            @Override
+            public void initialize() {
+                execute();
+            }
+            @Override
+            public void execute() {
+                setAngle(angle.get());
+            }
+            @Override
+            public void end (boolean interrupted) {
                 io.stop();
             }
             @Override
