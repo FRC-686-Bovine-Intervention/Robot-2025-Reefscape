@@ -1,15 +1,11 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -22,14 +18,7 @@ public class Pivot extends SubsystemBase {
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    public final ArmMech mech = new ArmMech(new Transform3d(
-        new Translation3d(
-            Meters.of(-0.228600),
-            Meters.of(0),
-            Meters.of(0.254000)
-        ),
-        Rotation3d.kZero
-    ));
+    public final ArmMech mech = new ArmMech(PivotConstants.pivotBase);
 
     public Pivot(PivotIO io) {
         this.io = io;

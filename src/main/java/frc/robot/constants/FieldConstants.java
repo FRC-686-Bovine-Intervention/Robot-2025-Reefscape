@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.flipping.Flipped;
 
 public final class FieldConstants {
@@ -64,6 +65,7 @@ public final class FieldConstants {
 
 
     public static final class Reef {
+        public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
         public static final Flipped<Translation2d> reefCenter = Flipped.fromBlue(
             new Translation2d(
                 Meters.of(4.489325),
@@ -94,6 +96,8 @@ public final class FieldConstants {
             Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750)),
             ;
             private final Transform3d transform;
+            public final Pose2d forwardBranch;
+            public final Pose2d backwardBranch;
             Level(Distance height, Angle angle, Distance radius) {
                 this.transform = new Transform3d(
                     new Translation3d(
@@ -107,6 +111,30 @@ public final class FieldConstants {
                         Degrees.zero()
                     )
                 );
+                var branchRobotSpace = new Pose2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
+                        height
+                    ),
+                    new Rotation2d(
+                        angle.unaryMinus()
+                    )
+                );
+                var pivot = new Pose2d(
+                    new Translation2d(
+                        PivotConstants.pivotX,
+                        PivotConstants.pivotZ
+                    ),
+                    Rotation2d.kZero
+                );
+                this.forwardBranch = branchRobotSpace.relativeTo(pivot);
+                this.backwardBranch = new Pose2d(
+                    new Translation2d(
+                        branchRobotSpace.getMeasureX().unaryMinus(),
+                        branchRobotSpace.getMeasureY()
+                    ),
+                    Rotation2d.k180deg.minus(branchRobotSpace.getRotation())
+                ).relativeTo(pivot);
             }
         }
 

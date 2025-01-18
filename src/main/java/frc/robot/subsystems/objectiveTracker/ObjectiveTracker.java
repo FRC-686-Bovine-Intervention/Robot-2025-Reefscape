@@ -35,4 +35,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
             placedCoral.add(selectedNode);
         }
     }
+
+    public Node getSelectedNode() {
+        return selectedNode;
+    }
 }

@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
+import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -248,11 +249,19 @@ public class RobotContainer {
         // );
 
 
-        driveController.b().toggleOnTrue(superstructure.pivotVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 6));
-        driveController.x().toggleOnTrue(superstructure.elevatorVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 6));
+        driveController.b().toggleOnTrue(superstructure.pivotVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
+        driveController.x().toggleOnTrue(superstructure.elevatorVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
         
         driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
         driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
+        driveController.leftBumper().onTrue(Commands.defer(
+            () -> superstructure.goToLevelForward(objectiveTracker.getSelectedNode().level),
+            Set.of(superstructure.pivot, superstructure.elevator)
+        ));
+        driveController.rightBumper().onTrue(Commands.defer(
+            () -> superstructure.goToLevelBackward(objectiveTracker.getSelectedNode().level),
+            Set.of(superstructure.pivot, superstructure.elevator)
+        ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));

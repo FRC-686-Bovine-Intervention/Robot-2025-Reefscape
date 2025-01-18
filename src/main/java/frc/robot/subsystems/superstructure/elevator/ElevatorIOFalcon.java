@@ -46,7 +46,7 @@ public class ElevatorIOFalcon implements ElevatorIO {
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Elevator/PID",
-        0,
+        10,
         0,
         0
     );
