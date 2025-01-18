@@ -24,8 +24,8 @@ import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
 public class WristIOFalcon implements WristIO {
-    private final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
-    private final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
+    protected final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
+    protected final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile("Wrist/Profile", DegreesPerSecond.of(180), DegreesPerSecondPerSecond.of(360));
     private static final LoggedTunableFF ffConsts = new LoggedTunableFF("Wrist/FF", 0, 0, 0, 0);
