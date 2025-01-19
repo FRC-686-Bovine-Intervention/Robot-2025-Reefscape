@@ -11,10 +11,9 @@ import frc.robot.constants.RobotConstants;
 
 public class ElevatorIOSim extends ElevatorIOFalcon {
     private final ElevatorSim elevatorSim = new ElevatorSim(
+        1,
+        1,
         DCMotor.getFalcon500(2),
-        100,
-        10,
-        ElevatorConstants.sprocketRadius.in(Meters),
         0,
         2,
         false,

@@ -5,19 +5,20 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.constants.RobotConstants;
 
 public class PivotIOSim extends PivotIOFalcon {
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(
+        LinearSystemId.identifyPositionSystem(0.1, 0.1),
         DCMotor.getFalcon500(2),
         100,
         1,
-        1,
         0,
         Degrees.of(100).in(Radians),
-        true,
+        false,
         0
     );
 

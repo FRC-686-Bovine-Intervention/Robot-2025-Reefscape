@@ -5,18 +5,19 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.constants.RobotConstants;
 
 public class WristIOSim extends WristIOFalcon {
     private final SingleJointedArmSim wristSim = new SingleJointedArmSim(
+        LinearSystemId.identifyPositionSystem(0.1, 0.1),
         DCMotor.getFalcon500(1),
         WristConstants.motorToMechanism.ratio(),
-        1,
         0.2,
-        Degrees.of(135).unaryMinus().in(Radians),
-        Degrees.of(135).in(Radians),
+        Degrees.of(150).unaryMinus().in(Radians),
+        Degrees.of(150).in(Radians),
         false,
         0
     );

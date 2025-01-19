@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.InchesPerSecond;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -17,6 +18,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -34,19 +36,19 @@ public class ElevatorIOFalcon implements ElevatorIO {
 
     private final LoggedTunableLinearProfile profileConsts = new LoggedTunableLinearProfile(
         "Elevator/Profile",
-        InchesPerSecond.of(17),
-        InchesPerSecond.per(Second).of(34)
+        InchesPerSecond.of(8),
+        InchesPerSecond.per(Second).of(8)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Elevator/FF",
         0,
         0,
-        0,
-        0
+        Units.rotationsToRadians(1*ElevatorConstants.sprocketRadius.in(Meters)),
+        Units.rotationsToRadians(1*ElevatorConstants.sprocketRadius.in(Meters))
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Elevator/PID",
-        10,
+        0.01,
         0,
         0
     );

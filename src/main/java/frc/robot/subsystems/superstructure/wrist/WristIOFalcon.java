@@ -15,6 +15,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -29,19 +30,19 @@ public class WristIOFalcon implements WristIO {
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Wrist/Profile",
-        DegreesPerSecond.of(180),
-        DegreesPerSecondPerSecond.of(360)
+        DegreesPerSecond.of(90),
+        DegreesPerSecondPerSecond.of(90)
     );
     private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Wrist/FF",
         0,
         0,
-        0,
-        0
+        Units.rotationsToRadians(0.1),
+        Units.rotationsToRadians(0.1)
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Wrist/PID",
-        10,
+        0.1,
         0,
         0
     );

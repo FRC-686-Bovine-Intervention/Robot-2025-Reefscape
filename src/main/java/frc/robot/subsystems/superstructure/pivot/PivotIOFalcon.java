@@ -17,6 +17,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -34,19 +35,19 @@ public class PivotIOFalcon implements PivotIO {
 
     private final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Pivot/Profile",
-        DegreesPerSecond.of(100),
-        DegreesPerSecondPerSecond.of(200)
+        DegreesPerSecond.of(90),
+        DegreesPerSecondPerSecond.of(90)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Pivot/FF",
         0,
         0,
-        0,
-        0
+        Units.rotationsToRadians(0.1),
+        Units.rotationsToRadians(0.1)
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Pivot/PID",
-        10,
+        0.1,
         0,
         0
     );
