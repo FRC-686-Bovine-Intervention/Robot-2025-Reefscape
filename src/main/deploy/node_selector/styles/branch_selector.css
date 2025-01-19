@@ -2,8 +2,6 @@
   --hub-size: 0px;
   --branch-button-size: 0px;
 
-  height: calc(var(--hub-size) + (var(--branch-button-size) + 10px) * 2);
-  
   width: 100%;
   display: flex;
   align-items: center;
@@ -20,16 +18,13 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-}
-
-#hub > svg {
+  aspect-ratio: 1 / cos(30deg);
+  clip-path: polygon(50% -50%, 100% 50%, 50% 150%, 0 50%);
+  background-color: var(--hub-color);
   width: var(--hub-size);
-  height: calc(var(--hub-size) / cos(30deg));
-  fill: var(--hub-color);
-  stroke: var(--hub-color);
 }
 
-.branch_button {
+/* .branch_button_circle {
   --x: 0px;
   --y: 0px;
   position: absolute;
@@ -49,10 +44,44 @@
   font-size: 1.15em;
 }
 
-.branch_button:hover {
+.branch_button_circle:hover {
   width: calc(var(--branch-button-size) * 1.25);
 }
 
-.branch_button.selected {
+.branch_button_circle.selected {
   background-color: var(--coral-color);
+} */
+
+.branch_button {
+  --rotation: 0;
+  position: absolute;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  aspect-ratio: 1 / sqrt(3);
+  height: calc((var(--hub-size) * sqrt(3) / 4));
+  rotate: var(--rotation);
+  transition: scale 100ms;
+}
+
+.branch_button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-45%, -45%);
+  width: 80%;
+  background-color: red;
+  clip-path: inherit;
+  aspect-ratio: inherit;
+}
+
+.branch_button.selected::after {
+  background-color: #3ba799;
+}
+
+.branch_button.left {
+  transform: translate(-50%, 50%);
+}
+
+.branch_button.right {
+  transform: scaleX(-1) translate(-50%, 50%);
 }

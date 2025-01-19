@@ -75,10 +75,10 @@ window.onkeydown = (e) => {
   }
 
   if (e.ctrlKey && e.shiftKey) {
-    e.preventDefault();
     if (e.code === "KeyL") {
       moveSidebarLeft();
     } else if (e.code === "KeyR") {
+      e.preventDefault();
       moveSidebarRight();
     }
   }

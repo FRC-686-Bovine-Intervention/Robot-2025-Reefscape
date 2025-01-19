@@ -15,17 +15,18 @@ branchSelectorContainer.style.setProperty(
   BRANCH_BUTTON_SIZE + "px"
 );
 
-const y = HUB_SIZE / 2;
-const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
+// const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
+// const y = HUB_SIZE / 2;
 
-const branchButton = document.createElement("div");
-branchButton.classList.add("branch_button");
+// const branchButton = document.createElement("div");
+// branchButton.classList.add("branch_button");
 
 const reefDOM = [];
 
 for (let i = 0; i < 6; i++) {
-  const angle = -degreesToRadians(i * 60);
+  const angle = -i * 60;
 
+  /*
   const [leftX, leftY] = rotatePoint(
     [-x + BRANCH_BUTTON_SIDE_OFFSET, y + BRANCH_BUTTON_NORMAL_OFFSET],
     angle
@@ -45,13 +46,24 @@ for (let i = 0; i < 6; i++) {
   rightBranchButton.style.setProperty("--y", rightY + "px");
   rightBranchButton.textContent = i * 2 + 2;
   branchSelectorContainer.appendChild(rightBranchButton);
+  */
+
+  const leftBranchButton = document.createElement("div");
+  leftBranchButton.style.setProperty("--rotation", angle + "deg");
+  leftBranchButton.classList.add("branch_button", "left");
+  branchSelectorContainer.appendChild(leftBranchButton);
+  
+  const rightBranchButton = document.createElement("div");
+  rightBranchButton.style.setProperty("--rotation", angle + "deg");
+  rightBranchButton.classList.add("branch_button", "right");
+  branchSelectorContainer.appendChild(rightBranchButton);
 
   reefDOM.push([leftBranchButton, rightBranchButton]);
 
   leftBranchButton.onclick = () =>
-    sendSelectedBranch(i, reefDOM[i].indexOf(leftBranchButton))
+    sendSelectedBranch(i, reefDOM[i].indexOf(leftBranchButton));
   rightBranchButton.onclick = () =>
-    sendSelectedBranch(i, reefDOM[i].indexOf(rightBranchButton))
+    sendSelectedBranch(i, reefDOM[i].indexOf(rightBranchButton));
 }
 
 export function displaySelectedBranch(rack, side) {
