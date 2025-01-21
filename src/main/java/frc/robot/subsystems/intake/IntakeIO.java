@@ -16,6 +16,6 @@ public interface IntakeIO {
 
     public default void updateInputs(IntakeIOInputs inputs) {}
     
-    public default void setMotorVoltage(Measure<VoltageUnit> volts) {}
+    public default void setMotorVoltage(Measure<VoltageUnit> voltage) {}
     
 }
