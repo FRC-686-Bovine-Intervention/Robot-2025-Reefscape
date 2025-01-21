@@ -15,14 +15,16 @@ import frc.util.VirtualSubsystem;
 import frc.util.rust.iter.Iterator;
 
 public class ObjectiveTracker extends VirtualSubsystem {
-    private final NodeSelectorIO selectorIO;
-    private final NodeSelectorIOInputsAutoLogged selectorInputs =
-        new NodeSelectorIOInputsAutoLogged();
+    private final ObjectiveSelectorIO selectorIO;
+    private final ObjectiveSelectorIOInputsAutoLogged selectorInputs =
+        new ObjectiveSelectorIOInputsAutoLogged();
 
     private final ArrayList<Node> placedCoral = new ArrayList<>(36);
-    private Node selectedNode = FieldConstants.Reef.nodes[0];
+    private Node selectedCoral = FieldConstants.Reef.nodes[0];
+    private int selectedAlgae = 0;
+    private int selectedIntake = 0;
 
-    public ObjectiveTracker(NodeSelectorIO selectorIO) {
+    public ObjectiveTracker(ObjectiveSelectorIO selectorIO) {
         System.out.println("[Init] Creating ObjectiveTracker");
         this.selectorIO = selectorIO;
     }
@@ -32,40 +34,36 @@ public class ObjectiveTracker extends VirtualSubsystem {
         selectorIO.updateInputs(selectorInputs);
         Logger.processInputs("NodeSelector", selectorInputs);
 
-        if (selectorInputs.node != null) {
-            selectedNode = selectorInputs.node;
-            selectorInputs.node = null;
+        if (selectorInputs.coral != -1) {
+            selectedCoral = FieldConstants.Reef.nodes[selectorInputs.coral];
+            selectorInputs.coral = -1;
+        }
+        if (selectorInputs.algae != -1) {
+            selectedAlgae = selectorInputs.algae;
+            selectorInputs.algae = -1;
+        }
+        if (selectorInputs.intake != -1) {
+            selectedIntake = selectorInputs.intake;
+            selectorInputs.intake = -1;
         }
 
-        selectorIO.setSelectedNode(selectedNode);
+        selectorIO.setCoral(selectedCoral.getIndex());
+        selectorIO.setAlgae(selectedAlgae);
+        selectorIO.setIntake(selectedIntake);
         
-        Logger.recordOutput("Selected Coral", selectedNode.pose.getOurs());
+        Logger.recordOutput("Selected Coral", selectedCoral.pose.getOurs());
         Logger.recordOutput("Placed Coral", Iterator.of(placedCoral).map((node) -> node.pose.getOurs().transformBy(Coral.rackPlacement)).collect_array(Pose3d[]::new));
     }
 
-    public void moveSelectedNode(Direction direction) {
-        var horiz = Math.floorMod(((selectedNode.rack.ordinal() * Side.values().length) + selectedNode.side.ordinal() + direction.x), (Rack.values().length * Side.values().length));
-        var height = Math.floorMod((selectedNode.level.ordinal() + direction.y), Level.values().length);
-        selectedNode = FieldConstants.Reef.getNode(Rack.values()[horiz / Side.values().length], Level.values()[height], Side.values()[Math.floorMod(horiz, Side.values().length)]);
+    public void moveSelectedCoral(int x, int y) {
+        var horiz = Math.floorMod(((selectedCoral.rack.ordinal() * Side.values().length) + selectedCoral.side.ordinal() + x), (Rack.values().length * Side.values().length));
+        var height = Math.floorMod((selectedCoral.level.ordinal() + y), Level.values().length);
+        selectedCoral = FieldConstants.Reef.getNode(Rack.values()[horiz / Side.values().length], Level.values()[height], Side.values()[Math.floorMod(horiz, Side.values().length)]);
     }
 
     public void toggleSelectedNode() {
-        if (!placedCoral.remove(selectedNode)) {
-            placedCoral.add(selectedNode);
-        }
-    }
-
-    public static enum Direction {
-        LEFT(-1, 0),
-        RIGHT(1, 0),
-        UP(0, 1),
-        DOWN(0, -1)
-        ;
-        public int x;
-        public int y;
-        Direction(int x, int y) {
-            this.x = x;
-            this.y = y;
+        if (!placedCoral.remove(selectedCoral)) {
+            placedCoral.add(selectedCoral);
         }
     }
 }

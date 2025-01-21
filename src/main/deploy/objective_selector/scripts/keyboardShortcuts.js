@@ -1,8 +1,10 @@
 import { moveSidebarLeft, moveSidebarRight } from "./alerts.js";
 import {
-  getSelectedNode,
+  getSelectedAlgae,
+  getSelectedCoral,
   sendSelectedBranch,
   sendSelectedLevel,
+  sendSelectedRack,
 } from "./index.js";
 import { wrapNumber } from "./utils.js";
 
@@ -16,9 +18,9 @@ const nodeKeybinds = [
   ["Digit7", "Numpad7"],
   ["Digit8", "Numpad8"],
   ["Digit9", "Numpad9"],
-  ["Digit0", "NumpadDivide"],
-  ["Minus", "NumpadMultiply"],
-  ["Equal", "NumpadSubtract"],
+  ["Digit0", ""],
+  ["Minus", "NumpadDivide"],
+  ["Equal", "NumpadMultiply"],
 ];
 
 const directionalKeybinds = {
@@ -45,32 +47,45 @@ function getDirectionWithKeyBind(key) {
 window.onkeydown = (e) => {
   const node = getNodeWithKeyBind(e.code);
   if (node >= 0) {
-    const rack = Math.floor(node / 2);
-    const side = Math.ceil(node / 2 - rack);
-    sendSelectedBranch(rack, side);
+    if (e.ctrlKey) {
+      e.preventDefault();
+      if (node < 6) {
+        sendSelectedRack(node);
+      }
+    } else {
+      const rack = Math.floor(node / 2);
+      const side = node % 2;
+      sendSelectedBranch(rack, side);
+    }
   }
 
-  const selectedNode = getSelectedNode();
+  const selectedCoral = getSelectedCoral();
+  const selectedAlgae = getSelectedAlgae();
   const direction = getDirectionWithKeyBind(e.code);
   switch (direction) {
     case "up":
-      sendSelectedLevel(wrapNumber(selectedNode[1] + 1, 0, 3));
+      sendSelectedLevel(wrapNumber(selectedCoral.level + 1, 0, 3));
       break;
     case "down":
-      sendSelectedLevel(wrapNumber(selectedNode[1] - 1, 0, 3));
+      sendSelectedLevel(wrapNumber(selectedCoral.level - 1, 0, 3));
       break;
     case "left":
     case "right":
-      const node = wrapNumber(
-        selectedNode[0] * 2 +
-          selectedNode[2] +
-          (direction === "left" ? -1 : +1),
-        0,
-        11
-      );
-      const rack = Math.floor(node / 2);
-      const side = Math.ceil(node / 2 - rack);
-      sendSelectedBranch(rack, side);
+      if (e.ctrlKey) {
+        e.preventDefault();
+        sendSelectedRack(wrapNumber(selectedAlgae + (direction === "left" ? -1 : +1), 0, 5));
+      } else {
+        const node = wrapNumber(
+          selectedCoral.rack * 2 +
+            selectedCoral.side +
+            (direction === "left" ? -1 : +1),
+          0,
+          11
+        );
+        const rack = Math.floor(node / 2);
+        const side = node % 2;
+        sendSelectedBranch(rack, side);
+      }
       break;
   }
 

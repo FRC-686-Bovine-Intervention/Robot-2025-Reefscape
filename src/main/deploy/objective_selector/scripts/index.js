@@ -1,13 +1,15 @@
 import { displaySelectedLevel } from "./levelSelector.js";
-import { displaySelectedBranch } from "./branchSelector.js";
+import {
+  displaySelectedBranch,
+  displaySelectedRack,
+} from "./branchSelector.js";
 import { displayTime } from "./timer.js";
 import { displayErrors, displayInfos, displayWarnings } from "./alerts.js";
 import "./keyboardShortcuts.js";
 
 import { NT4_Client } from "./NT4.js";
+import { getCoral, getCoralIdx } from "./utils.js";
 
-const nodeRobotToDashboardTopic = "/node_selector/node_robot_to_dashboard";
-const nodeDashboardToRobotTopic = "/node_selector/node_dashboard_to_robot";
 const matchTimeAdvantagekitToDashboardTopic =
   "/AdvantageKit/DriverStation/MatchTime";
 const autonomousAdvantagekitToDashboardTopic =
@@ -18,9 +20,25 @@ const alertsSmartdashboardToDashboardTopic = {
   errors: "/SmartDashboard/Alerts/errors",
 };
 
-let selectedNode = [-1, -1, -1];
+const coralRobotToDashboardTopic =
+  "/objective_selector/coral_robot_to_dashboard";
+const coralDashboardToRobotTopic =
+  "/objective_selector/coral_dashboard_to_robot";
+const algaeRobotToDashboardTopic =
+  "/objective_selector/algae_robot_to_dashboard";
+const algaeDashboardToRobotTopic =
+  "/objective_selector/algae_dashboard_to_robot";
+const intakeRobotToDashboardTopic =
+  "/objective_selector/intake_robot_to_dashboard";
+const intakeDashboardToRobotTopic =
+  "/objective_selector/intake_dashboard_to_robot";
+
 let isAuto = false;
 let matchTime = 0;
+
+let coral = -1;
+let algae = -1;
+let intake = -1;
 
 let client = new NT4_Client(
   window.location.hostname,
@@ -28,15 +46,7 @@ let client = new NT4_Client(
   (topic) => {}, // Topic Announce
   () => {}, // Topic Unannounce
   (topic, timestamp, value) => {
-    if (topic.name === nodeRobotToDashboardTopic) {
-      const rack = value[0];
-      const level = value[1];
-      const side = value[2];
-      displaySelectedBranch(rack, side);
-      displaySelectedLevel(level);
-
-      selectedNode = value;
-    } else if (topic.name === matchTimeAdvantagekitToDashboardTopic) {
+    if (topic.name === matchTimeAdvantagekitToDashboardTopic) {
       matchTime = Math.max(0, value);
       displayTime(matchTime, isAuto);
     } else if (topic.name === autonomousAdvantagekitToDashboardTopic) {
@@ -49,12 +59,29 @@ let client = new NT4_Client(
     } else if (topic.name === alertsSmartdashboardToDashboardTopic.errors) {
       displayErrors(value);
     }
+
+    switch (topic.name) {
+      case coralRobotToDashboardTopic:
+        const { rack, side, level } = getCoral(value);
+        displaySelectedBranch(rack, side);
+        displaySelectedLevel(level);
+        coral = value;
+        break;
+      case algaeRobotToDashboardTopic:
+        displaySelectedRack(value);
+        algae = value;
+        break;
+      case intakeRobotToDashboardTopic:
+        intake = value;
+        break;
+    }
   }, // New data
   () => {
     const overlay = document.getElementById("overlay");
     if (overlay) overlay.remove();
   }, // Connect
   () => {
+    displaySelectedRack();
     displaySelectedBranch();
     displaySelectedLevel();
     displayTime(0, false);
@@ -72,37 +99,55 @@ let client = new NT4_Client(
 window.onload = () => {
   client.subscribe(
     [
-      nodeRobotToDashboardTopic,
       matchTimeAdvantagekitToDashboardTopic,
       autonomousAdvantagekitToDashboardTopic,
       alertsSmartdashboardToDashboardTopic.infos,
       alertsSmartdashboardToDashboardTopic.warnings,
       alertsSmartdashboardToDashboardTopic.errors,
+      coralRobotToDashboardTopic,
+      algaeRobotToDashboardTopic,
+      intakeRobotToDashboardTopic,
     ],
     false,
     false,
     0.02
   );
-  client.publishTopic(nodeDashboardToRobotTopic, "int[]");
+  client.publishTopic(coralDashboardToRobotTopic, "int");
+  client.publishTopic(algaeDashboardToRobotTopic, "int");
+  client.publishTopic(intakeDashboardToRobotTopic, "int");
   client.connect();
 };
 
 export function sendSelectedBranch(rack, side) {
-  if (selectedNode[0] !== rack || selectedNode[2] !== side) {
-    client.addSample(nodeDashboardToRobotTopic, [rack, selectedNode[1], side]);
+  const { rack: prevRack, side: prevSide, level: level } = getCoral(coral);
+  if (prevRack !== rack || prevSide !== side) {
+    client.addSample(
+      coralDashboardToRobotTopic,
+      getCoralIdx({ rack, level, side })
+    );
   }
 }
 
 export function sendSelectedLevel(level) {
-  if (selectedNode[1] !== level) {
-    client.addSample(nodeDashboardToRobotTopic, [
-      selectedNode[0],
-      level,
-      selectedNode[2],
-    ]);
+  const { rack, side, level: prevLevel } = getCoral(coral);
+  if (prevLevel !== level) {
+    client.addSample(
+      coralDashboardToRobotTopic,
+      getCoralIdx({ rack, level, side })
+    );
   }
 }
 
-export function getSelectedNode() {
-  return selectedNode;
+export function sendSelectedRack(rack) {
+  if (algae !== rack) {
+    client.addSample(algaeDashboardToRobotTopic, rack);
+  }
+}
+
+export function getSelectedCoral() {
+  return getCoral(coral);
+}
+
+export function getSelectedAlgae() {
+  return algae;
 }

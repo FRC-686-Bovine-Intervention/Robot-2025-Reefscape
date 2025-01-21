@@ -143,45 +143,13 @@ public final class FieldConstants {
                 this.side = side;
                 this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
             }
-            
-            public static final NodeStruct struct = new NodeStruct();
 
-            public static class NodeStruct implements Struct<Node> {
-                @Override
-                public Class<Node> getTypeClass() {
-                    return Node.class;
-                }
+            public int getIndex() {
+                return Node.getIndex(rack, level, side);
+            }
 
-                @Override
-                public String getTypeName() {
-                    return "Node";
-                }
-
-                @Override
-                public int getSize() {
-                    return kSizeInt32 * 3;
-                }
-
-                @Override
-                public String getSchema() {
-                    return "int Rack;int Side;int Level;";
-                }
-
-                @Override
-                public Node unpack(ByteBuffer bb) {
-                    var rackIdx = bb.getInt();
-                    var levelIdx = bb.getInt();
-                    var sideIdx = bb.getInt();
-                    var node = new Node(Rack.values()[rackIdx], Level.values()[levelIdx], Side.values()[sideIdx]);
-                    return node;
-                }
-
-                @Override
-                public void pack(ByteBuffer bb, Node value) {
-                    bb.putInt(value.rack.ordinal());
-                    bb.putInt(value.level.ordinal());
-                    bb.putInt(value.side.ordinal());
-                }
+            public static int getIndex(Rack rack, Level level, Side side) {
+                return (rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal());
             }
         }
 
@@ -190,20 +158,18 @@ public final class FieldConstants {
             for (var rack : Rack.values()) {
                 for (var level : Level.values()) {
                     for (var side : Side.values()) {
-                        nodes[(rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal())] = 
-                            new Node(rack, level, side)
-                        ;
+                        nodes[Node.getIndex(rack, level, side)] = new Node(rack, level, side);
                     }
                 }
             }
         }
 
         public static final Node getNode(Rack rack, Level level, Side side) {
-            return getNode(rack.ordinal(), level.ordinal(), side.ordinal());
+            return nodes[Node.getIndex(rack, level, side)];
         }
 
         public static final Node getNode(int rack, int level, int side) {
-            return nodes[(rack * Level.values().length * Side.values().length) + (level * Side.values().length) + (side)];
+            return getNode(Rack.values()[rack], Level.values()[level], Side.values()[side]);
         }
     }
 }

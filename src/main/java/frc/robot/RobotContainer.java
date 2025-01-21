@@ -31,9 +31,8 @@ import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
-import frc.robot.subsystems.objectiveTracker.NodeSelectorIOServer;
+import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
-import frc.robot.subsystems.objectiveTracker.ObjectiveTracker.Direction;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
@@ -126,7 +125,7 @@ public class RobotContainer {
             break;
         }
         manualOverrides = new ManualOverrides();
-        objectiveTracker = new ObjectiveTracker(new NodeSelectorIOServer());
+        objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
 
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
@@ -198,10 +197,10 @@ public class RobotContainer {
         // );
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(Direction.UP)));
-        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(Direction.DOWN)));
-        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(Direction.LEFT)));
-        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(Direction.RIGHT)));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
     }
 
     private void configureNotifications() {}
