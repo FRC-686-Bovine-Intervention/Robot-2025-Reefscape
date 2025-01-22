@@ -28,8 +28,7 @@ import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
 public class ElevatorIOFalcon implements ElevatorIO {
-    protected final TalonFX leftMotor = HardwareDevices.elevatorLeftMotorID.talonFX();
-    protected final TalonFX rightMotor = HardwareDevices.elevatorRightMotorID.talonFX();
+    protected final TalonFX motor = HardwareDevices.elevatorLeftMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.elevatorEncoderID.cancoder();
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
@@ -76,43 +75,40 @@ public class ElevatorIOFalcon implements ElevatorIO {
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);
 
-        leftMotor.getConfigurator().apply(motorConfig);
+        motor.getConfigurator().apply(motorConfig);
 
         motorConfig.MotorOutput
             .withInverted(InvertedValue.Clockwise_Positive)
         ;
-        rightMotor.getConfigurator().apply(motorConfig);
-        rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
     }
     
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.encoder.updateFrom(cancoder);
-        inputs.leftMotor.updateFrom(leftMotor);
-        inputs.rightMotor.updateFrom(rightMotor);
+        inputs.leftMotor.updateFrom(motor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
-            leftMotor.getConfigurator().refresh(config);
+            motor.getConfigurator().refresh(config);
             profileConsts.update(config, ElevatorConstants.sprocketRadius);
-            leftMotor.getConfigurator().apply(config);
+            motor.getConfigurator().apply(config);
         }
         if (ffConsts.hasChanged(hashCode()) | pidConsts.hasChanged(hashCode())) {
             var config = new Slot0Configs();
-            leftMotor.getConfigurator().refresh(config);
+            motor.getConfigurator().refresh(config);
             ffConsts.update(config);
             pidConsts.update(config);
-            leftMotor.getConfigurator().apply(config);
+            motor.getConfigurator().apply(config);
         }
     }
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
-        leftMotor.setVoltage(voltage.in(Volts));
+        motor.setVoltage(voltage.in(Volts));
     }
 
     @Override
     public void setLength(Measure<DistanceUnit> length) {
-        leftMotor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude() / 3)));
+        motor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude() / 3)));
     }
 }

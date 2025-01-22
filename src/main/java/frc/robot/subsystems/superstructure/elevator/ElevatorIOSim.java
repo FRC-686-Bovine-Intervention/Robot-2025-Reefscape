@@ -22,11 +22,10 @@ public class ElevatorIOSim extends ElevatorIOFalcon {
 
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        var leftSimState = leftMotor.getSimState();
-        var rightSimState = rightMotor.getSimState();
+        var motorSimState = motor.getSimState();
         var cancoderSimState = cancoder.getSimState();
 
-        elevatorSim.setInputVoltage(leftSimState.getMotorVoltage());
+        elevatorSim.setInputVoltage(motorSimState.getMotorVoltage());
         elevatorSim.update(RobotConstants.rioUpdatePeriodSecs);
 
         var position = Radians.of(elevatorSim.getPositionMeters() / ElevatorConstants.sprocketRadius.in(Meters));
@@ -35,8 +34,7 @@ public class ElevatorIOSim extends ElevatorIOFalcon {
         cancoderSimState.setRawPosition(position);
         cancoderSimState.setVelocity(velocity);
 
-        leftSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-        rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
         super.updateInputs(inputs);
     }
