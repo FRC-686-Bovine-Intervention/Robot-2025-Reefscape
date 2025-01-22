@@ -41,13 +41,13 @@ paths.forEach((path, i) => {
   levelButton.style.setProperty("top", topMostY + "px");
   levelButton.textContent = formatString(LEVEL_BUTTON_TEMPLATE_STRING, i + 1);
 
-  levelButton.addEventListener("click", () => {
-    sendSelectedLevel(i);
-  });
-
   branch.appendChild(levelButton);
-
   levelsDOM.push(levelButton);
+
+  const onLevelButtonClick = () => sendSelectedLevel(i);
+
+  levelButton.onclick = onLevelButtonClick;
+  levelButton.oncontextmenu = onLevelButtonClick;
 });
 
 export function displaySelectedLevel(level) {

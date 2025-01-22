@@ -52,8 +52,12 @@ buttons.forEach((button) => {
   dom.appendChild(text);
   category.appendChild(dom);
   intakeSelectorContainer.appendChild(category);
-  dom.onclick = () => sendSelectedIntake(button.value);
   buttonDOM.push(dom);
+
+  const onIntakeButtonClick = () => sendSelectedIntake(button.value);
+    
+  dom.onclick = onIntakeButtonClick;
+  dom.oncontextmenu = onIntakeButtonClick;
 });
 
 export let selectedButtonIndex = -1;
