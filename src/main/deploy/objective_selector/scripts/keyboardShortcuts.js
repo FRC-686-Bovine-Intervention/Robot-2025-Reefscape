@@ -1,12 +1,14 @@
 import { moveSidebarLeft, moveSidebarRight } from "./alerts.js";
 import {
-  getSelectedAlgae,
-  getSelectedCoral,
+  algae,
+  coral,
   sendSelectedBranch,
+  sendSelectedIntake,
   sendSelectedLevel,
-  sendSelectedRack,
+  sendSelectedRack
 } from "./index.js";
-import { wrapNumber } from "./utils.js";
+import { buttons, selectedButtonIndex } from "./intakeSelector.js";
+import { getCoral, wrapNumber } from "./utils.js";
 
 const nodeKeybinds = [
   ["Digit1", "Numpad1"],
@@ -18,9 +20,9 @@ const nodeKeybinds = [
   ["Digit7", "Numpad7"],
   ["Digit8", "Numpad8"],
   ["Digit9", "Numpad9"],
-  ["Digit0", ""],
-  ["Minus", "NumpadDivide"],
-  ["Equal", "NumpadMultiply"],
+  ["Digit0", "NumpadDivide"],
+  ["Minus", "NumpadMultiply"],
+  ["Equal", "NumpadSubtract"],
 ];
 
 const directionalKeybinds = {
@@ -59,21 +61,23 @@ window.onkeydown = (e) => {
     }
   }
 
-  const selectedCoral = getSelectedCoral();
-  const selectedAlgae = getSelectedAlgae();
+  const selectedCoral = getCoral(coral);
   const direction = getDirectionWithKeyBind(e.code);
   switch (direction) {
     case "up":
-      sendSelectedLevel(wrapNumber(selectedCoral.level + 1, 0, 3));
-      break;
     case "down":
-      sendSelectedLevel(wrapNumber(selectedCoral.level - 1, 0, 3));
+      if (e.shiftKey) {
+        sendSelectedIntake(wrapNumber(selectedButtonIndex + (direction === "down" ? +1 : -1), 0, buttons.length - 1));
+      } else {
+        sendSelectedLevel(wrapNumber(selectedCoral.level + (direction === "down" ? -1 : +1), 0, 3));
+        sendSelectedLevel(wrapNumber(selectedCoral.level + (direction === "down" ? -1 : +1), 0, 3));
+      }
       break;
     case "left":
     case "right":
       if (e.ctrlKey) {
         e.preventDefault();
-        sendSelectedRack(wrapNumber(selectedAlgae + (direction === "left" ? -1 : +1), 0, 5));
+        sendSelectedRack(wrapNumber(algae + (direction === "left" ? -1 : +1), 0, 5));
       } else {
         const node = wrapNumber(
           selectedCoral.rack * 2 +

@@ -9,6 +9,7 @@ import "./keyboardShortcuts.js";
 
 import { NT4_Client } from "./NT4.js";
 import { getCoral, getCoralIdx } from "./utils.js";
+import { displaySelectedIntake } from "./intakeSelector.js";
 
 const matchTimeAdvantagekitToDashboardTopic =
   "/AdvantageKit/DriverStation/MatchTime";
@@ -36,9 +37,9 @@ const intakeDashboardToRobotTopic =
 let isAuto = false;
 let matchTime = 0;
 
-let coral = -1;
-let algae = -1;
-let intake = -1;
+export let coral = -1;
+export let algae = -1;
+export let intake = -1;
 
 let client = new NT4_Client(
   window.location.hostname,
@@ -72,6 +73,7 @@ let client = new NT4_Client(
         algae = value;
         break;
       case intakeRobotToDashboardTopic:
+        displaySelectedIntake(value);
         intake = value;
         break;
     }
@@ -84,6 +86,7 @@ let client = new NT4_Client(
     displaySelectedRack();
     displaySelectedBranch();
     displaySelectedLevel();
+    displaySelectedIntake();
     displayTime(0, false);
     displayInfos([]);
     displayWarnings([]);
@@ -144,10 +147,8 @@ export function sendSelectedRack(rack) {
   }
 }
 
-export function getSelectedCoral() {
-  return getCoral(coral);
-}
-
-export function getSelectedAlgae() {
-  return algae;
+export function sendSelectedIntake(value) {
+  if (intake !== value) {
+    client.addSample(intakeDashboardToRobotTopic, value);
+  }
 }

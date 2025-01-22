@@ -30,8 +30,18 @@ function moveSidebar() {
 
 function swapPanels() {
   const childNodes = Array.from(container.children);
-  [childNodes[0], childNodes[2]] = [childNodes[2], childNodes[0]];
-  childNodes.forEach((element) => container.appendChild(element));
+  if (container.style.gridTemplateColumns) {
+    container.style.gridTemplateColumns = "";
+  } else {
+    container.style.gridTemplateColumns = "1fr 2fr 1fr 1fr"
+  }
+  childNodes.reverse().forEach((element, i) => {
+    if (element.style.order) {
+      element.style.order = "";
+    } else {
+      element.style.order = i;
+    }
+  });
 }
 
 export function moveSidebarRight() {

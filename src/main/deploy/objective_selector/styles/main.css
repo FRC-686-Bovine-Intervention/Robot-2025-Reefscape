@@ -13,6 +13,7 @@
   --reef-color: #ac26be;
   --coral-color: #4ca6eb;
   --algae-color: #3ba799;
+  --intake-color: #e13f3f;
   --hub-color: #181418;
 }
 
@@ -47,7 +48,7 @@ body {
 #container {
   display: grid;
   place-items: center;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 1fr 2fr 1fr;
   flex: 1;
   min-height: 0;
 }
