@@ -5,18 +5,14 @@ import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.units.measure.Distance;
 import frc.util.mechanismUtil.GearRatio;
 
 public class PivotConstants {
-    public static final Distance pivotX = Meters.of(-0.228600);
-    public static final Distance pivotZ = Meters.of(0.254000);
-
     public static final Transform3d pivotBase = new Transform3d(
         new Translation3d(
-            pivotX,
+            Meters.of(-0.228600),
             Meters.of(0),
-            pivotZ
+            Meters.of(0.254000)
         ),
         Rotation3d.kZero
     );

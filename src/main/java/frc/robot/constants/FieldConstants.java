@@ -15,7 +15,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.flipping.Flipped;
 
 public final class FieldConstants {
@@ -96,8 +95,8 @@ public final class FieldConstants {
             Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750)),
             ;
             private final Transform3d transform;
-            public final Pose2d forwardBranch;
-            public final Pose2d backwardBranch;
+            public final Pose2d forwardBranchRobotSpace;
+            public final Pose2d backwardBranchRobotSpace;
             Level(Distance height, Angle angle, Distance radius) {
                 this.transform = new Transform3d(
                     new Translation3d(
@@ -120,21 +119,14 @@ public final class FieldConstants {
                         angle.unaryMinus()
                     )
                 );
-                var pivot = new Pose2d(
-                    new Translation2d(
-                        PivotConstants.pivotX,
-                        PivotConstants.pivotZ
-                    ),
-                    Rotation2d.kZero
-                );
-                this.forwardBranch = branchRobotSpace.relativeTo(pivot);
-                this.backwardBranch = new Pose2d(
+                this.forwardBranchRobotSpace = branchRobotSpace;
+                this.backwardBranchRobotSpace = new Pose2d(
                     new Translation2d(
                         branchRobotSpace.getMeasureX().unaryMinus(),
                         branchRobotSpace.getMeasureY()
                     ),
                     Rotation2d.k180deg.minus(branchRobotSpace.getRotation())
-                ).relativeTo(pivot);
+                );
             }
         }
 

@@ -42,7 +42,7 @@ public class WristIOFalcon implements WristIO {
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Wrist/PID",
-        0.1,
+        0.5,
         0,
         0
     );

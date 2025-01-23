@@ -11,6 +11,7 @@ import edu.wpi.first.units.measure.Distance;
 import frc.util.mechanismUtil.GearRatio;
 
 public class ElevatorConstants {
+    public static final int movingStages = 3;
     
     public static final Distance sprocketRadius = Inches.of(1.432).div(2);
 

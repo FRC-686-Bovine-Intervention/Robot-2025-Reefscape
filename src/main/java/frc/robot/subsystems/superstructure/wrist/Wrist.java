@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.robotStructure.angle.ArmMech;
@@ -27,6 +28,10 @@ public class Wrist extends SubsystemBase{
         Logger.processInputs("Inputs/Wrist", inputs);
 
         mech.set(inputs.encoder.position);
+    }
+
+    public Angle getAngle() {
+        return inputs.encoder.position;
     }
     
     public void setVoltage(Measure<VoltageUnit> voltage) {

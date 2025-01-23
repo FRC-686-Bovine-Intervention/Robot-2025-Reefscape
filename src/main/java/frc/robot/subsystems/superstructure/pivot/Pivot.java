@@ -32,6 +32,10 @@ public class Pivot extends SubsystemBase {
         mech.set(inputs.encoder.position);
     }
 
+    public Angle getAngle() {
+        return inputs.encoder.position;
+    }
+
     public void setPivot(Measure<AngleUnit> angle) {
         io.setPosition(angle);
     }

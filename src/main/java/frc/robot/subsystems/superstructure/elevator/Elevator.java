@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.robotStructure.linear.ExtenderMech;
@@ -64,7 +65,11 @@ public class Elevator extends SubsystemBase{
         stage3Mech.set(stageDist);
         stage4Mech.set(stageDist);
 
-        Logger.recordOutput("Elevator/Total Length", stageDist.times(3));
+        Logger.recordOutput("Elevator/Total Length", stageDist.times(ElevatorConstants.movingStages));
+    }
+
+    public Distance getLength() {
+        return ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians)).times(ElevatorConstants.movingStages);
     }
 
     public void setLength(Measure<DistanceUnit> dist) {

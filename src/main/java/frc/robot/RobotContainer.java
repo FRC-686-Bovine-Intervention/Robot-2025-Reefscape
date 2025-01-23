@@ -218,7 +218,7 @@ public class RobotContainer {
                 .withName("Robot spin")
         );
 
-        superstructure.pivot.setDefaultCommand(superstructure.pivot.pivotTo(Degrees.of(90)));
+        superstructure.pivot.setDefaultCommand(superstructure.pivot.pivotTo(Degrees.of(0)));
         superstructure.elevator.setDefaultCommand(superstructure.elevator.elevateTo(Meters.zero()));
         superstructure.wrist.setDefaultCommand(superstructure.wrist.pivotTo(Degrees.zero()));
     }

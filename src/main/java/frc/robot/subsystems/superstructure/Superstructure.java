@@ -6,6 +6,8 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -22,6 +24,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef.Level;
@@ -30,16 +33,19 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
+import frc.util.misc.MeasureUtil;
 
 public class Superstructure {
     public final Pivot pivot;
     public final Elevator elevator;
     public final Wrist wrist;
+    public final Set<Subsystem> subsystems;
 
     public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         this.pivot = pivot;
         this.elevator = elevator;
         this.wrist = wrist;
+        this.subsystems = Set.of(pivot, elevator, wrist);
     }
 
     public Command pivotVoltage(DoubleSupplier voltage) {
@@ -93,10 +99,10 @@ public class Superstructure {
     ).inverse();
 
     public Command goToLevelForward(Level level) {
-        return inverseKinematics(level.forwardBranch.transformBy(forwardScoringTransform));
+        return goToSetpointSequenced(SuperstructureSetpoint.fromRobotSpace(level.forwardBranchRobotSpace.transformBy(forwardScoringTransform)));
     }
     public Command goToLevelBackward(Level level) {
-        return inverseKinematics(level.backwardBranch.transformBy(backwardScoringTransform));
+        return goToSetpointSequenced(SuperstructureSetpoint.fromRobotSpace(level.backwardBranchRobotSpace.transformBy(backwardScoringTransform)));
     }
 
     public Command inverseKinematics(Pose2d target) {
@@ -145,6 +151,75 @@ public class Superstructure {
         );
     }
 
+    public Command goToSetpointSequenced(SuperstructureSetpoint setpoint) {
+        return new Command() {
+            {
+                addRequirements(subsystems);
+                setName("Superstructure Setpoint With Safety");
+            }
+            private Angle initialPivotAngle;
+            private Distance initialElevatorLength;
+            private Angle initialWristAngle;
+            private BooleanSupplier pivotMoveCondition;
+            private BooleanSupplier elevatorMoveCondition;
+            private BooleanSupplier wristMoveCondition;
+            private boolean pivotMoving;
+            private boolean elevatorMoving;
+            private boolean wristMoving;
+            @Override
+            public void initialize() {
+                pivotMoving = false;
+                elevatorMoving = false;
+                wristMoving = false;
+                initialPivotAngle = pivot.getAngle();
+                initialElevatorLength = elevator.getLength();
+                initialWristAngle = wrist.getAngle();
+                var elevatorFirst = setpoint.elevatorLength.lt(initialElevatorLength);
+                pivotMoveCondition = () -> !elevatorFirst || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
+                elevatorMoveCondition = () -> elevatorFirst || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
+                wristMoveCondition = () -> true;
+            }
+            @Override
+            public void execute() {
+                if (!pivotMoving) {
+                    pivotMoving = pivotMoveCondition.getAsBoolean();
+                }
+                if (!elevatorMoving) {
+                    elevatorMoving = elevatorMoveCondition.getAsBoolean();
+                }
+                if (!wristMoving) {
+                    wristMoving = wristMoveCondition.getAsBoolean();
+                }
+                if (pivotMoving) {
+                    pivot.setPivot(setpoint.pivotAngle);
+                } else {
+                    pivot.setPivot(initialPivotAngle);
+                }
+                if (elevatorMoving) {
+                    elevator.setLength(setpoint.elevatorLength);
+                } else {
+                    elevator.setLength(initialElevatorLength);
+                }
+                if (wristMoving) {
+                    wrist.setAngle(setpoint.wristAngle);
+                } else {
+                    wrist.setAngle(initialWristAngle);
+                }
+                Logger.recordOutput("Superstructure/Pivot Moving", pivotMoving);
+                Logger.recordOutput("Superstructure/Elevator Moving", elevatorMoving);
+                Logger.recordOutput("Superstructure/Wrist Moving", wristMoving);
+            }
+            @Override
+            public void end(boolean interrupted) {
+                
+            }
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        };
+    }
+
     public static class SuperstructureSetpoint {
         public final Angle pivotAngle;
         public final Distance elevatorLength;
@@ -173,8 +248,8 @@ public class Superstructure {
 
         public static final Pose2d pivotRobotSpace = new Pose2d(
             new Translation2d(
-                PivotConstants.pivotX,
-                PivotConstants.pivotZ
+                PivotConstants.pivotBase.getMeasureX(),
+                PivotConstants.pivotBase.getMeasureZ()
             ),
             Rotation2d.kZero
         );
@@ -182,7 +257,5 @@ public class Superstructure {
         public static SuperstructureSetpoint fromRobotSpace(Pose2d robotSpacePose) {
             return fromPivotSpace(robotSpacePose.relativeTo(pivotRobotSpace));
         }
-
-
     }
 }
