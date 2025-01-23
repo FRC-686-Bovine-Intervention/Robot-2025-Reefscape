@@ -11,10 +11,12 @@
 
 :root {
   --reef-color: #ac26be;
+  --coral-station-color: #ddd;
   --coral-color: #4ca6eb;
   --algae-color: #3ba799;
-  --intake-color: #e13f3f;
+  --scoring-color: #e13f3f;
   --hub-color: #181418;
+  --hover-scale-factor: 1.25;
 }
 
 * {
@@ -22,6 +24,7 @@
   padding: 0;
   box-sizing: border-box;
   font-family: "Manrope Variable", sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {

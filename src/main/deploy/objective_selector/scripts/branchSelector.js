@@ -15,81 +15,94 @@ branchSelectorContainer.style.setProperty(
   "--branch-button-size",
   BRANCH_BUTTON_SIZE + "px"
 );
+branchSelectorContainer.style.setProperty(
+  "--branch-button-normal-offset",
+  BRANCH_BUTTON_NORMAL_OFFSET + "px"
+);
 
 const branchDOM = [];
 const rackDOM = [];
 
-const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
-const y = HUB_SIZE / 2;
+export function createBranchSelector() {
+  const ring = document.createElement("div");
+  ring.id = "ring";
+  branchSelectorContainer.appendChild(ring);
 
-for (let i = 0; i < 6; i++) {
-  const angle = -degreesToRadians(i * 60);
+  const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
+  const y = HUB_SIZE / 2;
 
-  const [rackX, rackY] = rotatePoint(
-    [x - HUB_SIZE / Math.sqrt(3) / 2, y + BRANCH_BUTTON_NORMAL_OFFSET],
-    angle
-  );
-  const rackButton = document.createElement("div");
-  rackButton.classList.add("rack_button");
-  rackButton.style.setProperty("--x", rackX + "px");
-  rackButton.style.setProperty("--y", rackY + "px");
-  rackButton.textContent = i + 1;
-  branchSelectorContainer.appendChild(rackButton);
+  for (let i = 0; i < 6; i++) {
+    const angle = -degreesToRadians(i * 60);
 
-  rackDOM.push(rackButton);
+    const [rackX, rackY] = rotatePoint(
+      [x - HUB_SIZE / Math.sqrt(3) / 2, y + BRANCH_BUTTON_NORMAL_OFFSET],
+      angle
+    );
+    const rackButton = document.createElement("div");
+    rackButton.classList.add("rack_button");
+    rackButton.style.setProperty("--x", rackX + "px");
+    rackButton.style.setProperty("--y", rackY + "px");
+    rackButton.textContent = i + 1;
+    branchSelectorContainer.appendChild(rackButton);
 
-  const [leftX, leftY] = rotatePoint(
-    [-x + BRANCH_TEXT_SIDE_OFFSET, y + BRANCH_TEXT_NORMAL_OFFSET],
-    angle
-  );
-  const leftBranchText = document.createElement("p");
-  leftBranchText.classList.add("branch_text");
-  leftBranchText.style.setProperty("--x", leftX + "px");
-  leftBranchText.style.setProperty("--y", leftY + "px");
-  leftBranchText.textContent = i * 2 + 1;
-  branchSelectorContainer.appendChild(leftBranchText);
+    rackDOM.push(rackButton);
 
-  const [rightX, rightY] = rotatePoint(
-    [x - BRANCH_TEXT_SIDE_OFFSET, y + BRANCH_TEXT_NORMAL_OFFSET],
-    angle
-  );
-  const rightBranchText = document.createElement("p");
-  rightBranchText.classList.add("branch_text");
-  rightBranchText.style.setProperty("--x", rightX + "px");
-  rightBranchText.style.setProperty("--y", rightY + "px");
-  rightBranchText.textContent = i * 2 + 2;
-  branchSelectorContainer.appendChild(rightBranchText);
+    const [leftX, leftY] = rotatePoint(
+      [-x + BRANCH_TEXT_SIDE_OFFSET, y + BRANCH_TEXT_NORMAL_OFFSET],
+      angle
+    );
+    const leftBranchText = document.createElement("p");
+    leftBranchText.classList.add("branch_text");
+    leftBranchText.style.setProperty("--x", leftX + "px");
+    leftBranchText.style.setProperty("--y", leftY + "px");
+    leftBranchText.textContent = i * 2 + 1;
+    branchSelectorContainer.appendChild(leftBranchText);
 
-  const leftBranchButton = document.createElement("div");
-  leftBranchButton.style.setProperty("--rotation", angle + "rad");
-  leftBranchButton.classList.add("branch_button", "left");
-  branchSelectorContainer.appendChild(leftBranchButton);
+    const [rightX, rightY] = rotatePoint(
+      [x - BRANCH_TEXT_SIDE_OFFSET, y + BRANCH_TEXT_NORMAL_OFFSET],
+      angle
+    );
+    const rightBranchText = document.createElement("p");
+    rightBranchText.classList.add("branch_text");
+    rightBranchText.style.setProperty("--x", rightX + "px");
+    rightBranchText.style.setProperty("--y", rightY + "px");
+    rightBranchText.textContent = i * 2 + 2;
+    branchSelectorContainer.appendChild(rightBranchText);
 
-  const rightBranchButton = document.createElement("div");
-  rightBranchButton.style.setProperty("--rotation", angle + "rad");
-  rightBranchButton.classList.add("branch_button", "right");
-  branchSelectorContainer.appendChild(rightBranchButton);
+    const leftBranchButton = document.createElement("div");
+    leftBranchButton.style.setProperty("--rotation", angle + "rad");
+    leftBranchButton.classList.add("branch_button", "left");
+    branchSelectorContainer.appendChild(leftBranchButton);
 
-  branchDOM.push([leftBranchButton, rightBranchButton]);
+    const rightBranchButton = document.createElement("div");
+    rightBranchButton.style.setProperty("--rotation", angle + "rad");
+    rightBranchButton.classList.add("branch_button", "right");
+    branchSelectorContainer.appendChild(rightBranchButton);
 
-  const onLeftBranchButtonClick = () =>
-    sendSelectedBranch(i, branchDOM[i].indexOf(leftBranchButton));
+    branchDOM.push([leftBranchButton, rightBranchButton]);
 
-  const onRightBranchButtonClick = () =>
-    sendSelectedBranch(i, branchDOM[i].indexOf(rightBranchButton));
+    const onLeftBranchButtonClick = () =>
+      sendSelectedBranch(i, branchDOM[i].indexOf(leftBranchButton));
 
-  const onRackButtonClick = () => sendSelectedRack(i);
+    const onRightBranchButtonClick = () =>
+      sendSelectedBranch(i, branchDOM[i].indexOf(rightBranchButton));
 
-  leftBranchButton.onclick = onLeftBranchButtonClick;
-  leftBranchText.onclick = onLeftBranchButtonClick;
-  leftBranchButton.oncontextmenu = onLeftBranchButtonClick;
-  leftBranchText.oncontextmenu = onLeftBranchButtonClick;
-  rightBranchButton.onclick = onRightBranchButtonClick;
-  rightBranchText.onclick = onRightBranchButtonClick;
-  rightBranchButton.oncontextmenu = onRightBranchButtonClick;
-  rightBranchText.oncontextmenu = onRightBranchButtonClick;
-  rackButton.onclick = onRackButtonClick;
-  rackButton.oncontextmenu = onRackButtonClick;
+    leftBranchButton.onclick = onLeftBranchButtonClick;
+    leftBranchText.onclick = onLeftBranchButtonClick;
+    leftBranchButton.oncontextmenu = onLeftBranchButtonClick;
+    leftBranchText.oncontextmenu = onLeftBranchButtonClick;
+    rightBranchButton.onclick = onRightBranchButtonClick;
+    rightBranchText.onclick = onRightBranchButtonClick;
+    rightBranchButton.oncontextmenu = onRightBranchButtonClick;
+    rightBranchText.oncontextmenu = onRightBranchButtonClick;
+  }
+  
+  rackDOM.push(ring);
+  rackDOM.forEach((rackButton, i) => {
+    const onRackButtonClick = () => sendSelectedRack(i);
+    rackButton.onclick = onRackButtonClick;
+    rackButton.oncontextmenu = onRackButtonClick;
+  });
 }
 
 export function displaySelectedBranch(rack, side) {

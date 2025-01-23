@@ -1,13 +1,13 @@
-import { sendSelectedIntake } from "./index.js";
+import { sendSelectedAlgaeScoring } from "./index.js";
 
-const intakeSelectorContainer = document.getElementById(
-  "intake_selector_container"
+const algaeScoringSelectorContainer = document.getElementById(
+  "algae_scoring_selector_container"
 );
 
-const INTAKE_BUTTON_SIZE = 100;
-intakeSelectorContainer.style.setProperty(
-  "--intake-button-size",
-  INTAKE_BUTTON_SIZE + "px"
+const ALGAE_SCORING_BUTTON_SIZE = 100;
+algaeScoringSelectorContainer.style.setProperty(
+  "--algae-scoring-button-size",
+  ALGAE_SCORING_BUTTON_SIZE + "px"
 );
 
 const icons = {
@@ -18,28 +18,23 @@ const icons = {
 
 export const buttons = [
   {
-    name: "Coral Station",
-    icon: icons.credit_card,
-    value: 0,
-    category: "coral",
-  },
-  {
     name: "Net",
     icon: icons.grid,
-    value: 1,
-    category: "algae_common",
+    value: 0,
+    category: "common",
   },
   {
     name: "Processor",
     icon: icons.gallery_vertical,
-    value: 2,
-    category: "algae_common",
+    value: 1,
+    category: "common",
   },
   {
     name: "Opponent Processor",
     icon: icons.gallery_vertical,
-    value: 3,
-    category: "algae_uncommon",
+    value: 2,
+    category: "uncommon",
+    variant: "horizontal,small",
   },
 ];
 
@@ -50,26 +45,34 @@ buttons.forEach((button) => {
   const category =
     categoryDOM[button.category] || document.createElement("div");
   categoryDOM[button.category] = category;
-  category.classList.add("intake_button_container");
+  category.classList.add("algae_scoring_button_container");
   const dom = document.createElement("div");
-  dom.classList.add("intake_button");
+  dom.classList.add(
+    "algae_scoring_button",
+  );
+  if (button.variant?.includes("horizontal")) {
+    dom.classList.add("horizontal");
+  }
+  if (button.variant?.includes("small")) {
+    dom.classList.add("small");
+  }
   dom.innerHTML += button.icon;
   const text = document.createElement("p");
   text.textContent = button.name;
   dom.appendChild(text);
   category.appendChild(dom);
-  intakeSelectorContainer.appendChild(category);
+  algaeScoringSelectorContainer.appendChild(category);
   buttonDOM.push(dom);
 
-  const onIntakeButtonClick = () => sendSelectedIntake(button.value);
+  const onScoringButtonClick = () => sendSelectedAlgaeScoring(button.value);
 
-  dom.onclick = onIntakeButtonClick;
-  dom.oncontextmenu = onIntakeButtonClick;
+  dom.onclick = onScoringButtonClick;
+  dom.oncontextmenu = onScoringButtonClick;
 });
 
 export let selectedButtonIndex = -1;
 
-export function displaySelectedIntake(value) {
+export function displaySelectedAlgaeScoring(value) {
   buttons.forEach((button, i) => {
     if (button.value === value) {
       selectedButtonIndex = i;

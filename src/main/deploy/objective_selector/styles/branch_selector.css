@@ -1,11 +1,11 @@
 #branch_selector_container {
   --hub-size: 0px;
   --branch-button-size: 0px;
+  --branch-button-normal-offset: 0px;
 
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   position: relative;
 }
 
@@ -22,34 +22,7 @@
   clip-path: polygon(50% -50%, 100% 50%, 50% 150%, 0 50%);
   background-color: var(--hub-color);
   width: var(--hub-size);
-}
-
-.rack_button {
-  --x: 0px;
-  --y: 0px;
-  position: absolute;
-  width: var(--branch-button-size);
-  aspect-ratio: 1 / 1;
-  border-radius: 100%;
-  background: var(--reef-color);
-  color: white;
-  cursor: pointer;
-  top: 50%;
-  left: 50%;
-  transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px)));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: width 100ms;
-  font-size: 1.15em;
-}
-
-.rack_button:hover {
-  width: calc(var(--branch-button-size) * 1.25);
-}
-
-.rack_button.selected {
-  background-color: var(--algae-color);
+  z-index: 1;
 }
 
 .branch_text {
@@ -61,8 +34,8 @@
   left: 50%;
   transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px)));
   font-size: 1.15em;
-  z-index: 100;
-  cursor: default;
+  z-index: 2;
+  cursor: pointer;
 }
 
 .branch_button {
@@ -72,6 +45,8 @@
   aspect-ratio: 1 / sqrt(3);
   height: calc((var(--hub-size) * sqrt(3) / 4));
   rotate: var(--rotation);
+  z-index: 1;
+  cursor: pointer;
 }
 
 .branch_button::after {
@@ -97,3 +72,139 @@
 .branch_button.right {
   transform: scaleX(-1) translate(-50%, 50%);
 }
+
+.rack_button {
+  --x: 0px;
+  --y: 0px;
+  position: absolute;
+  width: var(--branch-button-size);
+  aspect-ratio: 1 / 1;
+  border-radius: 100%;
+  background: var(--reef-color);
+  color: white;
+  cursor: pointer;
+  top: 50%;
+  left: 50%;
+  transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 100ms;
+  font-size: 1.15em;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.rack_button:hover {
+  width: calc(var(--branch-button-size) * var(--hover-scale-factor));
+}
+
+.rack_button.selected {
+  background-color: var(--algae-color);
+}
+
+#ring {
+  background: var(--coral-station-color);
+  width: calc(
+    var(--hub-size) + var(--branch-button-normal-offset) +
+      var(--branch-button-size) + 28px
+  );
+  aspect-ratio: 1 / 1;
+  border-radius: 100%;
+  transition: width 100ms;
+  cursor: pointer;
+  clip-path: polygon(
+    100% 50%,
+    100% 100%,
+    0px 100%,
+    0px 0px,
+    100% 0px,
+    100% 50%,
+    87.5% 50%,
+    87.3137% 46.2662%,
+    86.7565% 42.5695%,
+    85.834% 38.9467%,
+    84.5554% 35.4337%,
+    82.9333% 32.0655%,
+    80.984% 28.8755%,
+    78.7267% 25.8955%,
+    76.1839% 23.155%,
+    73.3809% 20.6813%,
+    70.3455% 18.499%,
+    67.1079% 16.6298%,
+    63.7003% 15.0922%,
+    60.1565% 13.9016%,
+    56.5118% 13.0697%,
+    52.8024% 12.6049%,
+    49.0651% 12.5117%,
+    45.3371% 12.791%,
+    41.6555% 13.4402%,
+    38.0568% 14.4527%,
+    34.5767% 15.8185%,
+    31.25% 17.524%,
+    28.1096% 19.5523%,
+    25.1868% 21.8832%,
+    22.5106% 24.4935%,
+    20.1075% 27.3573%,
+    18.0016% 30.4462%,
+    16.2137% 33.7294%,
+    14.7615% 37.1742%,
+    13.6596% 40.7466%,
+    12.9188% 44.4109%,
+    12.5466% 48.1308%,
+    12.5466% 51.8692%,
+    12.9188% 55.5891%,
+    13.6596% 59.2534%,
+    14.7615% 62.8258%,
+    16.2137% 66.2706%,
+    18.0016% 69.5538%,
+    20.1075% 72.6427%,
+    22.5106% 75.5065%,
+    25.1868% 78.1168%,
+    28.1096% 80.4477%,
+    31.25% 82.476%,
+    34.5767% 84.1815%,
+    38.0568% 85.5473%,
+    41.6555% 86.5598%,
+    45.3371% 87.209%,
+    49.0651% 87.4883%,
+    52.8024% 87.3951%,
+    56.5118% 86.9303%,
+    60.1565% 86.0984%,
+    63.7003% 84.9078%,
+    67.1079% 83.3702%,
+    70.3455% 81.501%,
+    73.3809% 79.3187%,
+    76.1839% 76.845%,
+    78.7267% 74.1045%,
+    80.984% 71.1245%,
+    82.9333% 67.9345%,
+    84.5554% 64.5663%,
+    85.834% 61.0533%,
+    86.7565% 57.4305%,
+    87.3137% 53.7338%,
+    87.5% 50%
+  );
+  position: relative;
+  overflow: clip;
+}
+
+#ring.selected::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 100%;
+  width: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    #606dbc,
+    #606dbc 10px,
+    #465298 10px,
+    #465298 20px
+  );
+}
+
+/* #ring.selected {
+  background: var(--algae-color);
+} */

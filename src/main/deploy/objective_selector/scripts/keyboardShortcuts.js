@@ -3,11 +3,11 @@ import {
   algae,
   coral,
   sendSelectedBranch,
-  sendSelectedIntake,
+  sendSelectedAlgaeScoring,
   sendSelectedLevel,
-  sendSelectedRack
+  sendSelectedRack,
 } from "./index.js";
-import { buttons, selectedButtonIndex } from "./intakeSelector.js";
+import { buttons, selectedButtonIndex } from "./algaeScoringSelector.js";
 import { getCoral, wrapNumber } from "./utils.js";
 
 const nodeKeybinds = [
@@ -50,8 +50,8 @@ window.onkeydown = (e) => {
   const node = getNodeWithKeyBind(e.code);
   if (node >= 0) {
     if (e.ctrlKey) {
-      e.preventDefault();
-      if (node < 6) {
+      if (node <= 6) {
+        e.preventDefault();
         sendSelectedRack(node);
       }
     } else {
@@ -66,18 +66,28 @@ window.onkeydown = (e) => {
   switch (direction) {
     case "up":
     case "down":
-      if (e.shiftKey) {
-        sendSelectedIntake(wrapNumber(selectedButtonIndex + (direction === "down" ? +1 : -1), 0, buttons.length - 1));
-      } else {
-        sendSelectedLevel(wrapNumber(selectedCoral.level + (direction === "down" ? -1 : +1), 0, 3));
-        sendSelectedLevel(wrapNumber(selectedCoral.level + (direction === "down" ? -1 : +1), 0, 3));
-      }
+      sendSelectedLevel(
+        wrapNumber(selectedCoral.level + (direction === "down" ? -1 : +1), 0, 3)
+      );
+      sendSelectedLevel(
+        wrapNumber(selectedCoral.level + (direction === "down" ? -1 : +1), 0, 3)
+      );
       break;
     case "left":
     case "right":
       if (e.ctrlKey) {
         e.preventDefault();
-        sendSelectedRack(wrapNumber(algae + (direction === "left" ? -1 : +1), 0, 5));
+        sendSelectedRack(
+          wrapNumber(algae + (direction === "left" ? -1 : +1), 0, 6)
+        );
+      } else if (e.shiftKey) {
+        sendSelectedAlgaeScoring(
+          wrapNumber(
+            selectedButtonIndex + (direction === "left" ? -1 : +1),
+            0,
+            buttons.length - 1
+          )
+        );
       } else {
         const node = wrapNumber(
           selectedCoral.rack * 2 +

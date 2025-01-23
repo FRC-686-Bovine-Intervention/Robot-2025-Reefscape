@@ -1,0 +1,56 @@
+#algae_scoring_selector_container {
+  --algae-scoring-button-size: 0px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: absolute;
+  bottom: 0;
+  padding: 15px;
+}
+
+.algae_scoring_button_container {
+  border-radius: 5px;
+  display: flex;
+  overflow: clip;
+}
+
+.algae_scoring_button {
+  min-width: var(--algae-scoring-button-size);
+  width: 100%;
+  padding: 15px;
+  background: var(--hub-color);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  gap: 5px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: width 100ms;
+  font-size: 0.85em;
+  transition: filter 100ms;
+  font-weight: 600;
+  text-align: center;
+}
+
+.algae_scoring_button.horizontal {
+  flex-direction: row;
+}
+
+.algae_scoring_button.small {
+  font-size: 0.75em;
+}
+
+.algae_scoring_button.small > svg {
+  width: 16px;
+}
+
+.algae_scoring_button > svg {
+  stroke: 2px;
+  width: 24px;
+}
+
+.algae_scoring_button.selected {
+  background-color: var(--scoring-color);
+}

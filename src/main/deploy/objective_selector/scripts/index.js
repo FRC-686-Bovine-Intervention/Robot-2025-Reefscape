@@ -1,5 +1,6 @@
 import { displaySelectedLevel } from "./levelSelector.js";
 import {
+  createBranchSelector,
   displaySelectedBranch,
   displaySelectedRack,
 } from "./branchSelector.js";
@@ -9,7 +10,7 @@ import "./keyboardShortcuts.js";
 
 import { NT4_Client } from "./NT4.js";
 import { getCoral, getCoralIdx } from "./utils.js";
-import { displaySelectedIntake } from "./intakeSelector.js";
+import { displaySelectedAlgaeScoring } from "./algaeScoringSelector.js";
 
 const matchTimeAdvantagekitToDashboardTopic =
   "/AdvantageKit/DriverStation/MatchTime";
@@ -69,12 +70,12 @@ let client = new NT4_Client(
         coral = value;
         break;
       case algaeRobotToDashboardTopic:
-        displaySelectedRack(value);
-        algae = value;
+        displaySelectedAlgaeScoring(value);
+        intake = value;
         break;
       case intakeRobotToDashboardTopic:
-        displaySelectedIntake(value);
-        intake = value;
+        displaySelectedRack(value);
+        algae = value;
         break;
     }
   }, // New data
@@ -86,7 +87,7 @@ let client = new NT4_Client(
     displaySelectedRack();
     displaySelectedBranch();
     displaySelectedLevel();
-    displaySelectedIntake();
+    displaySelectedAlgaeScoring();
     displayTime(0, false);
     displayInfos([]);
     displayWarnings([]);
@@ -119,6 +120,8 @@ window.onload = () => {
   client.publishTopic(algaeDashboardToRobotTopic, "int");
   client.publishTopic(intakeDashboardToRobotTopic, "int");
   client.connect();
+
+  createBranchSelector();
 };
 
 export function sendSelectedBranch(rack, side) {
@@ -141,14 +144,14 @@ export function sendSelectedLevel(level) {
   }
 }
 
-export function sendSelectedRack(rack) {
-  if (algae !== rack) {
-    client.addSample(algaeDashboardToRobotTopic, rack);
+export function sendSelectedAlgaeScoring(value) {
+  if (intake !== value) {
+    client.addSample(algaeDashboardToRobotTopic, value);
   }
 }
 
-export function sendSelectedIntake(value) {
-  if (intake !== value) {
-    client.addSample(intakeDashboardToRobotTopic, value);
+export function sendSelectedRack(rack) {
+  if (algae !== rack) {
+    client.addSample(intakeDashboardToRobotTopic, rack);
   }
 }
