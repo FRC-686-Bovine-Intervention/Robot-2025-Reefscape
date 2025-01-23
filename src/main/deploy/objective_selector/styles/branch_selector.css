@@ -95,7 +95,7 @@
 }
 
 .rack_button:hover {
-  width: calc(var(--branch-button-size) * var(--hover-scale-factor));
+  width: calc(var(--branch-button-size) * 1.25);
 }
 
 .rack_button.selected {
@@ -204,7 +204,3 @@
     #465298 20px
   );
 }
-
-/* #ring.selected {
-  background: var(--algae-color);
-} */

@@ -59,7 +59,7 @@
 }
 
 .level_button:hover {
-  width: calc(var(--level-button-size) * var(--hover-scale-factor));
+  width: calc(var(--level-button-size) * 1.1);
 }
 
 .level_button.selected {
