@@ -1,11 +1,14 @@
 import { sendSelectedBranch, sendSelectedRack } from "./index.js";
-import { degreesToRadians, rotatePoint } from "./utils.js";
+import { degreesToRadians, formatString, rotatePoint } from "./utils.js";
 
 const HUB_SIZE = 500;
 const BRANCH_BUTTON_SIZE = 70;
 const BRANCH_BUTTON_NORMAL_OFFSET = 20;
 const BRANCH_TEXT_SIDE_OFFSET = 90;
 const BRANCH_TEXT_NORMAL_OFFSET = -75;
+const SHOW_NUMBERS = false;
+const BRANCH_TEXT_TEMPLATE_STRING = `%s ${SHOW_NUMBERS ? "(%s)" : ""}`;
+const RACK_BUTTON_TEMPLATE_STRING = `%s ${SHOW_NUMBERS ? "(%s)" : ""}`;
 
 const branchSelectorContainer = document.getElementById(
   "branch_selector_container"
@@ -31,6 +34,8 @@ export function createBranchSelector() {
   const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
   const y = HUB_SIZE / 2;
 
+  const letters = "abcdefghijklmnopqrstuvwxyz".toUpperCase();
+
   for (let i = 0; i < 6; i++) {
     const angle = -degreesToRadians(i * 60);
 
@@ -42,7 +47,11 @@ export function createBranchSelector() {
     rackButton.classList.add("rack_button");
     rackButton.style.setProperty("--x", rackX + "px");
     rackButton.style.setProperty("--y", rackY + "px");
-    rackButton.textContent = i + 1;
+    rackButton.textContent = formatString(
+      RACK_BUTTON_TEMPLATE_STRING,
+      i % 2 === 0 ? "H" : "L",
+      i + 1,
+    );
     branchSelectorContainer.appendChild(rackButton);
 
     rackDOM.push(rackButton);
@@ -55,7 +64,11 @@ export function createBranchSelector() {
     leftBranchText.classList.add("branch_text");
     leftBranchText.style.setProperty("--x", leftX + "px");
     leftBranchText.style.setProperty("--y", leftY + "px");
-    leftBranchText.textContent = i * 2 + 1;
+    leftBranchText.textContent = formatString(
+      BRANCH_TEXT_TEMPLATE_STRING,
+      letters[i * 2],
+      i * 2 + 1
+    );
     branchSelectorContainer.appendChild(leftBranchText);
 
     const [rightX, rightY] = rotatePoint(
@@ -66,7 +79,11 @@ export function createBranchSelector() {
     rightBranchText.classList.add("branch_text");
     rightBranchText.style.setProperty("--x", rightX + "px");
     rightBranchText.style.setProperty("--y", rightY + "px");
-    rightBranchText.textContent = i * 2 + 2;
+    rightBranchText.textContent = formatString(
+      BRANCH_TEXT_TEMPLATE_STRING,
+      letters[i * 2 + 1],
+      i * 2 + 2,
+    );
     branchSelectorContainer.appendChild(rightBranchText);
 
     const leftBranchButton = document.createElement("div");
@@ -96,7 +113,7 @@ export function createBranchSelector() {
     rightBranchButton.oncontextmenu = onRightBranchButtonClick;
     rightBranchText.oncontextmenu = onRightBranchButtonClick;
   }
-  
+
   rackDOM.push(ring);
   rackDOM.forEach((rackButton, i) => {
     const onRackButtonClick = () => sendSelectedRack(i);
