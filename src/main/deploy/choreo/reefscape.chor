@@ -1,0 +1,311 @@
+{
+ "name":"reefscape",
+ "version":1,
+ "type":"Swerve",
+ "variables":{
+  "expressions":{
+   "BranchA":{
+    "dimension":"Length",
+    "var":{
+     "exp":"sqrt((6.468819 in) ^ 2 + (ReefInnerRadius + CenterToBumper) ^ 2)",
+     "val":1.27424964333525
+    }
+   },
+   "BranchOffset":{
+    "dimension":"Angle",
+    "var":{
+     "exp":"atan2(6.468819, 17 + (65.497 / 2)) rad",
+     "val":0.1293049312385986
+    }
+   },
+   "BumperWidth":{
+    "dimension":"Length",
+    "var":{
+     "exp":"4 in",
+     "val":0.1016
+    }
+   },
+   "CenterToBumper":{
+    "dimension":"Length",
+    "var":{
+     "exp":"FrameLength / 2 + BumperWidth",
+     "val":0.4318
+    }
+   },
+   "FrameLength":{
+    "dimension":"Length",
+    "var":{
+     "exp":"26 in",
+     "val":0.6604
+    }
+   },
+   "RackDelta":{
+    "dimension":"Angle",
+    "var":{
+     "exp":"60 deg",
+     "val":1.0471975511965976
+    }
+   },
+   "ReefInnerRadius":{
+    "dimension":"Length",
+    "var":{
+     "exp":"65.497 in / 2",
+     "val":0.8318118999999999
+    }
+   }
+  },
+  "poses":{
+   "ReefA":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 3 - BranchOffset) * BranchA",
+     "val":3.2257131
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 3 - BranchOffset) * BranchA",
+     "val":4.190185002600001
+    },
+    "heading":{
+     "exp":"RackDelta * 0",
+     "val":0.0
+    }
+   },
+   "ReefB":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 3 + BranchOffset) * BranchA",
+     "val":3.2257131
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 3 + BranchOffset) * BranchA",
+     "val":3.861568997400001
+    },
+    "heading":{
+     "exp":"RackDelta * 0",
+     "val":0.0
+    }
+   },
+   "ReefC":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 4 - BranchOffset) * BranchA",
+     "val":3.71522414570332
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 4 - BranchOffset) * BranchA",
+     "val":3.013710995375679
+    },
+    "heading":{
+     "exp":"RackDelta * 1",
+     "val":1.0471975511965976
+    }
+   },
+   "ReefCenter":{
+    "x":{
+     "exp":"4.489325 m",
+     "val":4.489325
+    },
+    "y":{
+     "exp":"4.025877 m",
+     "val":4.025877
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "ReefD":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 4 + BranchOffset) * BranchA",
+     "val":3.999813954296679
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 4 + BranchOffset) * BranchA",
+     "val":2.849402992775679
+    },
+    "heading":{
+     "exp":"RackDelta * 1",
+     "val":1.0471975511965976
+    }
+   },
+   "ReefE":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 5 - BranchOffset) * BranchA",
+     "val":4.97883604570332
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 5 - BranchOffset) * BranchA",
+     "val":2.849402992775678
+    },
+    "heading":{
+     "exp":"RackDelta * 2",
+     "val":2.0943951023931953
+    }
+   },
+   "ReefF":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 5 + BranchOffset) * BranchA",
+     "val":5.2634258542966785
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 5 + BranchOffset) * BranchA",
+     "val":3.013710995375678
+    },
+    "heading":{
+     "exp":"RackDelta * 2",
+     "val":2.0943951023931953
+    }
+   },
+   "ReefG":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 0 - BranchOffset) * BranchA",
+     "val":5.7529369
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 0 - BranchOffset) * BranchA",
+     "val":3.861568997400001
+    },
+    "heading":{
+     "exp":"RackDelta * 3",
+     "val":3.141592653589793
+    }
+   },
+   "ReefH":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 0 + BranchOffset) * BranchA",
+     "val":5.7529369
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 0 + BranchOffset) * BranchA",
+     "val":4.190185002600001
+    },
+    "heading":{
+     "exp":"RackDelta * 3",
+     "val":3.141592653589793
+    }
+   },
+   "ReefI":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 1 - BranchOffset) * BranchA",
+     "val":5.263425854296679
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 1 - BranchOffset) * BranchA",
+     "val":5.038043004624322
+    },
+    "heading":{
+     "exp":"RackDelta * 4",
+     "val":4.1887902047863905
+    }
+   },
+   "ReefJ":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 1 + BranchOffset) * BranchA",
+     "val":4.9788360457033205
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 1 + BranchOffset) * BranchA",
+     "val":5.202351007224322
+    },
+    "heading":{
+     "exp":"RackDelta * 4",
+     "val":4.1887902047863905
+    }
+   },
+   "ReefK":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 2 - BranchOffset) * BranchA",
+     "val":3.99981395429668
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 2 - BranchOffset) * BranchA",
+     "val":5.202351007224323
+    },
+    "heading":{
+     "exp":"RackDelta * 5",
+     "val":5.235987755982988
+    }
+   },
+   "ReefL":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 2 + BranchOffset) * BranchA",
+     "val":3.7152241457033206
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 2 + BranchOffset) * BranchA",
+     "val":5.038043004624322
+    },
+    "heading":{
+     "exp":"RackDelta * 5",
+     "val":5.235987755982988
+    }
+   }
+  }
+ },
+ "config":{
+  "frontLeft":{
+   "x":{
+    "exp":"11 in",
+    "val":0.2794
+   },
+   "y":{
+    "exp":"11 in",
+    "val":0.2794
+   }
+  },
+  "backLeft":{
+   "x":{
+    "exp":"-11 in",
+    "val":-0.2794
+   },
+   "y":{
+    "exp":"11 in",
+    "val":0.2794
+   }
+  },
+  "mass":{
+   "exp":"150 lbs",
+   "val":68.0388555
+  },
+  "inertia":{
+   "exp":"6 kg m ^ 2",
+   "val":6.0
+  },
+  "gearing":{
+   "exp":"6.5",
+   "val":6.5
+  },
+  "radius":{
+   "exp":"2 in",
+   "val":0.0508
+  },
+  "vmax":{
+   "exp":"6000 RPM",
+   "val":628.3185307179587
+  },
+  "tmax":{
+   "exp":"1.2 N * m",
+   "val":1.2
+  },
+  "cof":{
+   "exp":"1.5",
+   "val":1.5
+  },
+  "bumper":{
+   "front":{
+    "exp":"16 in",
+    "val":0.4064
+   },
+   "side":{
+    "exp":"16 in",
+    "val":0.4064
+   },
+   "back":{
+    "exp":"16 in",
+    "val":0.4064
+   }
+  },
+  "differentialTrackWidth":{
+   "exp":"22 in",
+   "val":0.5588
+  }
+ },
+ "generationFeatures":[]
+}
