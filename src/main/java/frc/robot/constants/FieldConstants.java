@@ -59,11 +59,44 @@ public final class FieldConstants {
     }
 
     public static final class Algae {
-        public static final Distance radius = Inches.of(0);
+        public static final Distance radius = Inches.of(16.5).div(2);
     }
 
 
     public static final class Reef {
+        public static enum AlgaeLevel {
+            High(Meters.of(0.679337), Meters.of(1.313180)),
+            Low(Meters.of(0.679337), Meters.of(0.909320)),
+            ;
+            private final Transform3d transform;
+            public final Pose2d forwardRobotSpace;
+            public final Pose2d backwardRobotSpace;
+            AlgaeLevel(Distance radius, Distance height) {
+                this.transform = new Transform3d(
+                    new Translation3d(
+                        radius.unaryMinus(),
+                        Meters.zero(),
+                        height
+                    ),
+                    Rotation3d.kZero
+                );
+                this.forwardRobotSpace = new Pose2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
+                        height
+                    ),
+                    Rotation2d.kZero
+                );
+                this.backwardRobotSpace = new Pose2d(
+                    new Translation2d(
+                        forwardRobotSpace.getMeasureX().unaryMinus(),
+                        forwardRobotSpace.getMeasureY()
+                    ),
+                    Rotation2d.k180deg.minus(forwardRobotSpace.getRotation())
+                );
+            }
+        }
+
         public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
         public static final Flipped<Translation2d> reefCenter = Flipped.fromBlue(
             new Translation2d(
@@ -75,16 +108,22 @@ public final class FieldConstants {
             Degrees.of(60)
         );
         public static enum Rack {
-            Rack0(rackDelta.times(0)),
-            Rack1(rackDelta.times(1)),
-            Rack2(rackDelta.times(2)),
-            Rack3(rackDelta.times(3)),
-            Rack4(rackDelta.times(4)),
-            Rack5(rackDelta.times(5)),
+            Rack0(rackDelta.times(0), AlgaeLevel.High),
+            Rack1(rackDelta.times(1), AlgaeLevel.Low),
+            Rack2(rackDelta.times(2), AlgaeLevel.High),
+            Rack3(rackDelta.times(3), AlgaeLevel.Low),
+            Rack4(rackDelta.times(4), AlgaeLevel.High),
+            Rack5(rackDelta.times(5), AlgaeLevel.Low),
             ;
             private final Pose2d origin;
-            Rack(Rotation2d rotation) {
+            public final AlgaeLevel algaeLevel;
+            Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
+                this.algaeLevel = algaeLevel;
+            }
+
+            public Flipped<Pose3d> getAlgaePose() {
+                return Flipped.fromBlue(new Pose3d(origin).transformBy(algaeLevel.transform));
             }
         }
 

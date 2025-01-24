@@ -26,7 +26,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.RobotState;
+import frc.robot.constants.FieldConstants.Algae;
 import frc.robot.constants.FieldConstants.Coral;
+import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -83,27 +85,27 @@ public class Superstructure {
         };
     }
 
-    private static final Transform2d forwardScoringTransform = new Transform2d(
+    private static final Transform2d forwardCoralTransform = new Transform2d(
         new Translation2d(
             Coral.length.plus(Inches.of(1)),
             Inches.zero()
         ),
         new Rotation2d(Degrees.of(35).unaryMinus())
     ).inverse();
-    private static final Transform2d backwardScoringTransform = new Transform2d(
+    private static final Transform2d backwardCoralTransform = new Transform2d(
         new Translation2d(
             Coral.length.plus(Inches.of(1)),
             Inches.zero()
         ),
         new Rotation2d(Degrees.of(35))
     ).inverse();
-
-    public Command goToLevelForward(Level level) {
-        return goToSetpointSequenced(SuperstructureSetpoint.fromRobotSpace(level.forwardBranchRobotSpace.transformBy(forwardScoringTransform)));
-    }
-    public Command goToLevelBackward(Level level) {
-        return goToSetpointSequenced(SuperstructureSetpoint.fromRobotSpace(level.backwardBranchRobotSpace.transformBy(backwardScoringTransform)));
-    }
+    private static final Transform2d algaeTransform = new Transform2d(
+        new Translation2d(
+            Algae.radius.plus(Inches.of(1)),
+            Inches.zero()
+        ),
+        Rotation2d.kZero
+    ).inverse();
 
     public Command inverseKinematics(Pose2d target) {
         var pivotToTargetDist = Meters.of(target.getTranslation().getNorm());
@@ -256,6 +258,18 @@ public class Superstructure {
 
         public static SuperstructureSetpoint fromRobotSpace(Pose2d robotSpacePose) {
             return fromPivotSpace(robotSpacePose.relativeTo(pivotRobotSpace));
+        }
+        public static SuperstructureSetpoint fromLevelForward(Level level) {
+            return fromRobotSpace(level.forwardBranchRobotSpace.transformBy(forwardCoralTransform));
+        }
+        public static SuperstructureSetpoint fromLevelBackward(Level level) {
+            return fromRobotSpace(level.backwardBranchRobotSpace.transformBy(backwardCoralTransform));
+        }
+        public static SuperstructureSetpoint fromAlgaeForward(AlgaeLevel algaeLevel) {
+            return fromRobotSpace(algaeLevel.forwardRobotSpace.transformBy(algaeTransform));
+        }
+        public static SuperstructureSetpoint fromAlgaeBackward(AlgaeLevel algaeLevel) {
+            return fromRobotSpace(algaeLevel.backwardRobotSpace.transformBy(algaeTransform));
         }
     }
 }

@@ -24,6 +24,7 @@ import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
 import frc.robot.constants.FieldConstants.Reef.Level;
+import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -36,6 +37,7 @@ import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.SuperstructureSetpoint;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOFalcon;
@@ -252,8 +254,8 @@ public class RobotContainer {
                 private final Command[] commands = new Command[Level.values().length * 2];
                 {
                     for (var level : Level.values()) {
-                        commands[level.ordinal() * 2] = superstructure.goToLevelForward(level);
-                        commands[level.ordinal() * 2 + 1] = superstructure.goToLevelBackward(level);
+                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromLevelForward(level));
+                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromLevelBackward(level));
                     }
                 }
                 public Command get() {
@@ -262,6 +264,26 @@ public class RobotContainer {
                         return commands[node.level.ordinal() * 2];
                     } else {
                         return commands[node.level.ordinal() * 2 + 1];
+                    }
+                }
+            },
+            Set.of(superstructure.pivot, superstructure.elevator, superstructure.wrist)
+        ));
+        driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final Command[] commands = new Command[Rack.values().length * 2];
+                {
+                    for (var rack : Rack.values()) {
+                        commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromAlgaeForward(rack.algaeLevel));
+                        commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromAlgaeBackward(rack.algaeLevel));
+                    }
+                }
+                public Command get() {
+                    var rack = Rack.Rack2;
+                    if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+                        return commands[rack.ordinal() * 2];
+                    } else {
+                        return commands[rack.ordinal() * 2 + 1];
                     }
                 }
             },
