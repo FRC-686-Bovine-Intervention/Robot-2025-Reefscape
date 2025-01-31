@@ -32,6 +32,20 @@
      "val":0.4318
     }
    },
+   "CoralStationAngle":{
+    "dimension":"Angle",
+    "var":{
+     "exp":"54.01139199925591 deg",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationOffset":{
+    "dimension":"Length",
+    "var":{
+     "exp":"0.5 m",
+     "val":0.5
+    }
+   },
    "FrameLength":{
     "dimension":"Length",
     "var":{
@@ -62,6 +76,34 @@
    }
   },
   "poses":{
+   "CoralStationLeft":{
+    "x":{
+     "exp":"CenterToBumper * cos(-CoralStationAngle)",
+     "val":0.2537362096713698
+    },
+    "y":{
+     "exp":"6.802882 m + CenterToBumper * sin(-CoralStationAngle)",
+     "val":6.453498005086658
+    },
+    "heading":{
+     "exp":"-CoralStationAngle",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationRight":{
+    "x":{
+     "exp":"CenterToBumper * cos(CoralStationAngle)",
+     "val":0.2537362096713698
+    },
+    "y":{
+     "exp":"1.248918 m + CenterToBumper * sin(CoralStationAngle)",
+     "val":1.5983019949133426
+    },
+    "heading":{
+     "exp":"CoralStationAngle",
+     "val":0.9426766239723384
+    }
+   },
    "ReefA":{
     "x":{
      "exp":"ReefCenter.x + cos(RackDelta * 3 - BranchOffset) * BranchA",
