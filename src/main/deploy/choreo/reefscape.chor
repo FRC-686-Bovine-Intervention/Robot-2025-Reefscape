@@ -52,6 +52,13 @@
      "exp":"65.497 in / 2",
      "val":0.8318118999999999
     }
+   },
+   "StartingLineX":{
+    "dimension":"Length",
+    "var":{
+     "exp":"297.490611 in",
+     "val":7.5562615194
+    }
    }
   },
   "poses":{
