@@ -30,6 +30,7 @@ export function createBranchSelector() {
   const ring = document.createElement("div");
   ring.id = "ring";
   branchSelectorContainer.appendChild(ring);
+  rackDOM.push(ring);
 
   const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
   const y = HUB_SIZE / 2;
@@ -114,7 +115,6 @@ export function createBranchSelector() {
     rightBranchText.oncontextmenu = onRightBranchButtonClick;
   }
 
-  rackDOM.push(ring);
   rackDOM.forEach((rackButton, i) => {
     const onRackButtonClick = () => sendSelectedRack(i);
     rackButton.onclick = onRackButtonClick;
