@@ -32,7 +32,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     @Override
     public void periodic() {
         selectorIO.updateInputs(selectorInputs);
-        Logger.processInputs("NodeSelector", selectorInputs);
+        Logger.processInputs("ObjectiveTracker", selectorInputs);
 
         if (selectorInputs.coral != -1) {
             selectedCoral = FieldConstants.Reef.nodes[selectorInputs.coral];

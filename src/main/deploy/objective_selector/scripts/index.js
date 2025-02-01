@@ -44,7 +44,7 @@ export let intake = -1;
 
 let client = new NT4_Client(
   window.location.hostname,
-  "NodeSelector",
+  "ObjectiveSelector",
   (topic) => {}, // Topic Announce
   () => {}, // Topic Unannounce
   (topic, timestamp, value) => {

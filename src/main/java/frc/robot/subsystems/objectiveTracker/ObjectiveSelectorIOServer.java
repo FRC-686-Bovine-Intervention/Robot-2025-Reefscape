@@ -30,14 +30,14 @@ public class ObjectiveSelectorIOServer implements ObjectiveSelectorIO {
 
     @Override
     public void updateInputs(ObjectiveSelectorIOInputs inputs) {
-        for (var value : coralSubscriber.readQueueValues()) {
-            inputs.coral = (int) value;
+        if (coralSubscriber.readQueueValues().length > 0) {
+            inputs.coral = (int) coralSubscriber.get();
         }
-        for (var value : algaeSubscriber.readQueueValues()) {
-            inputs.algae = (int) value;
+        if (algaeSubscriber.readQueueValues().length > 0) {
+            inputs.algae = (int) algaeSubscriber.get();
         }
-        for (var value : intakeSubscriber.readQueueValues()) {
-            inputs.intake = (int) value;
+        if (intakeSubscriber.readQueueValues().length > 0) {
+            inputs.intake = (int) intakeSubscriber.get();
         }
     }
 
