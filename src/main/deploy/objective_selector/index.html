@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Objective Tracker Dashboard</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/branch_selector.css" />
+    <link rel="stylesheet" href="styles/level_selector.css" />
+    <link rel="stylesheet" href="styles/timer.css" />
+    <link rel="stylesheet" href="styles/alerts.css" />
+    <link rel="stylesheet" href="styles/algae_scoring_selector.css" />
+  </head>
+  <body>
+    <div id="timer_container">
+      <p id="timer">00:00.000</p>
+    </div>
+    <div id="container">
+      <div id="alerts_container">
+        <div class="alerts_header">
+          <h3>Alerts</h3>
+          <svg
+            id="move_sidebar_right"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-panel-right-close"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M15 3v18" />
+            <path d="m8 9 3 3-3 3" />
+          </svg>
+          <svg
+            id="move_sidebar_left"
+            style="display: none"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-panel-right-open"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M15 3v18" />
+            <path d="m10 15-3-3 3-3" />
+          </svg>
+        </div>
+        <!-- <h4 id="error_header" style="display: none">Errors</h4> -->
+        <div class="alerts" id="errors"></div>
+        <!-- <h4 id="warning_header" style="display: none">Warnings</h4> -->
+        <div class="alerts" id="warnings"></div>
+        <!-- <h4 id="info_header" style="display: none">Infos</h4> -->
+        <div class="alerts" id="infos"></div>
+      </div>
+      <div></div>
+      <div id="branch_selector_container">
+        <div id="hub"></div>
+      </div>
+      <div id="level_selector_column">
+        <div id="level_selector_container">
+          <div id="branch">
+            <svg
+              width="86"
+              height="388"
+              viewBox="0 0 86 388"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M85.5 379H78H4.5C3.39543 379 2.5 379.895 2.5 381V385.5C2.5 386.605 3.39543 387.5 4.5 387.5H83.5C84.6046 387.5 85.5 386.605 85.5 385.5V379Z"
+              />
+              <path
+                d="M78 329.5L7.08672 279.616C6.20269 278.994 4.98452 279.187 4.33601 280.052L2.24433 282.841C1.56453 283.747 1.77268 285.037 2.70314 285.683L78 338V329.5Z"
+              />
+              <path
+                d="M78 218.5L6.67566 168.671C5.75619 168.028 4.48832 168.268 3.86614 169.201L2.08827 171.868C1.48388 172.774 1.71638 173.998 2.61118 174.619L78 227V218.5Z"
+              />
+              <path
+                d="M2 0.5C0.89543 0.5 0 1.39543 0 2.5V59.963C0 60.6133 0.316074 61.2229 0.847456 61.5976L77.1525 115.402C77.6839 115.777 78 116.387 78 117.037V218.5V227V329.5V338V379H85.5V113.042C85.5 112.389 85.181 111.777 84.6455 111.403L8.35448 58.097C7.81901 57.7229 7.5 57.1108 7.5 56.4576V2.5C7.5 1.39543 6.60457 0.5 5.5 0.5H2Z"
+              />
+            </svg>
+          </div>
+        </div>
+        <div id="algae_scoring_selector_container"></div>
+      </div>
+    </div>
+  </body>
+  <script src="./scripts/index.js" type="module"></script>
+</html>
