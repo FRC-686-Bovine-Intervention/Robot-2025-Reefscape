@@ -1,4 +1,4 @@
-package frc.util;
+package frc.util.commands;
 
 import java.util.Arrays;
 import java.util.Collections;

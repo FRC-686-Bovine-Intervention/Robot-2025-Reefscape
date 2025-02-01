@@ -70,7 +70,7 @@ public final class DriveConstants {
         new ModuleConstants(
             "Front Left",
             HardwareDevices.frontLeftDriveMotorID, HardwareDevices.frontLeftTurnMotorID,
-            InvertedValue.Clockwise_Positive,
+            InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.25),
             new Translation2d(
                 trackWidthX.div(+2),
@@ -100,7 +100,7 @@ public final class DriveConstants {
         new ModuleConstants(
             "Back Right",
             HardwareDevices.backRightDriveMotorID, HardwareDevices.backRightTurnMotorID,
-            InvertedValue.Clockwise_Positive,
+            InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.75),
             new Translation2d(
                 trackWidthX.div(-2),
