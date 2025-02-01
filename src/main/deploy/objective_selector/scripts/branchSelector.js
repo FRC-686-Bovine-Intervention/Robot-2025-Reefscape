@@ -1,7 +1,7 @@
 import { sendSelectedBranch, sendSelectedRack } from "./index.js";
 import { degreesToRadians, formatString, rotatePoint } from "./utils.js";
 
-const HUB_SIZE = 500;
+const HUB_SIZE = 470;
 const BRANCH_BUTTON_SIZE = 70;
 const BRANCH_BUTTON_NORMAL_OFFSET = 20;
 const BRANCH_TEXT_SIDE_OFFSET = 90;
@@ -10,6 +10,7 @@ const SHOW_NUMBERS = false;
 const BRANCH_TEXT_TEMPLATE_STRING = `%s ${SHOW_NUMBERS ? "(%s)" : ""}`;
 const RACK_BUTTON_TEMPLATE_STRING = `%s ${SHOW_NUMBERS ? "(%s)" : ""}`;
 
+const branchSelectorColumn = document.getElementById("branch_selector_column");
 const branchSelectorContainer = document.getElementById(
   "branch_selector_container"
 );
@@ -30,6 +31,13 @@ export function createBranchSelector() {
   const ring = document.createElement("div");
   ring.id = "ring";
   branchSelectorContainer.appendChild(ring);
+  rackDOM.push(ring);
+
+  const groundAlgaeDOM = document.createElement("div");
+  groundAlgaeDOM.id = "ground_algae_dom";
+  groundAlgaeDOM.textContent = "Ground Algae";
+  branchSelectorColumn.appendChild(groundAlgaeDOM);
+  rackDOM.push(groundAlgaeDOM);
 
   const x = (HUB_SIZE / 2) * Math.tan(degreesToRadians(30));
   const y = HUB_SIZE / 2;
@@ -114,9 +122,8 @@ export function createBranchSelector() {
     rightBranchText.oncontextmenu = onRightBranchButtonClick;
   }
 
-  rackDOM.push(ring);
   rackDOM.forEach((rackButton, i) => {
-    const onRackButtonClick = () => sendSelectedRack(i);
+    const onRackButtonClick = () => {sendSelectedRack(i); console.log(i)};
     rackButton.onclick = onRackButtonClick;
     rackButton.oncontextmenu = onRackButtonClick;
   });
@@ -137,6 +144,7 @@ export function displaySelectedBranch(rack, side) {
 export function displaySelectedRack(rack) {
   rackDOM.forEach((dom, i) => {
     if (i === rack) {
+      console.log(i, dom)
       dom.classList.add("selected");
     } else {
       dom.classList.remove("selected");

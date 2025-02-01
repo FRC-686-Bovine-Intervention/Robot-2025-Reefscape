@@ -135,8 +135,8 @@ public class Robot extends LoggedRobot {
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
-        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.nodes).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
-        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.nodes).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
+        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
+        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
     }
 
     @Override

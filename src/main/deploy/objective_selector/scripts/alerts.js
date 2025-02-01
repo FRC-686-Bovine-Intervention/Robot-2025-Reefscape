@@ -4,10 +4,6 @@ const infosDOM = document.getElementById("infos");
 const warningsDOM = document.getElementById("warnings");
 const errorsDOM = document.getElementById("errors");
 
-// const infoHeader = document.getElementById("info_header");
-// const warningHeader = document.getElementById("warning_header");
-// const errorHeader = document.getElementById("error_header");
-
 const icons = {
   info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>`,
   warning: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4" /><path d="M12 17h.01" /></svg>`,
@@ -73,10 +69,8 @@ function alert(type, text) {
 export function displayInfos(texts) {
   if (texts.length > 0) {
     infosDOM.style.display = "";
-    // infoHeader.style.display = "";
   } else {
     infosDOM.style.display = "none";
-    // infoHeader.style.display = "none";
   }
   infosDOM.innerHTML = "";
   texts
@@ -87,10 +81,8 @@ export function displayInfos(texts) {
 export function displayWarnings(texts) {
   if (texts.length > 0) {
     warningsDOM.style.display = "";
-    // warningHeader.style.display = "";
   } else {
     warningsDOM.style.display = "none";
-    // warningHeader.style.display = "none";
   }
   warningsDOM.innerHTML = "";
   texts
@@ -100,10 +92,8 @@ export function displayWarnings(texts) {
 
 export function displayErrors(texts) {
   if (texts.length > 0) {
-    // errorHeader.style.display = "";
     errorsDOM.style.display = "";
   } else {
-    // errorHeader.style.display = "none";
     errorsDOM.style.display = "none";
   }
   errorsDOM.innerHTML = "";

@@ -176,10 +176,8 @@ public final class FieldConstants {
             Right(Meters.of(-0.164309)),
             ;
             private final Transform3d transform;
-            private final Distance yOffset;
             private final Transform2d scoringTransform;
             Side(Distance yOffset) {
-                this.yOffset = yOffset;
                 this.transform = new Transform3d(
                     new Translation3d(
                         Meters.zero(),
@@ -222,44 +220,52 @@ public final class FieldConstants {
             }
         }
 
-        public static final Branch[] nodes = new Branch[Rack.values().length * Level.values().length * Side.values().length];
+        public static final Branch[] branches = new Branch[Rack.values().length * Level.values().length * Side.values().length];
         static {
             for (var rack : Rack.values()) {
                 for (var level : Level.values()) {
                     for (var side : Side.values()) {
-                        nodes[Branch.getIndex(rack, level, side)] = new Branch(rack, level, side);
+                        branches[Branch.getIndex(rack, level, side)] = new Branch(rack, level, side);
                     }
                 }
             }
         }
 
-        public static final Branch getNode(Rack rack, Level level, Side side) {
-            return nodes[Branch.getIndex(rack, level, side)];
+        public static final Branch getBranch(Rack rack, Level level, Side side) {
+            return branches[Branch.getIndex(rack, level, side)];
         }
 
-        public static final Branch getNode(int rack, int level, int side) {
-            return getNode(Rack.values()[rack], Level.values()[level], Side.values()[side]);
+        public static final Branch getBranch(int rack, int level, int side) {
+            return getBranch(Rack.values()[rack], Level.values()[level], Side.values()[side]);
         }
 
         public static class StagedAlgae {
             public final Rack rack;
             public final AlgaeLevel algaeLevel;
-            public final Flipped<Pose3d> algaeFlipped;
+            public final Flipped<Pose3d> algaePose;
             public final Flipped<Pose2d> robotPose;
             private static final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
             
             public StagedAlgae (Rack rack, AlgaeLevel algaeLevel) {
                 this.rack = rack;
                 this.algaeLevel = algaeLevel;
-                this.algaeFlipped = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
+                this.algaePose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
                 this.robotPose = Flipped.fromBlue(rack.origin.transformBy(scoringTransform));
+            }
+
+            public static int getIndex(Rack rack) {
+                return rack.ordinal();
+            }
+
+            public int getIndex() {
+                return StagedAlgae.getIndex(rack);
             }
         }
 
         public static final StagedAlgae[] stagedAlgae = new StagedAlgae[Rack.values().length];
         static {
             for(var rack : Rack.values()) {
-                stagedAlgae[rack.ordinal()] = new StagedAlgae(rack, rack.algaeLevel);
+                stagedAlgae[StagedAlgae.getIndex(rack)] = new StagedAlgae(rack, rack.algaeLevel);
             }
         }
     }
