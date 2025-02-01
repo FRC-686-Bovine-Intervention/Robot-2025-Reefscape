@@ -4,8 +4,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
-import java.nio.ByteBuffer;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -17,7 +15,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
 import frc.util.flipping.Flipped;
 
@@ -194,13 +191,15 @@ public final class FieldConstants {
             public final Rack rack;
             public final Level level;
             public final Side side;
-            public final Flipped<Pose3d> pose;
+            public final Flipped<Pose3d> branchPose;
+            public final Flipped<Pose2d> robotPose;
 
             public Node(Rack rack, Level level, Side side) {
                 this.rack = rack;
                 this.level = level;
                 this.side = side;
-                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+                this.branchPose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+                this.robotPose = Flipped.fromBlue(new Pose2d());
             }
 
             public int getIndex() {

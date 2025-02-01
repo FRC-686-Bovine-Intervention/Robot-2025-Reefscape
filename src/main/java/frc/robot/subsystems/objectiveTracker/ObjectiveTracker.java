@@ -51,8 +51,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
         selectorIO.setAlgae(selectedAlgae);
         selectorIO.setIntake(selectedIntake);
         
-        Logger.recordOutput("Selected Coral", selectedCoral.pose.getOurs());
-        Logger.recordOutput("Placed Coral", Iterator.of(placedCoral).map((node) -> node.pose.getOurs().transformBy(Coral.rackPlacement)).collect_array(Pose3d[]::new));
+        Logger.recordOutput("Selected Coral", selectedCoral.branchPose.getOurs());
+        Logger.recordOutput("Placed Coral", Iterator.of(placedCoral).map((node) -> node.branchPose.getOurs().transformBy(Coral.rackPlacement)).collect_array(Pose3d[]::new));
     }
 
     public void moveSelectedCoral(int x, int y) {
