@@ -20,6 +20,7 @@ import edu.wpi.first.util.struct.StructSerializable;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.Flipped;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
+import frc.util.misc.GeomUtil;
 
 public final class FieldConstants {
     public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
@@ -29,7 +30,7 @@ public final class FieldConstants {
     static {
         AprilTagFieldLayout a = null;
         try {
-            a = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+            a = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -68,25 +69,13 @@ public final class FieldConstants {
             Rotation2d.kZero
         );
 
-        public static final Flipped<Pose2d> leftStationLeftBackward = Flipped.fromBlue(leftStationMidpoint.transformBy(leftStationTransform));
-        public static final Flipped<Pose2d> leftStationCenterBackward = Flipped.fromBlue(leftStationMidpoint.transformBy(centerStationTransform));
-        public static final Flipped<Pose2d> leftStationRightBackward = Flipped.fromBlue(leftStationMidpoint.transformBy(rightStationTransform));
+        public static final Flipped<Pose2d> leftStationLeft = Flipped.fromBlue(leftStationMidpoint.transformBy(leftStationTransform).transformBy(GeomUtil.rotate180Transform2d));
+        public static final Flipped<Pose2d> leftStationCenter = Flipped.fromBlue(leftStationMidpoint.transformBy(centerStationTransform).transformBy(GeomUtil.rotate180Transform2d));
+        public static final Flipped<Pose2d> leftStationRight = Flipped.fromBlue(leftStationMidpoint.transformBy(rightStationTransform).transformBy(GeomUtil.rotate180Transform2d));
 
-        public static final Flipped<Pose2d> rightStationLeftBackward = Flipped.fromBlue(rightStationMidpoint.transformBy(leftStationTransform));
-        public static final Flipped<Pose2d> rightStationCenterBackward = Flipped.fromBlue(rightStationMidpoint.transformBy(centerStationTransform));
-        public static final Flipped<Pose2d> rightStationRightBackward = Flipped.fromBlue(rightStationMidpoint.transformBy(rightStationTransform));
-
-        public static final Flipped<Pose2d> leftStationLeftForward = leftStationLeftBackward.map(CoralStation::rotate);
-        public static final Flipped<Pose2d> leftStationCenterForward = leftStationCenterBackward.map(CoralStation::rotate);
-        public static final Flipped<Pose2d> leftStationRightForward = leftStationRightBackward.map(CoralStation::rotate);
-        
-        public static final Flipped<Pose2d> rightStationLeftForward = rightStationLeftBackward.map(CoralStation::rotate);
-        public static final Flipped<Pose2d> rightStationCenterForward = rightStationCenterBackward.map(CoralStation::rotate);
-        public static final Flipped<Pose2d> rightStationRightForward = rightStationRightBackward.map(CoralStation::rotate);
-
-        private static Pose2d rotate(Pose2d pose) {
-            return pose.transformBy(new Transform2d(Translation2d.kZero, Rotation2d.k180deg));
-        }
+        public static final Flipped<Pose2d> rightStationLeft = Flipped.fromBlue(rightStationMidpoint.transformBy(leftStationTransform).transformBy(GeomUtil.rotate180Transform2d));
+        public static final Flipped<Pose2d> rightStationCenter = Flipped.fromBlue(rightStationMidpoint.transformBy(centerStationTransform).transformBy(GeomUtil.rotate180Transform2d));
+        public static final Flipped<Pose2d> rightStationRight = Flipped.fromBlue(rightStationMidpoint.transformBy(rightStationTransform).transformBy(GeomUtil.rotate180Transform2d));
     }
 
     public static final class Coral {
@@ -118,7 +107,6 @@ public final class FieldConstants {
     public static final class Algae {
         public static final Distance radius = Inches.of(16.5).div(2);
     }
-
 
     public static final class Reef {
         public static final Distance minimumReefRadius = Inches.of(65.497).div(2);

@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.constants.FieldConstants;
+import frc.util.misc.GeomUtil;
 
 public class AllianceFlipUtil {
     public static enum FieldFlipType {
@@ -132,11 +133,10 @@ public class AllianceFlipUtil {
     public static Rotation3d flip(Rotation3d rotation) {
         return flip(rotation, defaultFlipType);
     }
-    private static final Rotation3d rev = new Rotation3d(Rotation2d.k180deg);
     public static Rotation3d flip(Rotation3d rotation, FieldFlipType flipType) {
         switch(flipType) {
             default:
-            case CenterPointRotation:   return rotation.rotateBy(rev);
+            case CenterPointRotation:   return rotation.rotateBy(GeomUtil.rotate180Transform3d.getRotation());
             case CenterLineMirror:      return null;
             case XenterLineMirror:      return null;
         }
