@@ -17,7 +17,9 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.util.struct.StructSerializable;
+import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.Flipped;
+import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 
 public final class FieldConstants {
     public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
@@ -32,6 +34,59 @@ public final class FieldConstants {
             e.printStackTrace();
         }
         apriltagLayout = a;
+    }
+
+    public static final class CoralStation {
+        private static final Angle rightStationWallAngle = Degrees.of(144.011392);
+        private static final Pose2d rightStationMidpoint = new Pose2d(
+            new Translation2d(
+                Inches.of(33.563385),
+                Inches.of(25.876826)
+            ),
+            new Rotation2d(rightStationWallAngle).minus(Rotation2d.kCCW_90deg)
+        );
+        private static final Pose2d leftStationMidpoint = AllianceFlipUtil.flip(rightStationMidpoint, FieldFlipType.XenterLineMirror);
+        private static final Transform2d centerStationTransform = new Transform2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper,
+                Inches.zero()
+            ),
+            Rotation2d.kZero
+        );
+        private static final Transform2d leftStationTransform = new Transform2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper,
+                Inches.of(24)
+            ),
+            Rotation2d.kZero
+        );
+        private static final Transform2d rightStationTransform = new Transform2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper,
+                Inches.of(24).unaryMinus()
+            ),
+            Rotation2d.kZero
+        );
+
+        public static final Flipped<Pose2d> leftStationLeftBackward = Flipped.fromBlue(leftStationMidpoint.transformBy(leftStationTransform));
+        public static final Flipped<Pose2d> leftStationCenterBackward = Flipped.fromBlue(leftStationMidpoint.transformBy(centerStationTransform));
+        public static final Flipped<Pose2d> leftStationRightBackward = Flipped.fromBlue(leftStationMidpoint.transformBy(rightStationTransform));
+
+        public static final Flipped<Pose2d> rightStationLeftBackward = Flipped.fromBlue(rightStationMidpoint.transformBy(leftStationTransform));
+        public static final Flipped<Pose2d> rightStationCenterBackward = Flipped.fromBlue(rightStationMidpoint.transformBy(centerStationTransform));
+        public static final Flipped<Pose2d> rightStationRightBackward = Flipped.fromBlue(rightStationMidpoint.transformBy(rightStationTransform));
+
+        public static final Flipped<Pose2d> leftStationLeftForward = leftStationLeftBackward.map(CoralStation::rotate);
+        public static final Flipped<Pose2d> leftStationCenterForward = leftStationCenterBackward.map(CoralStation::rotate);
+        public static final Flipped<Pose2d> leftStationRightForward = leftStationRightBackward.map(CoralStation::rotate);
+        
+        public static final Flipped<Pose2d> rightStationLeftForward = rightStationLeftBackward.map(CoralStation::rotate);
+        public static final Flipped<Pose2d> rightStationCenterForward = rightStationCenterBackward.map(CoralStation::rotate);
+        public static final Flipped<Pose2d> rightStationRightForward = rightStationRightBackward.map(CoralStation::rotate);
+
+        private static Pose2d rotate(Pose2d pose) {
+            return pose.transformBy(new Transform2d(Translation2d.kZero, Rotation2d.k180deg));
+        }
     }
 
     public static final class Coral {
@@ -66,39 +121,6 @@ public final class FieldConstants {
 
 
     public static final class Reef {
-        public static enum AlgaeLevel {
-            High(Meters.of(0.679337), Meters.of(1.313180)),
-            Low(Meters.of(0.679337), Meters.of(0.909320)),
-            ;
-            private final Transform3d transform;
-            public final Pose2d forwardRobotSpace;
-            public final Pose2d backwardRobotSpace;
-            AlgaeLevel(Distance radius, Distance height) {
-                this.transform = new Transform3d(
-                    new Translation3d(
-                        radius.unaryMinus(),
-                        Meters.zero(),
-                        height
-                    ),
-                    Rotation3d.kZero
-                );
-                this.forwardRobotSpace = new Pose2d(
-                    new Translation2d(
-                        RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
-                        height
-                    ),
-                    Rotation2d.kZero
-                );
-                this.backwardRobotSpace = new Pose2d(
-                    new Translation2d(
-                        forwardRobotSpace.getMeasureX().unaryMinus(),
-                        forwardRobotSpace.getMeasureY()
-                    ),
-                    Rotation2d.k180deg.minus(forwardRobotSpace.getRotation())
-                );
-            }
-        }
-
         public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
         public static final Flipped<Translation2d> reefCenter = Flipped.fromBlue(
             new Translation2d(
@@ -239,6 +261,39 @@ public final class FieldConstants {
             return getBranch(Rack.values()[rack], Level.values()[level], Side.values()[side]);
         }
 
+        public static enum AlgaeLevel {
+            High(Meters.of(0.679337), Meters.of(1.313180)),
+            Low(Meters.of(0.679337), Meters.of(0.909320)),
+            ;
+            private final Transform3d transform;
+            public final Pose2d forwardRobotSpace;
+            public final Pose2d backwardRobotSpace;
+            AlgaeLevel(Distance radius, Distance height) {
+                this.transform = new Transform3d(
+                    new Translation3d(
+                        radius.unaryMinus(),
+                        Meters.zero(),
+                        height
+                    ),
+                    Rotation3d.kZero
+                );
+                this.forwardRobotSpace = new Pose2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
+                        height
+                    ),
+                    Rotation2d.kZero
+                );
+                this.backwardRobotSpace = new Pose2d(
+                    new Translation2d(
+                        forwardRobotSpace.getMeasureX().unaryMinus(),
+                        forwardRobotSpace.getMeasureY()
+                    ),
+                    Rotation2d.k180deg.minus(forwardRobotSpace.getRotation())
+                );
+            }
+        }
+
         public static class StagedAlgae {
             public final Rack rack;
             public final AlgaeLevel algaeLevel;
@@ -267,6 +322,10 @@ public final class FieldConstants {
             for(var rack : Rack.values()) {
                 stagedAlgae[StagedAlgae.getIndex(rack)] = new StagedAlgae(rack, rack.algaeLevel);
             }
+        }
+
+        public static StagedAlgae getStagedAlgae(Rack rack) {
+            return stagedAlgae[rack.ordinal()];
         }
     }
 }

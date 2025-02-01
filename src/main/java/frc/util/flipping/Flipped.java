@@ -1,5 +1,7 @@
 package frc.util.flipping;
 
+import java.util.function.Function;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -39,6 +41,10 @@ public class Flipped<T> {
         } else {
             return getBlue();
         }
+    }
+
+    public Flipped<T> map(Function<T, T> mappingFunction) {
+        return new Flipped<T>(mappingFunction.apply(this.blue), mappingFunction.apply(this.red));
     }
 
     public static <T extends Flippable<T>> Flipped<T> fromBlue(T blue) {
