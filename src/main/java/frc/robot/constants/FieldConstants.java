@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -175,7 +176,10 @@ public final class FieldConstants {
             Right(Meters.of(-0.164309)),
             ;
             private final Transform3d transform;
+            private final Distance yOffset;
+            private final Transform2d scoringTransform;
             Side(Distance yOffset) {
+                this.yOffset = yOffset;
                 this.transform = new Transform3d(
                     new Translation3d(
                         Meters.zero(),
@@ -183,6 +187,13 @@ public final class FieldConstants {
                         Meters.zero()
                     ),
                     Rotation3d.kZero
+                );
+                this.scoringTransform = new Transform2d(
+                    new Translation2d(
+                        minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                        yOffset
+                    ),
+                    Rotation2d.kZero
                 );
             }
         }
@@ -199,7 +210,7 @@ public final class FieldConstants {
                 this.level = level;
                 this.side = side;
                 this.branchPose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
-                this.robotPose = Flipped.fromBlue(new Pose2d());
+                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(side.scoringTransform));
             }
 
             public int getIndex() {

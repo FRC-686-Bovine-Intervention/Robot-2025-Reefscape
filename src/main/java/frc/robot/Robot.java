@@ -15,9 +15,8 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -137,6 +136,7 @@ public class Robot extends LoggedRobot {
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
         Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.nodes).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
+        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.nodes).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
     }
 
     @Override
