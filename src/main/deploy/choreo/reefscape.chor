@@ -90,18 +90,18 @@
      "val":-0.9426766239723384
     }
    },
-   "CoralStationLeft3":{
+   "CoralStationLeftMid":{
     "x":{
-     "exp":"CenterToBumper * cos(CoralStationAngle)",
+     "exp":"CoralStationLeft.x + CoralStationOffset * sin(CoralStationAngle)",
      "val":0.2537362096713698
     },
     "y":{
-     "exp":"1.248918 m + CenterToBumper * sin(CoralStationAngle)",
+     "exp":"CoralStationLeft.y + CoralStationOffset * cos(CoralStationAngle)",
      "val":1.5983019949133426
     },
     "heading":{
-     "exp":"CoralStationAngle",
-     "val":0.9426766239723384
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
     }
    },
    "CoralStationLeftClose":{
