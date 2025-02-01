@@ -198,14 +198,14 @@ public final class FieldConstants {
             }
         }
 
-        public static final class Node implements StructSerializable {
+        public static final class Branch implements StructSerializable {
             public final Rack rack;
             public final Level level;
             public final Side side;
             public final Flipped<Pose3d> branchPose;
             public final Flipped<Pose2d> robotPose;
 
-            public Node(Rack rack, Level level, Side side) {
+            public Branch(Rack rack, Level level, Side side) {
                 this.rack = rack;
                 this.level = level;
                 this.side = side;
@@ -214,7 +214,7 @@ public final class FieldConstants {
             }
 
             public int getIndex() {
-                return Node.getIndex(rack, level, side);
+                return Branch.getIndex(rack, level, side);
             }
 
             public static int getIndex(Rack rack, Level level, Side side) {
@@ -222,23 +222,45 @@ public final class FieldConstants {
             }
         }
 
-        public static final Node[] nodes = new Node[Rack.values().length * Level.values().length * Side.values().length];
+        public static final Branch[] nodes = new Branch[Rack.values().length * Level.values().length * Side.values().length];
         static {
             for (var rack : Rack.values()) {
                 for (var level : Level.values()) {
                     for (var side : Side.values()) {
-                        nodes[Node.getIndex(rack, level, side)] = new Node(rack, level, side);
+                        nodes[Branch.getIndex(rack, level, side)] = new Branch(rack, level, side);
                     }
                 }
             }
         }
 
-        public static final Node getNode(Rack rack, Level level, Side side) {
-            return nodes[Node.getIndex(rack, level, side)];
+        public static final Branch getNode(Rack rack, Level level, Side side) {
+            return nodes[Branch.getIndex(rack, level, side)];
         }
 
-        public static final Node getNode(int rack, int level, int side) {
+        public static final Branch getNode(int rack, int level, int side) {
             return getNode(Rack.values()[rack], Level.values()[level], Side.values()[side]);
+        }
+
+        public static class StagedAlgae {
+            public final Rack rack;
+            public final AlgaeLevel algaeLevel;
+            public final Flipped<Pose3d> algaeFlipped;
+            public final Flipped<Pose2d> robotPose;
+            private static final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
+            
+            public StagedAlgae (Rack rack, AlgaeLevel algaeLevel) {
+                this.rack = rack;
+                this.algaeLevel = algaeLevel;
+                this.algaeFlipped = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
+                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(scoringTransform));
+            }
+        }
+
+        public static final StagedAlgae[] stagedAlgae = new StagedAlgae[Rack.values().length];
+        static {
+            for(var rack : Rack.values()) {
+                stagedAlgae[rack.ordinal()] = new StagedAlgae(rack, rack.algaeLevel);
+            }
         }
     }
 }

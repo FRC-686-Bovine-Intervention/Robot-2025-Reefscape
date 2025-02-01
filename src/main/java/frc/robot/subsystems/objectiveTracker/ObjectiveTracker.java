@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Node;
+import frc.robot.constants.FieldConstants.Reef.Branch;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.util.VirtualSubsystem;
@@ -19,8 +19,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ObjectiveSelectorIOInputsAutoLogged selectorInputs =
         new ObjectiveSelectorIOInputsAutoLogged();
 
-    private final ArrayList<Node> placedCoral = new ArrayList<>(36);
-    private Node selectedCoral = FieldConstants.Reef.nodes[0];
+    private final ArrayList<Branch> placedCoral = new ArrayList<>(36);
+    private Branch selectedCoral = FieldConstants.Reef.nodes[0];
     private int selectedAlgae = 0;
     private int selectedIntake = 0;
 
@@ -67,7 +67,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
 
-    public Node getSelectedNode() {
+    public Branch getSelectedNode() {
         return selectedCoral;
     }
 }
