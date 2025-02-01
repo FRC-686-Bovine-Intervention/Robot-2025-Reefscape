@@ -9,7 +9,6 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -36,30 +35,22 @@ import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
+import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureSetpoint;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
-import frc.robot.subsystems.superstructure.elevator.ElevatorIOFalcon;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotIO;
-import frc.robot.subsystems.superstructure.pivot.PivotIOFalcon;
 import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristIO;
-import frc.robot.subsystems.superstructure.wrist.WristIOFalcon;
 import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
-import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
-import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants;
-import frc.robot.subsystems.vision.bucket.BucketCamera;
-import frc.robot.subsystems.vision.bucket.BucketCameraIOPhotonVision;
 import frc.robot.subsystems.vision.bucket.BucketVision;
-import frc.robot.subsystems.vision.bucket.BucketVisionConstants;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.Joystick;
@@ -160,7 +151,7 @@ public class RobotContainer {
             break;
         }
         manualOverrides = new ManualOverrides();
-        objectiveTracker = new ObjectiveTracker();
+        objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
 
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
@@ -245,11 +236,11 @@ public class RobotContainer {
         // );
 
 
-        driveController.b().toggleOnTrue(superstructure.pivotVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
-        driveController.x().toggleOnTrue(superstructure.elevatorVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
+        // driveController.b().toggleOnTrue(superstructure.pivotVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
+        // driveController.x().toggleOnTrue(superstructure.elevatorVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
         
-        driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
-        driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
+        // driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
+        // driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
         driveController.leftBumper().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final Command[] commands = new Command[Level.values().length * 2];
@@ -261,7 +252,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     var node = objectiveTracker.getSelectedNode();
-                    if (drive.getRotation().minus(node.pose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+                    if (drive.getRotation().minus(node.branchPose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
                         return commands[node.level.ordinal() * 2];
                     } else {
                         return commands[node.level.ordinal() * 2 + 1];
@@ -292,11 +283,11 @@ public class RobotContainer {
         ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, 1)));
-        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, -1)));
-        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(-1, 0)));
-        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(1, 0)));
-        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().pose.getOurs().getRotation().toRotation2d())));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
+        // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.Rack.Rack0.)));
     }
 
     private void configureNotifications() {}

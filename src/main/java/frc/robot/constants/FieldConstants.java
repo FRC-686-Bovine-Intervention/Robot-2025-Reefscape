@@ -10,11 +10,13 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.util.struct.StructSerializable;
 import frc.util.flipping.Flipped;
 
 public final class FieldConstants {
@@ -174,6 +176,7 @@ public final class FieldConstants {
             Right(Meters.of(-0.164309)),
             ;
             private final Transform3d transform;
+            private final Transform2d scoringTransform;
             Side(Distance yOffset) {
                 this.transform = new Transform3d(
                     new Translation3d(
@@ -183,38 +186,87 @@ public final class FieldConstants {
                     ),
                     Rotation3d.kZero
                 );
+                this.scoringTransform = new Transform2d(
+                    new Translation2d(
+                        minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                        yOffset
+                    ),
+                    Rotation2d.kZero
+                );
             }
         }
 
-        public static final class Node {
-            public final Flipped<Pose3d> pose;
+        public static final class Branch implements StructSerializable {
             public final Rack rack;
             public final Level level;
             public final Side side;
+            public final Flipped<Pose3d> branchPose;
+            public final Flipped<Pose2d> robotPose;
 
-            Node(Rack rack, Level level, Side side) {
+            public Branch(Rack rack, Level level, Side side) {
                 this.rack = rack;
                 this.level = level;
                 this.side = side;
-                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+                this.branchPose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(side.scoringTransform));
+            }
+
+            public int getIndex() {
+                return Branch.getIndex(rack, level, side);
+            }
+
+            public static int getIndex(Rack rack, Level level, Side side) {
+                return (rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal());
             }
         }
 
-        public static final Node[] nodes = new Node[Rack.values().length * Level.values().length * Side.values().length];
+        public static final Branch[] branches = new Branch[Rack.values().length * Level.values().length * Side.values().length];
         static {
             for (var rack : Rack.values()) {
                 for (var level : Level.values()) {
                     for (var side : Side.values()) {
-                        nodes[(rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal())] = 
-                            new Node(rack, level, side)
-                        ;
+                        branches[Branch.getIndex(rack, level, side)] = new Branch(rack, level, side);
                     }
                 }
             }
         }
 
-        public static final Node getNode(Rack rack, Level level, Side side) {
-            return nodes[(rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal())];
+        public static final Branch getBranch(Rack rack, Level level, Side side) {
+            return branches[Branch.getIndex(rack, level, side)];
+        }
+
+        public static final Branch getBranch(int rack, int level, int side) {
+            return getBranch(Rack.values()[rack], Level.values()[level], Side.values()[side]);
+        }
+
+        public static class StagedAlgae {
+            public final Rack rack;
+            public final AlgaeLevel algaeLevel;
+            public final Flipped<Pose3d> algaePose;
+            public final Flipped<Pose2d> robotPose;
+            private static final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
+            
+            public StagedAlgae (Rack rack, AlgaeLevel algaeLevel) {
+                this.rack = rack;
+                this.algaeLevel = algaeLevel;
+                this.algaePose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
+                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(scoringTransform));
+            }
+
+            public static int getIndex(Rack rack) {
+                return rack.ordinal();
+            }
+
+            public int getIndex() {
+                return StagedAlgae.getIndex(rack);
+            }
+        }
+
+        public static final StagedAlgae[] stagedAlgae = new StagedAlgae[Rack.values().length];
+        static {
+            for(var rack : Rack.values()) {
+                stagedAlgae[StagedAlgae.getIndex(rack)] = new StagedAlgae(rack, rack.algaeLevel);
+            }
         }
     }
 }

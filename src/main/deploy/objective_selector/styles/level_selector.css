@@ -1,0 +1,67 @@
+#level_selector_column {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+#level_selector_container {
+  --branch-size: 0px;
+  --level-button-size: 0px;
+
+  width: 100%;
+  position: absolute;
+  top: 0;
+  padding: 65px;
+  display: grid;
+  place-items: center;
+}
+
+#branch {
+  width: fit-content;
+  position: relative;
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+#branch.flipped {
+  transform: translate(-50%) scaleX(-1);
+}
+
+#branch > svg {
+  height: var(--branch-size);
+  fill: var(--hub-color);
+  stroke: var(--hub-color);
+}
+
+.level_button {
+  position: absolute;
+  width: var(--level-button-size);
+  aspect-ratio: 3 / 2;
+  border-radius: 5px;
+  background: var(--reef-color);
+  color: white;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 100ms;
+  font-size: 1.15em;
+}
+
+#branch.flipped .level_button {
+  transform: translate(-50%, -50%) scaleX(-1);
+}
+
+.level_button:hover {
+  width: calc(var(--level-button-size) * 1.1);
+}
+
+.level_button.selected {
+  background-color: var(--coral-color);
+}
