@@ -42,15 +42,8 @@
    "CoralStationOffset":{
     "dimension":"Length",
     "var":{
-     "exp":"1 m",
-     "val":1.0
-    }
-   },
-   "CoralStationPoseOffset":{
-    "dimension":"Length",
-    "var":{
-     "exp":"0.25 m",
-     "val":0.25
+     "exp":"0.6 m",
+     "val":0.6
     }
    },
    "FrameLength":{
@@ -85,47 +78,19 @@
   "poses":{
    "CoralStationLeft":{
     "x":{
-     "exp":"CenterToBumper * cos(CoralStationAngle)",
-     "val":0.2537362096713698
+     "exp":"CenterToBumper * cos(CoralStationAngle) + CenterToBumper * sin(CoralStationAngle)",
+     "val":0.6031202045847124
     },
     "y":{
-     "exp":"6.802882 m + CenterToBumper * sin(CoralStationAngle)",
-     "val":7.152265994913343
+     "exp":"6.802882 m - CenterToBumper * sin(CoralStationAngle) + CenterToBumper * cos(CoralStationAngle)",
+     "val":6.707234214758028
     },
     "heading":{
      "exp":"-CoralStationAngle",
      "val":-0.9426766239723384
     }
    },
-   "CoralStationLeft2":{
-    "x":{
-     "exp":"CoralStationLeft.x + CoralStationPoseOffset * cos(CoralStationAngle)",
-     "val":0.4006423060535894
-    },
-    "y":{
-     "exp":"CoralStationLeft.y + CoralStationPoseOffset * sin(CoralStationAngle)",
-     "val":7.354549456535241
-    },
-    "heading":{
-     "exp":"CoralStationLeft.heading",
-     "val":-0.9426766239723384
-    }
-   },
    "CoralStationLeft3":{
-    "x":{
-     "exp":"CoralStationLeft.x + 2 * CoralStationPoseOffset * cos(CoralStationAngle)",
-     "val":0.547548402435809
-    },
-    "y":{
-     "exp":"CoralStationLeft.y + 2 * CoralStationPoseOffset * sin(CoralStationAngle)",
-     "val":7.55683291815714
-    },
-    "heading":{
-     "exp":"CoralStationLeft.heading",
-     "val":-0.9426766239723384
-    }
-   },
-   "CoralStationRight":{
     "x":{
      "exp":"CenterToBumper * cos(CoralStationAngle)",
      "val":0.2537362096713698
@@ -136,6 +101,90 @@
     },
     "heading":{
      "exp":"CoralStationAngle",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationLeftClose":{
+    "x":{
+     "exp":"CoralStationLeft.x",
+     "val":0.6031202045847124
+    },
+    "y":{
+     "exp":"CoralStationLeft.y",
+     "val":6.707234214758028
+    },
+    "heading":{
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationLeftFar":{
+    "x":{
+     "exp":"CoralStationLeft.x + 2 * CoralStationOffset * sin(CoralStationAngle)",
+     "val":1.574080820369824
+    },
+    "y":{
+     "exp":"CoralStationLeft.y + 2 * CoralStationOffset * cos(CoralStationAngle)",
+     "val":7.412383477392682
+    },
+    "heading":{
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationRight":{
+    "x":{
+     "exp":"CenterToBumper * cos(CoralStationAngle) + CenterToBumper * sin(CoralStationAngle)",
+     "val":0.6031202045847124
+    },
+    "y":{
+     "exp":"1.248918 m + CenterToBumper * sin(CoralStationAngle) - CenterToBumper * cos(CoralStationAngle)",
+     "val":1.3445657852419728
+    },
+    "heading":{
+     "exp":"CoralStationAngle",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightClose":{
+    "x":{
+     "exp":"CoralStationRight.x",
+     "val":0.6031202045847124
+    },
+    "y":{
+     "exp":"CoralStationRight.y",
+     "val":1.3445657852419728
+    },
+    "heading":{
+     "exp":"CoralStationRight.heading",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightFar":{
+    "x":{
+     "exp":"CoralStationRight.x + 2 * CoralStationOffset * sin(CoralStationAngle)",
+     "val":1.574080820369824
+    },
+    "y":{
+     "exp":"CoralStationRight.y - 2 * CoralStationOffset * cos(CoralStationAngle)",
+     "val":0.6394165226073184
+    },
+    "heading":{
+     "exp":"CoralStationRight.heading",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightMid":{
+    "x":{
+     "exp":"CoralStationRight.x + CoralStationOffset * sin(CoralStationAngle)",
+     "val":1.0886005124772682
+    },
+    "y":{
+     "exp":"CoralStationRight.y - CoralStationOffset * cos(CoralStationAngle)",
+     "val":0.9919911539246457
+    },
+    "heading":{
+     "exp":"CoralStationRight.heading",
      "val":0.9426766239723384
     }
    },
