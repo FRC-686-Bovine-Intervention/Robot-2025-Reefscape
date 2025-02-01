@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -96,33 +97,33 @@ public class RobotContainer {
                         .toArray(ModuleIO[]::new)
                 );
                 superstructure = new Superstructure(
-                    new Pivot(new PivotIOFalcon()),
-                    new Elevator(new ElevatorIOFalcon()),
-                    new Wrist(new WristIOFalcon())
+                    new Pivot(new PivotIO() {}),
+                    new Elevator(new ElevatorIO() {}),
+                    new Wrist(new WristIO() {})
                 );
                 apriltagVision = new ApriltagVision(
-                    new ApriltagCamera(
-                        ApriltagVisionConstants.frontLeftApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera)
-                    ),
-                    new ApriltagCamera(
-                        ApriltagVisionConstants.frontRightApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera)
-                    ),
-                    new ApriltagCamera(
-                        ApriltagVisionConstants.backLeftApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera)
-                    ),
-                    new ApriltagCamera(
-                        ApriltagVisionConstants.backRightApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
-                    )
+                    // new ApriltagCamera(
+                    //     ApriltagVisionConstants.frontLeftApriltagCamera,
+                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera)
+                    // ),
+                    // new ApriltagCamera(
+                    //     ApriltagVisionConstants.frontRightApriltagCamera,
+                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera)
+                    // ),
+                    // new ApriltagCamera(
+                    //     ApriltagVisionConstants.backLeftApriltagCamera,
+                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera)
+                    // ),
+                    // new ApriltagCamera(
+                    //     ApriltagVisionConstants.backRightApriltagCamera,
+                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
+                    // )
                 );
                 bucketVision = new BucketVision(
-                    new BucketCamera(
-                        BucketVisionConstants.bucketCamera,
-                        new BucketCameraIOPhotonVision(BucketVisionConstants.bucketCamera)
-                    )
+                    // new BucketCamera(
+                    //     BucketVisionConstants.bucketCamera,
+                    //     new BucketCameraIOPhotonVision(BucketVisionConstants.bucketCamera)
+                    // )
                 );
             break;
             case SIM:
@@ -295,6 +296,7 @@ public class RobotContainer {
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(0, -1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedNode(1, 0)));
+        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().pose.getOurs().getRotation().toRotation2d())));
     }
 
     private void configureNotifications() {}
