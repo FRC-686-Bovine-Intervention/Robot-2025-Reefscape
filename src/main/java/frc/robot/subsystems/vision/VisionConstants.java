@@ -104,4 +104,5 @@ public final class VisionConstants {
             Degrees.of(+0)
         ))
     ));
+    public static final CameraMount questNavMount = new CameraMount(new Transform3d());
 }
