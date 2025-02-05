@@ -552,6 +552,34 @@
      "val":3.141592653589793
     }
    },
+   "StartRemoteLeft":{
+    "x":{
+     "exp":"StartFarLeft.x",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"StartFarLeft.y + CenterToBumper * 3",
+     "val":6.497751007224322
+    },
+    "heading":{
+     "exp":"StartFarLeft.heading",
+     "val":3.141592653589793
+    }
+   },
+   "StartRemoteRight":{
+    "x":{
+     "exp":"StartFarRight.x",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"StartFarRight.y - CenterToBumper * 3",
+     "val":1.5540029927756782
+    },
+    "heading":{
+     "exp":"StartFarRight.heading",
+     "val":3.141592653589793
+    }
+   },
    "StartRightCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
