@@ -90,20 +90,6 @@
      "val":-0.9426766239723384
     }
    },
-   "CoralStationLeftMid":{
-    "x":{
-     "exp":"CoralStationLeft.x + CoralStationOffset * sin(CoralStationAngle)",
-     "val":0.2537362096713698
-    },
-    "y":{
-     "exp":"CoralStationLeft.y + CoralStationOffset * cos(CoralStationAngle)",
-     "val":1.5983019949133426
-    },
-    "heading":{
-     "exp":"CoralStationLeft.heading",
-     "val":-0.9426766239723384
-    }
-   },
    "CoralStationLeftClose":{
     "x":{
      "exp":"CoralStationLeft.x",
@@ -126,6 +112,20 @@
     "y":{
      "exp":"CoralStationLeft.y + 2 * CoralStationOffset * cos(CoralStationAngle)",
      "val":7.412383477392682
+    },
+    "heading":{
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationLeftMid":{
+    "x":{
+     "exp":"CoralStationLeft.x + CoralStationOffset * sin(CoralStationAngle)",
+     "val":1.0886005124772682
+    },
+    "y":{
+     "exp":"CoralStationLeft.y + CoralStationOffset * cos(CoralStationAngle)",
+     "val":7.059808846075355
     },
     "heading":{
      "exp":"CoralStationLeft.heading",
@@ -186,6 +186,132 @@
     "heading":{
      "exp":"CoralStationRight.heading",
      "val":0.9426766239723384
+    }
+   },
+   "Net1":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"Reef4.y",
+     "val":5.1294095618915865
+    },
+    "heading":{
+     "exp":"Reef0.heading",
+     "val":0.0
+    }
+   },
+   "Net2":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"Reef3.y",
+     "val":4.025877
+    },
+    "heading":{
+     "exp":"Reef0.heading",
+     "val":0.0
+    }
+   },
+   "Net3":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"Reef2.y",
+     "val":2.9223444381084134
+    },
+    "heading":{
+     "exp":"Reef0.heading",
+     "val":0.0
+    }
+   },
+   "Reef0":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 3) * BranchA",
+     "val":3.21507535666475
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 3) * BranchA",
+     "val":4.025877
+    },
+    "heading":{
+     "exp":"RackDelta * 0",
+     "val":0.0
+    }
+   },
+   "Reef1":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 4) * BranchA",
+     "val":3.8522001783323745
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 4) * BranchA",
+     "val":2.9223444381084143
+    },
+    "heading":{
+     "exp":"RackDelta * 1",
+     "val":1.0471975511965976
+    }
+   },
+   "Reef2":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 5) * BranchA",
+     "val":5.126449821667624
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 5) * BranchA",
+     "val":2.9223444381084134
+    },
+    "heading":{
+     "exp":"RackDelta * 2",
+     "val":2.0943951023931953
+    }
+   },
+   "Reef3":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 6) * BranchA",
+     "val":5.76357464333525
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 6) * BranchA",
+     "val":4.025877
+    },
+    "heading":{
+     "exp":"RackDelta * 3",
+     "val":3.141592653589793
+    }
+   },
+   "Reef4":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 7) * BranchA",
+     "val":5.1264498216676255
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 7) * BranchA",
+     "val":5.1294095618915865
+    },
+    "heading":{
+     "exp":"RackDelta * 4",
+     "val":4.1887902047863905
+    }
+   },
+   "Reef5":{
+    "x":{
+     "exp":"ReefCenter.x + cos(RackDelta * 8) * BranchA",
+     "val":3.852200178332376
+    },
+    "y":{
+     "exp":"ReefCenter.y + sin(RackDelta * 8) * BranchA",
+     "val":5.129409561891588
+    },
+    "heading":{
+     "exp":"RackDelta * 5",
+     "val":5.235987755982988
     }
    },
    "ReefA":{
