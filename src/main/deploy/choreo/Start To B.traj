@@ -3,7 +3,7 @@
  "version":1,
  "snapshot":{
   "waypoints":[
-    {"x":7.1244615194, "y":2.849402992775679, "heading":3.141592653589793, "intervals":37, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":7.1244615194, "y":2.849402992775678, "heading":3.141592653589793, "intervals":37, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":4.470373153686523, "y":2.37158465385437, "heading":0.0, "intervals":18, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":3.0674071311950684, "y":3.2420380115509033, "heading":0.0, "intervals":11, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":3.2257131, "y":3.861568997400001, "heading":0.0, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
@@ -15,7 +15,7 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"StartingLineX - CenterToBumper", "val":7.1244615194}, "y":{"exp":"ReefD.y", "val":2.849402992775679}, "heading":{"exp":"180 deg", "val":3.141592653589793}, "intervals":37, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"StartFarRight.x", "val":7.1244615194}, "y":{"exp":"StartFarRight.y", "val":2.849402992775678}, "heading":{"exp":"StartFarRight.heading", "val":3.141592653589793}, "intervals":37, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"4.470373153686523 m", "val":4.470373153686523}, "y":{"exp":"2.37158465385437 m", "val":2.37158465385437}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":18, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"3.0674071311950684 m", "val":3.0674071311950684}, "y":{"exp":"3.2420380115509033 m", "val":3.2420380115509033}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":11, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"ReefB.x", "val":3.2257131}, "y":{"exp":"ReefB.y", "val":3.861568997400001}, "heading":{"exp":"ReefB.heading", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],

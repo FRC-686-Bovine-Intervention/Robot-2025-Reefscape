@@ -13,7 +13,7 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"StartingLineX - CenterToBumper", "val":7.1244615194}, "y":{"exp":"ReefE.y", "val":2.849402992775678}, "heading":{"exp":"180 deg", "val":3.141592653589793}, "intervals":29, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"StartFarRight.x", "val":7.1244615194}, "y":{"exp":"StartFarRight.y", "val":2.849402992775678}, "heading":{"exp":"StartFarRight.heading", "val":3.141592653589793}, "intervals":29, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"ReefE.x", "val":4.97883604570332}, "y":{"exp":"ReefE.y", "val":2.849402992775678}, "heading":{"exp":"ReefE.heading", "val":2.0943951023931953}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},

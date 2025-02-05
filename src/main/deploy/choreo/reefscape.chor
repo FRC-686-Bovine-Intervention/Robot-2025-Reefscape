@@ -495,6 +495,90 @@
      "exp":"RackDelta * 5",
      "val":5.235987755982988
     }
+   },
+   "StartFarLeft":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"ReefJ.y",
+     "val":5.202351007224322
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartFarRight":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"ReefE.y",
+     "val":2.849402992775678
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartLeftCage":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"ReefI.y",
+     "val":5.038043004624322
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartLeftCenter":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"ReefH.y",
+     "val":4.190185002600001
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartRightCage":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"ReefF.y",
+     "val":3.013710995375678
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartRightCenter":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"ReefG.y",
+     "val":3.861568997400001
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
    }
   }
  },
