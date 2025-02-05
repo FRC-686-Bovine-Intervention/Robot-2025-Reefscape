@@ -1,7 +1,6 @@
 package frc.robot.subsystems.superstructure.wrist;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -11,15 +10,11 @@ import frc.util.mechanismUtil.GearRatio;
 public class WristConstants {
     public static final Transform3d wristBase = new Transform3d(
         new Translation3d(
-            Meters.of(0.635000),
-            Meters.of(0),
-            Meters.of(0)
+            Inches.of(25),
+            Inches.zero(),
+            Inches.zero()
         ),
-        new Rotation3d(
-            Degrees.of(0),
-            Degrees.of(0),
-            Degrees.of(0)
-        )
+        Rotation3d.kZero
     );
     
     public static final GearRatio motorToMechanism = new GearRatio()

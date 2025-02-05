@@ -1,7 +1,7 @@
 {
     "name": "2025 Sirenia",
     "sourceUrl": "https://cad.onshape.com/documents/62a21464d34e46bb2b7d9c9b/w/e0c09022af1412aec5851809/e/f2552ef0d3b00617a3783b47",
-    "disableSimplification": false,
+    "disableSimplification": true,
     "rotations": [{ "axis": "x", "degrees": 90 },{ "axis": "z", "degrees": 90 }],
     "position": [0, 0, 0],
     "cameras": [
@@ -43,20 +43,20 @@
     ],
     "components": [
         {
-            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
-            "zeroedPosition": [0.228600, 0, -0.254000]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 110 }],
+            "zeroedPosition": [0.1604961209153729,0,-0.3016868495163786]
         },
         {
-            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
-            "zeroedPosition": [0.317500, 0, -0.304800]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 110 }],
+            "zeroedPosition": [0.17319612091537284, 0, -0.3016868495163786]
         },
         {
-            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
-            "zeroedPosition": [0.304800, 0, -0.304800]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 110 }],
+            "zeroedPosition": [0.1604961209153729, 0, -0.3016868495163786]
         },
         {
-            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],
-            "zeroedPosition": [0.292100, 0, -0.304800]
+            "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 110 }],
+            "zeroedPosition": [0.1477961209153729, 0, -0.30168684951637853]
         },
         {
             "zeroedRotations": [{ "axis": "z", "degrees": 90 },{ "axis": "y", "degrees": 90 }],

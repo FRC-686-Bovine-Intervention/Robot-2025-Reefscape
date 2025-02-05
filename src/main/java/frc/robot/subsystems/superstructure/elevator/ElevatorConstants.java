@@ -1,7 +1,6 @@
 package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -10,28 +9,28 @@ import edu.wpi.first.units.measure.Distance;
 import frc.util.mechanismUtil.GearRatio;
 
 public class ElevatorConstants {
-    public static final Distance pivotOffset = Meters.of(0.050800);
+    public static final Distance pivotOffset = Inches.zero();
     public static final Transform3d stage2Base = new Transform3d(
         new Translation3d(
-            Meters.of(-0.088900),
-            Meters.of(0),
+            Inches.of(-0.5),
+            Inches.zero(),
             pivotOffset
         ),
         Rotation3d.kZero
     );
     public static final Transform3d stage3Base = new Transform3d(
         new Translation3d(
-            Meters.of(0.012700),
-            Meters.of(0),
-            Meters.of(0)
+            Inches.of(0.5),
+            Inches.zero(),
+            Inches.zero()
         ),
         Rotation3d.kZero
     );
     public static final Transform3d stage4Base = new Transform3d(
         new Translation3d(
-            Meters.of(0.012700),
-            Meters.of(0),
-            Meters.of(0)
+            Inches.of(0.5),
+            Inches.zero(),
+            Inches.zero()
         ),
         Rotation3d.kZero
     );

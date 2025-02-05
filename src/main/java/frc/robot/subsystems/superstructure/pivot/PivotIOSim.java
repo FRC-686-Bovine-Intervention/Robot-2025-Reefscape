@@ -16,10 +16,10 @@ public class PivotIOSim extends PivotIOFalcon {
         DCMotor.getFalcon500(2),
         100,
         1,
-        0,
-        Degrees.of(100).in(Radians),
+        PivotConstants.minAngle.in(Radians),
+        PivotConstants.maxAngle.in(Radians),
         false,
-        0
+        PivotConstants.minAngle.in(Radians)
     );
 
     @Override
