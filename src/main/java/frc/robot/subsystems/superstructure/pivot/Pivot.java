@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.pivot;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -13,10 +14,19 @@ public class Pivot {
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
     public final ArmMech mech = new ArmMech(PivotConstants.pivotBase);
+    public final PointOfMass stage1Mass = new PointOfMass(
+        new Translation3d(
+            Inches.of(12),
+            Inches.zero(),
+            Inches.zero()
+        ),
+        Pounds.of(5)
+    );
 
     public Pivot(PivotIO io) {
         System.out.println("[Init Pivot] Instantiating Pivot with " + io.getClass().getSimpleName());
         this.io = io;
+        mech.addChild(stage1Mass);
     }
 
     public void periodic() {

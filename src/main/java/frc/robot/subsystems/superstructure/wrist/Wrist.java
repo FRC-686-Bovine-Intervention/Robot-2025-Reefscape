@@ -2,6 +2,7 @@ package frc.robot.subsystems.superstructure.wrist;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -13,10 +14,19 @@ public class Wrist {
     private final WristIOInputsAutoLogged inputs = new WristIOInputsAutoLogged();
 
     public final ArmMech mech = new ArmMech(WristConstants.wristBase);
+    public final PointOfMass wristMass = new PointOfMass(
+        new Translation3d(
+            Inches.of(10),
+            Inches.zero(),
+            Inches.zero()
+        ),
+        Pounds.of(8.5)
+    );
 
     public Wrist(WristIO io) {
         System.out.println("[Init Wrist] Instantiating Wrist with " + io.getClass().getSimpleName());
         this.io = io;
+        mech.addChild(wristMass);
     }
 
     public void periodic() {

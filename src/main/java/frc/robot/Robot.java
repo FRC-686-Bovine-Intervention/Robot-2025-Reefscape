@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -19,9 +17,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -31,8 +26,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.leds.Leds;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
-import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
@@ -145,10 +138,6 @@ public class Robot extends LoggedRobot {
         Mechanism3d.logAscopeAxes();
         Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
         Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
-        Logger.recordOutput("ASCOPE DEBUGGING/Pivot Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).inverse());
-        Logger.recordOutput("ASCOPE DEBUGGING/Stage 2 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).inverse());
-        Logger.recordOutput("ASCOPE DEBUGGING/Stage 3 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).inverse());
-        Logger.recordOutput("ASCOPE DEBUGGING/Stage 4 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).plus(ElevatorConstants.stage4Base).inverse());
     }
 
     @Override
