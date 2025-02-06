@@ -1,7 +1,5 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -9,9 +7,6 @@ import java.util.function.DoubleSupplier;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -24,31 +19,9 @@ public class Elevator extends SubsystemBase{
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
-    public final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.elevatorBase);
-    public final ExtenderMech stage3Mech = new ExtenderMech(new Transform3d(
-        new Translation3d(
-            Meters.of(0.012700),
-            Meters.of(0),
-            Meters.of(0)
-        ),
-        new Rotation3d(
-            Degrees.of(0),
-            Degrees.of(0),
-            Degrees.of(0)
-        )
-    ));
-    public final ExtenderMech stage4Mech = new ExtenderMech(new Transform3d(
-        new Translation3d(
-            Meters.of(0.012700),
-            Meters.of(0),
-            Meters.of(0)
-        ),
-        new Rotation3d(
-            Degrees.of(0),
-            Degrees.of(0),
-            Degrees.of(0)
-        )
-    ));
+    public final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.stage2Base);
+    public final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
+    public final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
 
     public Elevator(ElevatorIO io) {
         this.io = io;

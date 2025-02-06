@@ -38,7 +38,7 @@ import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureSetpoint;
+import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
@@ -246,8 +246,8 @@ public class RobotContainer {
                 private final Command[] commands = new Command[Level.values().length * 2];
                 {
                     for (var level : Level.values()) {
-                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromLevelForward(level));
-                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromLevelBackward(level));
+                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromLevelForward(level));
+                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromLevelBackward(level));
                     }
                 }
                 public Command get() {
@@ -266,8 +266,8 @@ public class RobotContainer {
                 private final Command[] commands = new Command[Rack.values().length * 2];
                 {
                     for (var rack : Rack.values()) {
-                        commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromAlgaeForward(rack.algaeLevel));
-                        commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureSetpoint.fromAlgaeBackward(rack.algaeLevel));
+                        commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
+                        commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
                     }
                 }
                 public Command get() {
