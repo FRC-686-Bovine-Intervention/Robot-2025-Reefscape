@@ -255,32 +255,6 @@ public class RobotContainer {
         //     .withName("Flick Stick")
         // );
 
-
-        // driveController.b().toggleOnTrue(superstructure.pivotVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
-        // driveController.x().toggleOnTrue(superstructure.elevatorVoltage(() -> (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * 12));
-        
-        // driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
-        // driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
-        driveController.x().toggleOnTrue(new ContinuouslySwappingCommand(
-            new Supplier<Command>() {
-                private final Command[] commands = new Command[Level.values().length * 2];
-                {
-                    for (var level : Level.values()) {
-                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromLevelForward(level));
-                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromLevelBackward(level));
-                    }
-                }
-                public Command get() {
-                    var node = objectiveTracker.getSelectedNode();
-                    if (drive.getRotation().minus(node.branchPose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
-                        return commands[node.level.ordinal() * 2];
-                    } else {
-                        return commands[node.level.ordinal() * 2 + 1];
-                    }
-                }
-            },
-            Set.of(superstructure)
-        ));
         // driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
         //     new Supplier<Command>() {
         //         private final Command[] commands = new Command[Rack.values().length * 2];
@@ -303,23 +277,38 @@ public class RobotContainer {
         // ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        */
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
-        //driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.Rack.Rack0.)));
         
-        driveController.a().toggleOnTrue(null); //Intake/Eject
-        driveController.y().toggleOnTrue(null); //Defense
-        driveController.x().toggleOnTrue(null); //Extend
-        driveController.rightBumper().whileTrue(null); //Auto drive
-        driveController.start().toggleOnTrue(null); //Start Climb
-        driveController.back().toggleOnTrue(null); //Climb
+        // driveController.a().toggleOnTrue(null); //Intake/Eject
+        driveController.y().toggleOnTrue(superstructure.defense()); //Defense
+        driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend
+            new Supplier<Command>() {
+                private final Command[] commands = new Command[Level.values().length * 2];
+                {
+                    for (var level : Level.values()) {
+                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromLevelForward(level));
+                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromLevelBackward(level));
+                    }
+                }
+                public Command get() {
+                    var node = objectiveTracker.getSelectedNode();
+                    if (drive.getRotation().minus(node.branchPose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+                        return commands[node.level.ordinal() * 2];
+                    } else {
+                        return commands[node.level.ordinal() * 2 + 1];
+                    }
+                }
+            },
+            Set.of(superstructure)
+        ));
+        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation()))); //Auto drive
+        // driveController.start().toggleOnTrue(null); //Start Climb
+        // driveController.back().toggleOnTrue(null); //Climb
+        
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.getStagedAlgae(Rack.Rack0).robotPose.getOurs())));
-
-        driveController.y().toggleOnTrue(superstructure.defense());
-        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
     }
 
     private void configureNotifications() {}
