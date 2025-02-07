@@ -4,11 +4,11 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -55,9 +55,9 @@ import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
 import frc.robot.subsystems.vision.bucket.BucketVision;
+import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
-import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
 import frc.util.robotStructure.Mechanism3d;
 
@@ -73,8 +73,6 @@ public class RobotContainer {
 
     // Controllers
     private final XboxController driveController = new XboxController(0);
-    private final Joystick driveJoystick;
-    private final Supplier<ChassisSpeeds> joystickTranslational;
     @SuppressWarnings("unused")
     private final ButtonBoard3x3 buttonBoard = new ButtonBoard3x3(1);
     @SuppressWarnings("unused")
@@ -182,22 +180,8 @@ public class RobotContainer {
         ;
         Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech);
 
-        driveJoystick = driveController.leftStick
-            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
-            .radialSensitivity(0.75)
-            // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
-        ;
-
-        joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
-            driveJoystick,
-            () -> false
-        );
-
-        System.out.println("[Init RobotContainer] Configuring Default Subsystem Commands");
-        configureSubsystems();
-
-        System.out.println("[Init RobotContainer] Configuring Controls");
-        configureControls();
+        System.out.println("[Init RobotContainer] Configuring Commands");
+        configureCommands();
 
         System.out.println("[Init RobotContainer] Configuring Notifications");
         configureNotifications();
@@ -213,22 +197,47 @@ public class RobotContainer {
         }
     }
 
-    private void configureSubsystems() {
+    private void configureCommands() {
+        var driveJoystick = driveController.leftStick
+            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
+            .radialSensitivity(0.75)
+            // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
+        ;
+
+        // var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
+        //     driveJoystick,
+        //     () -> false
+        // );
+
         drive.translationSubsystem.setDefaultCommand(
-            drive.translationSubsystem.fieldRelative(joystickTranslational)
-                .withName("Driver Control Field Relative")
+            drive.translationSubsystem.run(() -> {
+                var fieldVec = Perspective.getCurrent().toField(
+                    driveJoystick.toVector()
+                    .times(
+                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
+                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
+                    )
+                );
+                var fieldSpeeds = new ChassisSpeeds(
+                    fieldVec.get(0),
+                    fieldVec.get(1),
+                    0
+                );
+                var robotSpeeds = new ChassisSpeeds(
+                    Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                    (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                    0
+                );
+                drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
+            })
+            .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
             drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
                 .withName("Robot spin")
         );
 
-        superstructure.pivot.setDefaultCommand(superstructure.pivot.pivotTo(Degrees.of(0)));
-        superstructure.elevator.setDefaultCommand(superstructure.elevator.elevateTo(Meters.zero()));
-        superstructure.wrist.setDefaultCommand(superstructure.wrist.pivotTo(Degrees.zero()));
-    }
-
-    private void configureControls() {
+        superstructure.setDefaultCommand(superstructure.idle());
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
@@ -252,7 +261,7 @@ public class RobotContainer {
         
         // driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
         // driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
-        driveController.leftBumper().toggleOnTrue(new ContinuouslySwappingCommand(
+        driveController.x().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final Command[] commands = new Command[Level.values().length * 2];
                 {
@@ -270,28 +279,28 @@ public class RobotContainer {
                     }
                 }
             },
-            Set.of(superstructure.pivot, superstructure.elevator, superstructure.wrist)
+            Set.of(superstructure)
         ));
-        driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
-            new Supplier<Command>() {
-                private final Command[] commands = new Command[Rack.values().length * 2];
-                {
-                    for (var rack : Rack.values()) {
-                        commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
-                        commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
-                    }
-                }
-                public Command get() {
-                    var rack = Rack.Rack2;
-                    if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
-                        return commands[rack.ordinal() * 2];
-                    } else {
-                        return commands[rack.ordinal() * 2 + 1];
-                    }
-                }
-            },
-            Set.of(superstructure.pivot, superstructure.elevator, superstructure.wrist)
-        ));
+        // driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
+        //     new Supplier<Command>() {
+        //         private final Command[] commands = new Command[Rack.values().length * 2];
+        //         {
+        //             for (var rack : Rack.values()) {
+        //                 commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
+        //                 commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
+        //             }
+        //         }
+        //         public Command get() {
+        //             var rack = Rack.Rack2;
+        //             if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+        //                 return commands[rack.ordinal() * 2];
+        //             } else {
+        //                 return commands[rack.ordinal() * 2 + 1];
+        //             }
+        //         }
+        //     },
+        //     Set.of(superstructure)
+        // ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
@@ -299,6 +308,9 @@ public class RobotContainer {
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.getStagedAlgae(Rack.Rack0).robotPose.getOurs())));
+
+        driveController.y().toggleOnTrue(superstructure.defense());
+        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
     }
 
     private void configureNotifications() {}
