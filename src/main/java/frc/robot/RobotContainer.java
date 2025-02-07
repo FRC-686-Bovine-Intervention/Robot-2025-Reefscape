@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
@@ -49,9 +50,9 @@ import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
 import frc.robot.subsystems.vision.bucket.BucketVision;
+import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
-import frc.util.controllers.Joystick;
 import frc.util.controllers.XboxController;
 import frc.util.robotStructure.Mechanism3d;
 
@@ -66,8 +67,6 @@ public class RobotContainer {
 
     // Controllers
     private final XboxController driveController = new XboxController(0);
-    private final Joystick driveJoystick;
-    private final Supplier<ChassisSpeeds> joystickTranslational;
     @SuppressWarnings("unused")
     private final ButtonBoard3x3 buttonBoard = new ButtonBoard3x3(1);
     @SuppressWarnings("unused")
@@ -169,22 +168,8 @@ public class RobotContainer {
         ;
         Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech);
 
-        driveJoystick = driveController.leftStick
-            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
-            .radialSensitivity(0.75)
-            // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
-        ;
-
-        joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
-            driveJoystick,
-            () -> false
-        );
-
-        System.out.println("[Init RobotContainer] Configuring Default Subsystem Commands");
-        configureSubsystems();
-
-        System.out.println("[Init RobotContainer] Configuring Controls");
-        configureControls();
+        System.out.println("[Init RobotContainer] Configuring Commands");
+        configureCommands();
 
         System.out.println("[Init RobotContainer] Configuring Notifications");
         configureNotifications();
@@ -200,10 +185,40 @@ public class RobotContainer {
         }
     }
 
-    private void configureSubsystems() {
+    private void configureCommands() {
+        var driveJoystick = driveController.leftStick
+            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
+            .radialSensitivity(0.75)
+            // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
+        ;
+
+        // var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
+        //     driveJoystick,
+        //     () -> false
+        // );
+
         drive.translationSubsystem.setDefaultCommand(
-            drive.translationSubsystem.fieldRelative(joystickTranslational)
-                .withName("Driver Control Field Relative")
+            drive.translationSubsystem.run(() -> {
+                var fieldVec = Perspective.getCurrent().toField(
+                    driveJoystick.toVector()
+                    .times(
+                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
+                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
+                    )
+                );
+                var fieldSpeeds = new ChassisSpeeds(
+                    fieldVec.get(0),
+                    fieldVec.get(1),
+                    0
+                );
+                var robotSpeeds = new ChassisSpeeds(
+                    Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                    (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                    0
+                );
+                drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
+            })
+            .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
             drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
@@ -211,9 +226,6 @@ public class RobotContainer {
         );
 
         superstructure.setDefaultCommand(superstructure.idle());
-    }
-
-    private void configureControls() {
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
