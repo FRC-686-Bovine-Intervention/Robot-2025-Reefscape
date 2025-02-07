@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
+import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
@@ -297,7 +298,7 @@ public class RobotContainer {
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
-        // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.Rack.Rack0.)));
+        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.getStagedAlgae(Rack.Rack0).robotPose.getOurs())));
     }
 
     private void configureNotifications() {}
