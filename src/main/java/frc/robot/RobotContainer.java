@@ -34,6 +34,9 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
@@ -61,6 +64,7 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     public final Superstructure superstructure;
+    public final Intake intake;
     public final ApriltagVision apriltagVision;
     public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
@@ -73,7 +77,7 @@ public class RobotContainer {
     @SuppressWarnings("unused")
     private final ButtonBoard3x3 buttonBoard = new ButtonBoard3x3(1);
     @SuppressWarnings("unused")
-    private final CommandJoystick simJoystick = new CommandJoystick(2);
+    private final CommandJoystick simJoystick = new CommandJoystick(5);
 
     @SuppressWarnings("resource")
     public RobotContainer() {
@@ -92,6 +96,7 @@ public class RobotContainer {
                     new Elevator(new ElevatorIO() {}),
                     new Wrist(new WristIO() {})
                 );
+                intake = new Intake(new IntakeIO() {});
                 apriltagVision = new ApriltagVision(
                     // new ApriltagCamera(
                     //     ApriltagVisionConstants.frontLeftApriltagCamera,
@@ -129,6 +134,7 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOSim()),
                     new Wrist(new WristIOSim())
                 );
+                intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -146,6 +152,7 @@ public class RobotContainer {
                     new Elevator(new ElevatorIO() {}),
                     new Wrist(new WristIO() {})
                 );
+                intake = new Intake(new IntakeIO() {});
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
             break;
@@ -163,7 +170,10 @@ public class RobotContainer {
                 .addChild(superstructure.elevator.stage2Mech
                     .addChild(superstructure.elevator.stage3Mech
                         .addChild(superstructure.elevator.stage4Mech
-                            .addChild(superstructure.wrist.mech)
+                            .addChild(superstructure.wrist.mech
+                                .addChild(intake.coralPose)
+                                .addChild(intake.algaePose)
+                            )
                         )
                     )
                 )

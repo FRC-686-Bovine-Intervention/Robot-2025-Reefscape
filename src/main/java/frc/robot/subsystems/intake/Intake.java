@@ -1,14 +1,12 @@
 package frc.robot.subsystems.intake;
 
-import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.Volts;
+
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,38 +20,40 @@ public class Intake extends SubsystemBase{
     private final IntakeIO io;
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
-    //These two need to be set
     public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(4));
-    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(-4));
-    public static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold", Volts.of(2));
+    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(4).unaryMinus());
+    public static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold", Volts.of(1));
 
-    //Needs gamepiece pose & rotation
-    public final GamepiecePose gamepiecePose = new GamepiecePose(
-        new Transform3d(
-            new Translation3d(
+    public final GamepiecePose coralPose = new GamepiecePose(IntakeConstants.coralPose);
+    public final GamepiecePose algaePose = new GamepiecePose(IntakeConstants.algaePose);
 
-            ),
-            new Rotation3d()
-        )
-    );
-    //END OF NEEDS GAMEPIECE POSE
+    public final Trigger hasCoral = new Trigger(() -> inputs.coralSensor);
+    public final Trigger hasAlgae = new Trigger(() -> inputs.algaeSensor);
 
-    public final Trigger hasItem = new Trigger(() -> inputs.sensorDetect);
-
-    public Intake(IntakeIO io){
+    public Intake(IntakeIO io) {
+        System.out.println("[Init Intake] Instantiated Intake with " + io.getClass().getSimpleName());
         this.io = io;
         SmartDashboard.putData("Subsystems/Intake", this);
     }
 
     @Override
-    public void periodic(){
+    public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Intake", inputs);
 
-        Logger.recordOutput("Inputs/Intake",
-            (hasItem.getAsBoolean()) ? (
+        Logger.recordOutput("Gamepiece/Coral",
+            (hasCoral.getAsBoolean()) ? (
                 new Pose3d[]{
-                    gamepiecePose.getFieldRelative()
+                    coralPose.getFieldRelative()
+                }
+            ) : (
+                new Pose3d[]{}
+            )
+        );
+        Logger.recordOutput("Gamepiece/Algae",
+            (hasAlgae.getAsBoolean()) ? (
+                new Pose3d[]{
+                    algaePose.getFieldRelative()
                 }
             ) : (
                 new Pose3d[]{}
@@ -61,7 +61,6 @@ public class Intake extends SubsystemBase{
         );
     }
 
-    //NEEDS REVIEW: Should motor direction be set in initialize?
     private Command genCommand(
         String name,
         Supplier<Measure<VoltageUnit>> voltage
@@ -89,9 +88,7 @@ public class Intake extends SubsystemBase{
             }
         };
     }
-    //END OF REVIEW NEEDED
 
-    //NEEDS REVIEW: (are these commands we want?, do we need more?)
     public Command stop(){
         return genCommand(
             "Stop", 
@@ -119,5 +116,4 @@ public class Intake extends SubsystemBase{
             intakeVoltage          
         );
     }
-    // END OF REVIEW NEEDED
 }

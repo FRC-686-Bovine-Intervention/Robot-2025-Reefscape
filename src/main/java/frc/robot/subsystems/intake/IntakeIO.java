@@ -11,7 +11,8 @@ public interface IntakeIO {
     public static class IntakeIOInputs {
         public LoggedMotor motor = new LoggedMotor();
 
-        public boolean sensorDetect = false;
+        public boolean coralSensor = false;
+        public boolean algaeSensor = false;
     }
 
     public default void updateInputs(IntakeIOInputs inputs) {}

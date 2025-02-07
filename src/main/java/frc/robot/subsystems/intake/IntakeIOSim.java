@@ -1,12 +1,20 @@
 package frc.robot.subsystems.intake;
 
-import edu.wpi.first.wpilibj.Joystick;
+import java.util.function.BooleanSupplier;
 
-public class IntakeIOSim implements IntakeIO{
-    private final Joystick a = new Joystick(0);
-    //WIP
+public class IntakeIOSim extends IntakeIOFalcon {
+    private final BooleanSupplier coralSim;
+    private final BooleanSupplier algaeSim;
+
+    public IntakeIOSim(BooleanSupplier coralSim, BooleanSupplier algaeSim) {
+        this.coralSim = coralSim;
+        this.algaeSim = algaeSim;
+    }
+
     @Override
-    public void updateInputs(IntakeIOInputs inputs){
-        inputs.sensorDetect = a.getRawAxis(2) > 0.5;
+    public void updateInputs(IntakeIOInputs inputs) {
+        super.updateInputs(inputs);
+        inputs.coralSensor = coralSim.getAsBoolean();
+        inputs.algaeSensor = algaeSim.getAsBoolean();
     }
 }

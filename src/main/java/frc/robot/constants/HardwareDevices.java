@@ -58,9 +58,11 @@ public class HardwareDevices {
     public static final CANDevice wristMotorID = canivore.id(9);
     public static final CANDevice wristEncoderID = canivore.id(9);
 
-    // Intake: NEEDS TO BE SET
+    // Intake
     public static final CANDevice intakeMotorID = canivore.id(10);
-    
+    public static final DIOPort coralSensor = DIOPort.port(1);
+    public static final DIOPort algaeSensor = DIOPort.port(2);
+
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);
     public static final DIOPort button1 = DIOPort.port(0);
