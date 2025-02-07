@@ -303,10 +303,19 @@ public class RobotContainer {
         // ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
+        */
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
+        //driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.Rack.Rack0.)));
+        
+        driveController.a().toggleOnTrue(null); //Intake/Eject
+        driveController.y().toggleOnTrue(null); //Defense
+        driveController.x().toggleOnTrue(null); //Extend
+        driveController.rightBumper().whileTrue(null); //Auto drive
+        driveController.start().toggleOnTrue(null); //Start Climb
+        driveController.back().toggleOnTrue(null); //Climb
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.getStagedAlgae(Rack.Rack0).robotPose.getOurs())));
 
         driveController.y().toggleOnTrue(superstructure.defense());
