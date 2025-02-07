@@ -125,12 +125,6 @@ repositories {
     mavenLocal()
 }
 
-// task(checkAkitInstall, dependsOn: "classes", type: JavaExec) {
-//     mainClass = "org.littletonrobotics.junction.CheckInstall"
-//     classpath = sourceSets.main.runtimeClasspath
-// }
-// compileJava.finalizedBy checkAkitInstall
-
 // Create version file
 project.compileJava.dependsOn(createVersionFile)
 gversion {
@@ -139,5 +133,5 @@ gversion {
     className    = "BuildConstants"
     dateFormat   = "yyyy-MM-dd HH:mm:ss z"
     timeZone     = "America/New_York"
-    indent       = "  "
+    indent       = "    "
 }

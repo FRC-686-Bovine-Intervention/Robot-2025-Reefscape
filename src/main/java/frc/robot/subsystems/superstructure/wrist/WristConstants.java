@@ -1,0 +1,23 @@
+package frc.robot.subsystems.superstructure.wrist;
+
+import static edu.wpi.first.units.Units.Inches;
+
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import frc.util.mechanismUtil.GearRatio;
+
+public class WristConstants {
+    public static final Transform3d wristBase = new Transform3d(
+        new Translation3d(
+            Inches.of(25),
+            Inches.zero(),
+            Inches.zero()
+        ),
+        Rotation3d.kZero
+    );
+    
+    public static final GearRatio motorToMechanism = new GearRatio()
+    
+    ;
+}
