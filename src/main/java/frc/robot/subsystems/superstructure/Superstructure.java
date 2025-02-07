@@ -12,13 +12,17 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants.Algae;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
@@ -29,11 +33,13 @@ import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.util.misc.MeasureUtil;
+import frc.util.robotStructure.PointOfMass;
 
 public class Superstructure extends SubsystemBase {
     public final Pivot pivot;
     public final Elevator elevator;
     public final Wrist wrist;
+    public Translation2d centerOfMass = Translation2d.kZero;
 
     public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         System.out.println("[Init Superstructure] Instantiating Superstructure");
@@ -47,6 +53,21 @@ public class Superstructure extends SubsystemBase {
         pivot.periodic();
         elevator.periodic();
         wrist.periodic();
+
+        var centerOfMass3d = PointOfMass.getCenterOfMass(
+            pivot.stage1Mass,
+            elevator.stage2Mass,
+            elevator.stage3Mass,
+            elevator.stage4Mass,
+            wrist.wristMass
+        );
+
+        centerOfMass = new Translation2d(
+            centerOfMass3d.getX(),
+            centerOfMass3d.getZ()
+        );
+
+        Logger.recordOutput("Center of Mass", new Pose3d(RobotState.getInstance().getPose()).transformBy(new Transform3d(centerOfMass3d, Rotation3d.kZero)));
     }
 
     public SuperstructureState getCurrentState() {

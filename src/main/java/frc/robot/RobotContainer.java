@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
@@ -15,12 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import org.littletonrobotics.junction.Logger;
-
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -69,7 +60,6 @@ import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
 import frc.util.robotStructure.Mechanism3d;
-import frc.util.robotStructure.PointOfMass;
 
 public class RobotContainer {
     // Subsystems
@@ -321,19 +311,6 @@ public class RobotContainer {
 
         driveController.y().toggleOnTrue(superstructure.defense());
         driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
-
-        var driveCom = new PointOfMass(Translation3d.kZero, Pounds.of(80));
-        drive.structureRoot.addChild(driveCom);
-        driveController.start().toggleOnTrue(Commands.run(() -> {
-            Logger.recordOutput("Center of Mass", new Pose3d(RobotState.getInstance().getPose()).transformBy(new Transform3d(PointOfMass.getCenterOfMass(
-                driveCom,
-                superstructure.pivot.stage1Mass,
-                superstructure.elevator.stage2Mass,
-                superstructure.elevator.stage3Mass,
-                superstructure.elevator.stage4Mass,
-                superstructure.wrist.wristMass
-            ), Rotation3d.kZero)));
-        }));
     }
 
     private void configureNotifications() {}
