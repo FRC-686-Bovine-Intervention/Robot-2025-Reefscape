@@ -11,6 +11,7 @@ import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Distance;
+import frc.util.robotStructure.PointOfMass;
 import frc.util.robotStructure.linear.ExtenderMech;
 
 public class Elevator {

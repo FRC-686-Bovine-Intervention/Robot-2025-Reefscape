@@ -1,5 +1,8 @@
 package frc.robot.subsystems.superstructure.wrist;
 
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Pounds;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Translation3d;
@@ -7,6 +10,7 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
+import frc.util.robotStructure.PointOfMass;
 import frc.util.robotStructure.angle.ArmMech;
 
 public class Wrist {
