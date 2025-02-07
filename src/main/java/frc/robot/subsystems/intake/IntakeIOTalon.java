@@ -10,24 +10,24 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 
 
-public class IntakeIOTalon implements IntakeIO{
+public class IntakeIOTalon implements IntakeIO {
     protected final TalonSRX motor = HardwareDevices.intakeMotorID.talonSRX();
-    protected final DigitalInput sensor = new DigitalInput(9);
+    protected final DigitalInput coralSensor = HardwareDevices.coralSensor.input();
+    protected final DigitalInput algaeSensor = HardwareDevices.algaeSensor.input();
 
-    public IntakeIOTalon(){
-        //Value needs review
-        motor.configContinuousCurrentLimit(6);
+    public IntakeIOTalon() {
+        motor.configContinuousCurrentLimit(20);
     }
 
     @Override
-    public void updateInputs(IntakeIOInputs inputs){
+    public void updateInputs(IntakeIOInputs inputs) {
         inputs.motor.updateFrom(motor);
 
-        inputs.sensorDetect = !sensor.get();
+        inputs.coralSensor = coralSensor.get() ^ IntakeConstants.coralSensorInverted;
+        inputs.algaeSensor = algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;
     }
     @Override
     public void setMotorVoltage(Measure<VoltageUnit> volts) {
-        //Value needs review
         motor.set(ControlMode.PercentOutput, volts.in(Volts) / 12);
     }
 }

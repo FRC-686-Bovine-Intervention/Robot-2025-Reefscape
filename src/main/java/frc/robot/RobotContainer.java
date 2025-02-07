@@ -30,6 +30,8 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
@@ -59,7 +61,7 @@ public class RobotContainer {
     @SuppressWarnings("unused")
     private final ButtonBoard3x3 buttonBoard = new ButtonBoard3x3(1);
     @SuppressWarnings("unused")
-    private final CommandJoystick simJoystick = new CommandJoystick(2);
+    private final CommandJoystick simJoystick = new CommandJoystick(5);
 
     @SuppressWarnings("resource")
     public RobotContainer() {
@@ -122,6 +124,7 @@ public class RobotContainer {
             break;
         }
         manualOverrides = new ManualOverrides();
+        var intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
 
         drive.structureRoot
             .addChild(VisionConstants.frontLeftModuleMount)
@@ -129,6 +132,8 @@ public class RobotContainer {
             .addChild(VisionConstants.backLeftModuleMount)
             .addChild(VisionConstants.backRightModuleMount)
             .addChild(VisionConstants.flagStickMount)
+            .addChild(intake.coralPose)
+            .addChild(intake.algaePose)
         ;
         Mechanism3d.registerMechs();
 

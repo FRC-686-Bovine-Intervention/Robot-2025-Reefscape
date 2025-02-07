@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -13,14 +14,21 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 
 
-public class IntakeIOFalcon implements IntakeIO{
+public class IntakeIOFalcon implements IntakeIO {
     protected final TalonFX motor = HardwareDevices.intakeMotorID.talonFX();
-    protected final DigitalInput sensor = new DigitalInput(9);
+    protected final DigitalInput coralSensor = HardwareDevices.coralSensor.input();
+    protected final DigitalInput algaeSensor = HardwareDevices.algaeSensor.input();
 
     public IntakeIOFalcon(){
         var motorConfig = new TalonFXConfiguration();
-        motorConfig.MotorOutput.withNeutralMode(NeutralModeValue.Coast).withInverted(InvertedValue.CounterClockwise_Positive);
-        motorConfig.CurrentLimits.withStatorCurrentLimit(20).withStatorCurrentLimitEnable(true);
+        motorConfig.MotorOutput
+            .withNeutralMode(NeutralModeValue.Coast)
+            .withInverted(InvertedValue.CounterClockwise_Positive)
+        ;
+        motorConfig.CurrentLimits
+            .withStatorCurrentLimit(Amps.of(20))
+            .withStatorCurrentLimitEnable(true)
+        ;
 
         motor.getConfigurator().apply(motorConfig);
     }
@@ -29,8 +37,10 @@ public class IntakeIOFalcon implements IntakeIO{
     public void updateInputs(IntakeIOInputs inputs){
         inputs.motor.updateFrom(motor);
 
-        inputs.sensorDetect = !sensor.get();
+        inputs.coralSensor = coralSensor.get() ^ IntakeConstants.coralSensorInverted;
+        inputs.algaeSensor = algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;
     }
+
     @Override
     public void setMotorVoltage(Measure<VoltageUnit> voltage) {
         motor.setVoltage(voltage.in(Volts));
