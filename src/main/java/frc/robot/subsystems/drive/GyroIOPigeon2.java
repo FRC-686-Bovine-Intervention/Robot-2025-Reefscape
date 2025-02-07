@@ -19,34 +19,37 @@ import frc.robot.constants.RobotConstants;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOPigeon2 implements GyroIO {
-  private final Pigeon2 pigeon = HardwareDevices.pigeonID.pigeon2();
+    private final Pigeon2 pigeon = HardwareDevices.pigeonID.pigeon2();
 
-  public GyroIOPigeon2() {
-    var config = new Pigeon2Configuration();
-    // change factory defaults here
-    config.MountPose.MountPoseYaw = -179.67636108398438;    // pigeon2 oriented with x forward, y left, z up
-    config.MountPose.MountPosePitch = -0.25307801365852356;
-    config.MountPose.MountPoseRoll = -0.5043123960494995;
-    pigeon.getConfigurator().apply(config);
+    public GyroIOPigeon2() {
+        var config = new Pigeon2Configuration();
+        // change factory defaults here
+        config.MountPose
+            .withMountPoseYaw(Degrees.of(-179.59326171875))
+            .withMountPosePitch(Degrees.of(-0.29825273156166077))
+            .withMountPoseRoll(Degrees.of(-0.2136882245540619))
+        ;
 
-    // set signals to an appropriate rate
-    pigeon.getYaw().setUpdateFrequency(RobotConstants.rioUpdateFrequency);
+        pigeon.getConfigurator().apply(config);
 
-    pigeon.setYaw(0);
-  }
+        // set signals to an appropriate rate
+        pigeon.getYaw().setUpdateFrequency(RobotConstants.rioUpdateFrequency);
 
-  public void updateInputs(GyroIOInputs inputs) {
-    inputs.connected = pigeon.getYaw().getStatus().isOK();
+        pigeon.setYaw(0);
+    }
 
-    inputs.rotation = pigeon.getRotation3d();
+    public void updateInputs(GyroIOInputs inputs) {
+        inputs.connected = pigeon.getYaw().getStatus().isOK();
 
-    inputs.yawVelocity = pigeon.getAngularVelocityZWorld().getValue();   // ccw+
-    inputs.pitchVelocity = pigeon.getAngularVelocityYWorld().getValue().unaryMinus();   // up+
-    inputs.rollVelocity = pigeon.getAngularVelocityXWorld().getValue().unaryMinus();   // ccw+
-  }
+        inputs.rotation = pigeon.getRotation3d();
 
-  @Override
-  public void resetYaw(Measure<AngleUnit> yaw) {
-      pigeon.setYaw(yaw.in(Degrees));
-  }
+        inputs.yawVelocity = pigeon.getAngularVelocityZWorld().getValue();   // ccw+
+        inputs.pitchVelocity = pigeon.getAngularVelocityYWorld().getValue().unaryMinus();   // up+
+        inputs.rollVelocity = pigeon.getAngularVelocityXWorld().getValue().unaryMinus();   // ccw+
+    }
+
+    @Override
+    public void resetYaw(Measure<AngleUnit> yaw) {
+        pigeon.setYaw(yaw.in(Degrees));
+    }
 }

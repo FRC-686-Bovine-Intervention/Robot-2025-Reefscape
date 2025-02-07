@@ -1,9 +1,11 @@
 package frc.util.rust.iter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 import edu.wpi.first.math.Pair;
@@ -450,6 +452,13 @@ public interface Iterator<Item> extends IntoIterator<Item> {
     public default <DataStruct> DataStruct collect(FromIterator<Item, DataStruct> collector) {
         return collector.from_iter(this);
     }
+    public default Item[] collect_array(IntFunction<Item[]> generator) {
+        return FromIterator.array(this, generator);
+    }
+    public default ArrayList<Item> collect_arraylist() {
+        return FromIterator.arrayList(this);
+    }
+    
     @SuppressWarnings("unused")
     public default int count() {
         var count = 0;

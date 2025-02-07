@@ -23,6 +23,9 @@ public abstract class Mechanism3d<U extends Unit> extends ChildBase {
     public static void logAscopeComponents() {
         Logger.recordOutput(KEY + "/Mechs", Arrays.stream(mechanisms).map(Mechanism3d::getRobotRelative).toArray(Transform3d[]::new));
     }
+    public static void logAscopeAxes() {
+        Logger.recordOutput(KEY + "/Axes", Arrays.stream(mechanisms).map(Mechanism3d::getFieldRelative).toArray(Pose3d[]::new));
+    }
 
     public Mechanism3d(Transform3d base, Vector<N3> axis) {
         super(base);

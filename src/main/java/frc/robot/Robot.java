@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -17,8 +19,11 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,14 +31,16 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.leds.Leds;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
+import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
+import frc.util.rust.iter.Iterator;
 
 public class Robot extends LoggedRobot {
     public Robot() {
         Leds.getInstance();
-        // WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
         System.out.println("[Init Robot] Recording AdvantageKit Metadata");
         Logger.recordMetadata("Robot", RobotType.getRobot().name());
         Logger.recordMetadata("Mode", RobotType.getMode().name());
@@ -119,11 +126,12 @@ public class Robot extends LoggedRobot {
 
         System.out.println("[Init Robot] Instantiating RobotContainer");
         new RobotContainer();
+        System.out.println("[Init Robot] Starting Deploy Webserver");
+        WebServer.start(5800, Filesystem.getDeployDirectory().getPath() + "/elastic");
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
         Perspective.getCurrent();
         Shuffleboard.selectTab("Teleoperated");
-        System.out.println("[ROBOT] aifnwaifjawioefjiwjfewifaefjawpiefjawjpfoajwioefpjawioefjaiewojf");
     }
 
     @Override
@@ -134,56 +142,13 @@ public class Robot extends LoggedRobot {
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
-        Logger.recordOutput("bot", new Pose2d(
-            new Translation2d(
-                3,
-                2
-            ),
-            Rotation2d.fromDegrees(140)
-        ));
-        Logger.recordOutput("Coral", new Pose3d[]{
-            FieldConstants.Reef.rack0Level2Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack0Level2Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack0Level3Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack0Level3Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack0Level4Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack0Level4Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-
-            FieldConstants.Reef.rack1Level2Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack1Level2Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack1Level3Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack1Level3Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack1Level4Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack1Level4Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-
-            FieldConstants.Reef.rack2Level2Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack2Level2Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack2Level3Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack2Level3Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack2Level4Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack2Level4Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-
-            FieldConstants.Reef.rack3Level2Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack3Level2Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack3Level3Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack3Level3Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack3Level4Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack3Level4Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-
-            FieldConstants.Reef.rack4Level2Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack4Level2Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack4Level3Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack4Level3Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack4Level4Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack4Level4Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-
-            FieldConstants.Reef.rack5Level2Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack5Level2Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack5Level3Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack5Level3Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack5Level4Left.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-            FieldConstants.Reef.rack5Level4Right.getOurs().transformBy(FieldConstants.Coral.rackPlacement),
-        });
+        Mechanism3d.logAscopeAxes();
+        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
+        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
+        Logger.recordOutput("ASCOPE DEBUGGING/Pivot Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).inverse());
+        Logger.recordOutput("ASCOPE DEBUGGING/Stage 2 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).inverse());
+        Logger.recordOutput("ASCOPE DEBUGGING/Stage 3 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).inverse());
+        Logger.recordOutput("ASCOPE DEBUGGING/Stage 4 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).plus(ElevatorConstants.stage4Base).inverse());
     }
 
     @Override

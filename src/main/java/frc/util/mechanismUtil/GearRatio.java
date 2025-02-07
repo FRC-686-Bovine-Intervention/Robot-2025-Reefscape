@@ -1,5 +1,8 @@
 package frc.util.mechanismUtil;
 
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+
 public class GearRatio {
     private final double ratio;
 
@@ -17,6 +20,18 @@ public class GearRatio {
     
     public double apply(double source) {
         return source * ratio;
+    }
+    // public Measure<AngleUnit> apply(Measure<AngleUnit> source) {
+    //     return source.times(ratio);
+    // }
+    public Angle apply(Angle source) {
+        return source.times(ratio);
+    }
+    // public Measure<AngularVelocityUnit> apply(Measure<AngularVelocityUnit> source) {
+    //     return source.times(ratio);
+    // }
+    public AngularVelocity apply(AngularVelocity source) {
+        return source.times(ratio);
     }
     
     public GearRatio inverse() {

@@ -30,12 +30,10 @@ public class LoggedTunableAngularProfile {
     }
 
     public void update(MotionMagicConfigs motionMagicConfigs) {
-        if(LoggedTunableMeasure.hasChanged(hashCode(), kV, kA)) {
-            motionMagicConfigs
-                .withMotionMagicCruiseVelocity(kV.in(RotationsPerSecond))
-                .withMotionMagicAcceleration(kA.in(RotationsPerSecondPerSecond))
-            ;
-        }
+        motionMagicConfigs
+            .withMotionMagicCruiseVelocity(kV.in(RotationsPerSecond))
+            .withMotionMagicAcceleration(kA.in(RotationsPerSecondPerSecond))
+        ;
     }
 
     public TrapezoidProfile getTrapezoidProfile() {
@@ -48,13 +46,11 @@ public class LoggedTunableAngularProfile {
     }
 
     public void update(ProfiledPIDController profiledPIDController) {
-        if(LoggedTunableMeasure.hasChanged(hashCode(), kV, kA)) {
-            profiledPIDController.setConstraints(
-                new Constraints(
-                    kV.get().in(RadiansPerSecond),
-                    kA.get().in(RadiansPerSecondPerSecond)
-                )
-            );
-        }
+        profiledPIDController.setConstraints(
+            new Constraints(
+                kV.get().in(RadiansPerSecond),
+                kA.get().in(RadiansPerSecondPerSecond)
+            )
+        );
     }
 }

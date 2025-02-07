@@ -32,11 +32,11 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
-import frc.util.MathExtraUtil;
 import frc.util.hardwareID.can.CANDevice;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.mechanismUtil.GearRatio;
 import frc.util.mechanismUtil.Wheel;
+import frc.util.misc.GeomUtil;
 
 public final class DriveConstants {
     public static final double odometryLoopFrequencyHz = 100;
@@ -62,7 +62,7 @@ public final class DriveConstants {
             this.driveInverted = driveInverted;
             this.encoderOffset = cancoderOffset;
             this.moduleTranslation = moduleTranslation;
-            this.positiveRotVec = MathExtraUtil.vectorFromRotation(this.moduleTranslation.getAngle().plus(Rotation2d.fromDegrees(90)));
+            this.positiveRotVec = GeomUtil.vectorFromRotation(this.moduleTranslation.getAngle().plus(Rotation2d.fromDegrees(90)));
         }
     }
 
@@ -70,7 +70,7 @@ public final class DriveConstants {
         new ModuleConstants(
             "Front Left",
             HardwareDevices.frontLeftDriveMotorID, HardwareDevices.frontLeftTurnMotorID,
-            InvertedValue.Clockwise_Positive,
+            InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.25),
             new Translation2d(
                 trackWidthX.div(+2),
@@ -100,7 +100,7 @@ public final class DriveConstants {
         new ModuleConstants(
             "Back Right",
             HardwareDevices.backRightDriveMotorID, HardwareDevices.backRightTurnMotorID,
-            InvertedValue.Clockwise_Positive,
+            InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.75),
             new Translation2d(
                 trackWidthX.div(-2),
