@@ -67,7 +67,14 @@ public class Superstructure extends SubsystemBase {
             centerOfMass3d.getZ()
         );
 
-        Logger.recordOutput("Center of Mass", new Pose3d(RobotState.getInstance().getPose()).transformBy(new Transform3d(centerOfMass3d, Rotation3d.kZero)));
+        Logger.recordOutput("Superstructure/Center of Mass", new Pose3d(RobotState.getInstance().getPose()).transformBy(new Transform3d(centerOfMass3d, Rotation3d.kZero)));
+        Logger.recordOutput("Superstructure/Centers of Masses",
+            pivot.stage1Mass.getFieldRelative(),
+            elevator.stage2Mass.getFieldRelative(),
+            elevator.stage3Mass.getFieldRelative(),
+            elevator.stage4Mass.getFieldRelative(),
+            wrist.wristMass.getFieldRelative()
+        );
     }
 
     public SuperstructureState getCurrentState() {

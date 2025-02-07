@@ -39,7 +39,7 @@ public class Wrist {
 
         mech.set(inputs.encoder.position);
 
-        Logger.recordOutput("Superstructure/Pivot/Angle", getAngle());
+        Logger.recordOutput("Superstructure/Wrist/Angle", getAngle());
     }
 
     public Angle getAngle() {
