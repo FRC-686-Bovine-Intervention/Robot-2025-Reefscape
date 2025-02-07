@@ -57,6 +57,14 @@ public class Superstructure extends SubsystemBase {
         );
     }
 
+    public Command idle() {
+        return goToSetpointSequenced(SuperstructureState.idle);
+    }
+
+    public Command defense() {
+        return goToSetpointSequenced(SuperstructureState.defense);
+    }
+
     public Command pivotVoltage(DoubleSupplier voltage) {
         var subsystem = this;
         return new Command() {
@@ -194,6 +202,17 @@ public class Superstructure extends SubsystemBase {
         public final Angle pivotAngle;
         public final Distance elevatorLength;
         public final Angle wristAngle;
+
+        public static final SuperstructureState idle = new SuperstructureState(
+            Degrees.of(70),
+            Meters.zero(),
+            Degrees.of(90).minus(Degrees.of(70))
+        );
+        public static final SuperstructureState defense = new SuperstructureState(
+            PivotConstants.minAngle,
+            Meters.zero(),
+            Degrees.of(110).minus(PivotConstants.minAngle)
+        );
 
         public SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             this.pivotAngle = pivotAngle;

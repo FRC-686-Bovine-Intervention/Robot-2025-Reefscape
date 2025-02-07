@@ -7,6 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -22,7 +23,6 @@ import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
 import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -209,6 +209,8 @@ public class RobotContainer {
             drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
                 .withName("Robot spin")
         );
+
+        superstructure.setDefaultCommand(superstructure.idle());
     }
 
     private void configureControls() {
@@ -235,7 +237,7 @@ public class RobotContainer {
         
         // driveController.y().toggleOnTrue(superstructure.pivot.pivotTo(Degrees.of(90)));
         // driveController.y().toggleOnTrue(superstructure.elevator.elevateTo(Meters.of(1)));
-        driveController.leftBumper().toggleOnTrue(new ContinuouslySwappingCommand(
+        driveController.x().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final Command[] commands = new Command[Level.values().length * 2];
                 {
@@ -255,26 +257,26 @@ public class RobotContainer {
             },
             Set.of(superstructure)
         ));
-        driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
-            new Supplier<Command>() {
-                private final Command[] commands = new Command[Rack.values().length * 2];
-                {
-                    for (var rack : Rack.values()) {
-                        commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
-                        commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
-                    }
-                }
-                public Command get() {
-                    var rack = Rack.Rack2;
-                    if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
-                        return commands[rack.ordinal() * 2];
-                    } else {
-                        return commands[rack.ordinal() * 2 + 1];
-                    }
-                }
-            },
-            Set.of(superstructure)
-        ));
+        // driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
+        //     new Supplier<Command>() {
+        //         private final Command[] commands = new Command[Rack.values().length * 2];
+        //         {
+        //             for (var rack : Rack.values()) {
+        //                 commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
+        //                 commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
+        //             }
+        //         }
+        //         public Command get() {
+        //             var rack = Rack.Rack2;
+        //             if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+        //                 return commands[rack.ordinal() * 2];
+        //             } else {
+        //                 return commands[rack.ordinal() * 2 + 1];
+        //             }
+        //         }
+        //     },
+        //     Set.of(superstructure)
+        // ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
@@ -282,6 +284,9 @@ public class RobotContainer {
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.Rack.Rack0.)));
+
+        driveController.y().toggleOnTrue(superstructure.defense());
+        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
     }
 
     private void configureNotifications() {}
