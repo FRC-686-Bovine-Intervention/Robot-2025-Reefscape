@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
@@ -211,10 +209,6 @@ public class RobotContainer {
             drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
                 .withName("Robot spin")
         );
-
-        superstructure.pivot.setDefaultCommand(superstructure.pivot.pivotTo(Degrees.of(0)));
-        superstructure.elevator.setDefaultCommand(superstructure.elevator.elevateTo(Meters.zero()));
-        superstructure.wrist.setDefaultCommand(superstructure.wrist.pivotTo(Degrees.zero()));
     }
 
     private void configureControls() {
@@ -259,7 +253,7 @@ public class RobotContainer {
                     }
                 }
             },
-            Set.of(superstructure.pivot, superstructure.elevator, superstructure.wrist)
+            Set.of(superstructure)
         ));
         driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
@@ -279,7 +273,7 @@ public class RobotContainer {
                     }
                 }
             },
-            Set.of(superstructure.pivot, superstructure.elevator, superstructure.wrist)
+            Set.of(superstructure)
         ));
 
         driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
