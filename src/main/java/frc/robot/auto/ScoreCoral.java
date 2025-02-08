@@ -1,5 +1,8 @@
 package frc.robot.auto;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -8,7 +11,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef.Branch;
+import frc.util.misc.MathExtraUtil;
 
 public class ScoreCoral extends AutoRoutine {
     // scoring preload (reef branches)
@@ -30,6 +35,10 @@ public class ScoreCoral extends AutoRoutine {
     private static final Map.Entry<String, Branch> branchK = Settings.option("Branch K", FieldConstants.Reef.branches[10]); 
     private static final Map.Entry<String, Branch> branchL = Settings.option("Branch L", FieldConstants.Reef.branches[11]); 
     
+    
+    private static boolean isRightCoralStation(Branch branch){
+        return MathExtraUtil.isWithin(branch.getIndex(), 1, 6);
+    }
     private static final AutoQuestion<Branch> scorePreloadBranch = new AutoQuestion<Branch>("Score Preload Branch") {
         @Override
         protected Settings<Branch> generateSettings() {
@@ -41,8 +50,51 @@ public class ScoreCoral extends AutoRoutine {
 
     };
 
+    private static final AutoQuestion<Branch> scoreCoral1 = new AutoQuestion<Branch>("Score Second Branch") {
+        @Override
+        protected Settings<Branch> generateSettings() {
+            return (isRightCoralStation(scorePreloadBranch.getResponse())) ? (
+                Settings.from(branchB, 
+                branchB, branchC, branchD, branchE, branchF, branchG)
+            ) : (
+                Settings.from(branchA, 
+                branchA, branchH, branchI, branchJ, branchK, branchL)
+            );
+        }
+    };
+
+    private static final AutoQuestion<Branch> scoreCoral2 = new AutoQuestion<Branch>("Score Third Branch") {
+        @Override
+        protected Settings<Branch> generateSettings() {
+            return (isRightCoralStation(scorePreloadBranch.getResponse())) ? (
+                Settings.from(branchB, 
+                branchB, branchC, branchD, branchE, branchF, branchG)
+            ) : (
+                Settings.from(branchA, 
+                branchA, branchH, branchI, branchJ, branchK, branchL)
+            );
+        }
+    };
+
+    private enum CoralStationPosition{
+        CLOSE,
+        MID,
+        FAR
+    }
+    private static final AutoQuestion<CoralStationPosition> stationPosition = new AutoQuestion<CoralStationPosition>("Coral Station Position") {
+        private static final Map.Entry<String, CoralStationPosition> stationFar = Settings.option("Far", CoralStationPosition.FAR);
+        private static final Map.Entry<String, CoralStationPosition> stationMid = Settings.option("Mid", CoralStationPosition.MID);
+        private static final Map.Entry<String, CoralStationPosition> stationClose = Settings.option("Close", CoralStationPosition.CLOSE);
+        
+        @Override
+        protected Settings<CoralStationPosition> generateSettings() {
+            return Settings.from(stationClose, stationClose, stationMid, stationFar);
+        }
+    };
+
+
     public ScoreCoral(RobotContainer robot) {
-        super("ScoreCoral", List.of(scorePreloadBranch));
+        super("ScoreCoral", List.of(scorePreloadBranch, scoreCoral1, scoreCoral2, stationPosition));
     }
 
     @Override
