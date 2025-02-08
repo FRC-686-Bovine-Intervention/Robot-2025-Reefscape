@@ -19,7 +19,6 @@ public class Climber extends SubsystemBase {
 
     public static final LoggedTunableMeasure<VoltageUnit> idleVoltage = new LoggedTunableMeasure<>("Climber/Voltages/Idle", Volts.of(1));
     public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Climber/Voltages/Idle", Volts.of(4));
-    public static final LoggedTunableMeasure<VoltageUnit> releaseVoltage = new LoggedTunableMeasure<>("Climber/Voltages/Idle", Volts.of(4).unaryMinus());
 
     public Climber(ClimberIO io) {
         System.out.println("[Init Climber] Instantiated Climber with " + io.getClass().getSimpleName());
@@ -69,9 +68,5 @@ public class Climber extends SubsystemBase {
 
     public Command intake() {
         return genCommand("Intake", intakeVoltage);
-    }
-
-    public Command release() {
-        return genCommand("Release", releaseVoltage);
     }
 }
