@@ -33,12 +33,12 @@ public class Climber extends SubsystemBase {
         Logger.processInputs("Inputs/Climber", inputs);
     } 
 
-    private Command genCommand (
+    private Command genCommand(
         String name,
         Supplier<Measure<VoltageUnit>> voltage
     ) {
         var subsystem = this;
-        return new Command () {
+        return new Command() {
             {
                 setName(name);
                 addRequirements(subsystem);
