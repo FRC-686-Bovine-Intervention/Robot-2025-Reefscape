@@ -11,8 +11,6 @@ import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
-import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.util.VirtualSubsystem;
 
 public class ObjectiveTracker extends VirtualSubsystem {
@@ -64,7 +62,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         io.setIntake(selectedIntakeGoal.isEmpty() ? 0 : selectedIntakeGoal.get().getIndex() + 1);
         
         Logger.recordOutput("Objective Tracker/Selected Branch", selectedCoral.branchPose.getOurs());
-        var setpointState = SuperstructureState.fromRobotSpace(selectedCoral.level.forwardBranchRobotSpace.transformBy(Superstructure.forwardCoralTransform));
+        var setpointState = selectedCoral.level.superstructurePosition.getForward().getSuperstructureState();
         Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Pivot Angle", setpointState.pivotAngle);
         Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Elevator Length", setpointState.elevatorLength);
         Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Wrist Angle", setpointState.wristAngle);
