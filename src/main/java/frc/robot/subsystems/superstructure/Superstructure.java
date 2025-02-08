@@ -13,8 +13,11 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,6 +31,7 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
+import frc.robot.subsystems.superstructure.wrist.WristConstants;
 import frc.util.misc.MeasureUtil;
 
 public class Superstructure extends SubsystemBase {
@@ -287,6 +291,24 @@ public class Superstructure extends SubsystemBase {
                     robotSpace.getRotation().getSin()
                 )
             ));
+        }
+
+        public Transform3d[] getMechTransforms() {
+            var pivotMechTransform = new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(), this.pivotAngle.unaryMinus(), Degrees.zero()));
+            var elevatorMechTransform = new Transform3d(new Translation3d(this.elevatorLength.div(ElevatorConstants.movingStages), Meters.zero(), Meters.zero()), Rotation3d.kZero);
+            var wristMechTransform = new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(), this.wristAngle.unaryMinus(), Degrees.zero()));
+            var pivotTransform = PivotConstants.pivotBase.plus(pivotMechTransform);
+            var stage2Transform = pivotTransform.plus(ElevatorConstants.stage2Base).plus(elevatorMechTransform);
+            var stage3Transform = stage2Transform.plus(ElevatorConstants.stage3Base).plus(elevatorMechTransform);
+            var stage4Transform = stage3Transform.plus(ElevatorConstants.stage4Base).plus(elevatorMechTransform);
+            var wristTransform = stage4Transform.plus(WristConstants.wristBase).plus(wristMechTransform);
+            return new Transform3d[] {
+                pivotTransform,
+                stage2Transform,
+                stage3Transform,
+                stage4Transform,
+                wristTransform,
+            };
         }
     }
 

@@ -13,13 +13,7 @@ import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
-import frc.robot.subsystems.superstructure.pivot.PivotConstants;
-import frc.robot.subsystems.superstructure.wrist.WristConstants;
 import frc.util.VirtualSubsystem;
-import frc.util.robotStructure.Root;
-import frc.util.robotStructure.angle.ArmMech;
-import frc.util.robotStructure.linear.ExtenderMech;
 
 public class ObjectiveTracker extends VirtualSubsystem {
     private final ObjectiveSelectorIO io;
@@ -38,28 +32,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
     private Optional<StagedAlgae> selectedIntakeGoal = Optional.empty();
 
-    private final Root structureRoot = new Root();
-    private final ArmMech pivotMech = new ArmMech(PivotConstants.pivotBase);
-    private final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.stage2Base);
-    private final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
-    private final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
-    private final ArmMech wristMech = new ArmMech(WristConstants.wristBase);
-
     public ObjectiveTracker(ObjectiveSelectorIO io) {
         System.out.println("[Init] Instantiating ObjectiveTracker");
         this.io = io;
-
-        structureRoot
-            .addChild(pivotMech
-                .addChild(stage2Mech
-                    .addChild(stage3Mech
-                        .addChild(stage4Mech
-                            .addChild(wristMech)
-                        )
-                    )
-                )
-            )
-        ;
     }
 
     @Override
@@ -89,21 +64,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
         io.setIntake(selectedIntakeGoal.isEmpty() ? 0 : selectedIntakeGoal.get().getIndex() + 1);
         
         Logger.recordOutput("Objective Tracker/Selected Branch", selectedCoral.branchPose.getOurs());
-        structureRoot.setPose(selectedCoral.robotPose.getOurs());
         var setpointState = SuperstructureState.fromRobotSpace(selectedCoral.level.forwardBranchRobotSpace.transformBy(Superstructure.forwardCoralTransform));
-        pivotMech.set(setpointState.pivotAngle);
-        stage2Mech.set(setpointState.elevatorLength.div(ElevatorConstants.movingStages));
-        stage3Mech.set(setpointState.elevatorLength.div(ElevatorConstants.movingStages));
-        stage4Mech.set(setpointState.elevatorLength.div(ElevatorConstants.movingStages));
-        wristMech.set(setpointState.wristAngle);
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Robot", structureRoot.getFieldRelative());
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Mechs",
-            pivotMech.getRobotRelative(),
-            stage2Mech.getRobotRelative(),
-            stage3Mech.getRobotRelative(),
-            stage4Mech.getRobotRelative(),
-            wristMech.getRobotRelative()
-        );
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Pivot Angle", setpointState.pivotAngle);
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Elevator Length", setpointState.elevatorLength);
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Wrist Angle", setpointState.wristAngle);
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Robot", selectedCoral.robotPose.getOurs());
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Mechs", setpointState.getMechTransforms());
     }
 
     public void moveSelectedCoral(int x, int y) {
