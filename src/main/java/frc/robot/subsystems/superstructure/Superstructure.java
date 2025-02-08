@@ -236,7 +236,7 @@ public class Superstructure extends SubsystemBase {
         }
 
         public static SuperstructureState fromRobotSpace(Pose2d robotSpacePose) {
-            return fromPivotSpace(robotSpacePose.relativeTo(PivotConstants.pivotRobotSpace));
+            return fromPivotSpace(robotSpacePose.transformBy(PivotConstants.pivotRobotSpace));
         }
         public static SuperstructureState fromLevelForward(Level level) {
             return fromRobotSpace(level.forwardBranchRobotSpace.transformBy(forwardCoralTransform));
@@ -250,5 +250,47 @@ public class Superstructure extends SubsystemBase {
         public static SuperstructureState fromAlgaeBackward(AlgaeLevel algaeLevel) {
             return fromRobotSpace(algaeLevel.backwardRobotSpace.transformBy(algaeTransform));
         }
+
+        public Pose2d toPivotSpace() {
+            var pivotRotation = new Rotation2d(this.pivotAngle);
+            return new Pose2d(
+                new Translation2d(ElevatorConstants.minimumHeight.plus(this.elevatorLength).in(Meters), pivotRotation),
+                pivotRotation.plus(new Rotation2d(wristAngle))
+            );
+        }
+        public Pose2d toRobotSpace() {
+            return this.toPivotSpace().transformBy(PivotConstants.pivotRobotSpace.inverse());
+        }
+
+        public SuperstructureState flipPivotSpace() {
+            var pivotSpace = this.toPivotSpace();
+            return fromPivotSpace(new Pose2d(
+                new Translation2d(
+                    -pivotSpace.getX(),
+                    pivotSpace.getY()
+                ),
+                new Rotation2d(
+                    -pivotSpace.getRotation().getCos(),
+                    pivotSpace.getRotation().getSin()
+                )
+            ));
+        }
+        public SuperstructureState flipRobotSpace() {
+            var robotSpace = this.toRobotSpace();
+            return fromRobotSpace(new Pose2d(
+                new Translation2d(
+                    -robotSpace.getX(),
+                    robotSpace.getY()
+                ),
+                new Rotation2d(
+                    -robotSpace.getRotation().getCos(),
+                    robotSpace.getRotation().getSin()
+                )
+            ));
+        }
+    }
+
+    public static class SuperstructurePosition {
+        
     }
 }

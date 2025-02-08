@@ -37,6 +37,8 @@ public final class FieldConstants {
         apriltagLayout = a;
     }
 
+    public static final Flipped<Rotation2d> netForwardRotation = Flipped.fromBlue(Rotation2d.kZero);
+
     public static final class CoralStation {
         private static final Angle rightStationWallAngle = Degrees.of(144.011392);
         private static final Pose2d rightStationMidpoint = new Pose2d(

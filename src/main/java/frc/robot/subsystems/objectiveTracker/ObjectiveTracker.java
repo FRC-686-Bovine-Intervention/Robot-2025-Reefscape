@@ -26,10 +26,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ObjectiveSelectorIOInputsAutoLogged inputs =
         new ObjectiveSelectorIOInputsAutoLogged();
 
-    enum AlgaeGoal {
+    public enum AlgaeGoal {
         NET,
         PROCESSOR,
-        OPPONENT_PROCESSOR
+        OPPONENT_PROCESSOR,
+        ;
     }
 
     private final ArrayList<Branch> placedCoral = new ArrayList<>(36);
@@ -45,7 +46,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ArmMech wristMech = new ArmMech(WristConstants.wristBase);
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
-        System.out.println("[Init] Creating ObjectiveTracker");
+        System.out.println("[Init] Instantiating ObjectiveTracker");
         this.io = io;
 
         structureRoot
@@ -64,7 +65,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("ObjectiveTracker", inputs);
+        Logger.processInputs("Objective Tracker", inputs);
 
         if (inputs.coral != -1) {
             selectedCoral = FieldConstants.Reef.branches[inputs.coral];
@@ -75,10 +76,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
             inputs.algae = -1;
         }
         if (inputs.intake != -1) {
-            selectedIntakeGoal = 
-                inputs.intake > 0 ?
-                    Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 1]) :
-                    Optional.empty();
+            selectedIntakeGoal = (inputs.intake > 0) ? (
+                Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 1])
+            ) : (
+                Optional.empty()
+            );
             inputs.intake = -1;
         }
 
@@ -116,7 +118,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
 
-    public Branch getSelectedNode() {
+    public Branch getSelectedBranch() {
         return selectedCoral;
     }
 

@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
@@ -47,6 +49,7 @@ import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
+import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotIO;
 import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
@@ -284,7 +287,8 @@ public class RobotContainer {
         
         // driveController.a().toggleOnTrue(null); //Intake/Eject
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
-        driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend
+        
+        driveController.x().and(intake.hasCoral).toggleOnTrue(new ContinuouslySwappingCommand( //Extend
             new Supplier<Command>() {
                 private final Command[] commands = new Command[Level.values().length * 2];
                 {
@@ -294,17 +298,39 @@ public class RobotContainer {
                     }
                 }
                 public Command get() {
-                    var node = objectiveTracker.getSelectedNode();
-                    if (drive.getRotation().minus(node.branchPose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
-                        return commands[node.level.ordinal() * 2];
+                    var branch = objectiveTracker.getSelectedBranch();
+                    if (drive.getRotation().minus(branch.branchPose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+                        return commands[branch.level.ordinal() * 2];
                     } else {
-                        return commands[node.level.ordinal() * 2 + 1];
+                        return commands[branch.level.ordinal() * 2 + 1];
                     }
                 }
             },
             Set.of(superstructure)
         ));
-        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation()))); //Auto drive
+        driveController.x().and(intake.hasAlgae).toggleOnTrue(new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final Command processorCommand = superstructure.goToSetpointSequenced(new SuperstructureState(PivotConstants.minAngle, Meters.zero(), Degrees.of(35).unaryMinus()));
+                private final Command netForwardCommand = superstructure.goToSetpointSequenced(new SuperstructureState(Degrees.of(90), Meters.zero(), Degrees.of(45).unaryMinus()));
+                private final Command netBackwardCommand = superstructure.goToSetpointSequenced(new SuperstructureState(Degrees.of(90), Meters.zero(), Degrees.of(45)));
+                public Command get() {
+                    switch (objectiveTracker.getAlgaeGoal()) {
+                        default:
+                        case NET:
+                            if (drive.getRotation().minus(FieldConstants.netForwardRotation.getOurs()).getCos() >= 0) {
+                                return netForwardCommand;
+                            } else {
+                                return netBackwardCommand;
+                            }
+                        case PROCESSOR:
+                        case OPPONENT_PROCESSOR:
+                            return processorCommand;
+                    }
+                }
+            },
+            Set.of(superstructure)
+        ));
+        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedBranch().robotPose.getOurs().getRotation()))); //Auto drive
         // driveController.start().toggleOnTrue(null); //Start Climb
         // driveController.back().toggleOnTrue(null); //Climb
         
