@@ -35,10 +35,10 @@ public class ScoreCoral extends AutoRoutine {
     private static final Map.Entry<String, Branch> branchK = Settings.option("Branch K", FieldConstants.Reef.branches[10]); 
     private static final Map.Entry<String, Branch> branchL = Settings.option("Branch L", FieldConstants.Reef.branches[11]); 
     
-    
     private static boolean isRightCoralStation(Branch branch){
         return MathExtraUtil.isWithin(branch.getIndex(), 1, 6);
     }
+
     private static final AutoQuestion<Branch> scorePreloadBranch = new AutoQuestion<Branch>("Score Preload Branch") {
         @Override
         protected Settings<Branch> generateSettings() {
@@ -92,9 +92,55 @@ public class ScoreCoral extends AutoRoutine {
         }
     };
 
+    private enum StartPosition{
+        CLOSE,
+        REMOTE
+    }
+    private static final AutoQuestion<StartPosition> startPosition = new AutoQuestion<StartPosition>("Starting Position") {
+        private static final Map.Entry<String, StartPosition> startRemoteLeft = Settings.option("Remote (Left)", StartPosition.REMOTE);
+        private static final Map.Entry<String, StartPosition> startRemoteRight = Settings.option("Remote (Right)", StartPosition.REMOTE);
+        private static final Map.Entry<String, StartPosition> startFarLeft = Settings.option("Close (Far Left)", StartPosition.CLOSE);
+        private static final Map.Entry<String, StartPosition> startFarRight = Settings.option("Close (Far Right)", StartPosition.CLOSE);
+        private static final Map.Entry<String, StartPosition> startLeftCage = Settings.option("Close (Left Cage)", StartPosition.CLOSE);
+        private static final Map.Entry<String, StartPosition> startRightCage = Settings.option("Close(Right Cage)", StartPosition.CLOSE);
+        private static final Map.Entry<String, StartPosition> startLeftCenter = Settings.option("Close (Left Center)", StartPosition.CLOSE);
+        private static final Map.Entry<String, StartPosition> startRightCenter = Settings.option("Close (Right Center)", StartPosition.CLOSE);
+        
+        @Override
+        protected Settings<StartPosition> generateSettings() {
+            switch(scorePreloadBranch.getResponse().getIndex()){
+                case 0:
+                return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
+                case 1:
+                return Settings.from(startFarRight, startFarRight, startRemoteRight);
+                case 2:
+                return Settings.from(startFarRight, startFarRight, startRemoteRight);
+                case 3:
+                return Settings.from(startFarRight, startFarRight, startRemoteRight);
+                case 4:
+                return Settings.from(startFarRight, startFarRight);
+                case 5:
+                return Settings.from(startRightCage, startRightCage);
+                case 6:
+                return Settings.from(startRightCenter, startRightCenter);
+                case 7:
+                return Settings.from(startLeftCenter, startLeftCenter);
+                case 8:
+                return Settings.from(startLeftCage, startLeftCage);
+                case 9:
+                return Settings.from(startFarLeft, startFarLeft);
+                case 10:
+                return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
+                case 11:
+                return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
+                default:
+                return null;
+            }
+        }
+    };
 
     public ScoreCoral(RobotContainer robot) {
-        super("ScoreCoral", List.of(scorePreloadBranch, scoreCoral1, scoreCoral2, stationPosition));
+        super("ScoreCoral", List.of(scorePreloadBranch, startPosition, scoreCoral1, scoreCoral2, stationPosition));
     }
 
     @Override
