@@ -45,8 +45,8 @@ export let intake = -1;
 let client = new NT4_Client(
   window.location.hostname,
   "ObjectiveSelector",
-  (topic) => {}, // Topic Announce
-  () => {}, // Topic Unannounce
+  (topic) => { }, // Topic Announce
+  () => { }, // Topic Unannounce
   (topic, timestamp, value) => {
     if (topic.name === matchTimeAdvantagekitToDashboardTopic) {
       matchTime = Math.max(0, value);
@@ -64,8 +64,8 @@ let client = new NT4_Client(
 
     switch (topic.name) {
       case coralRobotToDashboardTopic:
-        const { rack, side, level } = getCoral(value);
-        displaySelectedBranch(rack, side);
+        const { rack, pipe, level } = getCoral(value);
+        displaySelectedBranch(rack, pipe);
         displaySelectedLevel(level);
         coral = value;
         break;
@@ -124,22 +124,22 @@ window.onload = () => {
   createBranchSelector();
 };
 
-export function sendSelectedBranch(rack, side) {
-  const { rack: prevRack, side: prevSide, level: level } = getCoral(coral);
-  if (prevRack !== rack || prevSide !== side) {
+export function sendSelectedBranch(rack, pipe) {
+  const { rack: prevRack, pipe: prevPipe, level } = getCoral(coral);
+  if (prevRack !== rack || prevPipe !== pipe) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, level, side })
+      getCoralIdx({ rack, pipe, level })
     );
   }
 }
 
 export function sendSelectedLevel(level) {
-  const { rack, side, level: prevLevel } = getCoral(coral);
+  const { rack, pipe, level: prevLevel } = getCoral(coral);
   if (prevLevel !== level) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, level, side })
+      getCoralIdx({ rack, pipe, level })
     );
   }
 }

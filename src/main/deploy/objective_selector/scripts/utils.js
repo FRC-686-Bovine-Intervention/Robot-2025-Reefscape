@@ -34,14 +34,18 @@ export function wrapNumber(num, min, max) {
   return ((((num - min) % range) + range) % range) + min;
 }
 
+export function isWithinRange(value, min, max) {
+  return value >= min && value <= max;
+}
+
 export function getCoral(idx) {
   return {
-    rack: Math.floor(idx / 2 / 4) % 6,
-    level: Math.floor(idx / 2) % 4,
-    side: idx % 2,
+    rack: (idx >> 16) & 0xFF,
+    pipe: (idx >> 8) & 0xFF,
+    level: idx & 0xFF,
   };
 }
 
-export function getCoralIdx({rack, level, side}) {
-  return rack * 4 * 2 + level * 2 + side;
+export function getCoralIdx({rack, pipe, level}) {
+  return (rack << 16) | (pipe << 8) | level;
 }

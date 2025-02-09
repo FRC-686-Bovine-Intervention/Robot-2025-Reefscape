@@ -48,17 +48,15 @@ public class ObjectiveTracker extends VirtualSubsystem {
         System.out.println("[Init] Creating ObjectiveTracker");
         this.io = io;
 
-        structureRoot
-            .addChild(pivotMech
-                .addChild(stage2Mech
-                    .addChild(stage3Mech
-                        .addChild(stage4Mech
-                            .addChild(wristMech)
-                        )
+        structureRoot.addChild(
+                pivotMech.addChild(
+                    stage2Mech.addChild(
+                        stage3Mech.addChild(
+                        stage4Mech.addChild(wristMech)
                     )
                 )
             )
-        ;
+        );
     }
 
     @Override
@@ -67,8 +65,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.processInputs("ObjectiveTracker", inputs);
 
         if (inputs.coral != -1) {
-            selectedCoral = FieldConstants.Reef.branches[inputs.coral];
-            inputs.coral = -1;
+            // selectedCoral = FieldConstants.Reef.branches[inputs.coral];
+            // inputs.coral = -1;
         }
         if (inputs.algae != -1) {
             selectedAlgaeGoal = AlgaeGoal.values()[inputs.algae];
@@ -82,7 +80,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
             inputs.intake = -1;
         }
 
-        io.setCoral(selectedCoral.getIndex());
+        // io.setCoral(selectedCoral.getIndex());
+        io.setCoral(inputs.coral);
         io.setAlgae(selectedAlgaeGoal.ordinal());
         io.setIntake(selectedIntakeGoal.isEmpty() ? 0 : selectedIntakeGoal.get().getIndex() + 1);
         
