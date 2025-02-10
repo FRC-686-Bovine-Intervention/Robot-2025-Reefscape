@@ -29,6 +29,7 @@ import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.CoralStation;
+import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
@@ -294,26 +295,42 @@ public class RobotContainer {
             new Supplier<Command>() {
                 private final Command coralStationForwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward().getSuperstructureState());
                 private final Command coralStationBackwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward().getSuperstructureState());
+                private final Command[] stagedAlgaeCommands = new Command[AlgaeLevel.values().length * 2];
+                {
+                    for (var level : AlgaeLevel.values()) {
+                        stagedAlgaeCommands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.superstructurePosition.getForward().getSuperstructureState());
+                        stagedAlgaeCommands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.superstructurePosition.getBackward().getSuperstructureState());
+                    }
+                }
                 public Command get() {
-                    var stationPoses = new FlippedRobotPose[] {
-                        CoralStation.leftStationLeft.getOurs(),
-                        CoralStation.leftStationCenter.getOurs(),
-                        CoralStation.leftStationRight.getOurs(),
-                        CoralStation.rightStationLeft.getOurs(),
-                        CoralStation.rightStationCenter.getOurs(),
-                        CoralStation.rightStationRight.getOurs(),
-                    };
-                    var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                        var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                        var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                        return (int) Math.signum(aDistance - bDistance);
-                    }).findFirst().get();
-                    Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
-                    Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getSuperstructureState().getMechTransforms());
-                    if (FlippedSuperstructurePosition.useForward(closestStationPose.getForward().getRotation(), drive.getRotation())) {
-                        return coralStationForwardCommand;
+                    if (objectiveTracker.intakeFromCoralStation()) {
+                        var stationPoses = new FlippedRobotPose[] {
+                            CoralStation.leftStationLeft.getOurs(),
+                            CoralStation.leftStationCenter.getOurs(),
+                            CoralStation.leftStationRight.getOurs(),
+                            CoralStation.rightStationLeft.getOurs(),
+                            CoralStation.rightStationCenter.getOurs(),
+                            CoralStation.rightStationRight.getOurs(),
+                        };
+                        var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
+                            var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
+                            var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
+                            return (int) Math.signum(aDistance - bDistance);
+                        }).findFirst().get();
+                        Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
+                        Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getSuperstructureState().getMechTransforms());
+                        if (FlippedSuperstructurePosition.useForward(closestStationPose.getForward().getRotation(), drive.getRotation())) {
+                            return coralStationForwardCommand;
+                        } else {
+                            return coralStationBackwardCommand;
+                        }
                     } else {
-                        return coralStationBackwardCommand;
+                        var stagedAlgae = objectiveTracker.getSelectedStagedAlgae().get();
+                        if (FlippedSuperstructurePosition.useForward(stagedAlgae.robotPose.getOurs().getRotation(), drive.getRotation())) {
+                            return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
+                        } else {
+                            return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
+                        }
                     }
                 }
             },

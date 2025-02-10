@@ -268,8 +268,7 @@ public final class FieldConstants {
             Low(Meters.of(0.679337), Meters.of(0.909320)),
             ;
             private final Transform3d transform;
-            public final Pose2d forwardRobotSpace;
-            public final Pose2d backwardRobotSpace;
+            public final FlippedSuperstructurePosition superstructurePosition;
             AlgaeLevel(Distance radius, Distance height) {
                 this.transform = new Transform3d(
                     new Translation3d(
@@ -279,20 +278,16 @@ public final class FieldConstants {
                     ),
                     Rotation3d.kZero
                 );
-                this.forwardRobotSpace = new Pose2d(
-                    new Translation2d(
-                        RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
-                        height
-                    ),
-                    Rotation2d.kZero
-                );
-                this.backwardRobotSpace = new Pose2d(
-                    new Translation2d(
-                        forwardRobotSpace.getMeasureX().unaryMinus(),
-                        forwardRobotSpace.getMeasureY()
-                    ),
-                    Rotation2d.k180deg.minus(forwardRobotSpace.getRotation())
-                );
+                this.superstructurePosition = FlippedSuperstructurePosition.fromForwardRobotFlipped(SuperstructurePosition.fromRobotSpace(
+                    new Pose2d(
+                        new Translation2d(
+                            RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
+                            height
+                        ),
+                        Rotation2d.kZero
+                    )
+                    .transformBy(SuperstructureConstants.algaeStagedForwardTransform)
+                ));
             }
         }
 
