@@ -17,9 +17,10 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.util.struct.StructSerializable;
+import frc.robot.subsystems.climber.ClimberConstants;
 import frc.util.flipping.AllianceFlipUtil;
-import frc.util.flipping.Flipped;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
+import frc.util.flipping.Flipped;
 import frc.util.misc.GeomUtil;
 
 public final class FieldConstants {
@@ -312,8 +313,63 @@ public final class FieldConstants {
             }
         }
 
-        public static StagedAlgae getStagedAlgae(Rack rack) {
+        /*public static StagedAlgae getStagedAlgae(Rack rack) {
             return stagedAlgae[rack.ordinal()];
+        }
+
+        public static enum Cage {
+            LeftCage(Meters.of(5.0784252)),
+            MiddleCage(Meters.of(6.169025)),
+            RightCage(Meters.of(7.2596248))
+            ;
+            public final Flipped<Pose2d> robotPose;
+            private final Translation2d transform;
+            private final Transform2d scoringTransform;
+            private final Distance minimumScoringDistance = Meters.of(0.06809);
+            Cage (Distance yDistance) {
+                this.transform = new Translation2d(
+                    Meters.of(8.7741252),
+                    yDistance
+                );
+                this.scoringTransform = new Transform2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(minimumScoringDistance).plus(ClimberConstants.climberBackwardOffset).unaryMinus(),
+                        Meters.zero()
+                    ),
+                    Rotation2d.k180deg
+                );
+                robotPose = Flipped.fromBlue(new Pose2d(transform, Rotation2d.kZero).transformBy(scoringTransform), FieldFlipType.XenterLineMirror);
+            }
+        }*/
+        
+        public static enum Cage {
+            LeftCage(Meters.of(5.0784252)),
+            MiddleCage(Meters.of(6.169025)),
+            RightCage(Meters.of(7.2596248))
+            ;
+            public final Flipped<Pose2d> robotPose;
+            private final Translation2d transform;
+            private final Transform2d scoringTransform;
+            private final Distance minimumScoringDistance = Meters.of(0.06809);
+            Cage (Distance yDistance) {
+                this.transform = new Translation2d(
+                    Meters.of(8.7741252),
+                    yDistance
+                );
+                this.scoringTransform = new Transform2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(minimumScoringDistance).plus(ClimberConstants.climberBackwardOffset).unaryMinus(),
+                        Meters.zero()
+                    ),
+                    Rotation2d.k180deg
+                );
+                robotPose = Flipped.fromBlue(new Pose2d(transform, Rotation2d.kZero).transformBy(scoringTransform), FieldFlipType.XenterLineMirror);
+            }
+        }
+        public static Cage[] cages = new Cage[Cage.values().length];
+
+        public static Cage getByIndex(int index) {
+            return (index >= 0 && index < cages.length) ? cages[index] : null;
         }
     }
 }

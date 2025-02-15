@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.Logger;
 
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Branch;
+import frc.robot.constants.FieldConstants.Reef.Cage;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
@@ -35,6 +36,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ArrayList<Branch> placedCoral = new ArrayList<>(36);
     private Branch selectedCoral = FieldConstants.Reef.branches[0];
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
+    private Cage selectedCage = Cage.LeftCage;
     private Optional<StagedAlgae> selectedIntakeGoal = Optional.empty();
 
     private final Root structureRoot = new Root();
@@ -81,10 +83,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
                     Optional.empty();
             inputs.intake = -1;
         }
+        if (inputs.cage != -1) {
+            selectedCage = Cage.values()[inputs.cage];
+        }
 
         io.setCoral(selectedCoral.getIndex());
         io.setAlgae(selectedAlgaeGoal.ordinal());
         io.setIntake(selectedIntakeGoal.isEmpty() ? 0 : selectedIntakeGoal.get().getIndex() + 1);
+        io.setCage(selectedCage.ordinal());
         
         Logger.recordOutput("Objective Tracker/Selected Branch", selectedCoral.branchPose.getOurs());
         structureRoot.setPose(selectedCoral.robotPose.getOurs());
@@ -102,6 +108,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             stage4Mech.getRobotRelative(),
             wristMech.getRobotRelative()
         );
+        Logger.recordOutput("TEST/CAGE", getSelectedCage().robotPose.getBlue());
     }
 
     public void moveSelectedCoral(int x, int y) {
@@ -118,6 +125,10 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     public Branch getSelectedNode() {
         return selectedCoral;
+    }
+    
+    public Cage getSelectedCage() {
+        return selectedCage;
     }
 
     public boolean intakeFromCoralStation() {
