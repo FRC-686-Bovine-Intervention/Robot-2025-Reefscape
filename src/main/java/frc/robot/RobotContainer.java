@@ -322,7 +322,6 @@ public class RobotContainer {
         driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
         driveController.back().toggleOnTrue(Commands.parallel(climber.intake(), superstructure.prepareToClimb()));
         driveController.start().toggleOnFalse(Commands.parallel(climber.idle(), superstructure.fold()));
-        Logger.recordOutput("TEST/roboPose", Barge.centerBargePose.getBlue());
     }
 
     private void configureNotifications() {}

@@ -108,7 +108,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
             stage4Mech.getRobotRelative(),
             wristMech.getRobotRelative()
         );
-        Logger.recordOutput("TEST/CAGE", getSelectedCage().robotPose.getBlue());
     }
 
     public void moveSelectedCoral(int x, int y) {
