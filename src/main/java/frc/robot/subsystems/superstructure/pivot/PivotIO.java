@@ -14,13 +14,20 @@ public interface PivotIO {
         LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
         LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
+        LoggedEncodedMotor climberMotor = new LoggedEncodedMotor();
     }
 
     public default void updateInputs(PivotIOInputs inputs) {}
 
-    public default void setVoltage(Measure<VoltageUnit> voltage) {}
+    public default void setPivotVoltage(Measure<VoltageUnit> voltage) {}
 
-    public default void setPosition(Measure<AngleUnit> position) {}
+    public default void setClimberVoltage(Measure<VoltageUnit> voltage) {}
+
+    public default void setPivotPosition(Measure<AngleUnit> position) {}
 
     public default void stop() {}
+
+    public default void stopPivot() {}
+    
+    public default void stopClimber() {}
 }

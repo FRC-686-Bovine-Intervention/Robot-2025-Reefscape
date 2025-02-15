@@ -30,6 +30,7 @@ public class PivotIOFalcon implements PivotIO {
     protected final TalonFX leftMotor = HardwareDevices.pivotLeftMotorID.talonFX();
     protected final TalonFX rightMotor = HardwareDevices.pivotRightMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.pivotEncoderID.cancoder();
+    protected final TalonFX climberMotor = HardwareDevices.pivotClimberMotorID.talonFX();
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
 
@@ -79,12 +80,18 @@ public class PivotIOFalcon implements PivotIO {
         pidConsts.update(motorConfig.Slot0);
 
         leftMotor.getConfigurator().apply(motorConfig);
-
+        
         motorConfig.MotorOutput
             .withInverted(InvertedValue.Clockwise_Positive)
         ;
         rightMotor.getConfigurator().apply(motorConfig);
         rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
+
+        motorConfig.MotorOutput
+            .withNeutralMode(NeutralModeValue.Coast)
+            .withInverted(InvertedValue.CounterClockwise_Positive)
+        ;
+        climberMotor.getConfigurator().apply(motorConfig);
     }
 
     @Override
@@ -92,6 +99,7 @@ public class PivotIOFalcon implements PivotIO {
         inputs.encoder.updateFrom(cancoder);
         inputs.leftMotor.updateFrom(leftMotor);
         inputs.rightMotor.updateFrom(rightMotor);
+        inputs.climberMotor.updateFrom(climberMotor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
@@ -110,19 +118,30 @@ public class PivotIOFalcon implements PivotIO {
 
     // Set Voltage
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage) {
+    public void setPivotVoltage(Measure<VoltageUnit> voltage) {
         leftMotor.setVoltage(voltage.in(Volts));
     }
 
     // Set position based on profile
     @Override
-    public void setPosition(Measure<AngleUnit> position) {
+    public void setPivotPosition(Measure<AngleUnit> position) {
         leftMotor.setControl(positionRequest.withPosition(position.in(Rotations)));
     }
 
     // Immediately stop
     @Override
     public void stop() {
+        stopPivot();
+        stopClimber();
+    }
+
+    @Override
+    public void stopPivot() {
         leftMotor.disable();
+    }
+
+    @Override
+    public void stopClimber() {
+        climberMotor.disable();
     }
 }

@@ -48,6 +48,7 @@ public class HardwareDevices {
     public static final CANDevice pivotLeftMotorID = canivore.id(5);
     public static final CANDevice pivotRightMotorID = canivore.id(6);
     public static final CANDevice pivotEncoderID = canivore.id(5);
+    public static final CANDevice pivotClimberMotorID = canivore.id(11);
 
     // Elevator
     public static final CANDevice elevatorLeftMotorID = canivore.id(7);
