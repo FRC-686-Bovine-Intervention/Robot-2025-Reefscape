@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -24,6 +26,7 @@ import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.Reef.Barge;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
@@ -319,6 +322,7 @@ public class RobotContainer {
         driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
         driveController.back().toggleOnTrue(Commands.parallel(climber.intake(), superstructure.prepareToClimb()));
         driveController.start().toggleOnFalse(Commands.parallel(climber.idle(), superstructure.fold()));
+        Logger.recordOutput("TEST/roboPose", Barge.centerBargePose.getBlue());
     }
 
     private void configureNotifications() {}

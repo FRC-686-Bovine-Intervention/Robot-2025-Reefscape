@@ -313,10 +313,50 @@ public final class FieldConstants {
             }
         }
 
-        /*public static StagedAlgae getStagedAlgae(Rack rack) {
+        public static final class Barge {
+            private final static Pose3d bargeMidpoint = new Pose3d(
+                new Translation3d(
+                    Meters.of(8.774113),
+                    Meters.of(6.130925),
+                    Meters.of(2.46989474)
+                ),
+                Rotation3d.kZero
+            );
+            private final static Transform3d bargeRightScoringTransform = new Transform3d(
+                new Translation3d(
+                    Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                    Meters.of(10.90600).unaryMinus(),
+                    Meters.zero()
+                ),
+                Rotation3d.kZero
+            );
+            private final static Transform3d bargeCenterScoringTransform = new Transform3d(
+                new Translation3d(
+                    Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                    Meters.zero(),
+                    Meters.zero()
+                ),
+                Rotation3d.kZero
+            );
+            private final static Transform3d bargeLeftScoringTransform = new Transform3d(
+                new Translation3d(
+                    Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                    Meters.of(1.0907522),
+                    Meters.zero()
+                ),
+                Rotation3d.kZero
+            );
+
+            public static final Flipped<Pose3d> rightBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeRightScoringTransform));
+            public static final Flipped<Pose3d> centerBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeCenterScoringTransform));
+            public static final Flipped<Pose3d> leftBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeLeftScoringTransform));
+        }
+
+        public static StagedAlgae getStagedAlgae(Rack rack) {
             return stagedAlgae[rack.ordinal()];
         }
 
+        /*
         public static enum Cage {
             LeftCage(Meters.of(5.0784252)),
             MiddleCage(Meters.of(6.169025)),
