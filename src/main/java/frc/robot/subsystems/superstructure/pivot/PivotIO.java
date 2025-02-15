@@ -25,6 +25,10 @@ public interface PivotIO {
 
     public default void setPivotPosition(Measure<AngleUnit> position) {}
 
+    public default void setPivotBrakeMode(boolean brake) {}
+    
+    public default void setClimberBrakeMode(boolean brake) {}
+
     public default void stop() {}
 
     public default void stopPivot() {}

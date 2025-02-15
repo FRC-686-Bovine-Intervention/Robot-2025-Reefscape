@@ -78,7 +78,7 @@ public class Superstructure extends SubsystemBase {
             }
             @Override
             public void execute() {
-                pivot.setVoltage(Volts.of(voltage.getAsDouble()));
+                pivot.setPivotVoltage(Volts.of(voltage.getAsDouble()));
                 elevator.setVoltage(Volts.zero());
             }
         };
@@ -96,8 +96,39 @@ public class Superstructure extends SubsystemBase {
             }
             @Override
             public void execute() {
-                pivot.setVoltage(Volts.zero());
+                pivot.setPivotVoltage(Volts.zero());
                 elevator.setVoltage(Volts.of(voltage.getAsDouble()));
+            }
+        };
+    }
+
+    public Command climbConstantVoltage() {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Climb with Constant Voltage");
+            }
+
+            @Override
+            public void initialize() {
+                pivot.setPivotBrakeMode(false);
+            }
+
+            @Override
+            public void execute() {
+                pivot.setClimberVoltage(Pivot.climberMotorVoltage.get());
+                pivot.setPivotVoltage(Pivot.pivotClimbingMotorVoltage.get());
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                pivot.stop();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return pivot.getChainLength(pivot.getAngle()).lte(Inches.of(5));
             }
         };
     }
@@ -169,9 +200,9 @@ public class Superstructure extends SubsystemBase {
                     wristMoving = wristMoveCondition.getAsBoolean();
                 }
                 if (pivotMoving) {
-                    pivot.setPivot(setpoint.pivotAngle);
+                    pivot.setPivotPosition(setpoint.pivotAngle);
                 } else {
-                    pivot.setPivot(initialState.pivotAngle);
+                    pivot.setPivotPosition(initialState.pivotAngle);
                 }
                 if (elevatorMoving) {
                     elevator.setLength(setpoint.elevatorLength);

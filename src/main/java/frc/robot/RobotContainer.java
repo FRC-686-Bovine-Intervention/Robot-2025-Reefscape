@@ -48,6 +48,7 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotIO;
+import frc.robot.subsystems.superstructure.pivot.PivotIOFalcon;
 import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristIO;
@@ -91,7 +92,7 @@ public class RobotContainer {
                         .toArray(ModuleIO[]::new)
                 );
                 superstructure = new Superstructure(
-                    new Pivot(new PivotIO() {}),
+                    new Pivot(new PivotIOFalcon()),
                     new Elevator(new ElevatorIO() {}),
                     new Wrist(new WristIO() {})
                 );

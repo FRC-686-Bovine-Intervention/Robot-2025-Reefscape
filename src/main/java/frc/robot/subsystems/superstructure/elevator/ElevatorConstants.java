@@ -36,7 +36,6 @@ public class ElevatorConstants {
     );
 
     public static final int movingStages = 3;
-    
     public static final Distance sprocketRadius = Inches.of(1.432).div(2);
 
     public static final Distance minimumHeight = Inches.of(26.500000);
