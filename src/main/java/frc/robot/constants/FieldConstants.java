@@ -314,42 +314,39 @@ public final class FieldConstants {
         }
 
         public static final class Barge {
-            private final static Pose3d bargeMidpoint = new Pose3d(
-                new Translation3d(
+            private final static Pose2d bargeMidpoint = new Pose2d(
+                new Translation2d(
                     Meters.of(8.774113),
-                    Meters.of(6.130925),
-                    Meters.of(2.46989474)
+                    Meters.of(6.130925)
                 ),
-                Rotation3d.kZero
+                new Rotation2d(Degrees.zero())
             );
-            private final static Transform3d bargeRightScoringTransform = new Transform3d(
-                new Translation3d(
+            private final static Transform2d bargeRightScoringTransform = new Transform2d(
+                new Translation2d(
                     Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                    Meters.of(10.90600).unaryMinus(),
+                    Meters.of(10.90600).unaryMinus()
+                ),
+                Rotation2d.kZero
+            );
+            private final static Transform2d bargeCenterScoringTransform = new Transform2d(
+                new Translation2d(
+                    Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
                     Meters.zero()
                 ),
-                Rotation3d.kZero
+                Rotation2d.kZero
             );
-            private final static Transform3d bargeCenterScoringTransform = new Transform3d(
-                new Translation3d(
+            private final static Transform2d bargeLeftScoringTransform = new Transform2d(
+                new Translation2d(
                     Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                    Meters.zero(),
-                    Meters.zero()
+                    Meters.of(1.0907522)
                 ),
-                Rotation3d.kZero
-            );
-            private final static Transform3d bargeLeftScoringTransform = new Transform3d(
-                new Translation3d(
-                    Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                    Meters.of(1.0907522),
-                    Meters.zero()
-                ),
-                Rotation3d.kZero
+                Rotation2d.kZero
             );
 
-            public static final Flipped<Pose3d> rightBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeRightScoringTransform));
-            public static final Flipped<Pose3d> centerBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeCenterScoringTransform));
-            public static final Flipped<Pose3d> leftBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeLeftScoringTransform));
+            public static final Flipped<Pose2d> rightBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeRightScoringTransform));
+            public static final Flipped<Pose2d> centerBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeCenterScoringTransform));
+            public static final Flipped<Pose2d> leftBargePose = Flipped.fromBlue(bargeMidpoint.transformBy(bargeLeftScoringTransform));
+            public static final Distance bargeHeight = Meters.of(2.46989474);
         }
 
         public static StagedAlgae getStagedAlgae(Rack rack) {

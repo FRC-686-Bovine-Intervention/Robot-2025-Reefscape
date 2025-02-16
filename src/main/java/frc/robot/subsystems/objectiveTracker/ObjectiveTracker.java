@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.Reef.Barge;
 import frc.robot.constants.FieldConstants.Reef.Branch;
 import frc.robot.constants.FieldConstants.Reef.Cage;
 import frc.robot.constants.FieldConstants.Reef.Level;
@@ -108,6 +109,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             stage4Mech.getRobotRelative(),
             wristMech.getRobotRelative()
         );
+        Logger.recordOutput("TEST/RoboPos", Barge.centerBargePose.getBlue());
     }
 
     public void moveSelectedCoral(int x, int y) {
