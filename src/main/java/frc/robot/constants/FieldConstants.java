@@ -127,15 +127,21 @@ public final class FieldConstants {
             Rack4(rackDelta.times(4), AlgaeLevel.High),
             Rack5(rackDelta.times(5), AlgaeLevel.Low),
             ;
+            private final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
             private final Pose2d origin;
+            
             public final Pipe leftPipe;
             public final Pipe rightPipe;
             public final StagedAlgae stagedAlgae;
+
+            public final Flipped<Pose2d> robotPose;
+
             Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
                 this.leftPipe = new Pipe(this, Side.Left);
                 this.rightPipe = new Pipe(this, Side.Right);
                 this.stagedAlgae = new StagedAlgae(this, algaeLevel);
+                this.robotPose = Flipped.fromBlue(origin.transformBy(scoringTransform));
             }
         }
 
@@ -339,15 +345,12 @@ public final class FieldConstants {
         public static class StagedAlgae {
             public final Rack rack;
             public final AlgaeLevel algaeLevel;
-            public final Flipped<Pose3d> algaePose;
-            public final Flipped<Pose2d> robotPose;
-            private static final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
+            public final Flipped<Pose3d> pose;
             
             public StagedAlgae (Rack rack, AlgaeLevel algaeLevel) {
                 this.rack = rack;
                 this.algaeLevel = algaeLevel;
-                this.algaePose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
-                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(scoringTransform));
+                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
             }
 
             public static int getIndex(Rack rack) {
