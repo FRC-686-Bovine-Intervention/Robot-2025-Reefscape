@@ -128,18 +128,14 @@ public final class FieldConstants {
             Rack5(rackDelta.times(5), AlgaeLevel.Low),
             ;
             private final Pose2d origin;
-            public final AlgaeLevel algaeLevel;
             public final Pipe leftPipe;
             public final Pipe rightPipe;
+            public final StagedAlgae stagedAlgae;
             Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
-                this.algaeLevel = algaeLevel;
                 this.leftPipe = new Pipe(this, Side.Left);
                 this.rightPipe = new Pipe(this, Side.Right);
-            }
-
-            public Flipped<Pose3d> getAlgaePose() {
-                return Flipped.fromBlue(new Pose3d(origin).transformBy(algaeLevel.transform));
+                this.stagedAlgae = new StagedAlgae(this, algaeLevel);
             }
         }
 
@@ -366,7 +362,7 @@ public final class FieldConstants {
         public static final StagedAlgae[] stagedAlgae = new StagedAlgae[Rack.values().length];
         static {
             for(var rack : Rack.values()) {
-                stagedAlgae[StagedAlgae.getIndex(rack)] = new StagedAlgae(rack, rack.algaeLevel);
+                stagedAlgae[StagedAlgae.getIndex(rack)] = rack.stagedAlgae;
             }
         }
 
