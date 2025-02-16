@@ -4,8 +4,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
-import java.util.ArrayList;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -219,7 +217,7 @@ public final class FieldConstants {
             public final Flipped<Pose3d> pose; 
             public final Flipped<Pose2d> robotPose;
 
-            public ArrayList<Branch> branches = new ArrayList<>();
+            public Branch[] branches = new Branch[Level.values().length];
 
             public Pipe(Rack rack, Side side) {
                 this.rack = rack;
@@ -279,7 +277,7 @@ public final class FieldConstants {
             for (var pipe : pipes) {
                 for (var level : Level.values()) {
                     var branch = new Branch(pipe, level);
-                    pipe.branches.add(branch);
+                    pipe.branches[level.ordinal()] = branch;
                     branches[Branch.getIndex(pipe, level)] = branch;
                 }
             }
@@ -287,6 +285,10 @@ public final class FieldConstants {
 
         public static final Pipe getPipe(Rack rack, Side side) {
             return pipes[Pipe.getIndex(rack, side)];
+        }
+
+        public static final Pipe getPipe(int rack, int side) {
+            return getPipe(Rack.values()[rack], Side.values()[side]);
         }
 
         public static final Branch getBranch(Pipe pipe, Level level) {
@@ -370,6 +372,10 @@ public final class FieldConstants {
 
         public static StagedAlgae getStagedAlgae(Rack rack) {
             return stagedAlgae[rack.ordinal()];
+        }
+
+        public static StagedAlgae getStagedAlgae(int rack) {
+            return getStagedAlgae(Rack.values()[rack]);
         }
     }
 }
