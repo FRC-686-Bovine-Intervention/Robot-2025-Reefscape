@@ -122,10 +122,10 @@ export function createBranchSelector() {
   });
 }
 
-export function displaySelectedBranch(rack, pipe) {
+export function displaySelectedBranch(rack, side) {
   branchDOM.forEach((arr, i) => {
     arr.forEach((dom, j) => {
-      if (i === rack && j === pipe) {
+      if (i === rack && j === side) {
         dom.classList.add("selected");
       } else {
         dom.classList.remove("selected");

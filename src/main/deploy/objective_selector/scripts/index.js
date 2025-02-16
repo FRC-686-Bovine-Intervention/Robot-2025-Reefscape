@@ -64,8 +64,8 @@ let client = new NT4_Client(
 
     switch (topic.name) {
       case coralRobotToDashboardTopic:
-        const { rack, pipe, level } = getCoral(value);
-        displaySelectedBranch(rack, pipe);
+        const { rack, side, level } = getCoral(value);
+        displaySelectedBranch(rack, side);
         displaySelectedLevel(level);
         coral = value;
         break;
@@ -124,22 +124,22 @@ window.onload = () => {
   createBranchSelector();
 };
 
-export function sendSelectedBranch(rack, pipe) {
-  const { rack: prevRack, pipe: prevPipe, level } = getCoral(coral);
-  if (prevRack !== rack || prevPipe !== pipe) {
+export function sendSelectedBranch(rack, side) {
+  const { rack: prevRack, side: prevSide, level } = getCoral(coral);
+  if (prevRack !== rack || prevSide !== side) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, pipe, level })
+      getCoralIdx({ rack, side, level })
     );
   }
 }
 
 export function sendSelectedLevel(level) {
-  const { rack, pipe, level: prevLevel } = getCoral(coral);
+  const { rack, side, level: prevLevel } = getCoral(coral);
   if (prevLevel !== level) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, pipe, level })
+      getCoralIdx({ rack, side, level })
     );
   }
 }

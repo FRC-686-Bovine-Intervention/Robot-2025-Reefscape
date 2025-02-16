@@ -56,8 +56,8 @@ window.onkeydown = (e) => {
       }
     } else {
       const rack = Math.floor(node / 2);
-      const pipe = node % 2;
-      sendSelectedBranch(rack, pipe);
+      const side = node % 2;
+      sendSelectedBranch(rack, side);
     }
   }
 
@@ -89,11 +89,11 @@ window.onkeydown = (e) => {
           )
         );
       } else {
-        let newPipe = selectedCoral.pipe + (direction === "left" ? -1 : +1);
-        const moveRack = !isWithinRange(newPipe, 0, 1);
-        const pipe = wrapNumber(newPipe, 0, 1);
+        let newSide = selectedCoral.side + (direction === "left" ? -1 : +1);
+        const moveRack = !isWithinRange(newSide, 0, 1);
+        const side = wrapNumber(newSide, 0, 1);
         const rack = wrapNumber(selectedCoral.rack + (moveRack ? (direction === "left" ? -1 : +1) : 0), 0, 5);
-        sendSelectedBranch(rack, pipe);
+        sendSelectedBranch(rack, side);
       }
       break;
   }
