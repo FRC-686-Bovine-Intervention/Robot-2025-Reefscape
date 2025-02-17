@@ -272,7 +272,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     var node = objectiveTracker.getSelectedNode();
-                    if (drive.getRotation().minus(node.branchPose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
+                    if (drive.getRotation().minus(node.pose.getOurs().getRotation().toRotation2d()).getCos() >= 0) {
                         return commands[node.level.ordinal() * 2];
                     } else {
                         return commands[node.level.ordinal() * 2 + 1];
@@ -307,10 +307,10 @@ public class RobotContainer {
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.getStagedAlgae(Rack.Rack0).robotPose.getOurs())));
+        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(FieldConstants.Reef.getStagedAlgae(Rack.Rack0).rack.robotPose.getOurs())));
 
         driveController.y().toggleOnTrue(superstructure.defense());
-        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().robotPose.getOurs().getRotation())));
+        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedNode().pipe.robotPose.getOurs().getRotation())));
     }
 
     private void configureNotifications() {}

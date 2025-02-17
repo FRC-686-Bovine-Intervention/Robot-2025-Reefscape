@@ -8,32 +8,32 @@ import {
   sendSelectedRack,
 } from "./index.js";
 import { buttons, selectedButtonIndex } from "./stagedAlgaeSelector.js";
-import { getCoral, wrapNumber } from "./utils.js";
+import { getCoral, isWithinRange, wrapNumber } from "./utils.js";
 
-const nodeKeybinds = [
-  ["Digit1", "Numpad1"],
-  ["Digit2", "Numpad2"],
-  ["Digit3", "Numpad3"],
-  ["Digit4", "Numpad4"],
-  ["Digit5", "Numpad5"],
-  ["Digit6", "Numpad6"],
-  ["Digit7", "Numpad7"],
-  ["Digit8", "Numpad8"],
-  ["Digit9", "Numpad9"],
-  ["Digit0", "NumpadDivide"],
-  ["Minus", "NumpadMultiply"],
-  ["Equal", "NumpadSubtract"],
+const branchKeybinds = [
+  ["Digit1", "Numpad1", "KeyA"],
+  ["Digit2", "Numpad2", "KeyB"],
+  ["Digit3", "Numpad3", "KeyC"],
+  ["Digit4", "Numpad4", "KeyD"],
+  ["Digit5", "Numpad5", "KeyE"],
+  ["Digit6", "Numpad6", "KeyF"],
+  ["Digit7", "Numpad7", "KeyG"],
+  ["Digit8", "Numpad8", "KeyH"],
+  ["Digit9", "Numpad9", "KeyI"],
+  ["Digit0", "NumpadDivide", "KeyJ"],
+  ["Minus", "NumpadMultiply", "KeyK"],
+  ["Equal", "NumpadSubtract", "KeyL"],
 ];
 
 const directionalKeybinds = {
-  up: ["KeyW", "ArrowUp"],
-  down: ["KeyS", "ArrowDown"],
-  left: ["KeyA", "ArrowLeft"],
-  right: ["KeyD", "ArrowRight"],
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
 };
 
-function getNodeWithKeyBind(key) {
-  return nodeKeybinds.findIndex(
+function getBranchWithKeyBind(key) {
+  return branchKeybinds.findIndex(
     (arr) => (Array.isArray(arr) && arr.includes(key)) || arr === key
   );
 }
@@ -47,7 +47,7 @@ function getDirectionWithKeyBind(key) {
 }
 
 window.onkeydown = (e) => {
-  const node = getNodeWithKeyBind(e.code);
+  const node = getBranchWithKeyBind(e.code);
   if (node >= 0) {
     if (e.ctrlKey) {
       if (node <= 6) {
@@ -89,15 +89,10 @@ window.onkeydown = (e) => {
           )
         );
       } else {
-        const node = wrapNumber(
-          selectedCoral.rack * 2 +
-            selectedCoral.side +
-            (direction === "left" ? -1 : +1),
-          0,
-          11
-        );
-        const rack = Math.floor(node / 2);
-        const side = node % 2;
+        let newSide = selectedCoral.side + (direction === "left" ? -1 : +1);
+        const moveRack = !isWithinRange(newSide, 0, 1);
+        const side = wrapNumber(newSide, 0, 1);
+        const rack = wrapNumber(selectedCoral.rack + (moveRack ? (direction === "left" ? -1 : +1) : 0), 0, 5);
         sendSelectedBranch(rack, side);
       }
       break;
