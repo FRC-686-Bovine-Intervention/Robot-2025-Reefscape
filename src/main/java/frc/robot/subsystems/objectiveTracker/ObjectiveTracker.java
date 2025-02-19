@@ -35,7 +35,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ArrayList<Branch> placedCoral = new ArrayList<>(36);
     private Branch selectedCoral = FieldConstants.Reef.branches[0];
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
-    private Optional<StagedAlgae> selectedIntakeGoal = Optional.empty();
+    private Optional<Optional<StagedAlgae>> selectedIntakeGoal = Optional.empty();
 
     private final Root structureRoot = new Root();
     private final ArmMech pivotMech = new ArmMech(PivotConstants.pivotBase);
@@ -77,9 +77,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
         if (inputs.intake != -1) {
             selectedIntakeGoal = 
-                inputs.intake > 0 ?
-                    Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 1]) :
-                    Optional.empty();
+            inputs.intake == 0 ?
+            Optional.empty() :
+            inputs.intake == 1 ?
+            Optional.of(Optional.empty()) :
+            Optional.of(Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 2]));
             inputs.intake = -1;
         }
 
@@ -89,7 +91,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
             selectedCoral.level.ordinal()
         );
         io.setAlgae(selectedAlgaeGoal.ordinal());
-        io.setIntake(selectedIntakeGoal.isEmpty() ? 0 : selectedIntakeGoal.get().getIndex() + 1);
+        io.setIntake(
+            selectedIntakeGoal.isEmpty() ? 0 :
+            selectedIntakeGoal.get().isEmpty() ? 1 :
+            selectedIntakeGoal.get().get().getIndex() + 2
+        );
         
         Logger.recordOutput("Objective Tracker/Selected Branch", selectedCoral.pose.getOurs());
         structureRoot.setPose(selectedCoral.pipe.robotPose.getOurs());
@@ -129,7 +135,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         return selectedIntakeGoal.isEmpty();
     }
 
-    public Optional<StagedAlgae> getSelectedStagedAlgae() {
+    public Optional<Optional<StagedAlgae>> getSelectedStagedAlgae() {
         return selectedIntakeGoal;
     }
 

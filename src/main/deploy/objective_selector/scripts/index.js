@@ -10,7 +10,7 @@ import "./keyboardShortcuts.js";
 
 import { NT4_Client } from "./NT4.js";
 import { getCoral, getCoralIdx } from "./utils.js";
-import { displaySelectedStagedAlgae } from "./stagedAlgaeSelector.js";
+import { displaySelectedAlgaeScoring } from "./algaeScoringSelector.js";
 
 const matchTimeAdvantagekitToDashboardTopic =
   "/AdvantageKit/DriverStation/MatchTime";
@@ -70,7 +70,7 @@ let client = new NT4_Client(
         coral = value;
         break;
       case algaeRobotToDashboardTopic:
-        displaySelectedStagedAlgae(value);
+        displaySelectedAlgaeScoring(value);
         intake = value;
         break;
       case intakeRobotToDashboardTopic:
@@ -87,7 +87,7 @@ let client = new NT4_Client(
     displaySelectedRack();
     displaySelectedBranch();
     displaySelectedLevel();
-    displaySelectedStagedAlgae();
+    displaySelectedAlgaeScoring();
     displayTime(0, false);
     displayInfos([]);
     displayWarnings([]);

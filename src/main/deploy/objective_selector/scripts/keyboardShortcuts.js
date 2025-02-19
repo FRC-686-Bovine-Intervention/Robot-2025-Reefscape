@@ -7,7 +7,7 @@ import {
   sendSelectedLevel,
   sendSelectedRack,
 } from "./index.js";
-import { buttons, selectedButtonIndex } from "./stagedAlgaeSelector.js";
+import { buttons, selectedButtonIndex } from "./algaeScoringSelector.js";
 import { getCoral, isWithinRange, wrapNumber } from "./utils.js";
 
 const branchKeybinds = [
