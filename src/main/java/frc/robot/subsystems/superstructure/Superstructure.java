@@ -13,21 +13,25 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.constants.FieldConstants.Algae;
-import frc.robot.constants.FieldConstants.Coral;
-import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
-import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
+import frc.robot.subsystems.superstructure.wrist.WristConstants;
+import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
+import frc.util.flipping.AllianceFlipUtil;
+import frc.util.flipping.Flippable;
+import frc.util.misc.GeomUtil;
 import frc.util.misc.MeasureUtil;
 
 public class Superstructure extends SubsystemBase {
@@ -101,28 +105,6 @@ public class Superstructure extends SubsystemBase {
             }
         };
     }
-
-    public static final Transform2d forwardCoralTransform = new Transform2d(
-        new Translation2d(
-            Coral.length.plus(Inches.of(1)),
-            Inches.zero()
-        ),
-        new Rotation2d(Degrees.of(35).unaryMinus())
-    ).inverse();
-    public static final Transform2d backwardCoralTransform = new Transform2d(
-        new Translation2d(
-            Coral.length.plus(Inches.of(1)),
-            Inches.zero()
-        ),
-        new Rotation2d(Degrees.of(35))
-    ).inverse();
-    public static final Transform2d algaeTransform = new Transform2d(
-        new Translation2d(
-            Algae.radius.plus(Inches.of(1)),
-            Inches.zero()
-        ),
-        Rotation2d.kZero
-    ).inverse();
 
     // public Command goToSetpoint(SuperstructureState setpoint) {
     //     return Commands.parallel(
@@ -220,7 +202,7 @@ public class Superstructure extends SubsystemBase {
             this.wristAngle = wristAngle;
         }
 
-        public static SuperstructureState fromPivotSpace(Pose2d pivotSpacePose) {
+        public static SuperstructureState fromPivotSpace(Transform2d pivotSpacePose) {
             var pivotToTargetDist = Meters.of(pivotSpacePose.getTranslation().getNorm());
 
             var pivotAngleOffset = Radians.of(Math.asin(ElevatorConstants.pivotOffset.div(pivotToTargetDist).baseUnitMagnitude()));
@@ -236,19 +218,217 @@ public class Superstructure extends SubsystemBase {
         }
 
         public static SuperstructureState fromRobotSpace(Pose2d robotSpacePose) {
-            return fromPivotSpace(robotSpacePose.relativeTo(PivotConstants.pivotRobotSpace));
+            return fromPivotSpace(robotSpacePose.minus(PivotConstants.pivotRobotSpace));
         }
-        public static SuperstructureState fromLevelForward(Level level) {
-            return fromRobotSpace(level.forwardBranchRobotSpace.transformBy(forwardCoralTransform));
+
+        public Transform3d[] getMechTransforms() {
+            var pivotMechTransform = new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(), this.pivotAngle.unaryMinus(), Degrees.zero()));
+            var elevatorMechTransform = new Transform3d(new Translation3d(this.elevatorLength.div(ElevatorConstants.movingStages), Meters.zero(), Meters.zero()), Rotation3d.kZero);
+            var wristMechTransform = new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(), this.wristAngle.unaryMinus(), Degrees.zero()));
+            var pivotTransform = PivotConstants.pivotBase.plus(pivotMechTransform);
+            var stage2Transform = pivotTransform.plus(ElevatorConstants.stage2Base).plus(elevatorMechTransform);
+            var stage3Transform = stage2Transform.plus(ElevatorConstants.stage3Base).plus(elevatorMechTransform);
+            var stage4Transform = stage3Transform.plus(ElevatorConstants.stage4Base).plus(elevatorMechTransform);
+            var wristTransform = stage4Transform.plus(WristConstants.wristBase).plus(wristMechTransform);
+            return new Transform3d[] {
+                pivotTransform,
+                stage2Transform,
+                stage3Transform,
+                stage4Transform,
+                wristTransform,
+            };
         }
-        public static SuperstructureState fromLevelBackward(Level level) {
-            return fromRobotSpace(level.backwardBranchRobotSpace.transformBy(backwardCoralTransform));
+    }
+
+    public static class SuperstructurePosition {
+        private final Pose2d robotSpacePose;
+
+        private SuperstructurePosition(Pose2d robotSpacePose) {
+            this.robotSpacePose = robotSpacePose;
         }
-        public static SuperstructureState fromAlgaeForward(AlgaeLevel algaeLevel) {
-            return fromRobotSpace(algaeLevel.forwardRobotSpace.transformBy(algaeTransform));
+
+        public static SuperstructurePosition fromRobotSpace(Pose2d robotSpace) {
+            return new SuperstructurePosition(robotSpace);
         }
-        public static SuperstructureState fromAlgaeBackward(AlgaeLevel algaeLevel) {
-            return fromRobotSpace(algaeLevel.backwardRobotSpace.transformBy(algaeTransform));
+        public static SuperstructurePosition fromPivotSpace(Transform2d pivotSpace) {
+            return fromRobotSpace(PivotConstants.pivotRobotSpace.transformBy(pivotSpace));
+        }
+
+        public Pose2d getRobotSpacePose() {
+            return robotSpacePose;
+        }
+        public Transform2d getPivotSpacePose() {
+            return getRobotSpacePose().minus(PivotConstants.pivotRobotSpace);
+        }
+
+        public SuperstructureState getSuperstructureState() {
+            return SuperstructureState.fromRobotSpace(getRobotSpacePose());
+        }
+    }
+
+    public static class FlippedSuperstructurePosition {
+        private final SuperstructurePosition forward;
+        private final SuperstructurePosition backward;
+
+        private FlippedSuperstructurePosition(SuperstructurePosition forward, SuperstructurePosition backward) {
+            this.forward = forward;
+            this.backward = backward;
+        }
+
+        public static FlippedSuperstructurePosition fromForwardRobotFlipped(SuperstructurePosition forward) {
+            var robotSpacePose = forward.getRobotSpacePose();
+            return new FlippedSuperstructurePosition(
+                forward,
+                SuperstructurePosition.fromRobotSpace(new Pose2d(
+                    new Translation2d(
+                        -robotSpacePose.getX(),
+                        robotSpacePose.getY()
+                    ),
+                    new Rotation2d(
+                        -robotSpacePose.getRotation().getCos(),
+                        robotSpacePose.getRotation().getSin()
+                    )
+                ))
+            );
+        }
+        public static FlippedSuperstructurePosition fromBackwardRobotFlipped(SuperstructurePosition backward) {
+            var robotSpacePose = backward.getRobotSpacePose();
+            return new FlippedSuperstructurePosition(
+                SuperstructurePosition.fromRobotSpace(new Pose2d(
+                    new Translation2d(
+                        -robotSpacePose.getX(),
+                        robotSpacePose.getY()
+                    ),
+                    new Rotation2d(
+                        -robotSpacePose.getRotation().getCos(),
+                        robotSpacePose.getRotation().getSin()
+                    )
+                )),
+                backward
+            );
+        }
+        public static FlippedSuperstructurePosition fromForwardPivotFlipped(SuperstructurePosition forward) {
+            var pivotSpacePose = forward.getPivotSpacePose();
+            return new FlippedSuperstructurePosition(
+                forward,
+                SuperstructurePosition.fromPivotSpace(new Transform2d(
+                    new Translation2d(
+                        -pivotSpacePose.getX(),
+                        pivotSpacePose.getY()
+                    ),
+                    new Rotation2d(
+                        -pivotSpacePose.getRotation().getCos(),
+                        pivotSpacePose.getRotation().getSin()
+                    )
+                ))
+            );
+        }
+        public static FlippedSuperstructurePosition fromBackwardPivotFlipped(SuperstructurePosition backward) {
+            var pivotSpacePose = backward.getPivotSpacePose();
+            return new FlippedSuperstructurePosition(
+                SuperstructurePosition.fromPivotSpace(new Transform2d(
+                    new Translation2d(
+                        -pivotSpacePose.getX(),
+                        pivotSpacePose.getY()
+                    ),
+                    new Rotation2d(
+                        -pivotSpacePose.getRotation().getCos(),
+                        pivotSpacePose.getRotation().getSin()
+                    )
+                )),
+                backward
+            );
+        }
+
+        public SuperstructurePosition getForward() {
+            return forward;
+        }
+
+        public SuperstructurePosition getBackward() {
+            return backward;
+        }
+
+        public static boolean useForward(Rotation2d target, Rotation2d current) {
+            return target.minus(current).getCos() >= 0;
+        }
+
+        public SuperstructurePosition getClosest(Rotation2d target, Rotation2d current) {
+            if (useForward(target, current)) {
+                return getForward();
+            } else {
+                return getBackward();
+            }
+        }
+    }
+
+    public static class FlippedRobotPose implements Flippable<FlippedRobotPose> {
+        private final Pose2d forward;
+        private final Pose2d backward;
+
+        private FlippedRobotPose(Pose2d forward, Pose2d backward) {
+            this.forward = forward;
+            this.backward = backward;
+        }
+
+        public static FlippedRobotPose fromForwardRobotFlipped(Pose2d forward) {
+            return new FlippedRobotPose(
+                forward,
+                forward.transformBy(GeomUtil.rotate180Transform2d)
+            );
+        }
+        public static FlippedRobotPose fromBackwardRobotFlipped(Pose2d backward) {
+            return new FlippedRobotPose(
+                backward.transformBy(GeomUtil.rotate180Transform2d),
+                backward
+            );
+        }
+        public static FlippedRobotPose fromForwardPivotFlipped(Pose2d forward) {
+            return new FlippedRobotPose(
+                forward,
+                forward.transformBy(new Transform2d(
+                    new Translation2d(
+                        PivotConstants.pivotRobotSpace.getMeasureX().times(-2),
+                        Meters.zero()
+                    ),
+                    Rotation2d.k180deg
+                ))
+            );
+        }
+        public static FlippedRobotPose fromBackwardPivotFlipped(Pose2d backward) {
+            return new FlippedRobotPose(
+                backward.transformBy(new Transform2d(
+                    new Translation2d(
+                        PivotConstants.pivotRobotSpace.getMeasureX().times(-2),
+                        Meters.zero()
+                    ),
+                    Rotation2d.k180deg
+                )),
+                backward
+            );
+        }
+
+        public Pose2d getForward() {
+            return forward;
+        }
+
+        public Pose2d getBackward() {
+            return backward;
+        }
+
+        public Pose2d getClosest(Rotation2d current) {
+            if (FlippedSuperstructurePosition.useForward(this.forward.getRotation(), current)) {
+                return getForward();
+            } else {
+                return getBackward();
+            }
+        }
+
+        @Override
+        public FlippedRobotPose flip(FieldFlipType flipType) {
+            return new FlippedRobotPose(
+                AllianceFlipUtil.flip(this.forward, flipType),
+                AllianceFlipUtil.flip(this.backward, flipType)
+            );
         }
     }
 }
