@@ -123,7 +123,7 @@ export function createBranchSelector() {
   }
 
   rackDOM.forEach((rackButton, i) => {
-    const onRackButtonClick = () => {sendSelectedRack(i); console.log(i)};
+    const onRackButtonClick = () => sendSelectedRack(i);
     rackButton.onclick = onRackButtonClick;
     rackButton.oncontextmenu = onRackButtonClick;
   });
@@ -144,7 +144,6 @@ export function displaySelectedBranch(rack, side) {
 export function displaySelectedRack(rack) {
   rackDOM.forEach((dom, i) => {
     if (i === rack) {
-      console.log(i, dom)
       dom.classList.add("selected");
     } else {
       dom.classList.remove("selected");
