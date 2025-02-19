@@ -1,13 +1,13 @@
 import { sendSelectedAlgaeScoring } from "./index.js";
 
-const stagedAlgaeSelectorContainer = document.getElementById(
-  "staged_algae_selector_container"
+const algaeScoringSelectorContainer = document.getElementById(
+  "algae_scoring_selector_container"
 );
 
-const STAGED_ALGAE_BUTTON_SIZE = 100;
-stagedAlgaeSelectorContainer.style.setProperty(
-  "--staged-algae-button-size",
-  STAGED_ALGAE_BUTTON_SIZE + "px"
+const ALGAE_SCORING_BUTTON_SIZE = 100;
+algaeScoringSelectorContainer.style.setProperty(
+  "--algae-scoring-button-size",
+  ALGAE_SCORING_BUTTON_SIZE + "px"
 );
 
 const icons = {
@@ -45,10 +45,10 @@ buttons.forEach((button) => {
   const category =
     categoryDOM[button.category] || document.createElement("div");
   categoryDOM[button.category] = category;
-  category.classList.add("staged_algae_button_container");
+  category.classList.add("algae_scoring_button_category");
   const dom = document.createElement("div");
   dom.classList.add(
-    "staged_algae_button",
+    "algae_scoring_button",
   );
   if (button.variant?.includes("horizontal")) {
     dom.classList.add("horizontal");
@@ -61,18 +61,18 @@ buttons.forEach((button) => {
   text.textContent = button.name;
   dom.appendChild(text);
   category.appendChild(dom);
-  stagedAlgaeSelectorContainer.appendChild(category);
+  algaeScoringSelectorContainer.appendChild(category);
   buttonDOM.push(dom);
 
-  const onStagedAlgaeButtonClick = () => sendSelectedAlgaeScoring(button.value);
+  const onAlgaeScoringButtonClick = () => sendSelectedAlgaeScoring(button.value);
 
-  dom.onclick = onStagedAlgaeButtonClick;
-  dom.oncontextmenu = onStagedAlgaeButtonClick;
+  dom.onclick = onAlgaeScoringButtonClick;
+  dom.oncontextmenu = onAlgaeScoringButtonClick;
 });
 
 export let selectedButtonIndex = -1;
 
-export function displaySelectedStagedAlgae(value) {
+export function displaySelectedAlgaeScoring(value) {
   buttons.forEach((button, i) => {
     if (button.value === value) {
       selectedButtonIndex = i;

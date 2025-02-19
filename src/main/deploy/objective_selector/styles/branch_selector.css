@@ -1,19 +1,26 @@
+#branch_selector_column {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  place-items: center;
+  padding: 10px;
+}
+
 #branch_selector_container {
   --hub-size: 0px;
   --branch-button-size: 0px;
   --branch-button-normal-offset: 0px;
 
-  width: 100%;
-  display: grid;
-  place-items: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
 #hub {
   width: fit-content;
-  position: relative;
-  display: grid;
-  place-items: center;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -203,4 +210,21 @@
     #465298 10px,
     #465298 20px
   );
+}
+
+#ground_algae_dom {
+  border-radius: 5px;
+  text-align: center;
+  height: min-content;
+  width: 50%;
+  padding: 15px;
+  background-color: var(--hub-color);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+#ground_algae_dom.selected {
+  background-color: var(--algae-color);
 }

@@ -1,22 +1,19 @@
-#staged_algae_selector_container {
-  --staged-algae-button-size: 0px;
+#algae_scoring_selector_container {
+  --algae-scoring-button-size: 0px;
 
   display: flex;
   flex-direction: column;
   gap: 10px;
-  position: absolute;
-  bottom: 0;
-  padding: 15px;
 }
 
-.staged_algae_button_container {
+.algae_scoring_button_category {
   border-radius: 5px;
   display: flex;
   overflow: clip;
 }
 
-.staged_algae_button {
-  min-width: var(--staged-algae-button-size);
+.algae_scoring_button {
+  min-width: var(--algae-scoring-button-size);
   width: 100%;
   padding: 15px;
   background: var(--hub-color);
@@ -34,23 +31,23 @@
   text-align: center;
 }
 
-.staged_algae_button.horizontal {
+.algae_scoring_button.horizontal {
   flex-direction: row;
 }
 
-.staged_algae_button.small {
+.algae_scoring_button.small {
   font-size: 0.75em;
 }
 
-.staged_algae_button.small > svg {
+.algae_scoring_button.small > svg {
   width: 16px;
 }
 
-.staged_algae_button > svg {
+.algae_scoring_button > svg {
   stroke: 2px;
   width: 24px;
 }
 
-.staged_algae_button.selected {
+.algae_scoring_button.selected {
   background-color: var(--scoring-color);
 }
