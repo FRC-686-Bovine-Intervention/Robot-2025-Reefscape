@@ -107,4 +107,9 @@ public class ElevatorIOKraken implements ElevatorIO {
     public void setLength(Measure<DistanceUnit> length) {
         motor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude() / ElevatorConstants.movingStageCount)));
     }
+
+    @Override
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        positionRequest.withFeedForward(feedForward.in(Volts));
+    }
 }

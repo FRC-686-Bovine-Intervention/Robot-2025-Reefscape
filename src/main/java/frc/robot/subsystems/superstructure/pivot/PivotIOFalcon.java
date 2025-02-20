@@ -120,6 +120,11 @@ public class PivotIOFalcon implements PivotIO {
     public void setPosition(Measure<AngleUnit> position) {
         leftMotor.setControl(positionRequest.withPosition(position.in(Rotations)));
     }
+    
+    @Override
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        positionRequest.withFeedForward(feedForward.in(Volts));
+    }
 
     // Immediately stop
     @Override

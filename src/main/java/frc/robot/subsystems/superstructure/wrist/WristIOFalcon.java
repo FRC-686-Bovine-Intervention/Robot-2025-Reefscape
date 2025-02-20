@@ -99,5 +99,10 @@ public class WristIOFalcon implements WristIO {
     public void setAngle(Measure<AngleUnit> angle) {
         motor.setControl(positionRequest.withPosition(angle.in(Rotations)));
     }
+    
+    @Override
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        positionRequest.withFeedForward(feedForward.in(Volts));
+    }
 }
 

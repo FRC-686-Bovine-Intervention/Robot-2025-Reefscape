@@ -46,4 +46,7 @@ public class Pivot {
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        io.setFeedForward(feedForward);
+    }
 }

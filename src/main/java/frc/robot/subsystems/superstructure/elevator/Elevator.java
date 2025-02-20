@@ -53,8 +53,10 @@ public class Elevator {
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
-    
     public void setLength(Measure<DistanceUnit> length) {
         io.setLength(length);
+    }
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        io.setFeedForward(feedForward);
     }
 }

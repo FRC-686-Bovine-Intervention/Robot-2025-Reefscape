@@ -21,5 +21,7 @@ public interface ElevatorIO {
 
     public default void setLength(Measure<DistanceUnit> length) {}
 
+    public default void setFeedForward(Measure<VoltageUnit> feedForward) {}
+
     public default void stop() {}
 }

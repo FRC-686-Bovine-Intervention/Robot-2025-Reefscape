@@ -43,8 +43,10 @@ public class Wrist {
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
-
     public void setAngle(Measure<AngleUnit> angle) {
         io.setAngle(angle);
+    }
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        io.setFeedForward(feedForward);
     }
 }
