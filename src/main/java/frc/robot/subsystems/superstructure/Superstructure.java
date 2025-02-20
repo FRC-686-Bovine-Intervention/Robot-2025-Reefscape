@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.BooleanSupplier;
@@ -20,8 +21,10 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
@@ -44,6 +47,91 @@ public class Superstructure extends SubsystemBase {
         this.pivot = pivot;
         this.elevator = elevator;
         this.wrist = wrist;
+
+        var pivotRoutine = new SysIdRoutine(
+            new SysIdRoutine.Config(
+                Volts.of(1).div(Seconds.of(1)),
+                Volts.of(1),
+                Seconds.of(15),
+                (state) -> {
+                    Logger.recordOutput("Superstructure/Pivot/SysID/State", state.toString());
+                }
+            ),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> {
+                    this.pivot.setVoltage(voltage);
+                    this.elevator.setVoltage(Volts.zero());
+                    this.wrist.setVoltage(Volts.zero());
+                },
+                (log) -> {
+                    Logger.recordOutput("Superstructure/Pivot/SysID/Voltage", this.pivot.getVoltage());
+                    Logger.recordOutput("Superstructure/Pivot/SysID/Position", this.pivot.getAngle());
+                    Logger.recordOutput("Superstructure/Pivot/SysID/Velocity", this.pivot.getVelocity());
+                },
+                this,
+                "Pivot"
+            )
+        );
+        SmartDashboard.putData("SysID/Superstructure/Pivot/Quasi Forward", pivotRoutine.quasistatic(SysIdRoutine.Direction.kForward));
+        SmartDashboard.putData("SysID/Superstructure/Pivot/Quasi Reverse", pivotRoutine.quasistatic(SysIdRoutine.Direction.kReverse));
+        SmartDashboard.putData("SysID/Superstructure/Pivot/Dynamic Forward", pivotRoutine.dynamic(SysIdRoutine.Direction.kForward));
+        SmartDashboard.putData("SysID/Superstructure/Pivot/Dynamic Reverse", pivotRoutine.dynamic(SysIdRoutine.Direction.kReverse));
+        var elevatorRoutine = new SysIdRoutine(
+            new SysIdRoutine.Config(
+                Volts.of(1).div(Seconds.of(1)),
+                Volts.of(1),
+                Seconds.of(15),
+                (state) -> {
+                    Logger.recordOutput("Superstructure/Elevator/SysID/State", state.toString());
+                }
+            ),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> {
+                    this.pivot.setVoltage(Volts.zero());
+                    this.elevator.setVoltage(voltage);
+                    this.wrist.setVoltage(Volts.zero());
+                },
+                (log) -> {
+                    Logger.recordOutput("Superstructure/Elevator/SysID/Voltage", this.pivot.getVoltage());
+                    Logger.recordOutput("Superstructure/Elevator/SysID/Position", this.pivot.getAngle());
+                    Logger.recordOutput("Superstructure/Elevator/SysID/Velocity", this.pivot.getVelocity());
+                },
+                this,
+                "Elevator"
+            )
+        );
+        SmartDashboard.putData("SysID/Superstructure/Elevator/Quasi Forward", elevatorRoutine.quasistatic(SysIdRoutine.Direction.kForward));
+        SmartDashboard.putData("SysID/Superstructure/Elevator/Quasi Reverse", elevatorRoutine.quasistatic(SysIdRoutine.Direction.kReverse));
+        SmartDashboard.putData("SysID/Superstructure/Elevator/Dynamic Forward", elevatorRoutine.dynamic(SysIdRoutine.Direction.kForward));
+        SmartDashboard.putData("SysID/Superstructure/Elevator/Dynamic Reverse", elevatorRoutine.dynamic(SysIdRoutine.Direction.kReverse));
+        var wristRoutine = new SysIdRoutine(
+            new SysIdRoutine.Config(
+                Volts.of(1).div(Seconds.of(1)),
+                Volts.of(1),
+                Seconds.of(15),
+                (state) -> {
+                    Logger.recordOutput("Superstructure/Wrist/SysID/State", state.toString());
+                }
+            ),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> {
+                    this.pivot.setVoltage(Volts.zero());
+                    this.elevator.setVoltage(Volts.zero());
+                    this.wrist.setVoltage(voltage);
+                },
+                (log) -> {
+                    Logger.recordOutput("Superstructure/Wrist/SysID/Voltage", this.wrist.getVoltage());
+                    Logger.recordOutput("Superstructure/Wrist/SysID/Position", this.wrist.getAngle());
+                    Logger.recordOutput("Superstructure/Wrist/SysID/Velocity", this.wrist.getVelocity());
+                },
+                this,
+                "Wrist"
+            )
+        );
+        SmartDashboard.putData("SysID/Superstructure/Wrist/Quasi Forward", wristRoutine.quasistatic(SysIdRoutine.Direction.kForward));
+        SmartDashboard.putData("SysID/Superstructure/Wrist/Quasi Reverse", wristRoutine.quasistatic(SysIdRoutine.Direction.kReverse));
+        SmartDashboard.putData("SysID/Superstructure/Wrist/Dynamic Forward", wristRoutine.dynamic(SysIdRoutine.Direction.kForward));
+        SmartDashboard.putData("SysID/Superstructure/Wrist/Dynamic Reverse", wristRoutine.dynamic(SysIdRoutine.Direction.kReverse));
     }
 
     @Override

@@ -6,6 +6,8 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.util.robotStructure.angle.ArmMech;
 
 public class Pivot {
@@ -30,6 +32,12 @@ public class Pivot {
 
     public Angle getAngle() {
         return inputs.encoder.position;
+    }
+    public AngularVelocity getVelocity() {
+        return inputs.encoder.velocity;
+    }
+    public Voltage getVoltage() {
+        return inputs.leftMotor.motor.appliedVoltage;
     }
 
     public void setPivot(Measure<AngleUnit> angle) {

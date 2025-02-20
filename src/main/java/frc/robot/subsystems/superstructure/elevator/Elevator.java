@@ -1,6 +1,8 @@
 package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Second;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -8,6 +10,8 @@ import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.util.robotStructure.linear.ExtenderMech;
 
 public class Elevator {
@@ -38,6 +42,12 @@ public class Elevator {
 
     public Distance getLength() {
         return ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians)).times(ElevatorConstants.movingStages);
+    }
+    public LinearVelocity getVelocity() {
+        return ElevatorConstants.sprocketRadius.times(inputs.encoder.velocity.in(RadiansPerSecond)).per(Second).times(ElevatorConstants.movingStages);
+    }
+    public Voltage getVoltage() {
+        return inputs.leftMotor.motor.appliedVoltage;
     }
 
     public void setVoltage(Measure<VoltageUnit> voltage) {
