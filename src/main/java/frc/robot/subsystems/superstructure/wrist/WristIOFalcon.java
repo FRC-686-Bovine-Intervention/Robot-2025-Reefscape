@@ -59,7 +59,8 @@ public class WristIOFalcon implements WristIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(WristConstants.motorToMechanism.ratio())
+            .withRotorToSensorRatio(WristConstants.motorToSensor.ratio())
+            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.ratio())
         ;
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);

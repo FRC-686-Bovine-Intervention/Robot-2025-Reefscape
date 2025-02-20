@@ -35,20 +35,21 @@ public class ElevatorConstants {
         Rotation3d.kZero
     );
 
-    public static final int movingStages = 3;
+    public static final int movingStageCount = 3;
     
     public static final Distance sprocketRadius = Inches.of(1.432).div(2);
 
-    public static final Distance minimumHeight = Inches.of(26.500000);
-    public static final Distance maximumHeight = Inches.of(76.930235);
-    public static final Distance maximumLength = maximumHeight.minus(maximumHeight);
+    public static final Distance stageExtension = Inches.of(17);
+    public static final Distance maximumLength = stageExtension.times(movingStageCount);
+    public static final Distance minimumHeight = Inches.of(26.5);
+    public static final Distance maximumHeight = minimumHeight.plus(maximumLength);
 
     public static final GearRatio motorToMechanism = new GearRatio()
         .planetary(1.0/9.0)
     ;
     public static final GearRatio sensorToMechanism = new GearRatio()
-        .gear(10)
         .gear(40)
+        .gear(10)
         .axle()
     ;
 }

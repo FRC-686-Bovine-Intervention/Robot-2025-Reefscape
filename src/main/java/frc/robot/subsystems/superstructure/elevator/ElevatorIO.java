@@ -12,8 +12,7 @@ public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {
         LoggedEncoder encoder = new LoggedEncoder();
-        LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
-        LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
+        LoggedEncodedMotor motor = new LoggedEncodedMotor();
     } 
 
     public default void updateInputs(ElevatorIOInputs inputs) {}

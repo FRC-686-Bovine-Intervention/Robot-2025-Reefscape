@@ -50,16 +50,15 @@ public class HardwareDevices {
     public static final CANDevice pivotEncoderID = canivore.id(5);
 
     // Elevator
-    public static final CANDevice elevatorLeftMotorID = canivore.id(7);
-    public static final CANDevice elevatorRightMotorID = canivore.id(8);
+    public static final CANDevice elevatorMotorID = canivore.id(7);
     public static final CANDevice elevatorEncoderID = canivore.id(7);
 
     // Wrist
-    public static final CANDevice wristMotorID = canivore.id(9);
-    public static final CANDevice wristEncoderID = canivore.id(9);
+    public static final CANDevice wristMotorID = canivore.id(8);
+    public static final CANDevice wristEncoderID = canivore.id(8);
 
     // Intake
-    public static final CANDevice intakeMotorID = canivore.id(10);
+    public static final CANDevice intakeMotorID = canivore.id(9);
     public static final DIOPort coralSensor = DIOPort.port(1);
     public static final DIOPort algaeSensor = DIOPort.port(2);
 

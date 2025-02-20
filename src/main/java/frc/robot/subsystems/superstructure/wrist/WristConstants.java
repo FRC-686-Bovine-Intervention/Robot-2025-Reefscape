@@ -17,7 +17,13 @@ public class WristConstants {
         Rotation3d.kZero
     );
     
-    public static final GearRatio motorToMechanism = new GearRatio()
-    
+    public static final GearRatio motorToSensor = new GearRatio()
+        .planetary(1.0/5.0)
+        .planetary(1.0/4.0)
     ;
+    public static final GearRatio sensorToMechanism = new GearRatio()
+        .sprocket(20)
+        .sprocket(32)
+    ;
+    public static final GearRatio motorToMechanism = motorToSensor.concat(sensorToMechanism);
 }

@@ -26,8 +26,8 @@ import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
-public class ElevatorIOFalcon implements ElevatorIO {
-    protected final TalonFX motor = HardwareDevices.elevatorLeftMotorID.talonFX();
+public class ElevatorIOKraken implements ElevatorIO {
+    protected final TalonFX motor = HardwareDevices.elevatorMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.elevatorEncoderID.cancoder();
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
@@ -51,7 +51,7 @@ public class ElevatorIOFalcon implements ElevatorIO {
         0
     );
     
-    public ElevatorIOFalcon() {
+    public ElevatorIOKraken() {
         var encoderConfig = new CANcoderConfiguration();
 
         cancoder.getConfigurator().apply(encoderConfig);
@@ -63,7 +63,8 @@ public class ElevatorIOFalcon implements ElevatorIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(100)
+            .withRotorToSensorRatio(ElevatorConstants.motorToMechanism.concat(ElevatorConstants.sensorToMechanism.inverse()).ratio())
+            .withSensorToMechanismRatio(ElevatorConstants.sensorToMechanism.ratio())
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)
@@ -75,16 +76,12 @@ public class ElevatorIOFalcon implements ElevatorIO {
         pidConsts.update(motorConfig.Slot0);
 
         motor.getConfigurator().apply(motorConfig);
-
-        motorConfig.MotorOutput
-            .withInverted(InvertedValue.Clockwise_Positive)
-        ;
     }
     
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.encoder.updateFrom(cancoder);
-        inputs.leftMotor.updateFrom(motor);
+        inputs.motor.updateFrom(motor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
@@ -108,6 +105,6 @@ public class ElevatorIOFalcon implements ElevatorIO {
 
     @Override
     public void setLength(Measure<DistanceUnit> length) {
-        motor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude() / ElevatorConstants.movingStages)));
+        motor.setControl(positionRequest.withPosition(Radians.of(length.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude() / ElevatorConstants.movingStageCount)));
     }
 }
