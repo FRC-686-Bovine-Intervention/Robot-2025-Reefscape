@@ -34,14 +34,31 @@ export function wrapNumber(num, min, max) {
   return ((((num - min) % range) + range) % range) + min;
 }
 
-export function getCoral(idx) {
-  return {
-    rack: Math.floor(idx / 2 / 4) % 6,
-    level: Math.floor(idx / 2) % 4,
-    side: idx % 2,
-  };
+export function isWithinRange(value, min, max) {
+  return value >= min && value <= max;
 }
 
-export function getCoralIdx({rack, level, side}) {
-  return rack * 4 * 2 + level * 2 + side;
+/*
+  4 bits for rack: [0 - 11]
+  1 bit for side: [0, 1]
+  2 bits for level: [0 - 3]
+*/
+const RACK_BITS = 4;
+const SIDE_BITS = 1;
+const LEVEL_BITS = 2;
+
+function createBinaryOnes(numBits) {
+  return Math.pow(2, numBits) - 1
+}
+
+export function getCoral(idx) {
+  return {
+    rack: idx >> (LEVEL_BITS + SIDE_BITS) & createBinaryOnes(RACK_BITS),
+    side: idx >> LEVEL_BITS & createBinaryOnes(SIDE_BITS),
+    level: idx & createBinaryOnes(LEVEL_BITS)
+  }
+}
+
+export function getCoralIdx({ rack, side, level }) {
+  return (rack << (SIDE_BITS + LEVEL_BITS)) | (side << LEVEL_BITS) | level;
 }

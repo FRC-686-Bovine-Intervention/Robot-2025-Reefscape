@@ -18,8 +18,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.util.struct.StructSerializable;
 import frc.util.flipping.AllianceFlipUtil;
-import frc.util.flipping.Flipped;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
+import frc.util.flipping.Flipped;
 import frc.util.misc.GeomUtil;
 
 public final class FieldConstants {
@@ -127,15 +127,21 @@ public final class FieldConstants {
             Rack4(rackDelta.times(4), AlgaeLevel.High),
             Rack5(rackDelta.times(5), AlgaeLevel.Low),
             ;
+            private final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
             private final Pose2d origin;
-            public final AlgaeLevel algaeLevel;
+            
+            public final Pipe leftPipe;
+            public final Pipe rightPipe;
+            public final StagedAlgae stagedAlgae;
+
+            public final Flipped<Pose2d> robotPose;
+
             Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
-                this.algaeLevel = algaeLevel;
-            }
-
-            public Flipped<Pose3d> getAlgaePose() {
-                return Flipped.fromBlue(new Pose3d(origin).transformBy(algaeLevel.transform));
+                this.leftPipe = new Pipe(this, Side.Left);
+                this.rightPipe = new Pipe(this, Side.Right);
+                this.stagedAlgae = new StagedAlgae(this, algaeLevel);
+                this.robotPose = Flipped.fromBlue(origin.transformBy(scoringTransform));
             }
         }
 
@@ -206,47 +212,101 @@ public final class FieldConstants {
             }
         }
 
-        public static final class Branch implements StructSerializable {
+        public static final class Pipe {
             public final Rack rack;
-            public final Level level;
             public final Side side;
-            public final Flipped<Pose3d> branchPose;
+            
+            public final Flipped<Pose3d> pose; 
             public final Flipped<Pose2d> robotPose;
 
-            public Branch(Rack rack, Level level, Side side) {
+            public Branch[] branches = new Branch[Level.values().length];
+
+            public Pipe(Rack rack, Side side) {
                 this.rack = rack;
-                this.level = level;
                 this.side = side;
-                this.branchPose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(level.transform).transformBy(side.transform));
+                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(side.transform));
                 this.robotPose = Flipped.fromBlue(rack.origin.transformBy(side.scoringTransform));
             }
 
-            public int getIndex() {
-                return Branch.getIndex(rack, level, side);
+            public static int getIndex(Rack rack, Side side) {
+                return rack.ordinal() * Side.values().length + side.ordinal();
             }
 
-            public static int getIndex(Rack rack, Level level, Side side) {
-                return (rack.ordinal() * Level.values().length * Side.values().length) + (level.ordinal() * Side.values().length) + (side.ordinal());
+            public int getIndex() {
+                return Pipe.getIndex(rack, side);
             }
         }
 
-        public static final Branch[] branches = new Branch[Rack.values().length * Level.values().length * Side.values().length];
+        public static final class Branch implements StructSerializable {
+            public final Pipe pipe;
+            public final Level level;
+
+            public final Flipped<Pose3d> pose;
+
+            public Branch(Pipe pipe, Level level) {
+                this.pipe = pipe;
+                this.level = level;
+                this.pose = Flipped.fromBlue(pipe.pose.getBlue().transformBy(level.transform));
+            }
+
+            public static int getIndex(Pipe pipe, Level level) {
+                return pipe.getIndex() * Level.values().length + level.ordinal();
+            }
+
+            public static int getIndex(Rack pipe, Side side, Level level) {
+                return getIndex(pipes[Pipe.getIndex(pipe, side)], level);
+            }
+
+            public int getIndex() {
+                return getIndex(pipe, level);
+            }
+        }
+
+        public static final Pipe[] pipes = new Pipe[Rack.values().length * Side.values().length];
+        public static final Branch[] branches = new Branch[Rack.values().length * Side.values().length * Level.values().length];
+        
         static {
             for (var rack : Rack.values()) {
+                for (var side : Side.values()) {
+                    pipes[Pipe.getIndex(rack, side)] =
+                        rack.leftPipe.side.equals(side) ?
+                            rack.leftPipe :
+                            rack.rightPipe
+                    ;
+                }
+            }
+
+            for (var pipe : pipes) {
                 for (var level : Level.values()) {
-                    for (var side : Side.values()) {
-                        branches[Branch.getIndex(rack, level, side)] = new Branch(rack, level, side);
-                    }
+                    var branch = new Branch(pipe, level);
+                    pipe.branches[level.ordinal()] = branch;
+                    branches[Branch.getIndex(pipe, level)] = branch;
                 }
             }
         }
 
-        public static final Branch getBranch(Rack rack, Level level, Side side) {
-            return branches[Branch.getIndex(rack, level, side)];
+        public static final Pipe getPipe(Rack rack, Side side) {
+            return pipes[Pipe.getIndex(rack, side)];
         }
 
-        public static final Branch getBranch(int rack, int level, int side) {
-            return getBranch(Rack.values()[rack], Level.values()[level], Side.values()[side]);
+        public static final Pipe getPipe(int rack, int side) {
+            return getPipe(Rack.values()[rack], Side.values()[side]);
+        }
+
+        public static final Branch getBranch(Pipe pipe, Level level) {
+            return branches[Branch.getIndex(pipe, level)];
+        }
+
+        public static final Branch getBranch(Rack rack, Side side, Level level) {
+            return branches[Branch.getIndex(rack, side, level)];
+        }
+
+        public static final Branch getBranch(int pipe, int level) {
+            return getBranch(pipes[pipe], Level.values()[level]);
+        }
+
+        public static final Branch getBranch(int rack, int side, int level) {
+            return getBranch(Rack.values()[rack], Side.values()[side], Level.values()[level]);
         }
 
         public static enum AlgaeLevel {
@@ -285,15 +345,12 @@ public final class FieldConstants {
         public static class StagedAlgae {
             public final Rack rack;
             public final AlgaeLevel algaeLevel;
-            public final Flipped<Pose3d> algaePose;
-            public final Flipped<Pose2d> robotPose;
-            private static final Transform2d scoringTransform = new Transform2d(new Translation2d(minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(), Meters.zero()), Rotation2d.kZero);
+            public final Flipped<Pose3d> pose;
             
             public StagedAlgae (Rack rack, AlgaeLevel algaeLevel) {
                 this.rack = rack;
                 this.algaeLevel = algaeLevel;
-                this.algaePose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
-                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(scoringTransform));
+                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
             }
 
             public static int getIndex(Rack rack) {
@@ -308,12 +365,16 @@ public final class FieldConstants {
         public static final StagedAlgae[] stagedAlgae = new StagedAlgae[Rack.values().length];
         static {
             for(var rack : Rack.values()) {
-                stagedAlgae[StagedAlgae.getIndex(rack)] = new StagedAlgae(rack, rack.algaeLevel);
+                stagedAlgae[StagedAlgae.getIndex(rack)] = rack.stagedAlgae;
             }
         }
 
         public static StagedAlgae getStagedAlgae(Rack rack) {
             return stagedAlgae[rack.ordinal()];
+        }
+
+        public static StagedAlgae getStagedAlgae(int rack) {
+            return getStagedAlgae(Rack.values()[rack]);
         }
     }
 }

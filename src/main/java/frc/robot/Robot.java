@@ -143,8 +143,8 @@ public class Robot extends LoggedRobot {
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
         Mechanism3d.logAscopeAxes();
-        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
-        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
+        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.pose.getOurs()).collect_array(Pose3d[]::new));
+        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.pipe.robotPose.getOurs()).collect_array(Pose2d[]::new));
         Logger.recordOutput("ASCOPE DEBUGGING/Pivot Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).inverse());
         Logger.recordOutput("ASCOPE DEBUGGING/Stage 2 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).inverse());
         Logger.recordOutput("ASCOPE DEBUGGING/Stage 3 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).inverse());
