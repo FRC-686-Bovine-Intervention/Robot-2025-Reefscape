@@ -14,64 +14,65 @@ import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef.Branch;
 import frc.util.misc.MathExtraUtil;
+import frc.robot.constants.FieldConstants.Reef.Pipe;
 
 public class ScoreCoral extends AutoRoutine {
-    // scoring preload (reef branches)
+    // scoring preload (reef pipes)
     // starting position (closest (center pillar), far?)
-    // scoring coral 1 (1/2 reef branches - 1)
-    // scoring coral 2 (1/2 reef branches - 2)
+    // scoring coral 1 (1/2 reef pipes - 1)
+    // scoring coral 2 (1/2 reef pipes - 2)
     // which part of the coral station (close, mid, far)
 
-    private static final Map.Entry<String, Branch> branchA = Settings.option("Branch A", FieldConstants.Reef.branches[0]); 
-    private static final Map.Entry<String, Branch> branchB = Settings.option("Branch B", FieldConstants.Reef.branches[1]); 
-    private static final Map.Entry<String, Branch> branchC = Settings.option("Branch C", FieldConstants.Reef.branches[2]); 
-    private static final Map.Entry<String, Branch> branchD = Settings.option("Branch D", FieldConstants.Reef.branches[3]); 
-    private static final Map.Entry<String, Branch> branchE = Settings.option("Branch E", FieldConstants.Reef.branches[4]); 
-    private static final Map.Entry<String, Branch> branchF = Settings.option("Branch F", FieldConstants.Reef.branches[5]); 
-    private static final Map.Entry<String, Branch> branchG = Settings.option("Branch G", FieldConstants.Reef.branches[6]); 
-    private static final Map.Entry<String, Branch> branchH = Settings.option("Branch H", FieldConstants.Reef.branches[7]); 
-    private static final Map.Entry<String, Branch> branchI = Settings.option("Branch I", FieldConstants.Reef.branches[8]); 
-    private static final Map.Entry<String, Branch> branchJ = Settings.option("Branch J", FieldConstants.Reef.branches[9]); 
-    private static final Map.Entry<String, Branch> branchK = Settings.option("Branch K", FieldConstants.Reef.branches[10]); 
-    private static final Map.Entry<String, Branch> branchL = Settings.option("Branch L", FieldConstants.Reef.branches[11]); 
+    private static final Map.Entry<String, Pipe> pipeA = Settings.option("Pipe A", FieldConstants.Reef.pipes[0]); 
+    private static final Map.Entry<String, Pipe> pipeB = Settings.option("Pipe B", FieldConstants.Reef.pipes[1]); 
+    private static final Map.Entry<String, Pipe> pipeC = Settings.option("Pipe C", FieldConstants.Reef.pipes[2]); 
+    private static final Map.Entry<String, Pipe> pipeD = Settings.option("Pipe D", FieldConstants.Reef.pipes[3]); 
+    private static final Map.Entry<String, Pipe> pipeE = Settings.option("Pipe E", FieldConstants.Reef.pipes[4]); 
+    private static final Map.Entry<String, Pipe> pipeF = Settings.option("Pipe F", FieldConstants.Reef.pipes[5]); 
+    private static final Map.Entry<String, Pipe> pipeG = Settings.option("Pipe G", FieldConstants.Reef.pipes[6]); 
+    private static final Map.Entry<String, Pipe> pipeH = Settings.option("Pipe H", FieldConstants.Reef.pipes[7]); 
+    private static final Map.Entry<String, Pipe> pipeI = Settings.option("Pipe I", FieldConstants.Reef.pipes[8]); 
+    private static final Map.Entry<String, Pipe> pipeJ = Settings.option("Pipe J", FieldConstants.Reef.pipes[9]); 
+    private static final Map.Entry<String, Pipe> pipeK = Settings.option("Pipe K", FieldConstants.Reef.pipes[10]); 
+    private static final Map.Entry<String, Pipe> pipeL = Settings.option("Pipe L", FieldConstants.Reef.pipes[11]); 
     
-    private static boolean isRightCoralStation(Branch branch){
-        return MathExtraUtil.isWithin(branch.getIndex(), 1, 6);
+    private static boolean isRightCoralStation(Pipe pipe){
+        return MathExtraUtil.isWithin(pipe.getIndex(), 1, 6);
     }
 
-    private static final AutoQuestion<Branch> scorePreloadBranch = new AutoQuestion<Branch>("Score Preload Branch") {
+    private static final AutoQuestion<Pipe> scorePreloadPipe = new AutoQuestion<Pipe>("Score Preload Pipe") {
         @Override
-        protected Settings<Branch> generateSettings() {
+        protected Settings<Pipe> generateSettings() {
             return Settings.from(
-                branchA,
-                branchA, branchB, branchC, branchD, branchE, branchF, branchG, branchH, branchI, branchJ, branchK, branchL
+                pipeA,
+                pipeA, pipeB, pipeC, pipeD, pipeE, pipeF, pipeG, pipeH, pipeI, pipeJ, pipeK, pipeL
             );
         }
 
     };
 
-    private static final AutoQuestion<Branch> scoreCoral1 = new AutoQuestion<Branch>("Score Second Branch") {
+    private static final AutoQuestion<Pipe> scoreCoral1 = new AutoQuestion<Pipe>("Score Second Pipe") {
         @Override
-        protected Settings<Branch> generateSettings() {
-            return (isRightCoralStation(scorePreloadBranch.getResponse())) ? (
-                Settings.from(branchB, 
-                branchB, branchC, branchD, branchE, branchF, branchG)
+        protected Settings<Pipe> generateSettings() {
+            return (isRightCoralStation(scorePreloadPipe.getResponse())) ? (
+                Settings.from(pipeB, 
+                pipeB, pipeC, pipeD, pipeE, pipeF, pipeG)
             ) : (
-                Settings.from(branchA, 
-                branchA, branchH, branchI, branchJ, branchK, branchL)
+                Settings.from(pipeA, 
+                pipeA, pipeH, pipeI, pipeJ, pipeK, pipeL)
             );
         }
     };
 
-    private static final AutoQuestion<Branch> scoreCoral2 = new AutoQuestion<Branch>("Score Third Branch") {
+    private static final AutoQuestion<Pipe> scoreCoral2 = new AutoQuestion<Pipe>("Score Third Pipe") {
         @Override
-        protected Settings<Branch> generateSettings() {
-            return (isRightCoralStation(scorePreloadBranch.getResponse())) ? (
-                Settings.from(branchB, 
-                branchB, branchC, branchD, branchE, branchF, branchG)
+        protected Settings<Pipe> generateSettings() {
+            return (isRightCoralStation(scorePreloadPipe.getResponse())) ? (
+                Settings.from(pipeB, 
+                pipeB, pipeC, pipeD, pipeE, pipeF, pipeG)
             ) : (
-                Settings.from(branchA, 
-                branchA, branchH, branchI, branchJ, branchK, branchL)
+                Settings.from(pipeA, 
+                pipeA, pipeH, pipeI, pipeJ, pipeK, pipeL)
             );
         }
     };
@@ -108,7 +109,7 @@ public class ScoreCoral extends AutoRoutine {
         
         @Override
         protected Settings<StartPosition> generateSettings() {
-            switch(scorePreloadBranch.getResponse().getIndex()){
+            switch(scorePreloadPipe.getResponse().getIndex()){
                 case 0:
                 return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
                 case 1:
@@ -140,7 +141,7 @@ public class ScoreCoral extends AutoRoutine {
     };
 
     public ScoreCoral(RobotContainer robot) {
-        super("ScoreCoral", List.of(scorePreloadBranch, startPosition, scoreCoral1, scoreCoral2, stationPosition));
+        super("ScoreCoral", List.of(scorePreloadPipe, startPosition, scoreCoral1, scoreCoral2, stationPosition));
     }
 
     @Override
