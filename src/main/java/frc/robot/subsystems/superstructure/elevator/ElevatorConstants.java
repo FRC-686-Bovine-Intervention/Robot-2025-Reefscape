@@ -1,6 +1,7 @@
 package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -41,9 +42,10 @@ public class ElevatorConstants {
     // public static final Distance sprocketRadius = Inches.of(0.25).times(16).div(Math.PI*2);
 
     public static final Distance stageExtension = Inches.of(17);
-    public static final Distance maximumLength = stageExtension.times(movingStageCount);
-    public static final Distance minimumHeight = Inches.of(26.5);
-    public static final Distance maximumHeight = minimumHeight.plus(maximumLength);
+    public static final Distance minLength = Meters.zero();
+    public static final Distance maxLength = stageExtension.times(movingStageCount);
+    public static final Distance minHeight = Inches.of(26.5);
+    public static final Distance maxHeight = minHeight.plus(maxLength);
 
     public static final GearRatio motorToMechanism = new GearRatio()
         .planetary(1.0/3.0)

@@ -73,7 +73,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         );
         
         Logger.recordOutput("Objective Tracker/Selected Branch", selectedCoral.pose.getOurs());
-        var setpointState = selectedCoral.level.superstructurePosition.getForward().getSuperstructureState();
+        var setpointState = selectedCoral.level.superstructureStates.getForward().getSuperstructureState();
         Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Pivot Angle", setpointState.pivotAngle);
         Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Elevator Length", setpointState.elevatorLength);
         Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Wrist Angle", setpointState.wristAngle);

@@ -17,15 +17,14 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.util.struct.StructSerializable;
-import frc.robot.subsystems.superstructure.Superstructure.FlippedRobotPose;
-import frc.robot.subsystems.superstructure.Superstructure.FlippedSuperstructurePosition;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructurePosition;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
+import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
-import frc.util.flipping.Flipped;
-import frc.util.misc.GeomUtil;
+import frc.util.flipping.AllianceFlipped;
 
 public final class FieldConstants {
     public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
@@ -42,7 +41,7 @@ public final class FieldConstants {
         apriltagLayout = a;
     }
 
-    public static final Flipped<Rotation2d> netForwardRotation = Flipped.fromBlue(Rotation2d.kZero);
+    public static final AllianceFlipped<Rotation2d> netForwardRotation = AllianceFlipped.fromBlue(Rotation2d.kZero);
 
     public static final class Coral {
         public static final Distance length = Inches.of(11.875);
@@ -106,32 +105,39 @@ public final class FieldConstants {
             Rotation2d.kZero
         );
 
-        public static final Flipped<FlippedRobotPose> leftStationLeft = Flipped.fromBlue(FlippedRobotPose.fromBackwardRobotFlipped(leftStationMidpoint.transformBy(leftStationTransform)));
-        public static final Flipped<FlippedRobotPose> leftStationCenter = Flipped.fromBlue(FlippedRobotPose.fromBackwardRobotFlipped(leftStationMidpoint.transformBy(centerStationTransform)));
-        public static final Flipped<FlippedRobotPose> leftStationRight = Flipped.fromBlue(FlippedRobotPose.fromBackwardRobotFlipped(leftStationMidpoint.transformBy(rightStationTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> leftStationLeft = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromBackwardRobotFlipped(leftStationMidpoint.transformBy(leftStationTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> leftStationCenter = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromBackwardRobotFlipped(leftStationMidpoint.transformBy(centerStationTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> leftStationRight = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromBackwardRobotFlipped(leftStationMidpoint.transformBy(rightStationTransform)));
 
-        public static final Flipped<FlippedRobotPose> rightStationLeft = Flipped.fromBlue(FlippedRobotPose.fromBackwardRobotFlipped(rightStationMidpoint.transformBy(leftStationTransform)));
-        public static final Flipped<FlippedRobotPose> rightStationCenter = Flipped.fromBlue(FlippedRobotPose.fromBackwardRobotFlipped(rightStationMidpoint.transformBy(centerStationTransform)));
-        public static final Flipped<FlippedRobotPose> rightStationRight = Flipped.fromBlue(FlippedRobotPose.fromBackwardRobotFlipped(rightStationMidpoint.transformBy(rightStationTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> rightStationLeft = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromBackwardRobotFlipped(rightStationMidpoint.transformBy(leftStationTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> rightStationCenter = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromBackwardRobotFlipped(rightStationMidpoint.transformBy(centerStationTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> rightStationRight = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromBackwardRobotFlipped(rightStationMidpoint.transformBy(rightStationTransform)));
 
         public static final Angle chuteAngle = Degrees.of(35);
         public static final Distance chuteBottomHeight = Inches.of(37.440179);
 
-        public static final FlippedSuperstructurePosition intakePosition = FlippedSuperstructurePosition.fromForwardRobotFlipped(SuperstructurePosition.fromRobotSpace(
-            new Pose2d(
-                new Translation2d(
-                    RobotConstants.centerToFrontBumper,
-                    chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians))))
-                ),
-                new Rotation2d(chuteAngle)
+        public static final RobotFlippedSuperstructureState intakePosition = new RobotFlippedSuperstructureState(
+            SuperstructureState.fromRobotSpace(
+                new Pose2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper,
+                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians))))
+                    ),
+                    new Rotation2d(chuteAngle)
+                )
+                .transformBy(SuperstructureConstants.coralIntakeForwardTransform)
+            ),
+            SuperstructureState.fromParts(
+                Degrees.of(75),
+                ElevatorConstants.minLength,
+                Degrees.of(175)
             )
-            .transformBy(SuperstructureConstants.coralIntakeForwardTransform)
-        ));
+        );
     }
 
     public static final class Reef {
         public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
-        public static final Flipped<Translation2d> reefCenter = Flipped.fromBlue(
+        public static final AllianceFlipped<Translation2d> reefCenter = AllianceFlipped.fromBlue(
             new Translation2d(
                 Meters.of(4.489325),
                 Meters.of(4.025877)
@@ -155,14 +161,14 @@ public final class FieldConstants {
             public final Pipe rightPipe;
             public final StagedAlgae stagedAlgae;
 
-            public final Flipped<Pose2d> robotPose;
+            public final AllianceFlipped<Pose2d> algaeIntakeRobotPose;
 
             Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
                 this.leftPipe = new Pipe(this, Side.Left);
                 this.rightPipe = new Pipe(this, Side.Right);
                 this.stagedAlgae = new StagedAlgae(this, algaeLevel);
-                this.robotPose = Flipped.fromBlue(origin.transformBy(scoringTransform));
+                this.algaeIntakeRobotPose = AllianceFlipped.fromBlue(origin.transformBy(scoringTransform));
             }
         }
 
@@ -173,7 +179,7 @@ public final class FieldConstants {
             Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750)),
             ;
             private final Transform3d transform;
-            public final FlippedSuperstructurePosition superstructurePosition;
+            public final RobotFlippedSuperstructureState superstructureStates;
             Level(Distance height, Angle angle, Distance radius) {
                 this.transform = new Transform3d(
                     new Translation3d(
@@ -187,7 +193,7 @@ public final class FieldConstants {
                         Degrees.zero()
                     )
                 );
-                this.superstructurePosition = FlippedSuperstructurePosition.fromForwardRobotFlipped(SuperstructurePosition.fromRobotSpace(
+                this.superstructureStates = RobotFlippedSuperstructureState.fromForwardRobotFlipped(SuperstructureState.fromRobotSpace(
                     new Pose2d(
                         new Translation2d(
                             RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
@@ -231,16 +237,16 @@ public final class FieldConstants {
             public final Rack rack;
             public final Side side;
             
-            public final Flipped<Pose3d> pose; 
-            public final Flipped<Pose2d> robotPose;
+            private final Pose3d pose;
+            public final AllianceFlipped<RobotFlippedRobotPose> robotPose;
 
             public Branch[] branches = new Branch[Level.values().length];
 
             public Pipe(Rack rack, Side side) {
                 this.rack = rack;
                 this.side = side;
-                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(side.transform));
-                this.robotPose = Flipped.fromBlue(rack.origin.transformBy(side.scoringTransform));
+                this.pose = new Pose3d(rack.origin).transformBy(side.transform);
+                this.robotPose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardRobotFlipped(rack.origin.transformBy(side.scoringTransform)));
             }
 
             public static int getIndex(Rack rack, Side side) {
@@ -252,16 +258,16 @@ public final class FieldConstants {
             }
         }
 
-        public static final class Branch implements StructSerializable {
+        public static final class Branch {
             public final Pipe pipe;
             public final Level level;
 
-            public final Flipped<Pose3d> pose;
+            public final AllianceFlipped<Pose3d> pose;
 
             public Branch(Pipe pipe, Level level) {
                 this.pipe = pipe;
                 this.level = level;
-                this.pose = Flipped.fromBlue(pipe.pose.getBlue().transformBy(level.transform));
+                this.pose = AllianceFlipped.fromBlue(pipe.pose.transformBy(level.transform));
             }
 
             public static int getIndex(Pipe pipe, Level level) {
@@ -329,7 +335,7 @@ public final class FieldConstants {
             Low(Meters.of(0.679337), Meters.of(0.909320)),
             ;
             private final Transform3d transform;
-            public final FlippedSuperstructurePosition superstructurePosition;
+            public final RobotFlippedSuperstructureState superstructurePosition;
             AlgaeLevel(Distance radius, Distance height) {
                 this.transform = new Transform3d(
                     new Translation3d(
@@ -339,7 +345,7 @@ public final class FieldConstants {
                     ),
                     Rotation3d.kZero
                 );
-                this.superstructurePosition = FlippedSuperstructurePosition.fromForwardRobotFlipped(SuperstructurePosition.fromRobotSpace(
+                this.superstructurePosition = RobotFlippedSuperstructureState.fromForwardRobotFlipped(SuperstructureState.fromRobotSpace(
                     new Pose2d(
                         new Translation2d(
                             RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
@@ -355,12 +361,12 @@ public final class FieldConstants {
         public static class StagedAlgae {
             public final Rack rack;
             public final AlgaeLevel algaeLevel;
-            public final Flipped<Pose3d> pose;
+            public final AllianceFlipped<Pose3d> pose;
             
             public StagedAlgae (Rack rack, AlgaeLevel algaeLevel) {
                 this.rack = rack;
                 this.algaeLevel = algaeLevel;
-                this.pose = Flipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
+                this.pose = AllianceFlipped.fromBlue(new Pose3d(rack.origin).transformBy(algaeLevel.transform));
             }
 
             public static int getIndex(Rack rack) {
