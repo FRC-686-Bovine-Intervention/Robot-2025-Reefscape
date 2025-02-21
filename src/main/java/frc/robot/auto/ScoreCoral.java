@@ -1,20 +1,17 @@
 package frc.robot.auto;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.FieldConstants.Coral;
-import frc.robot.constants.FieldConstants.Reef.Branch;
-import frc.util.misc.MathExtraUtil;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
+import frc.util.misc.MathExtraUtil;
 
 public class ScoreCoral extends AutoRoutine {
     // scoring preload (reef pipes)
@@ -22,20 +19,12 @@ public class ScoreCoral extends AutoRoutine {
     // scoring coral 1 (1/2 reef pipes - 1)
     // scoring coral 2 (1/2 reef pipes - 2)
     // which part of the coral station (close, mid, far)
-
-    private static final Map.Entry<String, Pipe> pipeA = Settings.option("Pipe A", FieldConstants.Reef.pipes[0]); 
-    private static final Map.Entry<String, Pipe> pipeB = Settings.option("Pipe B", FieldConstants.Reef.pipes[1]); 
-    private static final Map.Entry<String, Pipe> pipeC = Settings.option("Pipe C", FieldConstants.Reef.pipes[2]); 
-    private static final Map.Entry<String, Pipe> pipeD = Settings.option("Pipe D", FieldConstants.Reef.pipes[3]); 
-    private static final Map.Entry<String, Pipe> pipeE = Settings.option("Pipe E", FieldConstants.Reef.pipes[4]); 
-    private static final Map.Entry<String, Pipe> pipeF = Settings.option("Pipe F", FieldConstants.Reef.pipes[5]); 
-    private static final Map.Entry<String, Pipe> pipeG = Settings.option("Pipe G", FieldConstants.Reef.pipes[6]); 
-    private static final Map.Entry<String, Pipe> pipeH = Settings.option("Pipe H", FieldConstants.Reef.pipes[7]); 
-    private static final Map.Entry<String, Pipe> pipeI = Settings.option("Pipe I", FieldConstants.Reef.pipes[8]); 
-    private static final Map.Entry<String, Pipe> pipeJ = Settings.option("Pipe J", FieldConstants.Reef.pipes[9]); 
-    private static final Map.Entry<String, Pipe> pipeK = Settings.option("Pipe K", FieldConstants.Reef.pipes[10]); 
-    private static final Map.Entry<String, Pipe> pipeL = Settings.option("Pipe L", FieldConstants.Reef.pipes[11]); 
     
+    private static final Map.Entry<String, Pipe>[] pipeOptions =
+        IntStream.range(0, FieldConstants.Reef.pipes.length)
+            .mapToObj(i -> Settings.option("Pipe " + (char) ('A' + i), FieldConstants.Reef.pipes[i]))
+            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
+
     private static boolean isRightCoralStation(Pipe pipe){
         return MathExtraUtil.isWithin(pipe.getIndex(), 1, 6);
     }
@@ -44,8 +33,8 @@ public class ScoreCoral extends AutoRoutine {
         @Override
         protected Settings<Pipe> generateSettings() {
             return Settings.from(
-                pipeA,
-                pipeA, pipeB, pipeC, pipeD, pipeE, pipeF, pipeG, pipeH, pipeI, pipeJ, pipeK, pipeL
+                pipeOptions[0],
+                pipeOptions
             );
         }
 
@@ -54,26 +43,33 @@ public class ScoreCoral extends AutoRoutine {
     private static final AutoQuestion<Pipe> scoreCoral1 = new AutoQuestion<Pipe>("Score Second Pipe") {
         @Override
         protected Settings<Pipe> generateSettings() {
-            return (isRightCoralStation(scorePreloadPipe.getResponse())) ? (
-                Settings.from(pipeB, 
-                pipeB, pipeC, pipeD, pipeE, pipeF, pipeG)
-            ) : (
-                Settings.from(pipeA, 
-                pipeA, pipeH, pipeI, pipeJ, pipeK, pipeL)
-            );
+            var options = (
+                isRightCoralStation(scorePreloadPipe.getResponse())
+                ? IntStream.range(1, 7)
+                : IntStream.range(7, 12)
+            )
+                .mapToObj(i -> pipeOptions[i % pipeOptions.length])
+                .filter(entry -> !entry.getValue().equals(scorePreloadPipe.getResponse()))
+                .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
+            return Settings.from(options[0], options);
         }
     };
 
     private static final AutoQuestion<Pipe> scoreCoral2 = new AutoQuestion<Pipe>("Score Third Pipe") {
         @Override
         protected Settings<Pipe> generateSettings() {
-            return (isRightCoralStation(scorePreloadPipe.getResponse())) ? (
-                Settings.from(pipeB, 
-                pipeB, pipeC, pipeD, pipeE, pipeF, pipeG)
-            ) : (
-                Settings.from(pipeA, 
-                pipeA, pipeH, pipeI, pipeJ, pipeK, pipeL)
-            );
+            var options = (
+                isRightCoralStation(scorePreloadPipe.getResponse())
+                ? IntStream.range(1, 7)
+                : IntStream.range(7, 12)
+            )
+                .mapToObj(i -> pipeOptions[i % pipeOptions.length])
+                .filter(entry -> 
+                    !entry.getValue().equals(scorePreloadPipe.getResponse()) &&
+                    !entry.getValue().equals(scoreCoral1.getResponse())
+                )
+                .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
+            return Settings.from(options[0], options);
         }
     };
 
