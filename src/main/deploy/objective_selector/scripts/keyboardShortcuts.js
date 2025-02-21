@@ -78,7 +78,7 @@ window.onkeydown = (e) => {
       if (e.ctrlKey) {
         e.preventDefault();
         sendSelectedRack(
-          wrapNumber(algae + (direction === "left" ? -1 : +1), 0, 6)
+          wrapNumber(algae + (direction === "left" ? -1 : +1), 0, 7)
         );
       } else if (e.shiftKey) {
         sendSelectedAlgaeScoring(
