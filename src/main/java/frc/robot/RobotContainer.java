@@ -52,11 +52,14 @@ import frc.robot.subsystems.superstructure.Superstructure.FlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.FlippedSuperstructurePosition;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
+import frc.robot.subsystems.superstructure.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotIO;
+import frc.robot.subsystems.superstructure.pivot.PivotIOFalcon;
 import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristIO;
@@ -100,8 +103,8 @@ public class RobotContainer {
                         .toArray(ModuleIO[]::new)
                 );
                 superstructure = new Superstructure(
-                    new Pivot(new PivotIO() {}),
-                    new Elevator(new ElevatorIO() {}),
+                    new Pivot(new PivotIOFalcon()),
+                    new Elevator(new ElevatorIOKraken()),
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
@@ -218,35 +221,37 @@ public class RobotContainer {
         //     () -> false
         // );
 
-        drive.translationSubsystem.setDefaultCommand(
-            drive.translationSubsystem.run(() -> {
-                var fieldVec = Perspective.getCurrent().toField(
-                    driveJoystick.toVector()
-                    .times(
-                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
-                    )
-                );
-                var fieldSpeeds = new ChassisSpeeds(
-                    fieldVec.get(0),
-                    fieldVec.get(1),
-                    0
-                );
-                var robotSpeeds = new ChassisSpeeds(
-                    Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                    (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                    0
-                );
-                drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
-            })
-            .withName("Driver Control Field Relative")
-        );
-        drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
-                .withName("Robot spin")
-        );
+        // drive.translationSubsystem.setDefaultCommand(
+        //     drive.translationSubsystem.run(() -> {
+        //         var fieldVec = Perspective.getCurrent().toField(
+        //             driveJoystick.toVector()
+        //             .times(
+        //                 DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
+        //                 DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
+        //             )
+        //         );
+        //         var fieldSpeeds = new ChassisSpeeds(
+        //             fieldVec.get(0),
+        //             fieldVec.get(1),
+        //             0
+        //         );
+        //         var robotSpeeds = new ChassisSpeeds(
+        //             Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+        //             (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+        //             0
+        //         );
+        //         drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
+        //     })
+        //     .withName("Driver Control Field Relative")
+        // );
+        // drive.rotationalSubsystem.setDefaultCommand(
+        //     drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
+        //         .withName("Robot spin")
+        // );
 
-        superstructure.setDefaultCommand(superstructure.idle());
+        superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), () -> 0));
+        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), Meters.of(0), Degrees.of(0))));
+        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), ElevatorConstants.maximumLength, Degrees.of(0))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
@@ -343,7 +348,7 @@ public class RobotContainer {
             Set.of(superstructure)
         )); //Intake/Eject
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
-        driveController.x().and(intake.hasCoral).toggleOnTrue(new ContinuouslySwappingCommand( //Extend
+        driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend
             new Supplier<Command>() {
                 private final Command[] commands = new Command[Level.values().length * 2];
                 {

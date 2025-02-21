@@ -40,7 +40,7 @@ public class Pivot {
         return inputs.leftMotor.motor.appliedVoltage;
     }
 
-    public void setPivot(Measure<AngleUnit> angle) {
+    public void setAngle(Measure<AngleUnit> angle) {
         io.setPosition(angle);
     }
     public void setVoltage(Measure<VoltageUnit> voltage) {

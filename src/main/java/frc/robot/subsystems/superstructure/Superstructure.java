@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -32,6 +33,7 @@ import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristConstants;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.Flippable;
 import frc.util.misc.GeomUtil;
@@ -149,6 +151,30 @@ public class Superstructure extends SubsystemBase {
         );
     }
 
+    public Command throttle(DoubleSupplier pivotThrottle, DoubleSupplier elevatorThrottle, DoubleSupplier wristThrottle) {
+        var subsystem = this;
+        return new Command() {
+            private static final LoggedTunableMeasure<VoltageUnit> pivotVoltage = new LoggedTunableMeasure<>("Superstructure/Pivot Voltage", Volts.of(2));
+            private static final LoggedTunableMeasure<VoltageUnit> elevatorVoltage = new LoggedTunableMeasure<>("Superstructure/Elevator Voltage", Volts.of(2));
+            private static final LoggedTunableMeasure<VoltageUnit> wristVoltage = new LoggedTunableMeasure<>("Superstructure/Wrist Voltage", Volts.of(2));
+            {
+                addRequirements(subsystem);
+
+            }
+
+            @Override
+            public void initialize() {
+                
+            }
+            @Override
+            public void execute() {
+                pivot.setVoltage(pivotVoltage.get().times(pivotThrottle.getAsDouble()));
+                elevator.setVoltage(elevatorVoltage.get().times(elevatorThrottle.getAsDouble()));
+                wrist.setVoltage(wristVoltage.get().times(wristThrottle.getAsDouble()));
+            }
+        };
+    }
+
     public Command idle() {
         return goToSetpointSequenced(SuperstructureState.idle);
     }
@@ -194,13 +220,20 @@ public class Superstructure extends SubsystemBase {
         };
     }
 
-    // public Command goToSetpoint(SuperstructureState setpoint) {
-    //     return Commands.parallel(
-    //         pivot.pivotTo(setpoint.pivotAngle),
-    //         elevator.elevateTo(setpoint.elevatorLength),
-    //         wrist.pivotTo(setpoint.wristAngle)
-    //     );
-    // }
+    public Command goToSetpoint(SuperstructureState setpoint) {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+            }
+            @Override
+            public void execute() {
+                pivot.setAngle(setpoint.pivotAngle);
+                elevator.setLength(setpoint.elevatorLength);
+                wrist.setAngle(setpoint.wristAngle);
+            }
+        };
+    }
 
     public Command goToSetpointSequenced(SuperstructureState setpoint) {
         var subsystem = this;
@@ -239,9 +272,9 @@ public class Superstructure extends SubsystemBase {
                     wristMoving = wristMoveCondition.getAsBoolean();
                 }
                 if (pivotMoving) {
-                    pivot.setPivot(setpoint.pivotAngle);
+                    pivot.setAngle(setpoint.pivotAngle);
                 } else {
-                    pivot.setPivot(initialState.pivotAngle);
+                    pivot.setAngle(initialState.pivotAngle);
                 }
                 if (elevatorMoving) {
                     elevator.setLength(setpoint.elevatorLength);

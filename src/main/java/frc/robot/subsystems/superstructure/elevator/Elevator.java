@@ -31,7 +31,7 @@ public class Elevator {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
 
-        var stageDist = ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians));
+        var stageDist = getLength().div(ElevatorConstants.movingStageCount);
 
         stage2Mech.set(stageDist);
         stage3Mech.set(stageDist);
@@ -41,10 +41,10 @@ public class Elevator {
     }
 
     public Distance getLength() {
-        return ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians)).times(ElevatorConstants.movingStageCount);
+        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount);
     }
     public LinearVelocity getVelocity() {
-        return ElevatorConstants.sprocketRadius.times(inputs.encoder.velocity.in(RadiansPerSecond)).per(Second).times(ElevatorConstants.movingStageCount);
+        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount);
     }
     public Voltage getVoltage() {
         return inputs.motor.motor.appliedVoltage;

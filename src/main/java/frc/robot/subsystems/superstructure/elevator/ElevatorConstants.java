@@ -37,7 +37,8 @@ public class ElevatorConstants {
 
     public static final int movingStageCount = 3;
     
-    public static final Distance sprocketRadius = Inches.of(1.432).div(2);
+    public static final Distance sprocketRadius = Inches.of(1.273).div(2);
+    // public static final Distance sprocketRadius = Inches.of(0.25).times(16).div(Math.PI*2);
 
     public static final Distance stageExtension = Inches.of(17);
     public static final Distance maximumLength = stageExtension.times(movingStageCount);
@@ -45,11 +46,12 @@ public class ElevatorConstants {
     public static final Distance maximumHeight = minimumHeight.plus(maximumLength);
 
     public static final GearRatio motorToMechanism = new GearRatio()
-        .planetary(1.0/9.0)
+        .planetary(1.0/3.0)
+        .planetary(1.0/3.0)
     ;
     public static final GearRatio sensorToMechanism = new GearRatio()
-        .gear(40)
-        .gear(10)
+        .gear(90)
+        .gear(18)
         .axle()
     ;
 }
