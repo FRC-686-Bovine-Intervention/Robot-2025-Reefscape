@@ -16,8 +16,8 @@
   min-width: var(--algae-scoring-button-size);
   width: 100%;
   padding: 15px;
-  background: var(--hub-color);
-  color: white;
+  background: var(--button-color);
+  color: var(--button-text);
   cursor: pointer;
   display: flex;
   gap: 5px;

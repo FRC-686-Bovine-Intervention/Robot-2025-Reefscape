@@ -36,7 +36,7 @@
   --x: 0px;
   --y: 0px;
   position: absolute;
-  color: white;
+  color: var(--reef-text);
   top: 50%;
   left: 50%;
   transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px)));
@@ -88,7 +88,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 100%;
   background: var(--reef-color);
-  color: white;
+  color: var(--reef-text);
   cursor: pointer;
   top: 50%;
   left: 50%;
@@ -203,13 +203,7 @@
   transform: translate(-50%, -50%);
   height: 100%;
   width: 100%;
-  background: repeating-linear-gradient(
-    45deg,
-    #606dbc,
-    #606dbc 10px,
-    #465298 10px,
-    #465298 20px
-  );
+  background: var(--coral-selected);
 }
 
 #ground_algae_dom {
@@ -218,8 +212,8 @@
   height: min-content;
   width: 50%;
   padding: 15px;
-  background-color: var(--hub-color);
-  color: white;
+  background-color: var(--button-color);
+  color: var(--button-text);
   cursor: pointer;
   font-size: 0.85em;
   font-weight: 600;
