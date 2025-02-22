@@ -57,7 +57,7 @@ public class ScoreCoral extends AutoRoutine {
             var options = (
                 isRightCoralStation(scorePreloadPipe.getResponse())
                 ? IntStream.range(1, 7)
-                : IntStream.range(7, 12)
+                : IntStream.range(7, 13)
             )
                 .mapToObj(i -> pipeOptions[i % pipeOptions.length])
                 .filter(entry -> !entry.getValue().equals(scorePreloadPipe.getResponse()))
@@ -72,7 +72,7 @@ public class ScoreCoral extends AutoRoutine {
             var options = (
                 isRightCoralStation(scorePreloadPipe.getResponse())
                 ? IntStream.range(1, 7)
-                : IntStream.range(7, 12)
+                : IntStream.range(7, 13)
             )
                 .mapToObj(i -> pipeOptions[i % pipeOptions.length])
                 .filter(entry -> 
@@ -158,59 +158,57 @@ public class ScoreCoral extends AutoRoutine {
     
     @Override
     public Command generateCommand() {
-        var _scorePreloadPipe = scorePreloadPipe.getResponse();
-        var _startPosition = startPosition.getResponse();
-        var _scoreCoral1 = scoreCoral1.getResponse();
-        var _scoreCoral2 = scoreCoral2.getResponse();
-        var _stationPosition = stationPosition.getResponse();
-        var commands = new ArrayList<Command>(1);
+        var scorePreloadPipe = ScoreCoral.scorePreloadPipe.getResponse();
+        var startPosition = ScoreCoral.startPosition.getResponse();
+        var scoreCoral1 = ScoreCoral.scoreCoral1.getResponse();
+        var scoreCoral2 = ScoreCoral.scoreCoral2.getResponse();
+        var stationPosition = ScoreCoral.stationPosition.getResponse();
+        var commands = new ArrayList<Command>();
 
         String startToScorePath;
         if (
-            _startPosition.equals(AutoConstants.startRemoteLeft) ||
-            _startPosition.equals(AutoConstants.startRemoteRight)
+            startPosition.equals(AutoConstants.startRemoteLeft) ||
+            startPosition.equals(AutoConstants.startRemoteRight)
         ) {
-            startToScorePath = "Remote Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
+            startToScorePath = "Remote Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
         } else {
-            startToScorePath = "Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
+            startToScorePath = "Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
         }
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(Commands.sequence(
-                Commands.parallel(
-                    drive.followBluePath(startToScorePreload).andThen(Commands.runOnce(() -> test.set(true))),
-                    superstructure.goToSetpoint(Level.Level4.superstructureStates.getForward()
-                )),
-                intake.eject().until(intake.hasCoral)
+            Commands.parallel(
+                drive.followBluePath(startToScorePreload).andThen(Commands.runOnce(() -> test.set(true))),
+                superstructure.goToSetpoint(Level.Level4.superstructureStates.getForward())
+            ),
+            intake.eject().until(intake.hasCoral)
         ));
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(_scorePreloadPipe.getIndex()) +
+            getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
             " To Station " +
-            getStationPositionAsString(_stationPosition)
+            getStationPositionAsString(stationPosition)
         );
-        commands.add(
-            Commands.parallel(
-                drive.followBluePath(preloadToStation),
-                superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
-                intake.intake().until(intake.hasCoral)
-            )
-        );
+        commands.add(Commands.parallel(
+            drive.followBluePath(preloadToStation),
+            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
+            intake.intake().until(intake.hasCoral)
+        ));
         var stationToScore1 = AutoPaths.loadChoreoTrajectory(
             "Station "
-            + getStationPositionAsString(_stationPosition)
+            + getStationPositionAsString(stationPosition)
             + " To "
-            + getBranchLetterFromIndex(_scoreCoral1.getIndex())
+            + getBranchLetterFromIndex(scoreCoral1.getIndex())
         );
         commands.add(Commands.sequence(
-                Commands.parallel(
-                    drive.followBluePath(stationToScore1),
-                    superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()
-                )),
-                intake.eject().until(intake.hasCoral.negate())
+            Commands.parallel(
+                drive.followBluePath(stationToScore1),
+                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+            ),
+            intake.eject().until(intake.hasCoral.negate())
         ));
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(_scoreCoral1.getIndex())+
+            getBranchLetterFromIndex(scoreCoral1.getIndex())+
             " To Station "+
-            getStationPositionAsString(_stationPosition)
+            getStationPositionAsString(stationPosition)
         );
         commands.add(
             Commands.parallel(
@@ -221,30 +219,31 @@ public class ScoreCoral extends AutoRoutine {
         );
         var stationToScore2 = AutoPaths.loadChoreoTrajectory(
             "Station "
-            + getStationPositionAsString(_stationPosition)
+            + getStationPositionAsString(stationPosition)
             + " To "
-            + getBranchLetterFromIndex(_scoreCoral2.getIndex())
+            + getBranchLetterFromIndex(scoreCoral2.getIndex())
         );
         commands.add(Commands.sequence(
-                Commands.parallel(
-                    drive.followBluePath(stationToScore2),
-                    superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()
-                )),
-                intake.eject().until(intake.hasCoral.negate())
+            Commands.parallel(
+                drive.followBluePath(stationToScore2),
+                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()
+            )),
+            intake.eject().until(intake.hasCoral.negate())
         ));
         return AutoCommons
-            .setOdometryFlipped(_startPosition, drive)
+            .setOdometryFlipped(startPosition, drive)
             .andThen(commands.toArray(Command[]::new));
     }
 
     private static char getBranchLetterFromIndex(int index){
-        return (char) (index+'A');
+        return (char) (index + 'A');
     }
     private String getStationPositionAsString(CoralStationPosition _stationPosition){
-        return switch(_stationPosition){
+        return switch (_stationPosition) {
             case CLOSE -> "Close";
             case MID -> "Mid";
             case FAR -> "Far";
-            default -> null;};
+            default -> null;
+        };
     }
 }
