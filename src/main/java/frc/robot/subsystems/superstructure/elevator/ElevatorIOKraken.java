@@ -43,14 +43,14 @@ public class ElevatorIOKraken implements ElevatorIO {
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Elevator/FF",
-        0,
+        0.2,
         0.3,
         1.5,
         0
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Elevator/PID",
-        0,
+        7,
         0,
         0
     );

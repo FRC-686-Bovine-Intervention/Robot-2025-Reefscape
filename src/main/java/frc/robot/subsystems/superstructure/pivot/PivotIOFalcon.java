@@ -42,12 +42,12 @@ public class PivotIOFalcon implements PivotIO {
         "Pivot/FF",
         0,
         0,
-        0,
+        17,
         0
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Pivot/PID",
-        0,
+        30,
         0,
         0
     );

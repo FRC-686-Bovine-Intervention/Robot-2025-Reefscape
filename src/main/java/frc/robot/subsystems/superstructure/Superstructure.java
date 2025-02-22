@@ -226,6 +226,7 @@ public class Superstructure extends SubsystemBase {
         return new Command() {
             {
                 addRequirements(subsystem);
+                setName("Superstructure setpoint");
             }
             @Override
             public void execute() {

@@ -7,14 +7,21 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.CoralStation;
+import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.subsystems.drive.Drive;
-import frc.util.flipping.Flipped;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.superstructure.Superstructure;
+import frc.util.flipping.AllianceFlipped;
 import frc.util.misc.MathExtraUtil;
 
 public class ScoreCoral extends AutoRoutine {
@@ -93,18 +100,18 @@ public class ScoreCoral extends AutoRoutine {
         }
     };
 
-    private static final AutoQuestion<Flipped<Pose2d>> startPosition = new AutoQuestion<Flipped<Pose2d>>("Starting Position") {
-        private static final Map.Entry<String, Flipped<Pose2d>> startRemoteLeft = Settings.option("Remote (Left)", AutoConstants.startRemoteLeft);
-        private static final Map.Entry<String, Flipped<Pose2d>> startRemoteRight = Settings.option("Remote (Right)", AutoConstants.startRemoteRight);
-        private static final Map.Entry<String, Flipped<Pose2d>> startFarLeft = Settings.option("Close (Far Left)", AutoConstants.startFarLeft);
-        private static final Map.Entry<String, Flipped<Pose2d>> startFarRight = Settings.option("Close (Far Right)", AutoConstants.startFarRight);
-        private static final Map.Entry<String, Flipped<Pose2d>> startLeftCage = Settings.option("Close (Left Cage)", AutoConstants.startLeftCage);
-        private static final Map.Entry<String, Flipped<Pose2d>> startRightCage = Settings.option("Close(Right Cage)", AutoConstants.startRightCage);
-        private static final Map.Entry<String, Flipped<Pose2d>> startLeftCenter = Settings.option("Close (Left Center)", AutoConstants.startLeftCenter);
-        private static final Map.Entry<String, Flipped<Pose2d>> startRightCenter = Settings.option("Close (Right Center)", AutoConstants.startRightCenter);
+    private static final AutoQuestion<AllianceFlipped<Pose2d>> startPosition = new AutoQuestion<AllianceFlipped<Pose2d>>("Starting Position") {
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRemoteLeft = Settings.option("Remote (Left)", AutoConstants.startRemoteLeft);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRemoteRight = Settings.option("Remote (Right)", AutoConstants.startRemoteRight);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startFarLeft = Settings.option("Close (Far Left)", AutoConstants.startFarLeft);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startFarRight = Settings.option("Close (Far Right)", AutoConstants.startFarRight);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftCage = Settings.option("Close (Left Cage)", AutoConstants.startLeftCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightCage = Settings.option("Close(Right Cage)", AutoConstants.startRightCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftCenter = Settings.option("Close (Left Center)", AutoConstants.startLeftCenter);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightCenter = Settings.option("Close (Right Center)", AutoConstants.startRightCenter);
         
         @Override
-        protected Settings<Flipped<Pose2d>> generateSettings() {
+        protected Settings<AllianceFlipped<Pose2d>> generateSettings() {
             switch(scorePreloadPipe.getResponse().getIndex()){
                 case 0:
                 return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
@@ -137,10 +144,17 @@ public class ScoreCoral extends AutoRoutine {
     };
 
     private final Drive drive;
+    private final Superstructure superstructure;
+    private final Intake intake;
+
     public ScoreCoral(RobotContainer robot) {
         super("ScoreCoral", List.of(scorePreloadPipe, startPosition, scoreCoral1, scoreCoral2, stationPosition));
         this.drive = robot.drive;
+        this.superstructure = robot.superstructure;
+        this.intake = robot.intake;
     }
+
+    private static Alert test = new Alert("finished scoring preload", AlertType.kInfo);
     
     @Override
     public Command generateCommand() {
@@ -161,33 +175,63 @@ public class ScoreCoral extends AutoRoutine {
             startToScorePath = "Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
         }
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
-        commands.add(drive.followBluePath(startToScorePreload));
+        commands.add(Commands.sequence(
+                Commands.parallel(
+                    drive.followBluePath(startToScorePreload).andThen(Commands.runOnce(() -> test.set(true))),
+                    superstructure.goToSetpoint(Level.Level4.superstructureStates.getForward()
+                )),
+                intake.eject().until(intake.hasCoral)
+        ));
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(_scorePreloadPipe.getIndex()) +
             " To Station " +
             getStationPositionAsString(_stationPosition)
         );
-        commands.add(drive.followBluePath(preloadToStation));
+        commands.add(
+            Commands.parallel(
+                drive.followBluePath(preloadToStation),
+                superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
+                intake.intake().until(intake.hasCoral)
+            )
+        );
         var stationToScore1 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(_stationPosition)
             + " To "
             + getBranchLetterFromIndex(_scoreCoral1.getIndex())
         );
-        commands.add(drive.followBluePath(stationToScore1));
+        commands.add(Commands.sequence(
+                Commands.parallel(
+                    drive.followBluePath(stationToScore1),
+                    superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()
+                )),
+                intake.eject().until(intake.hasCoral.negate())
+        ));
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(_scoreCoral1.getIndex())+
             " To Station "+
             getStationPositionAsString(_stationPosition)
         );
-        commands.add(drive.followBluePath(coral1ToStation));
+        commands.add(
+            Commands.parallel(
+                drive.followBluePath(coral1ToStation),
+                superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
+                intake.intake().until(intake.hasCoral)
+            )
+        );
         var stationToScore2 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(_stationPosition)
             + " To "
             + getBranchLetterFromIndex(_scoreCoral2.getIndex())
         );
-        commands.add(drive.followBluePath(stationToScore2));
+        commands.add(Commands.sequence(
+                Commands.parallel(
+                    drive.followBluePath(stationToScore2),
+                    superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()
+                )),
+                intake.eject().until(intake.hasCoral.negate())
+        ));
         return AutoCommons
             .setOdometryFlipped(_startPosition, drive)
             .andThen(commands.toArray(Command[]::new));
