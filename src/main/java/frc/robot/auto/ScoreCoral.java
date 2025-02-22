@@ -7,8 +7,6 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
@@ -33,7 +31,7 @@ public class ScoreCoral extends AutoRoutine {
     
     private static final Map.Entry<String, Pipe>[] pipeOptions =
         IntStream.range(0, FieldConstants.Reef.pipes.length)
-            .mapToObj(i -> Settings.option("Pipe " + getBranchLetterFromIndex(i), FieldConstants.Reef.pipes[i]))
+            .mapToObj(i -> Settings.option(String.valueOf(getBranchLetterFromIndex(i)), FieldConstants.Reef.pipes[i]))
             .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
 
     private static boolean isRightCoralStation(Pipe pipe){
@@ -153,8 +151,6 @@ public class ScoreCoral extends AutoRoutine {
         this.superstructure = robot.superstructure;
         this.intake = robot.intake;
     }
-
-    private static Alert test = new Alert("finished scoring preload", AlertType.kInfo);
     
     @Override
     public Command generateCommand() {
@@ -177,7 +173,7 @@ public class ScoreCoral extends AutoRoutine {
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(startToScorePreload).andThen(Commands.runOnce(() -> test.set(true))),
+                drive.followBluePath(startToScorePreload),
                 superstructure.goToSetpoint(Level.Level4.superstructureStates.getForward())
             ),
             intake.eject().until(intake.hasCoral)
