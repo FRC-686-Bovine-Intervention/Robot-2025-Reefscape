@@ -12,7 +12,7 @@ public interface ObjectiveSelectorIO {
 
     public default void updateInputs(ObjectiveSelectorIOInputs inputs) {}
     
-    public void setCoral(int objective);
-    public void setAlgae(int objective);
-    public void setIntake(int objective);
+    public default void setCoral(int objective) {}
+    public default void setAlgae(int objective) {}
+    public default void setIntake(int objective) {}
 }

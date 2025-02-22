@@ -32,7 +32,6 @@ public class PivotConstants {
 
     public static final GearRatio motorToMechanism = new GearRatio()
         .planetary(1.0/5.0)
-        .planetary(1.0/5.0)
         .gear(20)
         .gear(66)
         .axle()

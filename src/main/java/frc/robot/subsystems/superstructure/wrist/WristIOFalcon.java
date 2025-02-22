@@ -59,7 +59,8 @@ public class WristIOFalcon implements WristIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(WristConstants.motorToMechanism.ratio())
+            .withRotorToSensorRatio(WristConstants.motorToSensor.ratio())
+            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.ratio())
         ;
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);
@@ -97,6 +98,11 @@ public class WristIOFalcon implements WristIO {
     @Override
     public void setAngle(Measure<AngleUnit> angle) {
         motor.setControl(positionRequest.withPosition(angle.in(Rotations)));
+    }
+    
+    @Override
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        positionRequest.withFeedForward(feedForward.in(Volts));
     }
 }
 

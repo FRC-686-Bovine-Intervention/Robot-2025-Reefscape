@@ -1,6 +1,8 @@
 package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Second;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -8,6 +10,8 @@ import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.util.robotStructure.linear.ExtenderMech;
 
 public class Elevator {
@@ -27,7 +31,7 @@ public class Elevator {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
 
-        var stageDist = ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians));
+        var stageDist = getLength().div(ElevatorConstants.movingStageCount);
 
         stage2Mech.set(stageDist);
         stage3Mech.set(stageDist);
@@ -37,14 +41,22 @@ public class Elevator {
     }
 
     public Distance getLength() {
-        return ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians)).times(ElevatorConstants.movingStages);
+        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount);
+    }
+    public LinearVelocity getVelocity() {
+        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount);
+    }
+    public Voltage getVoltage() {
+        return inputs.motor.motor.appliedVoltage;
     }
 
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
-    
     public void setLength(Measure<DistanceUnit> length) {
         io.setLength(length);
+    }
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        io.setFeedForward(feedForward);
     }
 }
