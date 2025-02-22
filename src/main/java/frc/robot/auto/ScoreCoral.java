@@ -6,14 +6,15 @@ import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.subsystems.drive.Drive;
+import frc.util.flipping.Flipped;
 import frc.util.misc.MathExtraUtil;
 
 public class ScoreCoral extends AutoRoutine {
@@ -92,22 +93,18 @@ public class ScoreCoral extends AutoRoutine {
         }
     };
 
-    private enum StartPosition{
-        CLOSE,
-        REMOTE
-    }
-    private static final AutoQuestion<StartPosition> startPosition = new AutoQuestion<StartPosition>("Starting Position") {
-        private static final Map.Entry<String, StartPosition> startRemoteLeft = Settings.option("Remote (Left)", StartPosition.REMOTE);
-        private static final Map.Entry<String, StartPosition> startRemoteRight = Settings.option("Remote (Right)", StartPosition.REMOTE);
-        private static final Map.Entry<String, StartPosition> startFarLeft = Settings.option("Close (Far Left)", StartPosition.CLOSE);
-        private static final Map.Entry<String, StartPosition> startFarRight = Settings.option("Close (Far Right)", StartPosition.CLOSE);
-        private static final Map.Entry<String, StartPosition> startLeftCage = Settings.option("Close (Left Cage)", StartPosition.CLOSE);
-        private static final Map.Entry<String, StartPosition> startRightCage = Settings.option("Close(Right Cage)", StartPosition.CLOSE);
-        private static final Map.Entry<String, StartPosition> startLeftCenter = Settings.option("Close (Left Center)", StartPosition.CLOSE);
-        private static final Map.Entry<String, StartPosition> startRightCenter = Settings.option("Close (Right Center)", StartPosition.CLOSE);
+    private static final AutoQuestion<Flipped<Pose2d>> startPosition = new AutoQuestion<Flipped<Pose2d>>("Starting Position") {
+        private static final Map.Entry<String, Flipped<Pose2d>> startRemoteLeft = Settings.option("Remote (Left)", AutoConstants.startRemoteLeft);
+        private static final Map.Entry<String, Flipped<Pose2d>> startRemoteRight = Settings.option("Remote (Right)", AutoConstants.startRemoteRight);
+        private static final Map.Entry<String, Flipped<Pose2d>> startFarLeft = Settings.option("Close (Far Left)", AutoConstants.startFarLeft);
+        private static final Map.Entry<String, Flipped<Pose2d>> startFarRight = Settings.option("Close (Far Right)", AutoConstants.startFarRight);
+        private static final Map.Entry<String, Flipped<Pose2d>> startLeftCage = Settings.option("Close (Left Cage)", AutoConstants.startLeftCage);
+        private static final Map.Entry<String, Flipped<Pose2d>> startRightCage = Settings.option("Close(Right Cage)", AutoConstants.startRightCage);
+        private static final Map.Entry<String, Flipped<Pose2d>> startLeftCenter = Settings.option("Close (Left Center)", AutoConstants.startLeftCenter);
+        private static final Map.Entry<String, Flipped<Pose2d>> startRightCenter = Settings.option("Close (Right Center)", AutoConstants.startRightCenter);
         
         @Override
-        protected Settings<StartPosition> generateSettings() {
+        protected Settings<Flipped<Pose2d>> generateSettings() {
             switch(scorePreloadPipe.getResponse().getIndex()){
                 case 0:
                 return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
@@ -144,7 +141,6 @@ public class ScoreCoral extends AutoRoutine {
         super("ScoreCoral", List.of(scorePreloadPipe, startPosition, scoreCoral1, scoreCoral2, stationPosition));
         this.drive = robot.drive;
     }
-
     
     @Override
     public Command generateCommand() {
@@ -155,15 +151,20 @@ public class ScoreCoral extends AutoRoutine {
         var _stationPosition = stationPosition.getResponse();
         var commands = new ArrayList<Command>(1);
 
-        var startToScorePreload = AutoPaths.loadChoreoTrajectory(switch (_startPosition){
-            case CLOSE -> "Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
-            case REMOTE -> "Remote Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
-            default -> "Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
-        });
+        String startToScorePath;
+        if (
+            _startPosition.equals(AutoConstants.startRemoteLeft) ||
+            _startPosition.equals(AutoConstants.startRemoteRight)
+        ) {
+            startToScorePath = "Remote Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
+        } else {
+            startToScorePath = "Start To " + getBranchLetterFromIndex(_scorePreloadPipe.getIndex());
+        }
+        var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(drive.followBluePath(startToScorePreload));
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(_scorePreloadPipe.getIndex())+
-            " To Station "+
+            getBranchLetterFromIndex(_scorePreloadPipe.getIndex()) +
+            " To Station " +
             getStationPositionAsString(_stationPosition)
         );
         commands.add(drive.followBluePath(preloadToStation));

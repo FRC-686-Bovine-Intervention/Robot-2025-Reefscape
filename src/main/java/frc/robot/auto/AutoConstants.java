@@ -23,6 +23,12 @@ public final class AutoConstants {
             Reef.branches[9].pipe.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
+    public static final Flipped<Pose2d> startRemoteLeft = 
+        Flipped.fromBlue(new Pose2d(
+            startX,
+            startFarLeft.getBlue().getMeasureY().plus(RobotConstants.centerToFrontBumper.times(3)),
+            Rotation2d.k180deg
+        ));
     public static final Flipped<Pose2d> startLeftCage =
         Flipped.fromBlue(new Pose2d(
             startX,
@@ -36,10 +42,16 @@ public final class AutoConstants {
             Rotation2d.k180deg
         ));
 
-    public static final Flipped<Pose2d> startRightCenter =
+    public static final Flipped<Pose2d> startFarRight = 
         Flipped.fromBlue(new Pose2d(
             startX,
-            Reef.branches[6].pipe.robotPose.getBlue().getMeasureY(),
+            Reef.branches[4].pipe.robotPose.getBlue().getMeasureY(),
+            Rotation2d.k180deg
+        ));
+    public static final Flipped<Pose2d> startRemoteRight = 
+        Flipped.fromBlue(new Pose2d(
+            startX,
+            startFarRight.getBlue().getMeasureY().minus(RobotConstants.centerToFrontBumper.times(3)),
             Rotation2d.k180deg
         ));
     public static final Flipped<Pose2d> startRightCage =
@@ -48,10 +60,10 @@ public final class AutoConstants {
             Reef.branches[5].pipe.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-    public static final Flipped<Pose2d> startFarRight = 
+    public static final Flipped<Pose2d> startRightCenter =
         Flipped.fromBlue(new Pose2d(
             startX,
-            Reef.branches[4].pipe.robotPose.getBlue().getMeasureY(),
+            Reef.branches[6].pipe.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
 }
