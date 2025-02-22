@@ -188,7 +188,9 @@ public class ScoreCoral extends AutoRoutine {
             + getBranchLetterFromIndex(_scoreCoral2.getIndex())
         );
         commands.add(drive.followBluePath(stationToScore2));
-        return AutoCommons.setOdometryFlipped(null, drive);
+        return AutoCommons
+            .setOdometryFlipped(_startPosition, drive)
+            .andThen(commands.toArray(Command[]::new));
     }
 
     private static char getBranchLetterFromIndex(int index){
