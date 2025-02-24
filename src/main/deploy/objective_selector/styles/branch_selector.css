@@ -1,19 +1,26 @@
+#branch_selector_column {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  place-items: center;
+  padding: 10px;
+}
+
 #branch_selector_container {
   --hub-size: 0px;
   --branch-button-size: 0px;
   --branch-button-normal-offset: 0px;
 
-  width: 100%;
-  display: grid;
-  place-items: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
 #hub {
   width: fit-content;
-  position: relative;
-  display: grid;
-  place-items: center;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -29,7 +36,7 @@
   --x: 0px;
   --y: 0px;
   position: absolute;
-  color: white;
+  color: var(--reef-text);
   top: 50%;
   left: 50%;
   transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px)));
@@ -81,7 +88,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 100%;
   background: var(--reef-color);
-  color: white;
+  color: var(--reef-text);
   cursor: pointer;
   top: 50%;
   left: 50%;
@@ -196,11 +203,22 @@
   transform: translate(-50%, -50%);
   height: 100%;
   width: 100%;
-  background: repeating-linear-gradient(
-    45deg,
-    #606dbc,
-    #606dbc 10px,
-    #465298 10px,
-    #465298 20px
-  );
+  background: var(--coral-selected);
+}
+
+#ground_algae_dom {
+  border-radius: 5px;
+  text-align: center;
+  height: min-content;
+  width: 50%;
+  padding: 15px;
+  background-color: var(--button-color);
+  color: var(--button-text);
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+#ground_algae_dom.selected {
+  background-color: var(--algae-color);
 }

@@ -1,8 +1,19 @@
+:root {
+  --color-background-default: #2b2b2b;
+  --color-background-auto: #357ae8;
+  --color-background-teleop-2: #ffb84d;
+  --color-background-teleop-3: #ff6347;
+  --color-text-default: #f1f1f1;
+  --color-overlay: rgba(0, 0, 0, 0.4);
+}
+
 #timer_container {
   --percentage-fill: 0;
   position: relative;
-  background-color: #5d5d5d;
-  color: #ffffff;
+  background-color: var(--color-background-default);
+  color: var(--color-text-default);
+  z-index: 100;
+  font-size: 24px;
 }
 
 #timer {
@@ -15,32 +26,27 @@
   top: 0;
   left: 0;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--color-overlay);
   width: calc(var(--percentage-fill) * 100%);
   z-index: 99;
 }
 
-#timer_container {
-  z-index: 100;
-  font-size: 24px;
-}
-
 #timer_container.auto {
-  background-color: #4c94ff;
-  color: #ffffff;
+  background-color: var(--color-background-auto);
+  color: var(--color-text-default);
 }
 
 #timer_container.teleop-1 {
-  background-color: #5d5d5d;
-  color: #ffffff;
+  background-color: var(--color-background-default);
+  color: var(--color-text-default);
 }
 
 #timer_container.teleop-2 {
-  background-color: #FFA500;
-  color: #ffffff;
+  background-color: var(--color-background-teleop-2);
+  color: var(--color-text-default);
 }
 
 #timer_container.teleop-3 {
-  background-color: #FF4500;
-  color: #fff;
+  background-color: var(--color-background-teleop-3);
+  color: var(--color-text-default);
 }

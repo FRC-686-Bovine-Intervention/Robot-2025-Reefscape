@@ -11,7 +11,15 @@ import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
+import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
+import frc.robot.subsystems.superstructure.pivot.PivotConstants;
+import frc.robot.subsystems.superstructure.wrist.WristConstants;
 import frc.util.VirtualSubsystem;
+import frc.util.robotStructure.Root;
+import frc.util.robotStructure.angle.ArmMech;
+import frc.util.robotStructure.linear.ExtenderMech;
 
 public class ObjectiveTracker extends VirtualSubsystem {
     private final ObjectiveSelectorIO io;
@@ -27,11 +35,28 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ArrayList<Branch> placedCoral = new ArrayList<>(36);
     private Branch selectedCoral = FieldConstants.Reef.branches[0];
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
-    private Optional<StagedAlgae> selectedIntakeGoal = Optional.empty();
+    private Optional<Optional<StagedAlgae>> selectedIntakeGoal = Optional.empty();
+
+    private final Root structureRoot = new Root();
+    private final ArmMech pivotMech = new ArmMech(PivotConstants.pivotBase);
+    private final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.stage2Base);
+    private final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
+    private final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
+    private final ArmMech wristMech = new ArmMech(WristConstants.wristBase);
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
         System.out.println("[Init] Creating ObjectiveTracker");
         this.io = io;
+
+        structureRoot.addChild(
+                pivotMech.addChild(
+                    stage2Mech.addChild(
+                        stage3Mech.addChild(
+                        stage4Mech.addChild(wristMech)
+                    )
+                )
+            )
+        );
     }
 
     @Override
@@ -40,7 +65,10 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.processInputs("ObjectiveTracker", inputs);
 
         if (inputs.coral != -1) {
-            selectedCoral = FieldConstants.Reef.branches[inputs.coral];
+            var rack = inputs.coral >> 3 & 0b1111;
+            var side = inputs.coral >> 2 & 0b1;
+            var level = inputs.coral & 0b11;
+            selectedCoral = FieldConstants.Reef.getBranch(rack, side, level);
             inputs.coral = -1;
         }
         if (inputs.algae != -1) {
@@ -49,23 +77,48 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
         if (inputs.intake != -1) {
             selectedIntakeGoal = 
-                inputs.intake > 0 ?
-                    Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 1]) :
-                    Optional.empty();
+            inputs.intake == 0 ?
+            Optional.empty() :
+            inputs.intake == 1 ?
+            Optional.of(Optional.empty()) :
+            Optional.of(Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 2]));
             inputs.intake = -1;
         }
 
-        io.setCoral(selectedCoral.getIndex());
+        io.setCoral(
+            selectedCoral.pipe.rack.ordinal() << 3 |
+            selectedCoral.pipe.side.ordinal() << 2 |
+            selectedCoral.level.ordinal()
+        );
         io.setAlgae(selectedAlgaeGoal.ordinal());
-        io.setIntake(selectedIntakeGoal.isEmpty() ? 0 : selectedIntakeGoal.get().getIndex() + 1);
+        io.setIntake(
+            selectedIntakeGoal.isEmpty() ? 0 :
+            selectedIntakeGoal.get().isEmpty() ? 1 :
+            selectedIntakeGoal.get().get().getIndex() + 2
+        );
         
-        Logger.recordOutput("ObjectiveTracker/Selected Branch", selectedCoral.branchPose.getOurs());
+        Logger.recordOutput("Objective Tracker/Selected Branch", selectedCoral.pose.getOurs());
+        structureRoot.setPose(selectedCoral.pipe.robotPose.getOurs());
+        var setpointState = SuperstructureState.fromRobotSpace(selectedCoral.level.forwardBranchRobotSpace.transformBy(Superstructure.forwardCoralTransform));
+        pivotMech.set(setpointState.pivotAngle);
+        stage2Mech.set(setpointState.elevatorLength.div(ElevatorConstants.movingStages));
+        stage3Mech.set(setpointState.elevatorLength.div(ElevatorConstants.movingStages));
+        stage4Mech.set(setpointState.elevatorLength.div(ElevatorConstants.movingStages));
+        wristMech.set(setpointState.wristAngle);
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Robot", structureRoot.getFieldRelative());
+        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Mechs",
+            pivotMech.getRobotRelative(),
+            stage2Mech.getRobotRelative(),
+            stage3Mech.getRobotRelative(),
+            stage4Mech.getRobotRelative(),
+            wristMech.getRobotRelative()
+        );
     }
 
     public void moveSelectedCoral(int x, int y) {
-        var horiz = Math.floorMod(((selectedCoral.rack.ordinal() * Side.values().length) + selectedCoral.side.ordinal() + x), (Rack.values().length * Side.values().length));
+        var horiz = Math.floorMod(((selectedCoral.pipe.rack.ordinal() * Side.values().length) + selectedCoral.pipe.side.ordinal() + x), (Rack.values().length * Side.values().length));
         var height = Math.floorMod((selectedCoral.level.ordinal() + y), Level.values().length);
-        selectedCoral = FieldConstants.Reef.getBranch(Rack.values()[horiz / Side.values().length], Level.values()[height], Side.values()[Math.floorMod(horiz, Side.values().length)]);
+        selectedCoral = FieldConstants.Reef.getBranch(horiz / Side.values().length, Math.floorMod(horiz, Side.values().length), height);
     }
 
     public void toggleSelectedNode() {
@@ -82,7 +135,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         return selectedIntakeGoal.isEmpty();
     }
 
-    public Optional<StagedAlgae> getSelectedStagedAlgae() {
+    public Optional<Optional<StagedAlgae>> getSelectedStagedAlgae() {
         return selectedIntakeGoal;
     }
 

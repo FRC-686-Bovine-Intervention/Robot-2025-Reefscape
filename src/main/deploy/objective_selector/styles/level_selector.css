@@ -1,20 +1,20 @@
 #level_selector_column {
   height: 100%;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   place-items: center;
-  position: relative;
+  padding: 10px;
 }
 
 #level_selector_container {
   --branch-size: 0px;
   --level-button-size: 0px;
 
-  width: 100%;
-  position: absolute;
-  top: 0;
-  padding: 65px;
-  display: grid;
-  place-items: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #branch {
@@ -22,10 +22,6 @@
   position: relative;
   display: grid;
   place-items: center;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%);
 }
 
 #branch.flipped {
@@ -34,8 +30,8 @@
 
 #branch > svg {
   height: var(--branch-size);
-  fill: var(--hub-color);
-  stroke: var(--hub-color);
+  fill: var(--branch-color);
+  stroke: var(--branch-color);
 }
 
 .level_button {
@@ -44,7 +40,7 @@
   aspect-ratio: 3 / 2;
   border-radius: 5px;
   background: var(--reef-color);
-  color: white;
+  color: var(--reef-text);
   cursor: pointer;
   transform: translate(-50%, -50%);
   display: flex;
