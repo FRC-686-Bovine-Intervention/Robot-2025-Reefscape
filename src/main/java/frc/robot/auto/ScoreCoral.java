@@ -1,14 +1,13 @@
 package frc.robot.auto;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
@@ -43,9 +42,13 @@ public class ScoreCoral extends AutoRoutine {
     private static final AutoQuestion<Pipe> scorePreloadPipe = new AutoQuestion<Pipe>("Score Preload Pipe") {
         @Override
         protected Settings<Pipe> generateSettings() {
+            var options = Arrays
+                .stream(pipeOptions, 2, pipeOptions.length)
+                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
+                .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
             return Settings.from(
-                pipeOptions[0],
-                pipeOptions
+                options[0],
+                options
             );
         }
 
@@ -61,6 +64,7 @@ public class ScoreCoral extends AutoRoutine {
             )
                 .mapToObj(i -> pipeOptions[i % pipeOptions.length])
                 .filter(entry -> !entry.getValue().equals(scorePreloadPipe.getResponse()))
+                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
                 .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
             return Settings.from(options[0], options);
         }
@@ -79,6 +83,7 @@ public class ScoreCoral extends AutoRoutine {
                     !entry.getValue().equals(scorePreloadPipe.getResponse()) &&
                     !entry.getValue().equals(scoreCoral1.getResponse())
                 )
+                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
                 .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
             return Settings.from(options[0], options);
         }
@@ -153,8 +158,6 @@ public class ScoreCoral extends AutoRoutine {
         this.superstructure = robot.superstructure;
         this.intake = robot.intake;
     }
-
-    private static Alert test = new Alert("finished scoring preload", AlertType.kInfo);
     
     @Override
     public Command generateCommand() {
