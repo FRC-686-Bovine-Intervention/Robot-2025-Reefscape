@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.Logger;
 
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Branch;
+import frc.robot.constants.FieldConstants.Reef.Cage;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
@@ -59,6 +60,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
             );
             inputs.intake = -1;
         }
+        if (inputs.cage != -1) {
+            selectedCage = Cage.values()[inputs.cage];
+        }
 
         io.setCoral(
             selectedCoral.pipe.rack.ordinal() << 3 |
@@ -95,6 +99,10 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     public Branch getSelectedBranch() {
         return selectedCoral;
+    }
+    
+    public Cage getSelectedCage() {
+        return selectedCage;
     }
 
     public boolean intakeFromCoralStation() {
