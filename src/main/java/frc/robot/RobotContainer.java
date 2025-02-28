@@ -32,6 +32,8 @@ import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.climber.ClimberIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
@@ -77,6 +79,7 @@ public class RobotContainer {
     public final Drive drive;
     public final Superstructure superstructure;
     public final Intake intake;
+    public final Climber climber;
     public final ApriltagVision apriltagVision;
     public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
@@ -107,6 +110,7 @@ public class RobotContainer {
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
+                climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision(
                     // new ApriltagCamera(
                     //     ApriltagVisionConstants.frontLeftApriltagCamera,
@@ -146,6 +150,7 @@ public class RobotContainer {
                     new Wrist(new WristIOSim())
                 );
                 intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
@@ -165,6 +170,7 @@ public class RobotContainer {
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
+                climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
                 bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
