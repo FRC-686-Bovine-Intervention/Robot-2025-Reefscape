@@ -79,9 +79,9 @@ public class AutoCommons {
 
     public static String getBargePositionAsString(BargePosition _bargePosition){
         return switch(_bargePosition){
-            case LEFT -> "NetLeft";
-            case CENTER -> "NetCenter";
-            case RIGHT -> "NetRight";
+            case LEFT -> "BargeLeft";
+            case CENTER -> "BargeCenter";
+            case RIGHT -> "BargeRight";
             default -> null;
         };
     }

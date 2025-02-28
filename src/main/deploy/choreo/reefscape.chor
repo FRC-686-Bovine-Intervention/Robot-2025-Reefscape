@@ -76,6 +76,62 @@
    }
   },
   "poses":{
+   "BargeCenter":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"BargeMidpoint.y",
+     "val":6.130925
+    },
+    "heading":{
+     "exp":"Reef0.heading",
+     "val":0.0
+    }
+   },
+   "BargeLeft":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"BargeMidpoint.y + 3 * CenterToBumper",
+     "val":7.426325
+    },
+    "heading":{
+     "exp":"Reef0.heading",
+     "val":0.0
+    }
+   },
+   "BargeMidpoint":{
+    "x":{
+     "exp":"8.774113 m",
+     "val":8.774113
+    },
+    "y":{
+     "exp":"6.130925 m",
+     "val":6.130925
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "BargeRight":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"BargeMidpoint.y - 3 * CenterToBumper",
+     "val":4.8355250000000005
+    },
+    "heading":{
+     "exp":"Reef0.heading",
+     "val":0.0
+    }
+   },
    "CoralStationLeft":{
     "x":{
      "exp":"CenterToBumper * cos(CoralStationAngle) + CenterToBumper * sin(CoralStationAngle)",
@@ -186,48 +242,6 @@
     "heading":{
      "exp":"CoralStationRight.heading",
      "val":0.9426766239723384
-    }
-   },
-   "NetCenter":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"Reef3.y",
-     "val":4.025877
-    },
-    "heading":{
-     "exp":"Reef0.heading",
-     "val":0.0
-    }
-   },
-   "NetLeft":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"Reef4.y",
-     "val":5.1294095618915865
-    },
-    "heading":{
-     "exp":"Reef0.heading",
-     "val":0.0
-    }
-   },
-   "NetRight":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"Reef2.y",
-     "val":2.9223444381084134
-    },
-    "heading":{
-     "exp":"Reef0.heading",
-     "val":0.0
     }
    },
    "Reef0":{
