@@ -10,7 +10,7 @@ import "./keyboardShortcuts.js";
 
 import { NT4_Client } from "./NT4.js";
 import { getCoral, getCoralIdx } from "./utils.js";
-import { displaySelectedStagedAlgae } from "./stagedAlgaeSelector.js";
+import { displaySelectedAlgaeScoring } from "./algaeScoringSelector.js";
 
 const matchTimeAdvantagekitToDashboardTopic =
   "/AdvantageKit/DriverStation/MatchTime";
@@ -45,8 +45,8 @@ export let intake = -1;
 let client = new NT4_Client(
   window.location.hostname,
   "ObjectiveSelector",
-  (topic) => {}, // Topic Announce
-  () => {}, // Topic Unannounce
+  (topic) => { }, // Topic Announce
+  () => { }, // Topic Unannounce
   (topic, timestamp, value) => {
     if (topic.name === matchTimeAdvantagekitToDashboardTopic) {
       matchTime = Math.max(0, value);
@@ -70,7 +70,7 @@ let client = new NT4_Client(
         coral = value;
         break;
       case algaeRobotToDashboardTopic:
-        displaySelectedStagedAlgae(value);
+        displaySelectedAlgaeScoring(value);
         intake = value;
         break;
       case intakeRobotToDashboardTopic:
@@ -87,7 +87,7 @@ let client = new NT4_Client(
     displaySelectedRack();
     displaySelectedBranch();
     displaySelectedLevel();
-    displaySelectedStagedAlgae();
+    displaySelectedAlgaeScoring();
     displayTime(0, false);
     displayInfos([]);
     displayWarnings([]);
@@ -125,11 +125,11 @@ window.onload = () => {
 };
 
 export function sendSelectedBranch(rack, side) {
-  const { rack: prevRack, side: prevSide, level: level } = getCoral(coral);
+  const { rack: prevRack, side: prevSide, level } = getCoral(coral);
   if (prevRack !== rack || prevSide !== side) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, level, side })
+      getCoralIdx({ rack, side, level })
     );
   }
 }
@@ -139,7 +139,7 @@ export function sendSelectedLevel(level) {
   if (prevLevel !== level) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, level, side })
+      getCoralIdx({ rack, side, level })
     );
   }
 }

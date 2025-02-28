@@ -15,10 +15,6 @@
   margin-bottom: 12px;
 }
 
-/* .alert_header {
-  display: none;
-} */
-
 .alerts_header {
   display: flex;
   align-items: center;

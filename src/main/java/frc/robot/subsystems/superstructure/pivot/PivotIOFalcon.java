@@ -42,12 +42,12 @@ public class PivotIOFalcon implements PivotIO {
         "Pivot/FF",
         0,
         0,
-        Units.rotationsToRadians(0.1),
-        Units.rotationsToRadians(0.1)
+        17,
+        0
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Pivot/PID",
-        0.5,
+        30,
         0,
         0
     );
@@ -56,22 +56,23 @@ public class PivotIOFalcon implements PivotIO {
     public PivotIOFalcon() {
         var encoderConfig = new CANcoderConfiguration();
 
-        cancoder.getConfigurator().apply(encoderConfig);
+        // cancoder.getConfigurator().apply(encoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.CounterClockwise_Positive)
+            .withInverted(InvertedValue.Clockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(100)
+            .withRotorToSensorRatio(PivotConstants.motorToMechanism.concat(PivotConstants.sensorToMechanism.inverse()).inverse().ratio())
+            .withSensorToMechanismRatio(PivotConstants.sensorToMechanism.inverse().ratio())
         ;
         motorConfig.SoftwareLimitSwitch
-            .withForwardSoftLimitEnable(true)
             .withReverseSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(Degrees.of(100))
-            .withReverseSoftLimitThreshold(Degrees.of(0))
+            .withReverseSoftLimitThreshold(PivotConstants.minAngle)
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(PivotConstants.maxAngle)
         ;
 
         profileConsts.update(motorConfig.MotionMagic);
@@ -81,7 +82,7 @@ public class PivotIOFalcon implements PivotIO {
         leftMotor.getConfigurator().apply(motorConfig);
 
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.Clockwise_Positive)
+            .withInverted(InvertedValue.CounterClockwise_Positive)
         ;
         rightMotor.getConfigurator().apply(motorConfig);
         rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
@@ -118,6 +119,11 @@ public class PivotIOFalcon implements PivotIO {
     @Override
     public void setPosition(Measure<AngleUnit> position) {
         leftMotor.setControl(positionRequest.withPosition(position.in(Rotations)));
+    }
+    
+    @Override
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        positionRequest.withFeedForward(feedForward.in(Volts));
     }
 
     // Immediately stop
