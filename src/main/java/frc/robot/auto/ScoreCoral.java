@@ -33,7 +33,7 @@ public class ScoreCoral extends AutoRoutine {
     
     private static final Map.Entry<String, Pipe>[] pipeOptions =
         IntStream.range(0, FieldConstants.Reef.pipes.length)
-            .mapToObj(i -> Settings.option("Pipe " + getBranchLetterFromIndex(i), FieldConstants.Reef.pipes[i]))
+            .mapToObj(i -> Settings.option("Pipe " + FieldConstants.Reef.pipes[i].getLetter(), FieldConstants.Reef.pipes[i]))
             .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
 
     private static boolean isRightCoralStation(Pipe pipe){
@@ -178,7 +178,7 @@ public class ScoreCoral extends AutoRoutine {
         commands.add(Commands.sequence(
             Commands.parallel(
                 drive.followBluePath(startToScorePreload).andThen(Commands.runOnce(() -> test.set(true))),
-                superstructure.goToSetpoint(Level.Level4.superstructureStates.getForward())
+                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
             ),
             intake.eject().until(intake.hasCoral)
         ));

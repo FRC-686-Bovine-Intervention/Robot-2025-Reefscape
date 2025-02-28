@@ -256,6 +256,10 @@ public final class FieldConstants {
             public int getIndex() {
                 return Pipe.getIndex(rack, side);
             }
+
+            public char getLetter() {
+                return (char) (getIndex() + 'A');
+            }
         }
 
         public static final class Branch {
