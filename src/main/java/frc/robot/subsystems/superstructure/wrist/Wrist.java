@@ -25,16 +25,18 @@ public class Wrist {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Wrist", inputs);
 
-        mech.set(inputs.encoder.position);
+        var angle = getAngle();
 
-        Logger.recordOutput("Superstructure/Pivot/Angle", getAngle());
+        mech.set(angle);
+
+        Logger.recordOutput("Superstructure/Wrist/Angle", angle);
     }
 
     public Angle getAngle() {
-        return inputs.encoder.position;
+        return WristConstants.sensorToMechanism.apply(inputs.encoder.position);
     }
     public AngularVelocity getVelocity() {
-        return inputs.encoder.velocity;
+        return WristConstants.sensorToMechanism.apply(inputs.encoder.velocity);
     }
     public Voltage getVoltage() {
         return inputs.motor.motor.appliedVoltage;

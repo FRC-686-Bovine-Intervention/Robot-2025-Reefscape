@@ -14,8 +14,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -24,7 +24,7 @@ import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
-public class WristIOFalcon implements WristIO {
+public class WristIOKraken implements WristIO {
     protected final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
     protected final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
@@ -37,30 +37,35 @@ public class WristIOFalcon implements WristIO {
         "Wrist/FF",
         0,
         0,
-        Units.rotationsToRadians(0.1),
-        Units.rotationsToRadians(0.1)
+        0,
+        0
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Wrist/PID",
-        0.5,
+        0,
         0,
         0
     );
     
-    public WristIOFalcon() {
+    public WristIOKraken() {
         var cancoderConfig = new CANcoderConfiguration();
+
+        cancoder.getConfigurator().refresh(cancoderConfig.MagnetSensor);
+        cancoderConfig.MagnetSensor
+            .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
+        ;
 
         cancoder.getConfigurator().apply(cancoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.CounterClockwise_Positive)
+            .withInverted(InvertedValue.Clockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(WristConstants.motorToSensor.ratio())
-            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.ratio())
+            .withRotorToSensorRatio(WristConstants.motorToSensor.inverse().ratio())
+            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.inverse().ratio())
         ;
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);
