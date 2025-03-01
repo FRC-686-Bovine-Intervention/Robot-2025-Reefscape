@@ -258,8 +258,8 @@ public class RobotContainer {
         // superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
         superstructure.setDefaultCommand(superstructure.idle());
         intake.setDefaultCommand(intake.idle());
-        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(-60))));
-        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(60))));
+        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(-60))));
+        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(60))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
@@ -379,9 +379,9 @@ public class RobotContainer {
         ));
         driveController.x().and(intake.hasAlgae).toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command processorCommand = superstructure.goToSetpointSequenced(new SuperstructureState(PivotConstants.minAngle, Meters.zero(), Degrees.of(35).unaryMinus()));
-                private final Command netForwardCommand = superstructure.goToSetpointSequenced(new SuperstructureState(Degrees.of(90), Meters.zero(), Degrees.of(45).unaryMinus()));
-                private final Command netBackwardCommand = superstructure.goToSetpointSequenced(new SuperstructureState(Degrees.of(90), Meters.zero(), Degrees.of(45)));
+                private final Command processorCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(PivotConstants.minAngle, Meters.zero(), Degrees.of(35).unaryMinus()));
+                private final Command netForwardCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(Degrees.of(90), Meters.zero(), Degrees.of(45).unaryMinus()));
+                private final Command netBackwardCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(Degrees.of(90), Meters.zero(), Degrees.of(45)));
                 public Command get() {
                     switch (objectiveTracker.getAlgaeGoal()) {
                         default:

@@ -259,7 +259,7 @@ public class Superstructure extends SubsystemBase {
                 var elevatorFirst = setpoint.elevatorLength.lt(initialState.elevatorLength);
                 pivotMoveCondition = () -> !elevatorFirst || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
                 elevatorMoveCondition = () -> elevatorFirst || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
-                wristMoveCondition = () -> true;
+                wristMoveCondition = elevatorMoveCondition;
             }
             @Override
             public void execute() {
@@ -307,6 +307,8 @@ public class Superstructure extends SubsystemBase {
         public final Distance elevatorLength;
         public final Angle wristAngle;
 
+        public static final SuperstructureState zero = new SuperstructureState(Degrees.zero(), Meters.zero(), Degrees.zero());
+
         public static final SuperstructureState idle = SuperstructureState.fromParts(
             Degrees.of(70),
             ElevatorConstants.minLength,
@@ -317,11 +319,18 @@ public class Superstructure extends SubsystemBase {
             ElevatorConstants.minLength,
             Degrees.of(110)
         );
+        public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
+            return new SuperstructureState(
+                Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians))),
+                Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLength.in(Meters), ElevatorConstants.maxLength.in(Meters))),
+                Radians.of(MathUtil.clamp(wristAngle.in(Radians), WristConstants.minAngle.in(Radians), WristConstants.maxAngle.in(Radians)))
+            );
+        }
 
-        public SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
-            this.pivotAngle = Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians)));
-            this.elevatorLength = Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLength.in(Meters), ElevatorConstants.maxLength.in(Meters)));
-            this.wristAngle = Radians.of(MathUtil.clamp(wristAngle.in(Radians), WristConstants.minAngle.in(Radians), WristConstants.maxAngle.in(Radians)));
+        private SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
+            this.pivotAngle = pivotAngle;
+            this.elevatorLength = elevatorLength;
+            this.wristAngle = wristAngle;
         }
 
         public static SuperstructureState fromParts(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
@@ -376,6 +385,14 @@ public class Superstructure extends SubsystemBase {
                 stage4Transform,
                 wristTransform,
             };
+        }
+
+        public SuperstructureState plus(SuperstructureState other) {
+            return newConstrained(
+                this.pivotAngle.plus(other.pivotAngle),
+                this.elevatorLength.plus(other.elevatorLength),
+                this.wristAngle.plus(other.wristAngle)
+            );
         }
     }
 
@@ -498,6 +515,13 @@ public class Superstructure extends SubsystemBase {
             } else {
                 return getBackward();
             }
+        }
+
+        public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
+            return new RobotFlippedSuperstructureState(
+                this.forward.plus(forwardOther),
+                this.backward.plus(backwardsOther)
+            );
         }
     }
 

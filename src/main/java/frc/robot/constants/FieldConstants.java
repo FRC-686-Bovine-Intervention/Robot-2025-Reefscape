@@ -176,11 +176,23 @@ public final class FieldConstants {
             Level1(Meters.of(0.592953), Degrees.of(35), Meters.of(0.779254)),
             Level2(Meters.of(0.792953), Degrees.of(35), Meters.of(0.779254)),
             Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254)),
-            Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750)),
+            Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750), new Transform2d(
+                new Translation2d(
+                    Inches.of(17),
+                    Inches.of(-5)
+                ),
+                new Rotation2d(Degrees.of(-55))
+            ).inverse()),
             ;
             private final Transform3d transform;
             public final RobotFlippedSuperstructureState superstructureStates;
             Level(Distance height, Angle angle, Distance radius) {
+                this(height, angle, radius, SuperstructureConstants.coralScoringForwardTransform, SuperstructureState.zero, SuperstructureState.zero);
+            }
+            Level(Distance height, Angle angle, Distance radius, Transform2d forwardOffsetRobotSpace) {
+                this(height, angle, radius, forwardOffsetRobotSpace, SuperstructureState.zero, SuperstructureState.zero);
+            }
+            Level(Distance height, Angle angle, Distance radius, Transform2d forwardOffsetRobotSpace, SuperstructureState forwardOffset, SuperstructureState backwardOffset) {
                 this.transform = new Transform3d(
                     new Translation3d(
                         radius.unaryMinus(),
@@ -203,8 +215,8 @@ public final class FieldConstants {
                             angle.unaryMinus()
                         )
                     )
-                    .transformBy(SuperstructureConstants.coralScoringForwardTransform)
-                ));
+                    .transformBy(forwardOffsetRobotSpace)
+                ).plus(backwardOffset));
             }
         }
 
