@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -41,6 +43,7 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOFalcon;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIO;
@@ -67,6 +70,7 @@ import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
 import frc.robot.subsystems.vision.bucket.BucketVision;
+import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
@@ -106,7 +110,7 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOKraken()),
                     new Wrist(new WristIOKraken())
                 );
-                intake = new Intake(new IntakeIO() {});
+                intake = new Intake(new IntakeIOFalcon());
                 apriltagVision = new ApriltagVision(
                     // new ApriltagCamera(
                     //     ApriltagVisionConstants.frontLeftApriltagCamera,
@@ -212,49 +216,50 @@ public class RobotContainer {
     }
 
     private void configureCommands() {
-        // var driveJoystick = driveController.leftStick
-        //     .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
-        //     .radialSensitivity(0.75)
-        //     // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
-        // ;
+        var driveJoystick = driveController.leftStick
+            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
+            .radialSensitivity(0.75)
+            // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
+        ;
 
-        // var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
-        //     driveJoystick,
-        //     () -> false
-        // );
+        var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
+            driveJoystick,
+            () -> false
+        );
 
-        // drive.translationSubsystem.setDefaultCommand(
-        //     drive.translationSubsystem.run(() -> {
-        //         var fieldVec = Perspective.getCurrent().toField(
-        //             driveJoystick.toVector()
-        //             .times(
-        //                 DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-        //                 DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
-        //             )
-        //         );
-        //         var fieldSpeeds = new ChassisSpeeds(
-        //             fieldVec.get(0),
-        //             fieldVec.get(1),
-        //             0
-        //         );
-        //         var robotSpeeds = new ChassisSpeeds(
-        //             Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-        //             (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-        //             0
-        //         );
-        //         drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
-        //     })
-        //     .withName("Driver Control Field Relative")
-        // );
-        // drive.rotationalSubsystem.setDefaultCommand(
-        //     drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
-        //         .withName("Robot spin")
-        // );
+        drive.translationSubsystem.setDefaultCommand(
+            drive.translationSubsystem.run(() -> {
+                var fieldVec = Perspective.getCurrent().toField(
+                    driveJoystick.toVector()
+                    .times(
+                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
+                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
+                    )
+                );
+                var fieldSpeeds = new ChassisSpeeds(
+                    fieldVec.get(0),
+                    fieldVec.get(1),
+                    0
+                );
+                var robotSpeeds = new ChassisSpeeds(
+                    Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                    (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                    0
+                );
+                drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
+            })
+            .withName("Driver Control Field Relative")
+        );
+        drive.rotationalSubsystem.setDefaultCommand(
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
+                .withName("Robot spin")
+        );
 
-        superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
-        // superstructure.setDefaultCommand(superstructure.idle());
-        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), Meters.of(0), Degrees.of(0))));
-        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), ElevatorConstants.maxLength, Degrees.of(0))));
+        // superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
+        superstructure.setDefaultCommand(superstructure.idle());
+        intake.setDefaultCommand(intake.idle());
+        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(-60))));
+        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(new SuperstructureState(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(60))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
@@ -293,7 +298,7 @@ public class RobotContainer {
         //     Set.of(superstructure)
         // ));
 
-        driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
+        // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
@@ -349,7 +354,8 @@ public class RobotContainer {
                 }
             },
             Set.of(superstructure)
-        )); //Intake/Eject
+        ).alongWith(intake.intake())); //Intake/Eject
+        driveController.b().whileTrue(intake.eject());
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
         driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend
             new Supplier<Command>() {

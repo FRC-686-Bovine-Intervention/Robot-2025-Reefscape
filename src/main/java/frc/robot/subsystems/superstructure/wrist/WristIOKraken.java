@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -37,12 +39,12 @@ public class WristIOKraken implements WristIO {
         "Wrist/FF",
         0,
         0,
-        0,
+        50,
         0
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Wrist/PID",
-        0,
+        150,
         0,
         0
     );
@@ -67,6 +69,13 @@ public class WristIOKraken implements WristIO {
             .withRotorToSensorRatio(WristConstants.motorToSensor.inverse().ratio())
             .withSensorToMechanismRatio(WristConstants.sensorToMechanism.inverse().ratio())
         ;
+        motorConfig.SoftwareLimitSwitch
+            .withReverseSoftLimitEnable(true)
+            .withReverseSoftLimitThreshold(WristConstants.minAngle)
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(WristConstants.maxAngle)
+        ;
+
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);
@@ -93,6 +102,13 @@ public class WristIOKraken implements WristIO {
             pidConsts.update(config);
             motor.getConfigurator().apply(config);
         }
+
+        Logger.recordOutput("Superstructure/Wrist/Motor/posiion", motor.getPosition().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Wrist/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Wrist/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Wrist/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Wrist/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Wrist/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
     }
 
     @Override

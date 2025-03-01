@@ -50,7 +50,7 @@ public class ElevatorIOKraken implements ElevatorIO {
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Elevator/PID",
-        7,
+        50,
         0,
         0
     );

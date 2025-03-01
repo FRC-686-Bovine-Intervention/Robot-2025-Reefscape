@@ -130,7 +130,7 @@ public final class FieldConstants {
             SuperstructureState.fromParts(
                 Degrees.of(75),
                 ElevatorConstants.minLength,
-                Degrees.of(175)
+                Degrees.of(155)
             )
         );
     }
