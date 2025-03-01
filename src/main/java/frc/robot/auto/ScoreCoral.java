@@ -167,6 +167,7 @@ public class ScoreCoral extends AutoRoutine {
         var scoreCoral2 = ScoreCoral.scoreCoral2.getResponse();
         var stationPosition = ScoreCoral.stationPosition.getResponse();
         var commands = new ArrayList<Command>();
+        boolean shouldUseForwardCoralStation = false;
 
         String startToScorePath;
         if (
@@ -180,58 +181,67 @@ public class ScoreCoral extends AutoRoutine {
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(startToScorePreload),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+                drive.followBluePath(startToScorePreload)//,
+                // superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
             ),
-            intake.eject().until(intake.hasCoral)
+            Commands.waitSeconds(2)
+            // intake.eject().until(intake.hasCoral)
         ));
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
             " To Station " +
-            getStationPositionAsString(stationPosition)
+            getStationPositionAsString(stationPosition) +
+            (shouldUseForwardCoralStation ? " Forward" : "")
         );
         commands.add(Commands.parallel(
             drive.followBluePath(preloadToStation),
-            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
-            intake.intake().until(intake.hasCoral)
+            Commands.waitSeconds(2)
+            // superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
+            // intake.intake().until(intake.hasCoral)
         ));
         var stationToScore1 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
+            + (shouldUseForwardCoralStation ? " Forward" : "")
             + " To "
             + getBranchLetterFromIndex(scoreCoral1.getIndex())
         );
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(stationToScore1),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+                drive.followBluePath(stationToScore1)//,
+                // superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
             ),
-            intake.eject().until(intake.hasCoral.negate())
+            Commands.waitSeconds(2)
+            // intake.eject().until(intake.hasCoral.negate())
         ));
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scoreCoral1.getIndex())+
             " To Station "+
             getStationPositionAsString(stationPosition)
+            + (shouldUseForwardCoralStation ? " Forward" : "")
         );
         commands.add(
             Commands.parallel(
                 drive.followBluePath(coral1ToStation),
-                superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
-                intake.intake().until(intake.hasCoral)
+                Commands.waitSeconds(2)
+                // superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
+                // intake.intake().until(intake.hasCoral)
             )
         );
         var stationToScore2 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
+            + (shouldUseForwardCoralStation ? " Forward" : "")
             + " To "
             + getBranchLetterFromIndex(scoreCoral2.getIndex())
         );
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(stationToScore2),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()
-            )),
-            intake.eject().until(intake.hasCoral.negate())
+                drive.followBluePath(stationToScore2)//,
+                // superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+            ),
+            Commands.waitSeconds(2)
+            // intake.eject().until(intake.hasCoral.negate())
         ));
         return AutoCommons
             .setOdometryFlipped(startPosition, drive)
