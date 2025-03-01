@@ -433,6 +433,7 @@ public final class FieldConstants {
         public static final AllianceFlipped<Pose2d> centerBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeCenterScoringTransform));
         public static final AllianceFlipped<Pose2d> leftBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeLeftScoringTransform));
 
+        // TODO
         public static final RobotFlippedSuperstructureState superstructurePosition = new RobotFlippedSuperstructureState(
             SuperstructureState.fromRobotSpace(
                 new Pose2d(

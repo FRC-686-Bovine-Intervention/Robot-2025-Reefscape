@@ -1,9 +1,12 @@
+package frc.robot.auto;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
@@ -18,6 +21,7 @@ import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.util.flipping.AllianceFlipped;
 
 public class ScoreAlgaeAndCoral extends AutoRoutine{
 
@@ -80,6 +84,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         var bargePosition = ScoreAlgaeAndCoral.bargePosition.getResponse();
         var scoreAlgae = ScoreAlgaeAndCoral.scoreAlgae.getResponse();
         var commands = new ArrayList<Command>();
+        var startPosition = scorePreloadPipe.equals(FieldConstants.Reef.pipes[6]) ? AutoConstants.startRightCenter : AutoConstants.startLeftCenter;
 
         var startToScorePreload = AutoPaths.loadChoreoTrajectory("Start To " + scorePreloadPipe.getLetter());
         commands.add(Commands.sequence(
@@ -101,11 +106,29 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         commands.add(Commands.sequence(
             Commands.parallel(
                 drive.followBluePath(algaeToBarge),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+                superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructurePosition.getForward())
             ),
             intake.eject().until(intake.hasAlgae.negate())
         ));
-        throw new UnsupportedOperationException("Unimplemented method 'generateCommand'");
+        var bargeToAlgae = AutoPaths.loadChoreoTrajectory(AutoCommons.getBargePositionAsString(bargePosition) + " To " + scoreAlgae.ordinal());
+        commands.add(Commands.sequence(
+            Commands.parallel(
+                drive.followBluePath(bargeToAlgae),
+                superstructure.goToSetpointSequenced(scoreAlgae.stagedAlgae.algaeLevel.superstructurePosition.getForward())
+            ),
+            intake.intake().until(intake.hasAlgae)
+        ));
+        var algaeToBarge1 = AutoPaths.loadChoreoTrajectory(scoreAlgae.ordinal() + " To " + AutoCommons.getBargePositionAsString(bargePosition));
+        commands.add(Commands.sequence(
+            Commands.parallel(
+                drive.followBluePath(algaeToBarge1),
+                superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructurePosition.getForward())
+            ),
+            intake.eject().until(intake.hasAlgae.negate())
+        ));
+        return AutoCommons
+            .setOdometryFlipped(startPosition, drive)
+            .andThen(commands.toArray(Command[]::new));
     }
     
 }
