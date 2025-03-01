@@ -39,11 +39,25 @@
      "val":0.9426766239723384
     }
    },
+   "CoralStationLeftReverseAngle":{
+    "dimension":"Angle",
+    "var":{
+     "exp":"-CoralStationAngle - 180 deg",
+     "val":-4.084269277562131
+    }
+   },
    "CoralStationOffset":{
     "dimension":"Length",
     "var":{
      "exp":"0.6 m",
      "val":0.6
+    }
+   },
+   "CoralStationRightReverseAngle":{
+    "dimension":"Angle",
+    "var":{
+     "exp":"CoralStationAngle - 180 deg",
+     "val":-2.198916029617455
     }
    },
    "FrameLength":{
