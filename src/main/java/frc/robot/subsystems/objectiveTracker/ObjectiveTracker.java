@@ -7,12 +7,10 @@ import org.littletonrobotics.junction.Logger;
 
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Branch;
-import frc.robot.constants.FieldConstants.Barge.Cage;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
-import frc.robot.constants.FieldConstants.Barge.*;
 import frc.util.VirtualSubsystem;
 
 public class ObjectiveTracker extends VirtualSubsystem {
@@ -31,7 +29,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Branch selectedCoral = FieldConstants.Reef.branches[0];
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
     private Optional<Optional<StagedAlgae>> selectedIntakeGoal = Optional.empty();
-    private Cage selectedCage = Cage.valueOf(null);
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
         System.out.println("[Init] Instantiating ObjectiveTracker");
@@ -61,9 +58,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 Optional.empty()
             );
             inputs.intake = -1;
-        }
-        if (inputs.cage != -1) {
-            selectedCage = Cage.values()[inputs.cage];
         }
 
         io.setCoral(
@@ -101,10 +95,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     public Branch getSelectedBranch() {
         return selectedCoral;
-    }
-     
-    public Cage getSelectedCage() {
-        return selectedCage;
     }
 
     public boolean intakeFromCoralStation() {

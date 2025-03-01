@@ -92,6 +92,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 drive.followBluePath(startToScorePreload),
                 superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
             ),
+            // Commands.waitSeconds(2)
             intake.eject().until(intake.hasCoral.negate())
         ));
         var preloadToAlgae = AutoPaths.loadChoreoTrajectory(scorePreloadPipe.getLetter() + " To " + scorePreloadPipe.rack.ordinal());
@@ -100,6 +101,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 drive.followBluePath(preloadToAlgae),
                 superstructure.goToSetpointSequenced(scorePreloadPipe.rack.stagedAlgae.algaeLevel.superstructurePosition.getForward())
             ),
+            // Commands.waitSeconds(2)
             intake.intake().until(intake.hasAlgae)
         ));
         var algaeToBarge = AutoPaths.loadChoreoTrajectory(scorePreloadPipe.rack.ordinal() + " To " + AutoCommons.getBargePositionAsString(bargePosition));
@@ -108,6 +110,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 drive.followBluePath(algaeToBarge),
                 superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructurePosition.getForward())
             ),
+            // Commands.waitSeconds(2)
             intake.eject().until(intake.hasAlgae.negate())
         ));
         var bargeToAlgae = AutoPaths.loadChoreoTrajectory(AutoCommons.getBargePositionAsString(bargePosition) + " To " + scoreAlgae.ordinal());
@@ -116,6 +119,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 drive.followBluePath(bargeToAlgae),
                 superstructure.goToSetpointSequenced(scoreAlgae.stagedAlgae.algaeLevel.superstructurePosition.getForward())
             ),
+            // Commands.waitSeconds(2)
             intake.intake().until(intake.hasAlgae)
         ));
         var algaeToBarge1 = AutoPaths.loadChoreoTrajectory(scoreAlgae.ordinal() + " To " + AutoCommons.getBargePositionAsString(bargePosition));
@@ -124,6 +128,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 drive.followBluePath(algaeToBarge1),
                 superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructurePosition.getForward())
             ),
+            // Commands.waitSeconds(2)
             intake.eject().until(intake.hasAlgae.negate())
         ));
         return AutoCommons

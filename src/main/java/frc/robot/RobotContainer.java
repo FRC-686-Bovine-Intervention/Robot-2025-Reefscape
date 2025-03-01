@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
+import frc.robot.auto.ScoreAlgaeAndCoral;
 import frc.robot.auto.ScoreCoral;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.CoralStation;
@@ -411,6 +412,7 @@ public class RobotContainer {
         AutoPaths.preload();
         var selector = new AutoSelector("Auto Selector");
         selector.addDefaultRoutine(new ScoreCoral(this));
+        selector.addRoutine(new ScoreAlgaeAndCoral(this));
 
         new AutoManager(selector);
     }

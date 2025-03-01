@@ -180,7 +180,7 @@ public class ScoreCoral extends AutoRoutine {
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(startToScorePreload).andThen(Commands.runOnce(() -> test.set(true))),
+                drive.followBluePath(startToScorePreload),
                 superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
             ),
             intake.eject().until(intake.hasCoral)
