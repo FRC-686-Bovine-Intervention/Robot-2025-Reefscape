@@ -1,20 +1,17 @@
+package frc.robot.auto;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntFunction;
-import java.util.stream.IntStream;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoCommons.BargePosition;
-import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.constants.FieldConstants.Reef.Rack;
-import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;

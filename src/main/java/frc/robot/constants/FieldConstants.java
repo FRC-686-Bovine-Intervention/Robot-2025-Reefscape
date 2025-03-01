@@ -437,8 +437,8 @@ public final class FieldConstants {
             SuperstructureState.fromRobotSpace(
                 new Pose2d(
                     new Translation2d(
-                        Meters.zero(),
-                        Meters.of(0)
+                        RobotConstants.centerToFrontBumper,
+                        Meters.of(2.26200)
                     ),
                     Rotation2d.kZero
                 )
