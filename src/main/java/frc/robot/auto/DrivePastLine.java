@@ -1,7 +1,12 @@
 package frc.robot.auto;
 
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import java.util.List;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
@@ -18,6 +23,16 @@ public class DrivePastLine extends AutoRoutine{
 
     @Override
     public Command generateCommand() {
-        return Commands.run(() -> drive.runRobotSpeeds(null), drive.translationSubsystem, drive.rotationalSubsystem).raceWith(Commands.waitSeconds(0.5));
+        return Commands.runEnd(
+            () -> drive.runRobotSpeeds(
+                ChassisSpeeds.fromRobotRelativeSpeeds(
+                    MetersPerSecond.of(3),
+                    MetersPerSecond.zero(),
+                    DegreesPerSecond.zero(),
+                    Rotation2d.k180deg
+                )),
+            () -> drive.stop(),
+            drive.translationSubsystem, drive.rotationalSubsystem
+        ).raceWith(Commands.waitSeconds(0.5));
     }
 }
