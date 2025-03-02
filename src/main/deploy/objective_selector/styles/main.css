@@ -10,12 +10,25 @@
 }
 
 :root {
-  --reef-color: #ac26be;
-  --coral-station-color: #ddd;
+  --background-color: #181418;
+  --text-color: #f1f1f1;
+  --coral-station-color: #453b49;
   --coral-color: #4ca6eb;
   --algae-color: #3ba799;
   --scoring-color: #e13f3f;
-  --hub-color: #181418;
+  --hub-color: #0f0c10;
+  --branch-color: #201f20;
+  --reef-color: #ac26be;
+  --reef-text: #fff;
+  --button-color: #39303c;
+  --button-text: #fff;
+  --coral-selected: repeating-linear-gradient(
+    45deg,
+    #606dbc,
+    #606dbc 10px,
+    #465298 10px,
+    #465298 20px
+  );
 }
 
 * {
@@ -32,6 +45,8 @@ body {
   height: 100dvh;
   margin: 0;
   padding: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 #overlay {
