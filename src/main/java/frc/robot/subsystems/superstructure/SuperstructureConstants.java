@@ -29,7 +29,7 @@ public class SuperstructureConstants {
     public static final Transform2d coralIntakeForwardTransform = new Transform2d(
         new Translation2d(
             Inches.of(12),
-            Inches.zero()
+            Inches.of(-2)
         ),
         Rotation2d.kZero
     ).inverse();

@@ -53,8 +53,8 @@ public class Superstructure extends SubsystemBase {
 
         var pivotRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(1).div(Seconds.of(1)),
-                Volts.of(1),
+                Volts.of(1).div(Seconds.of(2)),
+                Volts.of(5),
                 Seconds.of(15),
                 (state) -> {
                     Logger.recordOutput("Superstructure/Pivot/SysID/State", state.toString());
@@ -63,8 +63,8 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setVoltage(voltage);
-                    this.elevator.setVoltage(Volts.zero());
-                    this.wrist.setVoltage(Volts.zero());
+                    this.elevator.setLength(ElevatorConstants.minLength);
+                    this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
                     Logger.recordOutput("Superstructure/Pivot/SysID/Voltage", this.pivot.getVoltage());
@@ -81,8 +81,8 @@ public class Superstructure extends SubsystemBase {
         SmartDashboard.putData("SysID/Superstructure/Pivot/Dynamic Reverse", pivotRoutine.dynamic(SysIdRoutine.Direction.kReverse));
         var elevatorRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(1).div(Seconds.of(1)),
-                Volts.of(1),
+                Volts.of(1).div(Seconds.of(2)),
+                Volts.of(5),
                 Seconds.of(15),
                 (state) -> {
                     Logger.recordOutput("Superstructure/Elevator/SysID/State", state.toString());
@@ -90,9 +90,9 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setVoltage(Volts.zero());
+                    this.pivot.setAngle(Degrees.of(90));
                     this.elevator.setVoltage(voltage);
-                    this.wrist.setVoltage(Volts.zero());
+                    this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
                     Logger.recordOutput("Superstructure/Elevator/SysID/Voltage", this.pivot.getVoltage());
@@ -109,8 +109,8 @@ public class Superstructure extends SubsystemBase {
         SmartDashboard.putData("SysID/Superstructure/Elevator/Dynamic Reverse", elevatorRoutine.dynamic(SysIdRoutine.Direction.kReverse));
         var wristRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(1).div(Seconds.of(1)),
-                Volts.of(1),
+                Volts.of(0.5).div(Seconds.of(2)),
+                Volts.of(3),
                 Seconds.of(15),
                 (state) -> {
                     Logger.recordOutput("Superstructure/Wrist/SysID/State", state.toString());
@@ -118,8 +118,8 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setVoltage(Volts.zero());
-                    this.elevator.setVoltage(Volts.zero());
+                    this.pivot.setAngle(Degrees.of(90));
+                    this.elevator.setLength(ElevatorConstants.minLength);
                     this.wrist.setVoltage(voltage);
                 },
                 (log) -> {

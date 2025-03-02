@@ -128,7 +128,7 @@ public final class FieldConstants {
                 .transformBy(SuperstructureConstants.coralIntakeForwardTransform)
             ),
             SuperstructureState.fromParts(
-                Degrees.of(75),
+                Degrees.of(85),
                 ElevatorConstants.minLength,
                 Degrees.of(155)
             )
@@ -175,13 +175,19 @@ public final class FieldConstants {
         public static enum Level {
             Level1(Meters.of(0.592953), Degrees.of(35), Meters.of(0.779254)),
             Level2(Meters.of(0.792953), Degrees.of(35), Meters.of(0.779254)),
-            Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254)),
+            Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254), new Transform2d(
+                new Translation2d(
+                    Inches.of(17),
+                    Inches.of(0)
+                ),
+                new Rotation2d(Degrees.of(-15))
+            ).inverse()),
             Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750), new Transform2d(
                 new Translation2d(
                     Inches.of(17),
                     Inches.of(-5)
                 ),
-                new Rotation2d(Degrees.of(-55))
+                new Rotation2d(Degrees.of(-60))
             ).inverse()),
             ;
             private final Transform3d transform;
