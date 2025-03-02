@@ -1,7 +1,5 @@
 package frc.util.flipping;
 
-import static edu.wpi.first.units.Units.Meters;
-
 import java.util.Optional;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -16,25 +14,27 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.constants.FieldConstants;
+import frc.util.misc.GeomUtil;
 
 public class AllianceFlipUtil {
     public static enum FieldFlipType {
-        CenterPointFlip,
-        MirrorFlip,
+        CenterPointRotation,
+        CenterLineMirror,
+        XenterLineMirror,
     }
-    public static final FieldFlipType defaultFlipType = FieldFlipType.CenterPointFlip;
+    public static final FieldFlipType defaultFlipType = FieldFlipType.CenterPointRotation;
 
-    public static <T extends Flippable<T>> T apply(T flippable) {
+    public static <T extends AllianceFlippable<T>> T apply(T flippable) {
         return apply(flippable, defaultFlipType);
     }
-    public static <T extends Flippable<T>> T apply(T flippable, FieldFlipType flipType) {
-        if(!shouldFlip()) return flippable;
+    public static <T extends AllianceFlippable<T>> T apply(T flippable, FieldFlipType flipType) {
+        if (!shouldFlip()) return flippable;
         return flip(flippable, flipType);
     }
-    public static <T extends Flippable<T>> T flip(T flippable) {
+    public static <T extends AllianceFlippable<T>> T flip(T flippable) {
         return flip(flippable, defaultFlipType);
     }
-    public static <T extends Flippable<T>> T flip(T flippable, FieldFlipType flipType) {
+    public static <T extends AllianceFlippable<T>> T flip(T flippable, FieldFlipType flipType) {
         return flippable.flip(flipType);
     }
     
@@ -42,17 +42,18 @@ public class AllianceFlipUtil {
         return apply(translation, defaultFlipType);
     }
     public static Translation2d apply(Translation2d translation, FieldFlipType flipType) {
-        if(!shouldFlip()) return translation;
+        if (!shouldFlip()) return translation;
         return flip(translation, flipType);
     }
     public static Translation2d flip(Translation2d translation) {
         return flip(translation, defaultFlipType);
     }
     public static Translation2d flip(Translation2d translation, FieldFlipType flipType) {
-        switch(flipType) {
+        switch (flipType) {
             default:
-            case CenterPointFlip: return new Translation2d(FieldConstants.fieldLength.in(Meters) - translation.getX(), FieldConstants.fieldWidth.in(Meters) - translation.getY());
-            case MirrorFlip:      return new Translation2d(FieldConstants.fieldLength.in(Meters) - translation.getX(), translation.getY());
+            case CenterPointRotation:   return new Translation2d(FieldConstants.fieldLength.minus(translation.getMeasureX()), FieldConstants.fieldWidth.minus(translation.getMeasureY()));
+            case CenterLineMirror:      return new Translation2d(FieldConstants.fieldLength.minus(translation.getMeasureX()), translation.getMeasureY());
+            case XenterLineMirror:      return new Translation2d(translation.getMeasureX(), FieldConstants.fieldWidth.minus(translation.getMeasureY()));
         }
     }
 
@@ -60,17 +61,18 @@ public class AllianceFlipUtil {
         return apply(rotation, defaultFlipType);
     }
     public static Rotation2d apply(Rotation2d rotation, FieldFlipType flipType) {
-        if(!shouldFlip()) return rotation;
+        if (!shouldFlip()) return rotation;
         return flip(rotation, flipType);
     }
     public static Rotation2d flip(Rotation2d rotation) {
         return flip(rotation, defaultFlipType);
     }
     public static Rotation2d flip(Rotation2d rotation, FieldFlipType flipType) {
-        switch(flipType) {
+        switch (flipType) {
             default:
-            case CenterPointFlip: return rotation.rotateBy(Rotation2d.fromRotations(0.5));
-            case MirrorFlip:      return new Rotation2d(-rotation.getCos(), rotation.getSin());
+            case CenterPointRotation:   return new Rotation2d(-rotation.getCos(), -rotation.getSin());
+            case CenterLineMirror:      return new Rotation2d(-rotation.getCos(), rotation.getSin());
+            case XenterLineMirror:      return new Rotation2d(rotation.getCos(), -rotation.getSin());
         }
     }
 
@@ -78,7 +80,7 @@ public class AllianceFlipUtil {
         return apply(pose, defaultFlipType);
     }
     public static Pose2d apply(Pose2d pose, FieldFlipType flipType) {
-        if(!shouldFlip()) return pose;
+        if (!shouldFlip()) return pose;
         return flip(pose, flipType);
     }
     public static Pose2d flip(Pose2d pose) {
@@ -92,7 +94,7 @@ public class AllianceFlipUtil {
         return apply(pose, defaultFlipType);
     }
     public static Transform2d apply(Transform2d pose, FieldFlipType flipType) {
-        if(!shouldFlip()) return pose;
+        if (!shouldFlip()) return pose;
         return flip(pose, flipType);
     }
     public static Transform2d flip(Transform2d pose) {
@@ -106,17 +108,18 @@ public class AllianceFlipUtil {
         return apply(translation, defaultFlipType);
     }
     public static Translation3d apply(Translation3d translation, FieldFlipType flipType) {
-        if(!shouldFlip()) return translation;
+        if (!shouldFlip()) return translation;
         return flip(translation, flipType);
     }
     public static Translation3d flip(Translation3d translation) {
         return flip(translation, defaultFlipType);
     }
     public static Translation3d flip(Translation3d translation, FieldFlipType flipType) {
-        switch(flipType) {
+        switch (flipType) {
             default:
-            case CenterPointFlip: return new Translation3d(FieldConstants.fieldLength.in(Meters) - translation.getX(), FieldConstants.fieldWidth.in(Meters) - translation.getY(), translation.getZ());
-            case MirrorFlip:      return new Translation3d(FieldConstants.fieldLength.in(Meters) - translation.getX(), translation.getY(), translation.getZ());
+            case CenterPointRotation:   return new Translation3d(FieldConstants.fieldLength.minus(translation.getMeasureX()), FieldConstants.fieldWidth.minus(translation.getMeasureY()), translation.getMeasureZ());
+            case CenterLineMirror:      return new Translation3d(FieldConstants.fieldLength.minus(translation.getMeasureX()), translation.getMeasureY(), translation.getMeasureZ());
+            case XenterLineMirror:      return new Translation3d(translation.getMeasureX(), FieldConstants.fieldWidth.minus(translation.getMeasureY()), translation.getMeasureZ());
         }
     }
     
@@ -124,18 +127,18 @@ public class AllianceFlipUtil {
         return apply(rotation, defaultFlipType);
     }
     public static Rotation3d apply(Rotation3d rotation, FieldFlipType flipType) {
-        if(!shouldFlip()) return rotation;
+        if (!shouldFlip()) return rotation;
         return flip(rotation, flipType);
     }
     public static Rotation3d flip(Rotation3d rotation) {
         return flip(rotation, defaultFlipType);
     }
-    private static final Rotation3d rev = new Rotation3d(Rotation2d.k180deg);
     public static Rotation3d flip(Rotation3d rotation, FieldFlipType flipType) {
-        switch(flipType) {
+        switch (flipType) {
             default:
-            case CenterPointFlip: return rotation.rotateBy(rev);
-            case MirrorFlip:      return null;
+            case CenterPointRotation:   return rotation.rotateBy(GeomUtil.rotate180Transform3d.getRotation());
+            case CenterLineMirror:      return null;
+            case XenterLineMirror:      return null;
         }
     }
     
@@ -143,7 +146,7 @@ public class AllianceFlipUtil {
         return apply(pose, defaultFlipType);
     }
     public static Pose3d apply(Pose3d pose, FieldFlipType flipType) {
-        if(!shouldFlip()) return pose;
+        if (!shouldFlip()) return pose;
         return flip(pose, flipType);
     }
     public static Pose3d flip(Pose3d pose) {
@@ -157,7 +160,7 @@ public class AllianceFlipUtil {
         return apply(pose, defaultFlipType);
     }
     public static Transform3d apply(Transform3d pose, FieldFlipType flipType) {
-        if(!shouldFlip()) return pose;
+        if (!shouldFlip()) return pose;
         return flip(pose, flipType);
     }
     public static Transform3d flip(Transform3d pose) {
@@ -171,7 +174,7 @@ public class AllianceFlipUtil {
         return applyFieldRelative(speeds, defaultFlipType);
     }
     public static ChassisSpeeds applyFieldRelative(ChassisSpeeds speeds, FieldFlipType flipType) {
-        if(!shouldFlip()) return speeds;
+        if (!shouldFlip()) return speeds;
         return flipFieldRelative(speeds, flipType);
     }
     public static ChassisSpeeds flipFieldRelative(ChassisSpeeds speeds) {
@@ -180,8 +183,9 @@ public class AllianceFlipUtil {
     public static ChassisSpeeds flipFieldRelative(ChassisSpeeds speeds, FieldFlipType flipType) {
         switch (flipType) {
             default:
-            case CenterPointFlip: return new ChassisSpeeds(-speeds.vxMetersPerSecond, -speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-            case MirrorFlip: return new ChassisSpeeds(-speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+            case CenterPointRotation:   return new ChassisSpeeds(-speeds.vxMetersPerSecond, -speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+            case CenterLineMirror:      return new ChassisSpeeds(-speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+            case XenterLineMirror:      return new ChassisSpeeds(speeds.vxMetersPerSecond, -speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
         }
     }
 

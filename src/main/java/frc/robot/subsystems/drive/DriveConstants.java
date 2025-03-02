@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -70,7 +71,7 @@ public final class DriveConstants {
         new ModuleConstants(
             "Front Left",
             HardwareDevices.frontLeftDriveMotorID, HardwareDevices.frontLeftTurnMotorID,
-            InvertedValue.Clockwise_Positive,
+            InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.25),
             new Translation2d(
                 trackWidthX.div(+2),
@@ -100,7 +101,7 @@ public final class DriveConstants {
         new ModuleConstants(
             "Back Right",
             HardwareDevices.backRightDriveMotorID, HardwareDevices.backRightTurnMotorID,
-            InvertedValue.Clockwise_Positive,
+            InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.75),
             new Translation2d(
                 trackWidthX.div(-2),
@@ -164,6 +165,8 @@ public final class DriveConstants {
     public static final double headingKd = 0;
     public static final Angle headingTolerance = Degrees.of(1);
     public static final AngularVelocity omegaTolerance = DegreesPerSecond.of(1);
+
+    public static final LinearVelocity maxAdjustmentSpeed = InchesPerSecond.of(12);
 
     public static final RobotConfig robotConfig = new RobotConfig(
         RobotConstants.robotWeight,

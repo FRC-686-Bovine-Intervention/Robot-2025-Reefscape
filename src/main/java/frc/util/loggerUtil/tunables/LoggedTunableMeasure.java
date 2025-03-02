@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.Measure;
@@ -45,6 +44,9 @@ public class LoggedTunableMeasure<U extends Unit> implements Supplier<Measure<U>
         this.dashboardMeasure = new GenericMutableMeasureImpl<U>(defaultValue.in(dashboardUnit), defaultValue.baseUnitMagnitude(), dashboardUnit);
         if (RobotConstants.tuningMode) {
             dashboardNumber = new LoggedNetworkNumber(key, dashboardMeasure.magnitude());
+            dashboardNumber.set(dashboardMeasure.magnitude());
+        } else {
+            dashboardNumber = null;
         }
     }
 
@@ -54,7 +56,7 @@ public class LoggedTunableMeasure<U extends Unit> implements Supplier<Measure<U>
      * @return The current value
      */
     public Measure<U> get() {
-        if(RobotConstants.tuningMode) {
+        if (RobotConstants.tuningMode) {
             dashboardMeasure.mut_setMagnitude(dashboardNumber.get());
         }
         return dashboardMeasure;
@@ -73,6 +75,9 @@ public class LoggedTunableMeasure<U extends Unit> implements Supplier<Measure<U>
      *     otherwise.
      */
     public boolean hasChanged(int id) {
+        if (!RobotConstants.tuningMode) {
+            return false;
+        }
         double currentValue = dashboardNumber.get();
         Double lastValue = lastHasChangedValues.get(id);
         if (lastValue == null || currentValue != lastValue) {

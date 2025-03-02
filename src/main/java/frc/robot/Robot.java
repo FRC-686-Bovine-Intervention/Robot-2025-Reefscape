@@ -15,7 +15,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -23,12 +22,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.leds.Leds;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
-import frc.util.rust.iter.Iterator;
 
 public class Robot extends LoggedRobot {
     public Robot() {
@@ -119,7 +116,7 @@ public class Robot extends LoggedRobot {
         System.out.println("[Init Robot] Instantiating RobotContainer");
         new RobotContainer();
         System.out.println("[Init Robot] Starting Deploy Webserver");
-        WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+        WebServer.start(5800, Filesystem.getDeployDirectory().getPath() + "/elastic");
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
         Perspective.getCurrent();
@@ -134,7 +131,7 @@ public class Robot extends LoggedRobot {
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
-        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.nodes).map((node) -> node.pose.getOurs()).collect_array(Pose3d[]::new));
+        Mechanism3d.logAscopeAxes();
     }
 
     @Override
