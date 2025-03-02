@@ -93,11 +93,8 @@ public class QuestNavIOQuest3S implements QuestNavIO {
 
     // Gets the estimated pose of the Quest system, factoring in offsets.
     private Pose3d getPose() {
-        var translation = getTranslation()
-            // .minus(QuestNavConstants.offset.getTranslation())
-            ;
+        var translation = getTranslation();
         var rotation = getRotation()
-            // .minus(QuestNavConstants.offset.getRotation())
             .minus(new Rotation3d(VecBuilder.fill(0, 0, 1), yawOffset));
         return new Pose3d(translation, rotation);
     }

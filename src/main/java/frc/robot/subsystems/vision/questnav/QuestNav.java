@@ -29,12 +29,13 @@ public class QuestNav extends VirtualSubsystem {
         Logger.processInputs("Inputs/QuestNav/" + camMeta.hardwareName, inputs);
         io.cleanUp();
 
-        Logger.recordOutput("QuestNav/Pose", getPose());
+        Logger.recordOutput("QuestNav/Pose", inputs.cameraPose);
+        Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
 
         notConnectedAlert.set(!inputs.isConnected);
     }
 
-    public Pose3d getPose() {
+    public Pose3d getRobotPose() {
         return inputs.cameraPose.transformBy(camMeta.mount.getRobotRelative().inverse());
     }
 }
