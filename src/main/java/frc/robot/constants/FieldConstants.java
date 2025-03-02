@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import frc.robot.subsystems.climber.ClimberConstants;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
@@ -280,6 +281,10 @@ public final class FieldConstants {
             public int getIndex() {
                 return Pipe.getIndex(rack, side);
             }
+
+            public char getLetter() {
+                return (char) (getIndex() + 'A');
+            }
         }
 
         public static final class Branch {
@@ -412,9 +417,89 @@ public final class FieldConstants {
         public static StagedAlgae getStagedAlgae(Rack rack) {
             return stagedAlgae[rack.ordinal()];
         }
-
+    
         public static StagedAlgae getStagedAlgae(int rack) {
             return getStagedAlgae(Rack.values()[rack]);
         }
+    }
+
+    public static final class Barge {
+        private final static Pose2d bargeMidpoint = new Pose2d(
+            new Translation2d(
+                Meters.of(8.774113),
+                Meters.of(6.130925)
+            ),
+            Rotation2d.kZero
+        );
+        private final static Transform2d bargeRightScoringTransform = new Transform2d(
+            new Translation2d(
+                Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Meters.of(10.90600).unaryMinus()
+            ),
+            Rotation2d.kZero
+        );
+        private final static Transform2d bargeCenterScoringTransform = new Transform2d(
+            new Translation2d(
+                Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Meters.zero()
+            ),
+            Rotation2d.kZero
+        );
+        private final static Transform2d bargeLeftScoringTransform = new Transform2d(
+            new Translation2d(
+                Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Meters.of(1.0907522)
+            ),
+            Rotation2d.kZero
+        );
+
+        public static final AllianceFlipped<Pose2d> rightBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeRightScoringTransform));
+        public static final AllianceFlipped<Pose2d> centerBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeCenterScoringTransform));
+        public static final AllianceFlipped<Pose2d> leftBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeLeftScoringTransform));
+
+        // TODO
+        public static final RobotFlippedSuperstructureState superstructurePosition = new RobotFlippedSuperstructureState(
+            SuperstructureState.fromRobotSpace(
+                new Pose2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper,
+                        Meters.of(2.26200)
+                    ),
+                    Rotation2d.kZero
+                )
+                .transformBy(SuperstructureConstants.algaeOuttakeForwardTransform)
+            ),
+            SuperstructureState.fromParts(
+                Degrees.of(0),
+                ElevatorConstants.maxLength,
+                Degrees.of(0)
+            )
+        );
+
+        public static enum Cage {
+            LeftCage(Meters.of(5.0784252)),
+            MiddleCage(Meters.of(6.169025)),
+            RightCage(Meters.of(7.2596248))
+            ;
+            public final AllianceFlipped<Pose2d> robotPose;
+            private final Translation2d transform;
+            private final Transform2d scoringTransform;
+            private final Distance minimumScoringDistance = Meters.of(0.06809);
+            Cage (Distance yDistance) {
+                this.transform = new Translation2d(
+                    Meters.of(8.7741252),
+                    yDistance
+                );
+                this.scoringTransform = new Transform2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(minimumScoringDistance).plus(ClimberConstants.climberBackwardOffset).unaryMinus(),
+                        Meters.zero()
+                    ),
+                    Rotation2d.k180deg
+                );
+                robotPose = AllianceFlipped.fromBlue(new Pose2d(transform, Rotation2d.kZero).transformBy(scoringTransform), FieldFlipType.XenterLineMirror);
+            }
+        }
+    
     }
 }

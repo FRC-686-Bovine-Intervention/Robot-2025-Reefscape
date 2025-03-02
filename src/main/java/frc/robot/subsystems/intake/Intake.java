@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.robotStructure.GamepiecePose;
 
-public class Intake extends SubsystemBase{
+public class Intake extends SubsystemBase {
     private final IntakeIO io;
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 

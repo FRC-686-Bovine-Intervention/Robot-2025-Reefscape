@@ -184,6 +184,18 @@ public class Superstructure extends SubsystemBase {
         return goToSetpointSequenced(SuperstructureState.defense);
     }
 
+    public Command prepareToClimb() {
+        return goToSetpointSequenced(SuperstructureState.climb);
+    }
+
+    public Command climb() {
+        return goToSetpointSequenced(getCurrentState());
+    }
+
+    public Command fold() {
+        return goToSetpointSequenced(SuperstructureState.fold);
+    }
+
     public Command pivotVoltage(DoubleSupplier voltage) {
         var subsystem = this;
         return new Command() {
@@ -226,6 +238,7 @@ public class Superstructure extends SubsystemBase {
         return new Command() {
             {
                 addRequirements(subsystem);
+                setName("Superstructure setpoint");
             }
             @Override
             public void execute() {
@@ -318,6 +331,16 @@ public class Superstructure extends SubsystemBase {
             PivotConstants.minAngle,
             ElevatorConstants.minLength,
             Degrees.of(110)
+        );
+        public static final SuperstructureState climb = new SuperstructureState(
+            Degrees.of(100), 
+            Meters.zero(),
+            Degrees.of(50).minus(Degrees.of(70))
+        );
+        public static final SuperstructureState fold = new SuperstructureState(
+            Degrees.of(-20), 
+            Meters.zero(),
+            Degrees.of(90).minus(Degrees.of(70))
         );
         public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             return new SuperstructureState(

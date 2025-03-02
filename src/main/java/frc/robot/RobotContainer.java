@@ -25,6 +25,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
+import frc.robot.auto.routines.DrivePastLine;
+import frc.robot.auto.routines.ScoreAlgaeAndCoral;
+import frc.robot.auto.routines.ScoreCoral;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
 import frc.robot.constants.FieldConstants;
@@ -33,6 +36,8 @@ import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.climber.ClimberIO;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
@@ -84,6 +89,7 @@ public class RobotContainer {
     public final Drive drive;
     public final Superstructure superstructure;
     public final Intake intake;
+    // public final Climber climber;
     public final ApriltagVision apriltagVision;
     // public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
@@ -153,6 +159,7 @@ public class RobotContainer {
                     new Wrist(new WristIOSim())
                 );
                 intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                // climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
                 // bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
@@ -172,6 +179,7 @@ public class RobotContainer {
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
+                // climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
                 // bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
@@ -414,6 +422,9 @@ public class RobotContainer {
     private void configureAutos() {
         AutoPaths.preload();
         var selector = new AutoSelector("Auto Selector");
+        selector.addDefaultRoutine(new ScoreCoral(this));
+        selector.addRoutine(new ScoreAlgaeAndCoral(this));
+        selector.addRoutine(new DrivePastLine(this));
 
         new AutoManager(selector);
     }

@@ -33,4 +33,12 @@ public class SuperstructureConstants {
         ),
         Rotation2d.kZero
     ).inverse();
+
+    public static final Transform2d algaeOuttakeForwardTransform = new Transform2d(
+        new Translation2d(
+            Inches.of(2),
+            Inches.zero()
+        ),
+        Rotation2d.kZero
+    );
 }

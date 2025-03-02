@@ -2,6 +2,8 @@ package frc.robot.auto;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -16,6 +18,10 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
+import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
+import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.Reef.Pipe;
+import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.util.flipping.AllianceFlipUtil;
@@ -48,6 +54,45 @@ public class AutoCommons {
                 () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
                 () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
             ));
+    }
+
+    public static final Map.Entry<String, Pipe>[] pipeOptions =
+        IntStream.range(0, FieldConstants.Reef.pipes.length)
+            .mapToObj(i -> Settings.option("Pipe " + FieldConstants.Reef.pipes[i].getLetter(), FieldConstants.Reef.pipes[i]))
+            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
+    
+    public static final Map.Entry<String, Rack>[] rackOptions = 
+        IntStream.range(0, FieldConstants.Reef.Rack.values().length)
+        .mapToObj(i -> Settings.option("Rack " + i, FieldConstants.Reef.Rack.values()[i]))
+        .toArray((IntFunction<Map.Entry<String, Rack>[]>) Map.Entry[]::new);
+
+    public static enum BargePosition {
+        LEFT,
+        CENTER,
+        RIGHT
+    }
+    public static enum CoralStationPosition {
+        CLOSE,
+        MID,
+        FAR
+    }
+
+    public static String getBargePositionAsString(BargePosition _bargePosition){
+        return switch(_bargePosition){
+            case LEFT -> "BargeLeft";
+            case CENTER -> "BargeCenter";
+            case RIGHT -> "BargeRight";
+            default -> null;
+        };
+    }
+
+    public static String getCoralStationPositionAsString(CoralStationPosition _stationPosition){
+        return switch (_stationPosition) {
+            case CLOSE -> "Close";
+            case MID -> "Mid";
+            case FAR -> "Far";
+            default -> null;
+        };
     }
 
     public static class AutoPaths {
