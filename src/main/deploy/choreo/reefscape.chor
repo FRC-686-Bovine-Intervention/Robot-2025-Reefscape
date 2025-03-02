@@ -67,6 +67,13 @@
      "val":0.6604
     }
    },
+   "MaxVelocity":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"3 m / s",
+     "val":3.0
+    }
+   },
    "RackDelta":{
     "dimension":"Angle",
     "var":{
