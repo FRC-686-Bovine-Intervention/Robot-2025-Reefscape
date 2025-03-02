@@ -68,7 +68,10 @@ import frc.robot.subsystems.superstructure.wrist.WristIO;
 import frc.robot.subsystems.superstructure.wrist.WristIOKraken;
 import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
+import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
+import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants;
 import frc.robot.subsystems.vision.bucket.BucketVision;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
@@ -82,7 +85,7 @@ public class RobotContainer {
     public final Superstructure superstructure;
     public final Intake intake;
     public final ApriltagVision apriltagVision;
-    public final BucketVision bucketVision;
+    // public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
     public final ObjectiveTracker objectiveTracker;
 
@@ -112,29 +115,29 @@ public class RobotContainer {
                 );
                 intake = new Intake(new IntakeIOFalcon());
                 apriltagVision = new ApriltagVision(
-                    // new ApriltagCamera(
-                    //     ApriltagVisionConstants.frontLeftApriltagCamera,
-                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera)
-                    // ),
-                    // new ApriltagCamera(
-                    //     ApriltagVisionConstants.frontRightApriltagCamera,
-                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera)
-                    // ),
-                    // new ApriltagCamera(
-                    //     ApriltagVisionConstants.backLeftApriltagCamera,
-                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera)
-                    // ),
-                    // new ApriltagCamera(
-                    //     ApriltagVisionConstants.backRightApriltagCamera,
-                    //     new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
-                    // )
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontLeftApriltagCamera,
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera)
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontRightApriltagCamera,
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera)
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backLeftApriltagCamera,
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera)
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backRightApriltagCamera,
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
+                    )
                 );
-                bucketVision = new BucketVision(
-                    // new BucketCamera(
-                    //     BucketVisionConstants.bucketCamera,
-                    //     new BucketCameraIOPhotonVision(BucketVisionConstants.bucketCamera)
-                    // )
-                );
+                // bucketVision = new BucketVision(
+                //     // new BucketCamera(
+                //     //     BucketVisionConstants.bucketCamera,
+                //     //     new BucketCameraIOPhotonVision(BucketVisionConstants.bucketCamera)
+                //     // )
+                // );
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
             break;
             case SIM:
@@ -151,7 +154,7 @@ public class RobotContainer {
                 );
                 intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
                 apriltagVision = new ApriltagVision();
-                bucketVision = new BucketVision();
+                // bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
             break;
             default:
@@ -170,7 +173,7 @@ public class RobotContainer {
                 );
                 intake = new Intake(new IntakeIO() {});
                 apriltagVision = new ApriltagVision();
-                bucketVision = new BucketVision();
+                // bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
             break;
         }
@@ -178,11 +181,10 @@ public class RobotContainer {
         
 
         drive.structureRoot
-            .addChild(VisionConstants.frontLeftModuleMount)
-            .addChild(VisionConstants.frontRightModuleMount)
-            .addChild(VisionConstants.backLeftModuleMount)
-            .addChild(VisionConstants.backRightModuleMount)
-            .addChild(VisionConstants.flagStickMount)
+            .addChild(VisionConstants.frontLeftMount)
+            .addChild(VisionConstants.frontRightMount)
+            .addChild(VisionConstants.backLeftMount)
+            .addChild(VisionConstants.backRightMount)
             .addChild(superstructure.pivot.mech
                 .addChild(superstructure.elevator.stage2Mech
                     .addChild(superstructure.elevator.stage3Mech
