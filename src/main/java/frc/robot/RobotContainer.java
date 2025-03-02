@@ -258,7 +258,8 @@ public class RobotContainer {
         );
 
         // superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
-        superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
+        // superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
+        superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.idle));
         intake.setDefaultCommand(intake.idle());
         SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(-60))));
         SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(60))));
