@@ -184,11 +184,10 @@ public class ScoreCoral extends AutoRoutine {
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(startToScorePreload),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+                drive.followBluePath(startToScorePreload).andThen(Commands.print("================ FINISHED PATH ================")),
+                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
             ),
-            Commands.waitSeconds(2),
-            intake.eject().until(intake.hasCoral.negate())
+            intake.eject().withTimeout(0.75)
         ));
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
@@ -196,11 +195,10 @@ public class ScoreCoral extends AutoRoutine {
             getStationPositionAsString(stationPosition) +
             (shouldUseForwardCoralStation ? " Forward" : "")
         );
-        commands.add(Commands.parallel(
-            drive.followBluePath(preloadToStation),
-            Commands.waitSeconds(2),
+        commands.add(Commands.deadline(
+            intake.intake().until(intake.hasCoral),
             superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()),
-            intake.intake().until(intake.hasCoral.negate())
+            drive.followBluePath(preloadToStation)
         ));
         var stationToScore1 = AutoPaths.loadChoreoTrajectory(
             "Station "
@@ -211,11 +209,10 @@ public class ScoreCoral extends AutoRoutine {
         );
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(stationToScore1),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+                drive.followBluePath(stationToScore1).andThen(Commands.print("================ FINISHED PATH ================")),
+                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
             ),
-            Commands.waitSeconds(2),
-            intake.eject().until(intake.hasCoral.negate())
+            intake.eject().withTimeout(0.75)
         ));
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scoreCoral1.getIndex())+
@@ -223,14 +220,11 @@ public class ScoreCoral extends AutoRoutine {
             getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
         );
-        commands.add(
-            Commands.parallel(
-                drive.followBluePath(coral1ToStation),
-                Commands.waitSeconds(2),
-                superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()),
-                intake.intake().until(intake.hasCoral.negate())
-            )
-        );
+        commands.add(Commands.deadline(
+            intake.intake().until(intake.hasCoral),
+            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()),
+            drive.followBluePath(coral1ToStation)
+        ));
         var stationToScore2 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
@@ -240,14 +234,15 @@ public class ScoreCoral extends AutoRoutine {
         );
         commands.add(Commands.sequence(
             Commands.parallel(
-                drive.followBluePath(stationToScore2),
-                superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward())
+                drive.followBluePath(stationToScore2).andThen(Commands.print("================ FINISHED PATH ================")),
+                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
             ),
-            Commands.waitSeconds(2),
-            intake.eject().until(intake.hasCoral.negate())
+            intake.eject().withTimeout(0.75)
         ));
-        return AutoCommons
-            .setOdometryFlipped(startPosition, drive)
+        return Commands.parallel(
+            AutoCommons.setOdometryFlipped(startPosition, drive),
+            Commands.runOnce(() -> intake.setHasGamepiece(true))
+        )
             .andThen(commands.toArray(Command[]::new));
     }
 

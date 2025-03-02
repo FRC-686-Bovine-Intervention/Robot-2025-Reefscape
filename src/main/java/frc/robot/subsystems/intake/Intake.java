@@ -80,6 +80,10 @@ public class Intake extends SubsystemBase {
         );
     }
 
+    public void setHasGamepiece(boolean has) {
+        this.hasGamepiece = has;
+    }
+
     private Command genCommand(
         String name,
         Supplier<Measure<VoltageUnit>> voltage
