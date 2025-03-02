@@ -86,21 +86,21 @@ public final class FieldConstants {
         private static final Pose2d leftStationMidpoint = AllianceFlipUtil.flip(rightStationMidpoint, FieldFlipType.XenterLineMirror);
         private static final Transform2d centerStationTransform = new Transform2d(
             new Translation2d(
-                RobotConstants.centerToFrontBumper,
+                RobotConstants.centerToFrontBumper.minus(Inches.of(6)),
                 Inches.zero()
             ),
             Rotation2d.kZero
         );
         private static final Transform2d leftStationTransform = new Transform2d(
             new Translation2d(
-                RobotConstants.centerToFrontBumper,
+                RobotConstants.centerToFrontBumper.minus(Inches.of(6)),
                 Inches.of(24)
             ),
             Rotation2d.kZero
         );
         private static final Transform2d rightStationTransform = new Transform2d(
             new Translation2d(
-                RobotConstants.centerToFrontBumper,
+                RobotConstants.centerToFrontBumper.minus(Inches.of(6)),
                 Inches.of(24).unaryMinus()
             ),
             Rotation2d.kZero
@@ -131,7 +131,7 @@ public final class FieldConstants {
             SuperstructureState.fromParts(
                 Degrees.of(85),
                 ElevatorConstants.minLength,
-                Degrees.of(155)
+                Degrees.of(160)
             )
         );
     }
@@ -192,7 +192,7 @@ public final class FieldConstants {
             Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750), new Transform2d(
                 new Translation2d(
                     Inches.of(22),
-                    Inches.of(-1.5)
+                    Inches.of(-2.5)
                 ),
                 new Rotation2d(Degrees.of(-60))
             ).inverse()),

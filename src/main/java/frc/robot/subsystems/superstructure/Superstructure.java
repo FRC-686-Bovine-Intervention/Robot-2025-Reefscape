@@ -272,7 +272,7 @@ public class Superstructure extends SubsystemBase {
                 var elevatorFirst = setpoint.elevatorLength.lt(initialState.elevatorLength);
                 pivotMoveCondition = () -> !elevatorFirst || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
                 elevatorMoveCondition = () -> elevatorFirst || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
-                wristMoveCondition = elevatorMoveCondition;
+                wristMoveCondition = () -> elevatorFirst || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
             }
             @Override
             public void execute() {
