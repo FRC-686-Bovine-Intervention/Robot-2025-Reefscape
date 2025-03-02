@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import frc.robot.constants.FieldConstants.Reef;
+import frc.robot.constants.FieldConstants;
 import frc.robot.constants.RobotConstants;
 import frc.util.flipping.AllianceFlipped;
 
@@ -17,53 +18,46 @@ public final class AutoConstants {
 
     public static final Distance startLineX = Inches.of(297.490611);
     public static final Distance startX = startLineX.minus(RobotConstants.centerToFrontBumper);
-    public static final AllianceFlipped<Pose2d> startFarLeft = 
+    public static final AllianceFlipped<Pose2d> startBlueCageMiddle = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            Reef.pipes[9].robotPose.getBlue().getForward().getMeasureY(),
+            FieldConstants.Barge.Cage.MiddleCage.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startRemoteLeft = 
+    public static final AllianceFlipped<Pose2d> startBlueCageOuter = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            startFarLeft.getBlue().getMeasureY().plus(RobotConstants.centerToFrontBumper.times(3)),
+            FieldConstants.Barge.Cage.OuterCage.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startLeftCage =
+    public static final AllianceFlipped<Pose2d> startBlueCageInner =
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            Reef.pipes[8].robotPose.getBlue().getForward().getMeasureY(),
+            FieldConstants.Barge.Cage.InnerCage.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startLeftCenter =
+        public static final AllianceFlipped<Pose2d> startRedCageMiddle = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            Reef.pipes[7].robotPose.getBlue().getForward().getMeasureY(),
+            FieldConstants.fieldWidth.minus(FieldConstants.Barge.Cage.MiddleCage.robotPose.getBlue().getMeasureY()),
             Rotation2d.k180deg
         ));
-
-    public static final AllianceFlipped<Pose2d> startFarRight = 
+    public static final AllianceFlipped<Pose2d> startRedCageOuter = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            Reef.pipes[4].robotPose.getBlue().getForward().getMeasureY(),
+            FieldConstants.fieldWidth.minus(FieldConstants.Barge.Cage.OuterCage.robotPose.getBlue().getMeasureY()),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startRemoteRight = 
+    public static final AllianceFlipped<Pose2d> startRedCageInner =
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            startFarRight.getBlue().getMeasureY().minus(RobotConstants.centerToFrontBumper.times(3)),
+            FieldConstants.fieldWidth.minus(FieldConstants.Barge.Cage.InnerCage.robotPose.getBlue().getMeasureY()),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startRightCage =
+    public static final AllianceFlipped<Pose2d> startDeadCenter =
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
-            Reef.pipes[5].robotPose.getBlue().getForward().getMeasureY(),
-            Rotation2d.k180deg
-        ));
-    public static final AllianceFlipped<Pose2d> startRightCenter =
-        AllianceFlipped.fromBlue(new Pose2d(
-            startX,
-            Reef.pipes[6].robotPose.getBlue().getForward().getMeasureY(),
+            FieldConstants.fieldWidth.div(2),
             Rotation2d.k180deg
         ));
 }

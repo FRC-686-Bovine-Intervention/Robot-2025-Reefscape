@@ -78,7 +78,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         var bargePosition = ScoreAlgaeAndCoral.bargePosition.getResponse();
         var scoreAlgae = ScoreAlgaeAndCoral.scoreAlgae.getResponse();
         var commands = new ArrayList<Command>();
-        var startPosition = scorePreloadPipe.equals(FieldConstants.Reef.pipes[6]) ? AutoConstants.startRightCenter : AutoConstants.startLeftCenter;
+        var startPosition = AutoConstants.startDeadCenter;
 
         var startToScorePreload = AutoPaths.loadChoreoTrajectory("Start To " + scorePreloadPipe.getLetter());
         commands.add(Commands.sequence(

@@ -453,9 +453,9 @@ public final class FieldConstants {
         );
 
         public static enum Cage {
-            LeftCage(Meters.of(5.0784252)),
+            InnerCage(Meters.of(5.0784252)),
             MiddleCage(Meters.of(6.169025)),
-            RightCage(Meters.of(7.2596248))
+            OuterCage(Meters.of(7.2596248))
             ;
             public final AllianceFlipped<Pose2d> robotPose;
             private final Translation2d transform;
