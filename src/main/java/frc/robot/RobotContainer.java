@@ -365,7 +365,7 @@ public class RobotContainer {
                 }
             },
             Set.of(superstructure)
-        ).alongWith(intake.intake())); //Intake/Eject
+        ).alongWith(intake.intake()).until(intake.hasCoral)); //Intake/Eject
         driveController.b().whileTrue(intake.eject());
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
         driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend

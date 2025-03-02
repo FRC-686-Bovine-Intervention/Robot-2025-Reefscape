@@ -38,8 +38,8 @@ public class ElevatorIOKraken implements ElevatorIO {
 
     private final LoggedTunableLinearProfile profileConsts = new LoggedTunableLinearProfile(
         "Elevator/Profile",
-        InchesPerSecond.of(8),
-        InchesPerSecond.per(Second).of(16)
+        InchesPerSecond.of(12),
+        InchesPerSecond.per(Second).of(24)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Elevator/FF",
