@@ -177,15 +177,15 @@ public final class FieldConstants {
             Level1(Meters.of(0.592953), Degrees.of(35), Meters.of(0.779254)),
             Level2(Meters.of(0.792953), Degrees.of(35), Meters.of(0.779254), new Transform2d(
                 new Translation2d(
-                    Inches.of(19),
-                    Inches.of(-3.5)
+                    Inches.of(20),
+                    Inches.of(-5.5)
                 ),
                 new Rotation2d(Degrees.of(-20))
             ).inverse()),
             Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254), new Transform2d(
                 new Translation2d(
-                    Inches.of(20),
-                    Inches.of(-3.5)
+                    Inches.of(21),
+                    Inches.of(-5.5)
                 ),
                 new Rotation2d(Degrees.of(-20))
             ).inverse()),
