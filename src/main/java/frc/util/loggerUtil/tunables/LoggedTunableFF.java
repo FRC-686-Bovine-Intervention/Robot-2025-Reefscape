@@ -5,8 +5,7 @@ import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.math.controller.ArmFeedforward;
 
 public class LoggedTunableFF {
     private final LoggedTunableNumber kS;
@@ -25,13 +24,11 @@ public class LoggedTunableFF {
         return LoggedTunableNumber.hasChanged(hashCode, kS, kG, kV, kA);
     }
 
-    public TrapezoidProfile getTrapezoidProfile() {
-        return new TrapezoidProfile(
-            new Constraints(
-                kV.get(),
-                kA.get()
-            )
-        );
+    public void update(ArmFeedforward ff) {
+        ff.setKs(kS.get());
+        ff.setKg(kG.get());
+        ff.setKv(kV.get());
+        ff.setKa(kA.get());
     }
 
     public void update(SlotConfigs ff) {
