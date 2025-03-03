@@ -22,5 +22,7 @@ public interface PivotIO {
 
     public default void setPosition(Measure<AngleUnit> position) {}
 
+    public default void setFeedForward(Measure<VoltageUnit> feedForward) {}
+
     public default void stop() {}
 }

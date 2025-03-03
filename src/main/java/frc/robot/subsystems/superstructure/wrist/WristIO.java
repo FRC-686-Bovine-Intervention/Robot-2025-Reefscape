@@ -14,9 +14,14 @@ public interface WristIO {
         LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor motor = new LoggedEncodedMotor();
     }
+    
     public default void updateInputs (WristIOInputs inputs) {}
 
     public default void setVoltage(Measure<VoltageUnit> voltage) {}
+    
     public default void setAngle(Measure<AngleUnit> angle) {}
+
+    public default void setFeedForward(Measure<VoltageUnit> feedForward) {}
+
     public default void stop() {}
 }

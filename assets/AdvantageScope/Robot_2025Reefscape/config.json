@@ -10,14 +10,14 @@
             "rotations": [{ "axis": "z", "degrees": -7.5 }],
             "position": [-0.083008,0.244626,0.396240],
             "resolution": [1280, 800],
-            "fov": 70
+            "fov": 80
         },
         {
             "name": "Front Right",
             "rotations": [{ "axis": "z", "degrees": 7.5 }],
             "position": [-0.083008,-0.244626,0.396240],
             "resolution": [1280, 800],
-            "fov": 70
+            "fov": 80
         },
         {
             "name": "Back Left",

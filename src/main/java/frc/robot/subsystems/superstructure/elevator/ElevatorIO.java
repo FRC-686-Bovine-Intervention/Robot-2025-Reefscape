@@ -12,8 +12,7 @@ public interface ElevatorIO {
     @AutoLog
     public static class ElevatorIOInputs {
         LoggedEncoder encoder = new LoggedEncoder();
-        LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
-        LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
+        LoggedEncodedMotor motor = new LoggedEncodedMotor();
     } 
 
     public default void updateInputs(ElevatorIOInputs inputs) {}
@@ -21,6 +20,8 @@ public interface ElevatorIO {
     public default void setVoltage(Measure<VoltageUnit> voltage) {}
 
     public default void setLength(Measure<DistanceUnit> length) {}
+
+    public default void setFeedForward(Measure<VoltageUnit> feedForward) {}
 
     public default void stop() {}
 }

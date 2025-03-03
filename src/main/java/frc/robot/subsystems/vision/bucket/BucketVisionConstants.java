@@ -14,6 +14,6 @@ public class BucketVisionConstants {
 
     public static final BucketCameraConstants bucketCamera = new BucketCameraConstants(
         "Bucket Cam",
-        VisionConstants.flagStickMount
+        VisionConstants.driveCamMount
     );
 }

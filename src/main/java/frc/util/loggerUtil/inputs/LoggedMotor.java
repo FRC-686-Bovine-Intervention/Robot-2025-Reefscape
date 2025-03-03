@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.units.measure.MutCurrent;
@@ -34,6 +35,11 @@ public class LoggedMotor implements StructSerializable {
         this.appliedVoltage.mut_replace(talon.getMotorOutputVoltage(), Volts);
         this.current.mut_replace(talon.getStatorCurrent(), Amps);
         this.temperature.mut_replace(talon.getTemperature(), Celsius);
+    }
+    public void updateFrom(TalonFXS talon) {
+        this.appliedVoltage.mut_replace(talon.getMotorVoltage().getValue());
+        this.current.mut_replace(talon.getStatorCurrent().getValue());
+        this.temperature.mut_replace(talon.getDeviceTemp().getValue());
     }
 
     public void updateFrom(SparkMax spark) {
@@ -85,7 +91,7 @@ public class LoggedMotor implements StructSerializable {
 
         @Override
         public String getSchema() {
-            return "double AppliedVolts;double CurrentAmps;double TempCelsius";
+            return "double AppliedVolts;double CurrentAmps;double TempKelvin";
         }
 
         @Override
