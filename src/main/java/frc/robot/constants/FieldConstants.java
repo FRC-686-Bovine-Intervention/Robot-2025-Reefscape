@@ -23,6 +23,7 @@ import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstruc
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
+import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlipped;
@@ -162,14 +163,14 @@ public final class FieldConstants {
             public final Pipe rightPipe;
             public final StagedAlgae stagedAlgae;
 
-            public final AllianceFlipped<Pose2d> algaeIntakeRobotPose;
+            public final AllianceFlipped<RobotFlippedRobotPose> algaeIntakeRobotPose;
 
             Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
                 this.leftPipe = new Pipe(this, Side.Left);
                 this.rightPipe = new Pipe(this, Side.Right);
                 this.stagedAlgae = new StagedAlgae(this, algaeLevel);
-                this.algaeIntakeRobotPose = AllianceFlipped.fromBlue(origin.transformBy(scoringTransform));
+                this.algaeIntakeRobotPose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardRobotFlipped(origin.transformBy(scoringTransform)));
             }
         }
 
@@ -421,6 +422,22 @@ public final class FieldConstants {
         public static StagedAlgae getStagedAlgae(int rack) {
             return getStagedAlgae(Rack.values()[rack]);
         }
+    }
+
+    public static final class Processor {
+        public static final AllianceFlipped<Pose2d> processorTargetPose = AllianceFlipped.fromBlue(new Pose2d(
+            new Translation2d(
+                Meters.of(6.057646),
+                Algae.radius.times(2).plus(RobotConstants.centerToFrontBumper).plus(Inches.of(6))
+            ),
+            Rotation2d.kCW_90deg
+        ));
+
+        public static final SuperstructureState superstructureState = SuperstructureState.fromParts(
+            PivotConstants.minAngle,
+            ElevatorConstants.minLength,
+            Degrees.of(-10)
+        );
     }
 
     public static final class Barge {
