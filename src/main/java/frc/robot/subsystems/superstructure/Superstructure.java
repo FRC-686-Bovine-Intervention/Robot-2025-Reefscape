@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -257,52 +258,84 @@ public class Superstructure extends SubsystemBase {
                 setName("Superstructure Setpoint Sequenced");
             }
             private SuperstructureState initialState;
-            private BooleanSupplier pivotMoveCondition;
-            private BooleanSupplier elevatorMoveCondition;
-            private BooleanSupplier wristMoveCondition;
-            private boolean pivotMoving;
-            private boolean elevatorMoving;
-            private boolean wristMoving;
+            private Supplier<Angle> pivotTarget;
+            private Supplier<Distance> elevatorTarget;
+            private Supplier<Angle> wristTarget;
             @Override
             public void initialize() {
-                pivotMoving = false;
-                elevatorMoving = false;
-                wristMoving = false;
-                initialState = getCurrentState();
-                var elevatorFirst = setpoint.elevatorLength.lt(initialState.elevatorLength);
-                pivotMoveCondition = () -> !elevatorFirst || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
-                elevatorMoveCondition = () -> elevatorFirst || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
-                wristMoveCondition = () -> elevatorFirst || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
+                this.initialState = getCurrentState();
+                var extending = setpoint.elevatorLength.gt(initialState.elevatorLength);
+                var elevatorMovingSignificant = !MeasureUtil.isNear(setpoint.elevatorLength, initialState.elevatorLength, Inches.of(36));
+                var wristDown = setpoint.wristAngle.lt(initialState.wristAngle.minus(Degrees.of(30)));
+                // pivotMoveCondition = () -> extending || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
+                // elevatorMoveCondition = () -> !extending || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
+                // wristMoveCondition = () -> !extending || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
+                this.pivotTarget = () -> {
+                    if (extending) {
+                        if (wristDown) {
+                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
+                                return setpoint.pivotAngle;
+                            } else {
+                                return Degrees.of(90);
+                            }
+                        } else {
+                            return setpoint.pivotAngle;
+                        }
+                    } else {
+                        if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(10))) {
+                            return setpoint.pivotAngle;
+                        } else {
+                            if (elevatorMovingSignificant) {
+                                return Degrees.of(90);
+                            } else {
+                                return initialState.pivotAngle;
+                            }
+                        }
+                    }
+                };
+                this.elevatorTarget = () -> {
+                    if (extending) {
+                        if (MeasureUtil.isNear(this.pivotTarget.get(), pivot.getAngle(), Degrees.of(5))) {
+                            return setpoint.elevatorLength;
+                        } else {
+                            return elevator.getLength();
+                        }
+                    } else {
+                        return setpoint.elevatorLength;
+                    }
+                };
+                this.wristTarget = () -> {
+                    if (extending) {
+                        if (wristDown) {
+                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30))) {
+                                return setpoint.wristAngle;
+                            } else {
+                                return initialState.wristAngle;
+                            }
+                        } else {
+                            return setpoint.wristAngle;
+                        }
+                    } else {
+                        if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
+                            return setpoint.wristAngle;
+                        } else {
+                            return Degrees.of(10);
+                        }
+                    }
+                };
             }
             @Override
             public void execute() {
-                if (!pivotMoving) {
-                    pivotMoving = pivotMoveCondition.getAsBoolean();
-                }
-                if (!elevatorMoving) {
-                    elevatorMoving = elevatorMoveCondition.getAsBoolean();
-                }
-                if (!wristMoving) {
-                    wristMoving = wristMoveCondition.getAsBoolean();
-                }
-                if (pivotMoving) {
-                    pivot.setAngle(setpoint.pivotAngle);
-                } else {
-                    pivot.setAngle(initialState.pivotAngle);
-                }
-                if (elevatorMoving) {
-                    elevator.setLength(setpoint.elevatorLength);
-                } else {
-                    elevator.setLength(initialState.elevatorLength);
-                }
-                if (wristMoving) {
-                    wrist.setAngle(setpoint.wristAngle);
-                } else {
-                    wrist.setAngle(initialState.wristAngle);
-                }
-                Logger.recordOutput("Superstructure/Setpoint/Pivot Moving", pivotMoving);
-                Logger.recordOutput("Superstructure/Setpoint/Elevator Moving", elevatorMoving);
-                Logger.recordOutput("Superstructure/Setpoint/Wrist Moving", wristMoving);
+                var pivotSetpoint = pivotTarget.get();
+                var elevatorSetpoint = elevatorTarget.get();
+                var wristSetpoint = wristTarget.get();
+                pivot.setAngle(pivotSetpoint);
+                elevator.setLength(elevatorSetpoint);
+                wrist.setAngle(wristSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Pivot Setpoint", pivotSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Elevator Setpoint", elevatorSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Wrist Setpoint", wristSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Mech Transforms", new SuperstructureState(pivotSetpoint, elevatorSetpoint, wristSetpoint).getMechTransforms());
             }
             @Override
             public void end(boolean interrupted) {
