@@ -9,7 +9,6 @@ import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoCommons;
 import frc.robot.auto.AutoCommons.AutoPaths;
@@ -17,12 +16,12 @@ import frc.robot.auto.AutoConstants;
 import frc.robot.auto.AutoRoutine;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
 import frc.util.flipping.AllianceFlipped;
 import frc.util.misc.MathExtraUtil;
 
@@ -182,24 +181,18 @@ public class ScoreCoral extends AutoRoutine {
             startToScorePath = "Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
         }
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
-        commands.add(Commands.sequence(
-            Commands.parallel(
-                drive.followBluePath(startToScorePreload).andThen(Commands.print("================ FINISHED PATH ================")),
-                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
-            ),
-            intake.eject().withTimeout(0.75)
-        ));
+        commands.add(AutoCommons.scoreOnReef(startToScorePreload, Level.Level4, Direction.Forward, drive, superstructure, intake));
+
+
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
             " To Station " +
             getStationPositionAsString(stationPosition) +
             (shouldUseForwardCoralStation ? " Forward" : "")
         );
-        commands.add(Commands.deadline(
-            intake.intake().until(intake.hasCoral),
-            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()),
-            drive.followBluePath(preloadToStation)
-        ));
+        commands.add(AutoCommons.pickupCoralFromStation(preloadToStation, Direction.Backward, drive, superstructure, intake));
+
+
         var stationToScore1 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
@@ -207,24 +200,18 @@ public class ScoreCoral extends AutoRoutine {
             + " To "
             + getBranchLetterFromIndex(scoreCoral1.getIndex())
         );
-        commands.add(Commands.sequence(
-            Commands.parallel(
-                drive.followBluePath(stationToScore1).andThen(Commands.print("================ FINISHED PATH ================")),
-                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
-            ),
-            intake.eject().withTimeout(0.75)
-        ));
+        commands.add(AutoCommons.scoreOnReef(stationToScore1, Level.Level4, Direction.Forward, drive, superstructure, intake));
+
+
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scoreCoral1.getIndex())+
             " To Station "+
             getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
         );
-        commands.add(Commands.deadline(
-            intake.intake().until(intake.hasCoral),
-            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()),
-            drive.followBluePath(coral1ToStation)
-        ));
+        commands.add(AutoCommons.pickupCoralFromStation(coral1ToStation, Direction.Backward, drive, superstructure, intake));
+        
+
         var stationToScore2 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
@@ -232,18 +219,12 @@ public class ScoreCoral extends AutoRoutine {
             + " To "
             + getBranchLetterFromIndex(scoreCoral2.getIndex())
         );
-        commands.add(Commands.sequence(
-            Commands.parallel(
-                drive.followBluePath(stationToScore2).andThen(Commands.print("================ FINISHED PATH ================")),
-                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
-            ),
-            intake.eject().withTimeout(0.75)
-        ));
-        return Commands.parallel(
-            AutoCommons.setOdometryFlipped(startPosition, drive),
-            Commands.runOnce(() -> intake.setHasGamepiece(true))
-        )
-            .andThen(commands.toArray(Command[]::new));
+        commands.add(AutoCommons.scoreOnReef(stationToScore2, Level.Level4, Direction.Forward, drive, superstructure, intake));
+
+        return
+            AutoCommons.setOdometryFlipped(startPosition, drive)
+            .andThen(commands.toArray(Command[]::new))
+        ;
     }
 
     private static char getBranchLetterFromIndex(int index){
