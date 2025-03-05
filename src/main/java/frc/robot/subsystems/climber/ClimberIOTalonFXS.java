@@ -12,7 +12,7 @@ import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 
 public class ClimberIOTalonFXS implements ClimberIO {
-    protected final TalonFXS motor = HardwareDevices.climberMotorID.talonFXS();
+    protected final TalonFXS motor = HardwareDevices.climberCageMotorID.talonFXS();
 
     public ClimberIOTalonFXS() {
         var motorConfig = new TalonFXSConfiguration();

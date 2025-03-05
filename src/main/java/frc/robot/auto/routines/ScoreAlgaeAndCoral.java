@@ -1,4 +1,4 @@
-package frc.robot.auto;
+package frc.robot.auto.routines;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,8 +7,11 @@ import java.util.Map;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
+import frc.robot.auto.AutoCommons;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoCommons.BargePosition;
+import frc.robot.auto.AutoConstants;
+import frc.robot.auto.AutoRoutine;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;

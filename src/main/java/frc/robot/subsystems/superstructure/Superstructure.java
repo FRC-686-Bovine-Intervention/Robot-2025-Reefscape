@@ -53,8 +53,8 @@ public class Superstructure extends SubsystemBase {
 
         var pivotRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(1).div(Seconds.of(1)),
-                Volts.of(1),
+                Volts.of(1).div(Seconds.of(2)),
+                Volts.of(5),
                 Seconds.of(15),
                 (state) -> {
                     Logger.recordOutput("Superstructure/Pivot/SysID/State", state.toString());
@@ -63,8 +63,8 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setVoltage(voltage);
-                    this.elevator.setVoltage(Volts.zero());
-                    this.wrist.setVoltage(Volts.zero());
+                    this.elevator.setLength(ElevatorConstants.minLength);
+                    this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
                     Logger.recordOutput("Superstructure/Pivot/SysID/Voltage", this.pivot.getVoltage());
@@ -81,8 +81,8 @@ public class Superstructure extends SubsystemBase {
         SmartDashboard.putData("SysID/Superstructure/Pivot/Dynamic Reverse", pivotRoutine.dynamic(SysIdRoutine.Direction.kReverse));
         var elevatorRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(1).div(Seconds.of(1)),
-                Volts.of(1),
+                Volts.of(1).div(Seconds.of(2)),
+                Volts.of(5),
                 Seconds.of(15),
                 (state) -> {
                     Logger.recordOutput("Superstructure/Elevator/SysID/State", state.toString());
@@ -90,9 +90,9 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setVoltage(Volts.zero());
+                    this.pivot.setAngle(Degrees.of(90));
                     this.elevator.setVoltage(voltage);
-                    this.wrist.setVoltage(Volts.zero());
+                    this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
                     Logger.recordOutput("Superstructure/Elevator/SysID/Voltage", this.pivot.getVoltage());
@@ -109,8 +109,8 @@ public class Superstructure extends SubsystemBase {
         SmartDashboard.putData("SysID/Superstructure/Elevator/Dynamic Reverse", elevatorRoutine.dynamic(SysIdRoutine.Direction.kReverse));
         var wristRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                Volts.of(1).div(Seconds.of(1)),
-                Volts.of(1),
+                Volts.of(0.5).div(Seconds.of(2)),
+                Volts.of(3),
                 Seconds.of(15),
                 (state) -> {
                     Logger.recordOutput("Superstructure/Wrist/SysID/State", state.toString());
@@ -118,8 +118,8 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setVoltage(Volts.zero());
-                    this.elevator.setVoltage(Volts.zero());
+                    this.pivot.setAngle(Degrees.of(90));
+                    this.elevator.setLength(ElevatorConstants.minLength);
                     this.wrist.setVoltage(voltage);
                 },
                 (log) -> {
@@ -272,7 +272,7 @@ public class Superstructure extends SubsystemBase {
                 var elevatorFirst = setpoint.elevatorLength.lt(initialState.elevatorLength);
                 pivotMoveCondition = () -> !elevatorFirst || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
                 elevatorMoveCondition = () -> elevatorFirst || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
-                wristMoveCondition = () -> true;
+                wristMoveCondition = () -> elevatorFirst || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
             }
             @Override
             public void execute() {
@@ -320,6 +320,8 @@ public class Superstructure extends SubsystemBase {
         public final Distance elevatorLength;
         public final Angle wristAngle;
 
+        public static final SuperstructureState zero = new SuperstructureState(Degrees.zero(), Meters.zero(), Degrees.zero());
+
         public static final SuperstructureState idle = SuperstructureState.fromParts(
             Degrees.of(70),
             ElevatorConstants.minLength,
@@ -340,11 +342,18 @@ public class Superstructure extends SubsystemBase {
             Meters.zero(),
             Degrees.of(90).minus(Degrees.of(70))
         );
+        public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
+            return new SuperstructureState(
+                Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians))),
+                Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLength.in(Meters), ElevatorConstants.maxLength.in(Meters))),
+                Radians.of(MathUtil.clamp(wristAngle.in(Radians), WristConstants.minAngle.in(Radians), WristConstants.maxAngle.in(Radians)))
+            );
+        }
 
-        public SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
-            this.pivotAngle = Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians)));
-            this.elevatorLength = Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLength.in(Meters), ElevatorConstants.maxLength.in(Meters)));
-            this.wristAngle = Radians.of(MathUtil.clamp(wristAngle.in(Radians), WristConstants.minAngle.in(Radians), WristConstants.maxAngle.in(Radians)));
+        private SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
+            this.pivotAngle = pivotAngle;
+            this.elevatorLength = elevatorLength;
+            this.wristAngle = wristAngle;
         }
 
         public static SuperstructureState fromParts(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
@@ -399,6 +408,14 @@ public class Superstructure extends SubsystemBase {
                 stage4Transform,
                 wristTransform,
             };
+        }
+
+        public SuperstructureState plus(SuperstructureState other) {
+            return newConstrained(
+                this.pivotAngle.plus(other.pivotAngle),
+                this.elevatorLength.plus(other.elevatorLength),
+                this.wristAngle.plus(other.wristAngle)
+            );
         }
     }
 
@@ -521,6 +538,13 @@ public class Superstructure extends SubsystemBase {
             } else {
                 return getBackward();
             }
+        }
+
+        public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
+            return new RobotFlippedSuperstructureState(
+                this.forward.plus(forwardOther),
+                this.backward.plus(backwardsOther)
+            );
         }
     }
 

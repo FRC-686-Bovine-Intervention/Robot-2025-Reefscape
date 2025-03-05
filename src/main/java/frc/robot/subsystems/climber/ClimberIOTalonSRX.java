@@ -9,7 +9,7 @@ import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 
 public class ClimberIOTalonSRX implements ClimberIO {
-    protected final TalonSRX motor = HardwareDevices.climberMotorID.talonSRX();
+    protected final TalonSRX motor = HardwareDevices.climberCageMotorID.talonSRX();
 
     public ClimberIOTalonSRX() {
         motor.configContinuousCurrentLimit(20);

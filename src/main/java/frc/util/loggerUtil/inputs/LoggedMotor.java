@@ -91,7 +91,7 @@ public class LoggedMotor implements StructSerializable {
 
         @Override
         public String getSchema() {
-            return "double AppliedVolts;double CurrentAmps;double TempCelsius";
+            return "double AppliedVolts;double CurrentAmps;double TempKelvin";
         }
 
         @Override

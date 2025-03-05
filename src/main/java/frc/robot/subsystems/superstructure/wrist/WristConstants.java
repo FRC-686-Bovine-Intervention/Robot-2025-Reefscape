@@ -19,8 +19,8 @@ public class WristConstants {
         Rotation3d.kZero
     );
 
-    public static final Angle minAngle = Degrees.of(-135);
-    public static final Angle maxAngle = Degrees.of(135);
+    public static final Angle minAngle = Degrees.of(-117.66357421875);
+    public static final Angle maxAngle = Degrees.of(90);
     
     public static final GearRatio motorToSensor = new GearRatio()
         .planetary(1.0/5.0)

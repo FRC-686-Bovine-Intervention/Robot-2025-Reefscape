@@ -1,10 +1,11 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -16,8 +17,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -47,7 +48,7 @@ public class PivotIOFalcon implements PivotIO {
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Pivot/PID",
-        30,
+        150,
         0,
         0
     );
@@ -56,7 +57,12 @@ public class PivotIOFalcon implements PivotIO {
     public PivotIOFalcon() {
         var encoderConfig = new CANcoderConfiguration();
 
-        // cancoder.getConfigurator().apply(encoderConfig);
+        cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
+        encoderConfig.MagnetSensor
+            .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
+        ;
+
+        cancoder.getConfigurator().apply(encoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
@@ -107,6 +113,13 @@ public class PivotIOFalcon implements PivotIO {
             pidConsts.update(config);
             leftMotor.getConfigurator().apply(config);
         }
+
+        Logger.recordOutput("Superstructure/Pivot/Motor/posiion", leftMotor.getPosition().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/veloctiy", leftMotor.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Position", leftMotor.getClosedLoopReference().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Velocity", leftMotor.getClosedLoopReferenceSlope().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/PID error", leftMotor.getClosedLoopError().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/Out", leftMotor.getClosedLoopOutput().getValueAsDouble());
     }
 
     // Set Voltage

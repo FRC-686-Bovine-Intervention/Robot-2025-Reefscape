@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.constants.RobotConstants;
 
-public class WristIOSim extends WristIOFalcon {
+public class WristIOSim extends WristIOKraken {
     private final SingleJointedArmSim wristSim = new SingleJointedArmSim(
         LinearSystemId.identifyPositionSystem(0.1, 0.1),
         DCMotor.getFalcon500(1),
