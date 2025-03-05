@@ -23,7 +23,7 @@ public class CurrentSpikeDetector {
 
     public void update(Current current) {
         if (current.gte(threshold.get())) {
-            timer.restart();
+            timer.start();
         } else {
             timer.stop();
             timer.reset();

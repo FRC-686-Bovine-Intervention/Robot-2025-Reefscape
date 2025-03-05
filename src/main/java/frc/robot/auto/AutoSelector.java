@@ -80,7 +80,7 @@ public class AutoSelector extends VirtualSubsystem {
         );
     }
 
-    public void doThingy(AutoRoutine routine, boolean configurationChanged) {
+    private void doThingy(AutoRoutine routine, boolean configurationChanged) {
         var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
         var config = new AutoConfiguration(alliance, routine.name);
 
@@ -98,18 +98,13 @@ public class AutoSelector extends VirtualSubsystem {
                     var defaultOption = settings.defaultOption().getKey();
                     responseChooser.setOptions(settings.getOptionNames());
                     responseChooser.setDefault(defaultOption);
-                    // System.out.println(new String("a") == new String("a"));
-                    if (Iterator.of(settings.getOptionNames()).inspect(System.out::println).all((option) -> responseChooser.getSelected() != option)) {
+                    if (Iterator.of(settings.getOptionNames()).all((option) -> responseChooser.getSelected() != option)) {
                         responseChooser.setSelected(defaultOption);
                     }
                 } else {
                     var response = responseChooser.getSelected();
                     var last = lastConfiguration.questions().get(question.name);
                     configurationChanged = !Objects.equals(response, last);
-                    if (configurationChanged) {
-                        System.out.println("------ " + question.name + " changed ------");
-                        System.out.println(response + " != " + last);
-                    }
                 }
 
                 var selectedResponse = responseChooser.getSelected();

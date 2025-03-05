@@ -27,6 +27,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
+import frc.robot.auto.routines.DrivePastLine;
+import frc.robot.auto.routines.ScoreAlgaeAndCoral;
+import frc.robot.auto.routines.ScoreCoral;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
@@ -72,7 +75,6 @@ import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants;
-import frc.robot.subsystems.vision.bucket.BucketVision;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
@@ -84,6 +86,7 @@ public class RobotContainer {
     public final Drive drive;
     public final Superstructure superstructure;
     public final Intake intake;
+    // public final Climber climber;
     public final ApriltagVision apriltagVision;
     // public final BucketVision bucketVision;
     public final ManualOverrides manualOverrides;
@@ -153,6 +156,7 @@ public class RobotContainer {
                     new Wrist(new WristIOSim())
                 );
                 intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                // climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
                 // bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
@@ -172,6 +176,7 @@ public class RobotContainer {
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
+                // climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
                 // bucketVision = new BucketVision();
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
@@ -243,11 +248,20 @@ public class RobotContainer {
                     fieldVec.get(1),
                     0
                 );
-                var robotSpeeds = new ChassisSpeeds(
-                    Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                    (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                    0
-                );
+                ChassisSpeeds robotSpeeds;
+                if (driveController.leftTrigger.getAsDouble() > 0.1 && driveController.rightTrigger.getAsDouble() > 0.1) {
+                    robotSpeeds = new ChassisSpeeds(
+                        Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                        0,
+                        0
+                    );
+                } else {
+                    robotSpeeds = new ChassisSpeeds(
+                        0,
+                        (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
+                        0
+                    );
+                }
                 drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
             })
             .withName("Driver Control Field Relative")
@@ -357,7 +371,7 @@ public class RobotContainer {
                 }
             },
             Set.of(superstructure)
-        ).alongWith(intake.intake())); //Intake/Eject
+        ).alongWith(intake.intake()).until(intake.hasCoral)); //Intake/Eject
         driveController.b().whileTrue(intake.eject());
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
         driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend
@@ -402,7 +416,48 @@ public class RobotContainer {
             },
             Set.of(superstructure)
         ));
-        driveController.rightBumper().whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation()).getRotation()))); //Auto drive
+        driveController.leftBumper().and(intake.hasCoral).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> {
+            return Optional.of(objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation()).getRotation());
+        })); //Auto drive
+        driveController.leftBumper().and(intake.hasCoral.negate()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> {
+            var stationPoses = new RobotFlippedRobotPose[] {
+                CoralStation.leftStationLeft.getOurs(),
+                CoralStation.leftStationCenter.getOurs(),
+                CoralStation.leftStationRight.getOurs(),
+                CoralStation.rightStationLeft.getOurs(),
+                CoralStation.rightStationCenter.getOurs(),
+                CoralStation.rightStationRight.getOurs(),
+            };
+            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
+                var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
+                var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
+                return (int) Math.signum(aDistance - bDistance);
+            }).findFirst().get();
+            Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
+            Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
+            return Optional.of(closestStationPose.getClosest(drive.getRotation()).getRotation());
+        }));
+        driveController.rightBumper().and(intake.hasCoral).whileTrue(drive.simplePIDTo(() -> {
+            return objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation());
+        })); //Auto drive
+        driveController.rightBumper().and(intake.hasCoral.negate()).whileTrue(drive.simplePIDTo(() -> {
+            var stationPoses = new RobotFlippedRobotPose[] {
+                CoralStation.leftStationLeft.getOurs(),
+                CoralStation.leftStationCenter.getOurs(),
+                CoralStation.leftStationRight.getOurs(),
+                CoralStation.rightStationLeft.getOurs(),
+                CoralStation.rightStationCenter.getOurs(),
+                CoralStation.rightStationRight.getOurs(),
+            };
+            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
+                var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
+                var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
+                return (int) Math.signum(aDistance - bDistance);
+            }).findFirst().get();
+            Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
+            Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
+            return closestStationPose.getClosest(drive.getRotation());
+        }));
         // driveController.start().toggleOnTrue(null); //Start Climb
         // driveController.back().toggleOnTrue(null); //Climb
         
@@ -414,6 +469,9 @@ public class RobotContainer {
     private void configureAutos() {
         AutoPaths.preload();
         var selector = new AutoSelector("Auto Selector");
+        selector.addDefaultRoutine(new ScoreCoral(this));
+        selector.addRoutine(new ScoreAlgaeAndCoral(this));
+        selector.addRoutine(new DrivePastLine(this));
 
         new AutoManager(selector);
     }
