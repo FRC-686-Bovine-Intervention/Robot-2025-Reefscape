@@ -9,13 +9,13 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.constants.RobotConstants;
 
-public class ElevatorIOSim extends ElevatorIOFalcon {
+public class ElevatorIOSim extends ElevatorIOKraken {
     private final ElevatorSim elevatorSim = new ElevatorSim(
         1,
         1,
-        DCMotor.getFalcon500(2),
+        DCMotor.getKrakenX60(1),
         0,
-        2,
+        ElevatorConstants.stageExtension.in(Meters),
         false,
         0
     );

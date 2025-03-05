@@ -31,13 +31,12 @@ public class PivotConstants {
     );
 
     public static final GearRatio motorToMechanism = new GearRatio()
-        .planetary(1.0/5.0)
-        .planetary(1.0/5.0)
+        .planetary(1.0/9.0)
         .gear(20)
         .gear(66)
         .axle()
         .gear(10)
-        .gear(120)
+        .gear(80)
         .axle()
     ;
     public static final GearRatio sensorToMechanism = new GearRatio()

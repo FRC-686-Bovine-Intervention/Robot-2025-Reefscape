@@ -1,10 +1,11 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -16,8 +17,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -42,12 +43,12 @@ public class PivotIOFalcon implements PivotIO {
         "Pivot/FF",
         0,
         0,
-        Units.rotationsToRadians(0.1),
-        Units.rotationsToRadians(0.1)
+        17,
+        0
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Pivot/PID",
-        0.5,
+        150,
         0,
         0
     );
@@ -56,22 +57,28 @@ public class PivotIOFalcon implements PivotIO {
     public PivotIOFalcon() {
         var encoderConfig = new CANcoderConfiguration();
 
+        cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
+        encoderConfig.MagnetSensor
+            .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
+        ;
+
         cancoder.getConfigurator().apply(encoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.CounterClockwise_Positive)
+            .withInverted(InvertedValue.Clockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(100)
+            .withRotorToSensorRatio(PivotConstants.motorToMechanism.concat(PivotConstants.sensorToMechanism.inverse()).inverse().ratio())
+            .withSensorToMechanismRatio(PivotConstants.sensorToMechanism.inverse().ratio())
         ;
         motorConfig.SoftwareLimitSwitch
-            .withForwardSoftLimitEnable(true)
             .withReverseSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(Degrees.of(100))
-            .withReverseSoftLimitThreshold(Degrees.of(0))
+            .withReverseSoftLimitThreshold(PivotConstants.minAngle)
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(PivotConstants.maxAngle)
         ;
 
         profileConsts.update(motorConfig.MotionMagic);
@@ -81,7 +88,7 @@ public class PivotIOFalcon implements PivotIO {
         leftMotor.getConfigurator().apply(motorConfig);
 
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.Clockwise_Positive)
+            .withInverted(InvertedValue.CounterClockwise_Positive)
         ;
         rightMotor.getConfigurator().apply(motorConfig);
         rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
@@ -106,6 +113,13 @@ public class PivotIOFalcon implements PivotIO {
             pidConsts.update(config);
             leftMotor.getConfigurator().apply(config);
         }
+
+        Logger.recordOutput("Superstructure/Pivot/Motor/posiion", leftMotor.getPosition().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/veloctiy", leftMotor.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Position", leftMotor.getClosedLoopReference().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Velocity", leftMotor.getClosedLoopReferenceSlope().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/PID error", leftMotor.getClosedLoopError().getValueAsDouble());
+        Logger.recordOutput("Superstructure/Pivot/Motor/Out", leftMotor.getClosedLoopOutput().getValueAsDouble());
     }
 
     // Set Voltage
@@ -118,6 +132,11 @@ public class PivotIOFalcon implements PivotIO {
     @Override
     public void setPosition(Measure<AngleUnit> position) {
         leftMotor.setControl(positionRequest.withPosition(position.in(Rotations)));
+    }
+    
+    @Override
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        positionRequest.withFeedForward(feedForward.in(Volts));
     }
 
     // Immediately stop

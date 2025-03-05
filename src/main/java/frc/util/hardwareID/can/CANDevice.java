@@ -5,6 +5,7 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
@@ -29,6 +30,9 @@ public class CANDevice {
     // | Phoenix 6
     public TalonFX talonFX() {
         return new TalonFX(id, bus.name);
+    }
+    public TalonFXS talonFXS() {
+        return new TalonFXS(id, bus.name);
     }
     public CANcoder cancoder() {
         return new CANcoder(id, bus.name);

@@ -36,25 +36,25 @@ public class ApriltagVisionConstants {
 
     public static final ApriltagCameraConstants frontLeftApriltagCamera = new ApriltagCameraConstants(
         "Front Left",
-        VisionConstants.frontLeftModuleMount,
+        VisionConstants.frontLeftMount,
         1.0,
         Meters.of(8)
     );
     public static final ApriltagCameraConstants frontRightApriltagCamera = new ApriltagCameraConstants(
         "Front Right",
-        VisionConstants.frontRightModuleMount,
+        VisionConstants.frontRightMount,
         1.0,
         Meters.of(8)
     );
     public static final ApriltagCameraConstants backLeftApriltagCamera = new ApriltagCameraConstants(
         "Back Left",
-        VisionConstants.backLeftModuleMount,
+        VisionConstants.backLeftMount,
         1.0,
         Meters.of(8)
     );
     public static final ApriltagCameraConstants backRightApriltagCamera = new ApriltagCameraConstants(
         "Back Right",
-        VisionConstants.backRightModuleMount,
+        VisionConstants.backRightMount,
         1.0,
         Meters.of(8)
     );
