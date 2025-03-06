@@ -316,10 +316,10 @@ public class RobotContainer {
         // ));
 
         // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
-        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
-        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
-        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
         driveController.a().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
@@ -361,7 +361,7 @@ public class RobotContainer {
                             return groundAlgaeCommand;
                         } else {
                             var stagedAlgae = algae.get();
-                            if (RobotFlippedSuperstructureState.useForward(stagedAlgae.rack.algaeIntakeRobotPose.getOurs().getRotation(), drive.getRotation())) {
+                            if (RobotFlippedSuperstructureState.useForward(stagedAlgae.rack.algaeIntakeRobotPose.getOurs().getForward().getRotation(), drive.getRotation())) {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
                             } else {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
@@ -416,52 +416,12 @@ public class RobotContainer {
             },
             Set.of(superstructure)
         ));
-        driveController.leftBumper().and(intake.hasCoral).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> {
-            return Optional.of(objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation()).getRotation());
-        })); //Auto drive
-        driveController.leftBumper().and(intake.hasCoral.negate()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> {
-            var stationPoses = new RobotFlippedRobotPose[] {
-                CoralStation.leftStationLeft.getOurs(),
-                CoralStation.leftStationCenter.getOurs(),
-                CoralStation.leftStationRight.getOurs(),
-                CoralStation.rightStationLeft.getOurs(),
-                CoralStation.rightStationCenter.getOurs(),
-                CoralStation.rightStationRight.getOurs(),
-            };
-            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                return (int) Math.signum(aDistance - bDistance);
-            }).findFirst().get();
-            Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
-            Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
-            return Optional.of(closestStationPose.getClosest(drive.getRotation()).getRotation());
-        }));
-        driveController.rightBumper().and(intake.hasCoral).whileTrue(drive.simplePIDTo(() -> {
-            return objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation());
-        })); //Auto drive
-        driveController.rightBumper().and(intake.hasCoral.negate()).whileTrue(drive.simplePIDTo(() -> {
-            var stationPoses = new RobotFlippedRobotPose[] {
-                CoralStation.leftStationLeft.getOurs(),
-                CoralStation.leftStationCenter.getOurs(),
-                CoralStation.leftStationRight.getOurs(),
-                CoralStation.rightStationLeft.getOurs(),
-                CoralStation.rightStationCenter.getOurs(),
-                CoralStation.rightStationRight.getOurs(),
-            };
-            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                return (int) Math.signum(aDistance - bDistance);
-            }).findFirst().get();
-            Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
-            Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
-            return closestStationPose.getClosest(drive.getRotation());
-        }));
+        driveController.leftBumper().and(intake.hasCoral.negate()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> Optional.of(objectiveTracker.getTargetPose().getRotation())));
+        driveController.rightBumper().whileTrue(drive.simplePIDTo(objectiveTracker::getTargetPose)); //Auto drive
         // driveController.start().toggleOnTrue(null); //Start Climb
         // driveController.back().toggleOnTrue(null); //Climb
         
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs())));
+        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())));
     }
 
     private void configureNotifications() {}

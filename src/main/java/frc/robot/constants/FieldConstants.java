@@ -163,14 +163,14 @@ public final class FieldConstants {
             public final Pipe rightPipe;
             public final StagedAlgae stagedAlgae;
 
-            public final AllianceFlipped<Pose2d> algaeIntakeRobotPose;
+            public final AllianceFlipped<RobotFlippedRobotPose> algaeIntakeRobotPose;
 
             Rack(Rotation2d rotation, AlgaeLevel algaeLevel) {
                 this.origin = new Pose2d(reefCenter.getBlue(), rotation);
                 this.leftPipe = new Pipe(this, Side.Left);
                 this.rightPipe = new Pipe(this, Side.Right);
                 this.stagedAlgae = new StagedAlgae(this, algaeLevel);
-                this.algaeIntakeRobotPose = AllianceFlipped.fromBlue(origin.transformBy(scoringTransform));
+                this.algaeIntakeRobotPose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardRobotFlipped(origin.transformBy(scoringTransform)));
             }
         }
 
