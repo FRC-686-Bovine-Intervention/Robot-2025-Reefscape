@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Distance;
 import frc.robot.subsystems.climber.ClimberConstants;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedTotalState;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -223,7 +224,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)).unaryMinus(),
-                                Meters.of(0.792953).plus(Inches.of(5.5))
+                                Meters.of(1.196053).plus(Inches.of(5.5))
                             ),
                             Rotation2d.fromDegrees(180)
                         )
@@ -336,11 +337,13 @@ public final class FieldConstants {
             public final Level level;
 
             public final AllianceFlipped<Pose3d> pose;
+            public final AllianceFlipped<RobotFlippedTotalState> totalState;
 
             public Branch(Pipe pipe, Level level) {
                 this.pipe = pipe;
                 this.level = level;
                 this.pose = AllianceFlipped.fromBlue(pipe.pose.transformBy(level.transform));
+                this.totalState = AllianceFlipped.fromBlue(RobotFlippedTotalState.combine(this.pipe.robotPose.getBlue(), this.level.superstructureStates));
             }
 
             public static int getIndex(Pipe pipe, Level level) {
@@ -493,21 +496,21 @@ public final class FieldConstants {
         );
         private final static Transform2d bargeRightScoringTransform = new Transform2d(
             new Translation2d(
-                Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                Meters.of(10.90600).unaryMinus()
+                Inches.of(6).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Meters.of(1.0907522).unaryMinus()
             ),
             Rotation2d.kZero
         );
         private final static Transform2d bargeCenterScoringTransform = new Transform2d(
             new Translation2d(
-                Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Inches.of(6).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
                 Meters.zero()
             ),
             Rotation2d.kZero
         );
         private final static Transform2d bargeLeftScoringTransform = new Transform2d(
             new Translation2d(
-                Meters.of(0.568325).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Inches.of(6).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
                 Meters.of(1.0907522)
             ),
             Rotation2d.kZero

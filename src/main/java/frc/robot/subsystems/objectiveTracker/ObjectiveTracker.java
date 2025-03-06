@@ -18,6 +18,7 @@ import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedTotalState;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.util.VirtualSubsystem;
 
@@ -38,6 +39,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<Optional<StagedAlgae>> selectedIntakeGoal = Optional.empty();
 
     private Optional<Pose2d> targetPose = Optional.empty();
+    private Direction reefTargetDirection = Direction.Forward;
+    private Direction algaeTargetDirection = Direction.Forward;
+    private Direction intakeTargetDirection = Direction.Forward;
     private Direction targetDirection = Direction.Forward;
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
@@ -81,16 +85,17 @@ public class ObjectiveTracker extends VirtualSubsystem {
             selectedIntakeGoal.get().isEmpty() ? 1 :
             selectedIntakeGoal.get().get().getIndex() + 2
         );
+
+        Logger.recordOutput("Objective Tracker/Selected Branch", selectedBranch.pose.getOurs());
     }
 
     public void determineGoal(Pose2d currentPose, boolean hasCoral, boolean hasAlgae) {
-        final RobotFlippedRobotPose reefTarget = selectedBranch.pipe.robotPose.getOurs();
-        final Direction reefTargetDirection = reefTarget.getClosestDirection(currentPose.getRotation());
-        final Pose2d reefTargetPose = reefTarget.get(reefTargetDirection);
-        final SuperstructureState reefTargetState = selectedBranch.level.superstructureStates.get(reefTargetDirection);
+        final RobotFlippedTotalState reefTotalState = selectedBranch.totalState.getOurs();
+        reefTargetDirection = reefTotalState.getClosestDirection(currentPose.getRotation());
+        final Pose2d reefTargetPose = reefTotalState.getRobotPose(reefTargetDirection);
+        final SuperstructureState reefTargetState = reefTotalState.getSuperstructureState(reefTargetDirection);
 
         final RobotFlippedRobotPose algaeTarget;
-        final Direction algaeTargetDirection;
         final Pose2d algaeTargetPose;
         final SuperstructureState algaeTargetState;
         switch (selectedAlgaeGoal) {
@@ -128,7 +133,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         final Optional<RobotFlippedRobotPose> intakeTarget;
-        final Direction intakeTargetDirection;
         final Optional<Pose2d> intakeTargetPose;
         final SuperstructureState intakeTargetState;
         if (selectedIntakeGoal.isEmpty()) {
@@ -175,6 +179,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Intake/Target Pose", intakeTargetPose.orElse(Pose2d.kZero));
         Logger.recordOutput("Objective Tracker/Intake/Target Mechs", intakeTargetState.getMechTransforms());
 
+        cachedBranch = selectedBranch;
+
         if (hasCoral) {
             targetPose = Optional.of(reefTargetPose);
             targetDirection = reefTargetDirection;
@@ -193,6 +199,15 @@ public class ObjectiveTracker extends VirtualSubsystem {
     public Direction getTargetDirection() {
         return targetDirection;
     }
+    public Direction getReefTargetDirection() {
+        return reefTargetDirection;
+    }
+    public Direction getAlgaeTargetDirection() {
+        return algaeTargetDirection;
+    }
+    public Direction getIntakeTargetDirection() {
+        return intakeTargetDirection;
+    }
 
     public void moveSelectedBranch(int x, int y) {
         var horiz = Math.floorMod(((selectedBranch.pipe.rack.ordinal() * Side.values().length) + selectedBranch.pipe.side.ordinal() + x), (Rack.values().length * Side.values().length));
@@ -206,8 +221,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
 
+    private Branch cachedBranch;
     public Branch getSelectedBranch() {
-        return selectedBranch;
+        return cachedBranch;
     }
 
     public boolean intakeFromCoralStation() {

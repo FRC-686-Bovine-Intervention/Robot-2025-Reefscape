@@ -330,7 +330,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     if (objectiveTracker.intakeFromCoralStation()) {
-                        if (objectiveTracker.getTargetDirection().isForward()) {
+                        if (objectiveTracker.getIntakeTargetDirection().isForward()) {
                             return coralStationForwardCommand;
                         } else {
                             return coralStationBackwardCommand;
@@ -341,7 +341,7 @@ public class RobotContainer {
                             return groundAlgaeCommand;
                         } else {
                             var stagedAlgae = algae.get();
-                            if (objectiveTracker.getTargetDirection().isForward()) {
+                            if (objectiveTracker.getIntakeTargetDirection().isForward()) {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
                             } else {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
@@ -365,7 +365,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     var branch = objectiveTracker.getSelectedBranch();
-                    if (objectiveTracker.getTargetDirection().isForward()) {
+                    if (objectiveTracker.getReefTargetDirection().isForward()) {
                         return commands[branch.level.ordinal() * 2];
                     } else {
                         return commands[branch.level.ordinal() * 2 + 1];
@@ -383,7 +383,7 @@ public class RobotContainer {
                     switch (objectiveTracker.getAlgaeGoal()) {
                         default:
                         case NET:
-                            if (objectiveTracker.getTargetDirection().isForward()) {
+                            if (objectiveTracker.getAlgaeTargetDirection().isForward()) {
                                 return netForwardCommand;
                             } else {
                                 return netBackwardCommand;

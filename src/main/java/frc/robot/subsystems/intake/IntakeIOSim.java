@@ -13,7 +13,7 @@ public class IntakeIOSim extends IntakeIOFalcon {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        // super.updateInputs(inputs);
+        super.updateInputs(inputs);
         inputs.coralSensor = coralSim.getAsBoolean();
         inputs.algaeSensor = algaeSim.getAsBoolean();
     }
