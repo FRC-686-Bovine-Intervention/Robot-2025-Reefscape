@@ -270,57 +270,70 @@ public class Superstructure extends SubsystemBase {
                 // pivotMoveCondition = () -> extending || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
                 // elevatorMoveCondition = () -> !extending || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
                 // wristMoveCondition = () -> !extending || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
-                this.pivotTarget = () -> {
-                    if (extending) {
-                        if (wristDown) {
-                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
-                                return setpoint.pivotAngle;
+                this.pivotTarget = new Supplier<Angle>() {
+                    private Angle cached = initialState.pivotAngle;
+                    @Override
+                    public Angle get() {
+                        if (extending) {
+                            if (wristDown) {
+                                if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
+                                    cached = setpoint.pivotAngle;
+                                } else {
+                                    cached = Degrees.of(90);
+                                }
                             } else {
-                                return Degrees.of(90);
+                                cached = setpoint.pivotAngle;
                             }
                         } else {
-                            return setpoint.pivotAngle;
-                        }
-                    } else {
-                        if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(10))) {
-                            return setpoint.pivotAngle;
-                        } else {
-                            if (elevatorMovingSignificant) {
-                                return Degrees.of(90);
+                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(10))) {
+                                cached = setpoint.pivotAngle;
                             } else {
-                                return initialState.pivotAngle;
+                                if (elevatorMovingSignificant) {
+                                    cached = Degrees.of(90);
+                                } else {
+                                    cached = initialState.pivotAngle;
+                                }
                             }
                         }
+                        return cached;
                     }
                 };
-                this.elevatorTarget = () -> {
-                    if (extending) {
-                        if (MeasureUtil.isNear(this.pivotTarget.get(), pivot.getAngle(), Degrees.of(5))) {
+                this.elevatorTarget = new Supplier<Distance>() {
+                    private Distance cached = initialState.elevatorLength;
+                    @Override
+                    public Distance get() {
+                        if (extending) {
+                            if (MeasureUtil.isNear(pivotTarget.get(), pivot.getAngle(), Degrees.of(5))) {
+                                cached = setpoint.elevatorLength;
+                            }
+                        } else {
                             return setpoint.elevatorLength;
-                        } else {
-                            return elevator.getLength();
                         }
-                    } else {
-                        return setpoint.elevatorLength;
+                        return cached;
                     }
                 };
-                this.wristTarget = () -> {
-                    if (extending) {
-                        if (wristDown) {
-                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30))) {
-                                return setpoint.wristAngle;
+                this.wristTarget = new Supplier<Angle>() {
+                    private Angle cached = initialState.wristAngle;
+                    @Override
+                    public Angle get() {
+                        if (extending) {
+                            if (wristDown) {
+                                if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30))) {
+                                    cached = setpoint.wristAngle;
+                                } else {
+                                    cached = initialState.wristAngle;
+                                }
                             } else {
-                                return initialState.wristAngle;
+                                cached = setpoint.wristAngle;
                             }
                         } else {
-                            return setpoint.wristAngle;
+                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
+                                cached = setpoint.wristAngle;
+                            } else {
+                                cached = Degrees.of(10);
+                            }
                         }
-                    } else {
-                        if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
-                            return setpoint.wristAngle;
-                        } else {
-                            return Degrees.of(10);
-                        }
+                        return cached;
                     }
                 };
             }
