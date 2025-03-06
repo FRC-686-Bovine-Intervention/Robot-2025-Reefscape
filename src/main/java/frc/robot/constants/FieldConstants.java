@@ -131,7 +131,7 @@ public final class FieldConstants {
             ),
             SuperstructureState.fromParts(
                 Degrees.of(85),
-                ElevatorConstants.minLength,
+                ElevatorConstants.minLengthPhysical,
                 Degrees.of(160)
             )
         );
@@ -478,7 +478,7 @@ public final class FieldConstants {
 
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardOnly(SuperstructureState.fromParts(
             PivotConstants.minAngle,
-            ElevatorConstants.minLength,
+            ElevatorConstants.minLengthPhysical,
             Degrees.of(-10)
         ));
     }
@@ -520,7 +520,7 @@ public final class FieldConstants {
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardPivotFlipped(
             SuperstructureState.fromParts(
                 Degrees.of(90),
-                ElevatorConstants.maxHeight,
+                ElevatorConstants.maxLengthSoftware,
                 Degrees.of(60)
             )
         );

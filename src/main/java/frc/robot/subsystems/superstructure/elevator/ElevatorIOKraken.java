@@ -2,7 +2,6 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.InchesPerSecond;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -21,7 +20,6 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -78,7 +76,7 @@ public class ElevatorIOKraken implements ElevatorIO {
             .withReverseSoftLimitEnable(true)
             .withReverseSoftLimitThreshold(Degrees.of(0))
             .withForwardSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(Radians.of(ElevatorConstants.stageExtension.div(ElevatorConstants.sprocketRadius).baseUnitMagnitude()))
+            .withForwardSoftLimitThreshold(Radians.of(ElevatorConstants.maxLengthSoftware.div(ElevatorConstants.movingStageCount).div(ElevatorConstants.sprocketRadius).baseUnitMagnitude()))
         ;
         motorConfig.Slot0
             .withGravityType(GravityTypeValue.Elevator_Static)
