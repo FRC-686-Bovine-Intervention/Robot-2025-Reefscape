@@ -27,16 +27,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristConstants;
-import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.flipping.AllianceFlipUtil;
+import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlippable;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.GeomUtil;
 import frc.util.misc.MeasureUtil;
 
@@ -450,6 +451,22 @@ public class Superstructure extends SubsystemBase {
         private final SuperstructureState forward;
         private final SuperstructureState backward;
 
+        public static enum Direction {
+            Forward(true),
+            Backward(false),
+            ;
+            private final boolean forward;
+            Direction(boolean forward) {
+                this.forward = forward;
+            }
+            public boolean isForward() {
+                return this.forward;
+            }
+            public boolean isBackward() {
+                return !this.forward;
+            }
+        }
+
         public RobotFlippedSuperstructureState(SuperstructureState forward, SuperstructureState backward) {
             this.forward = forward;
             this.backward = backward;
@@ -527,17 +544,24 @@ public class Superstructure extends SubsystemBase {
         public SuperstructureState getBackward() {
             return backward;
         }
+        public SuperstructureState get(Direction direction) {
+            switch (direction) {
+                default:
+                case Forward:   return getForward();
+                case Backward:  return getBackward();
+            }
+        }
 
-        public static boolean useForward(Rotation2d target, Rotation2d current) {
-            return target.minus(current).getCos() >= 0;
+        public static Direction getClosestDirection(Rotation2d target, Rotation2d current) {
+            if (target.minus(current).getCos() >= 0) {
+                return Direction.Forward;
+            } else {
+                return Direction.Backward;
+            }
         }
 
         public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
-            if (useForward(target, current)) {
-                return getForward();
-            } else {
-                return getBackward();
-            }
+            return get(getClosestDirection(target, current));
         }
 
         public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
@@ -602,16 +626,20 @@ public class Superstructure extends SubsystemBase {
             return backward;
         }
 
-        public boolean useForward(Rotation2d current) {
-            return RobotFlippedSuperstructureState.useForward(this.forward.getRotation(), current);
+        public Pose2d get(Direction direction) {
+            switch (direction) {
+                default:
+                case Forward:   return getForward();
+                case Backward:  return getBackward();
+            }
+        }
+
+        public Direction getClosestDirection(Rotation2d current) {
+            return RobotFlippedSuperstructureState.getClosestDirection(this.forward.getRotation(), current);
         }
 
         public Pose2d getClosest(Rotation2d current) {
-            if (this.useForward(current)) {
-                return getForward();
-            } else {
-                return getBackward();
-            }
+            return get(getClosestDirection(current));
         }
 
         @Override

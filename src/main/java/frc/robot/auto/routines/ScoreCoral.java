@@ -9,7 +9,6 @@ import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.auto.AutoCommons;
 import frc.robot.auto.AutoCommons.AutoPaths;
@@ -17,12 +16,12 @@ import frc.robot.auto.AutoConstants;
 import frc.robot.auto.AutoRoutine;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
 import frc.util.flipping.AllianceFlipped;
 import frc.util.misc.MathExtraUtil;
 
@@ -109,42 +108,42 @@ public class ScoreCoral extends AutoRoutine {
     };
 
     private static final AutoQuestion<AllianceFlipped<Pose2d>> startPosition = new AutoQuestion<AllianceFlipped<Pose2d>>("Starting Position") {
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRemoteLeft = Settings.option("Remote (Left)", AutoConstants.startRemoteLeft);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRemoteRight = Settings.option("Remote (Right)", AutoConstants.startRemoteRight);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startFarLeft = Settings.option("Close (Far Left)", AutoConstants.startFarLeft);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startFarRight = Settings.option("Close (Far Right)", AutoConstants.startFarRight);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftCage = Settings.option("Close (Left Cage)", AutoConstants.startLeftCage);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightCage = Settings.option("Close(Right Cage)", AutoConstants.startRightCage);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftCenter = Settings.option("Close (Left Center)", AutoConstants.startLeftCenter);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightCenter = Settings.option("Close (Right Center)", AutoConstants.startRightCenter);
-        
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startDeadCenter = Settings.option("Dead Center", AutoConstants.startDeadCenter);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startBlueCageMiddle = Settings.option("Middle Blue Cage", AutoConstants.startBlueCageMiddle);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startBlueCageInner = Settings.option("Inner Blue Cage", AutoConstants.startBlueCageInner);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startBlueCageOuter = Settings.option("Outer Blue Cage", AutoConstants.startBlueCageOuter);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRedCageMiddle = Settings.option("Middle Red Cage", AutoConstants.startRedCageMiddle);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRedCageInner = Settings.option("Inner Red Cage", AutoConstants.startRedCageInner);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRedCageOuter = Settings.option("Outer Red Cage", AutoConstants.startRedCageOuter);
+
+
         @Override
         protected Settings<AllianceFlipped<Pose2d>> generateSettings() {
             switch(scorePreloadPipe.getResponse().getIndex()){
                 case 0:
-                return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
+                return Settings.from(startBlueCageMiddle, startBlueCageMiddle, startBlueCageOuter);
                 case 1:
-                return Settings.from(startFarRight, startFarRight, startRemoteRight);
+                return Settings.from(startRedCageMiddle, startRedCageMiddle, startRedCageOuter);
                 case 2:
-                return Settings.from(startFarRight, startFarRight, startRemoteRight);
+                return Settings.from(startRedCageMiddle, startRedCageMiddle, startRedCageOuter);
                 case 3:
-                return Settings.from(startFarRight, startFarRight, startRemoteRight);
+                return Settings.from(startRedCageMiddle, startRedCageMiddle, startRedCageOuter);
                 case 4:
-                return Settings.from(startFarRight, startFarRight);
+                return Settings.from(startRedCageInner, startRedCageInner);
                 case 5:
-                return Settings.from(startRightCage, startRightCage);
+                return Settings.from(startRedCageInner, startBlueCageInner);
                 case 6:
-                return Settings.from(startRightCenter, startRightCenter);
+                return Settings.from(startDeadCenter, startDeadCenter);
                 case 7:
-                return Settings.from(startLeftCenter, startLeftCenter);
+                return Settings.from(startDeadCenter, startDeadCenter);
                 case 8:
-                return Settings.from(startLeftCage, startLeftCage);
+                return Settings.from(startBlueCageInner, startBlueCageInner);
                 case 9:
-                return Settings.from(startFarLeft, startFarLeft);
+                return Settings.from(startBlueCageInner, startBlueCageInner);
                 case 10:
-                return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
+                return Settings.from(startBlueCageMiddle, startBlueCageMiddle, startBlueCageOuter);
                 case 11:
-                return Settings.from(startFarLeft, startFarLeft, startRemoteLeft);
+                return Settings.from(startBlueCageMiddle, startBlueCageMiddle, startBlueCageOuter);
                 default:
                 return null;
             }
@@ -174,32 +173,26 @@ public class ScoreCoral extends AutoRoutine {
 
         String startToScorePath;
         if (
-            startPosition.equals(AutoConstants.startRemoteLeft) ||
-            startPosition.equals(AutoConstants.startRemoteRight)
+            startPosition.equals(AutoConstants.startRedCageOuter) ||
+            startPosition.equals(AutoConstants.startBlueCageOuter)
         ) {
             startToScorePath = "Remote Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
         } else {
             startToScorePath = "Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
         }
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
-        commands.add(Commands.sequence(
-            Commands.parallel(
-                drive.followBluePath(startToScorePreload).andThen(Commands.print("================ FINISHED PATH ================")),
-                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
-            ),
-            intake.eject().withTimeout(0.75)
-        ));
+        commands.add(AutoCommons.scoreOnReef(startToScorePreload, Level.Level4, Direction.Forward, drive, superstructure, intake));
+
+
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
             " To Station " +
             getStationPositionAsString(stationPosition) +
             (shouldUseForwardCoralStation ? " Forward" : "")
         );
-        commands.add(Commands.deadline(
-            intake.intake().until(intake.hasCoral),
-            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()),
-            drive.followBluePath(preloadToStation)
-        ));
+        commands.add(AutoCommons.pickupCoralFromStation(preloadToStation, Direction.Backward, drive, superstructure, intake));
+
+
         var stationToScore1 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
@@ -207,24 +200,18 @@ public class ScoreCoral extends AutoRoutine {
             + " To "
             + getBranchLetterFromIndex(scoreCoral1.getIndex())
         );
-        commands.add(Commands.sequence(
-            Commands.parallel(
-                drive.followBluePath(stationToScore1).andThen(Commands.print("================ FINISHED PATH ================")),
-                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
-            ),
-            intake.eject().withTimeout(0.75)
-        ));
+        commands.add(AutoCommons.scoreOnReef(stationToScore1, Level.Level4, Direction.Forward, drive, superstructure, intake));
+
+
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
             getBranchLetterFromIndex(scoreCoral1.getIndex())+
             " To Station "+
             getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
         );
-        commands.add(Commands.deadline(
-            intake.intake().until(intake.hasCoral),
-            superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()),
-            drive.followBluePath(coral1ToStation)
-        ));
+        commands.add(AutoCommons.pickupCoralFromStation(coral1ToStation, Direction.Backward, drive, superstructure, intake));
+        
+
         var stationToScore2 = AutoPaths.loadChoreoTrajectory(
             "Station "
             + getStationPositionAsString(stationPosition)
@@ -232,18 +219,12 @@ public class ScoreCoral extends AutoRoutine {
             + " To "
             + getBranchLetterFromIndex(scoreCoral2.getIndex())
         );
-        commands.add(Commands.sequence(
-            Commands.parallel(
-                drive.followBluePath(stationToScore2).andThen(Commands.print("================ FINISHED PATH ================")),
-                Commands.waitSeconds(2).andThen(superstructure.goToSetpointSequenced(Level.Level4.superstructureStates.getForward()).withTimeout(3))
-            ),
-            intake.eject().withTimeout(0.75)
-        ));
-        return Commands.parallel(
-            AutoCommons.setOdometryFlipped(startPosition, drive),
-            Commands.runOnce(() -> intake.setHasGamepiece(true))
-        )
-            .andThen(commands.toArray(Command[]::new));
+        commands.add(AutoCommons.scoreOnReef(stationToScore2, Level.Level4, Direction.Forward, drive, superstructure, intake));
+
+        return
+            AutoCommons.setOdometryFlipped(startPosition, drive)
+            .andThen(commands.toArray(Command[]::new))
+        ;
     }
 
     private static char getBranchLetterFromIndex(int index){

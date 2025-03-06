@@ -1,5 +1,7 @@
 package frc.robot.auto;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntFunction;
@@ -20,15 +22,20 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.CoralStation;
+import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipped;
+import frc.util.misc.GeomUtil;
 
 public class AutoCommons {
-
     public static Translation2d getFirstPoint(PathPlannerPath path) {
         return path.getPoint(0).position;
     }
@@ -46,14 +53,55 @@ public class AutoCommons {
             .deadlineFor(Commands.startEnd(
                 () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
                 () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
-            ));
+            ))
+        ;
     }
     public static Command followPathFlipped(PathPlannerPath path, Drive.Translational drive) {
         return new FollowPathCommand(path, drive.drive::getPose, drive.drive::getRobotMeasuredSpeeds, drive.drive::drivePPVelocity, Drive.autoConfig(), DriveConstants.robotConfig, AllianceFlipUtil::shouldFlip, drive)
             .deadlineFor(Commands.startEnd(
                 () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
                 () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
-            ));
+            ))
+        ;
+    }
+
+    public static Command scoreOnReef(PathPlannerPath pathToReef, Level branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var end = getLastPoint(pathToReef);
+        return 
+            Commands.deadline(
+                Commands.sequence(
+                    Commands.waitUntil(() -> true), //TODO: Superstructure atSetpoint()
+                    intake.eject().onlyWhile(intake.hasCoral)
+                ),
+                Commands.sequence(
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose().getTranslation(), Inches.of(24))),
+                    superstructure.goToSetpointSequenced(branchLevel.superstructureStates.get(direction))
+                ),
+                followPathFlipped(pathToReef, drive)
+            )
+        ;
+    }
+
+    public static Command scoreInNet(PathPlannerPath pathToBarge, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        return Commands.none();
+    }
+
+    public static Command scoreInProcessor(PathPlannerPath pathToProcessor, Drive drive, Superstructure superstructure, Intake intake) {
+        return Commands.none();
+    }
+
+    public static Command pickupCoralFromStation(PathPlannerPath pathToStation, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        return 
+            Commands.deadline(
+                intake.intake().until(intake.hasCoral),
+                followPathFlipped(pathToStation, drive),
+                superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction))
+            )
+        ;
+    }
+
+    public static Command pickupAlgaeFromReef(PathPlannerPath pathToReef, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        return Commands.none();
     }
 
     public static final Map.Entry<String, Pipe>[] pipeOptions =

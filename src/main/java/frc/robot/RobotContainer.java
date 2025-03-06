@@ -350,7 +350,7 @@ public class RobotContainer {
                         }).findFirst().get();
                         Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
                         Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
-                        if (RobotFlippedSuperstructureState.useForward(closestStationPose.getForward().getRotation(), drive.getRotation())) {
+                        if (RobotFlippedSuperstructureState.getClosestDirection(closestStationPose.getForward().getRotation(), drive.getRotation()).isForward()) {
                             return coralStationForwardCommand;
                         } else {
                             return coralStationBackwardCommand;
@@ -361,7 +361,7 @@ public class RobotContainer {
                             return groundAlgaeCommand;
                         } else {
                             var stagedAlgae = algae.get();
-                            if (RobotFlippedSuperstructureState.useForward(stagedAlgae.rack.algaeIntakeRobotPose.getOurs().getForward().getRotation(), drive.getRotation())) {
+                            if (RobotFlippedSuperstructureState.getClosestDirection(stagedAlgae.rack.algaeIntakeRobotPose.getOurs().getForward().getRotation(), drive.getRotation()).isForward()) {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
                             } else {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
@@ -385,7 +385,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     var branch = objectiveTracker.getSelectedBranch();
-                    if (branch.pipe.robotPose.getOurs().useForward(drive.getRotation())) {
+                    if (branch.pipe.robotPose.getOurs().getClosestDirection(drive.getRotation()).isForward()) {
                         return commands[branch.level.ordinal() * 2];
                     } else {
                         return commands[branch.level.ordinal() * 2 + 1];
@@ -403,7 +403,7 @@ public class RobotContainer {
                     switch (objectiveTracker.getAlgaeGoal()) {
                         default:
                         case NET:
-                            if (RobotFlippedSuperstructureState.useForward(FieldConstants.netForwardRotation.getOurs(), drive.getRotation())) {
+                            if (RobotFlippedSuperstructureState.getClosestDirection(FieldConstants.netForwardRotation.getOurs(), drive.getRotation()).isForward()) {
                                 return netForwardCommand;
                             } else {
                                 return netBackwardCommand;
