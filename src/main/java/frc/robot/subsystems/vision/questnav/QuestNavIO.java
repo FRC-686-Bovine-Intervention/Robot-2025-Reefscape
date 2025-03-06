@@ -10,12 +10,11 @@ public interface QuestNavIO {
         public boolean isConnected;
         public double timestamp;
         public double batteryPercent;
-        public Pose3d cameraPose;
+        public Pose3d pose;
     }
 
     public default void updateInputs(QuestNavIOInputs inputs) {}
 
-    public default void zeroHeading() {}
     public default void zeroPosition() {}
     public default void cleanUp() {}
 }

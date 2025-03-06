@@ -30,7 +30,6 @@ public class RobotState {
 
     public void addDriveMeasurement(Rotation2d rotation, SwerveModulePosition[] modulePositions) {
         poseEstimator.update(rotation, modulePositions);
-
     }
 
     public void addVisionMeasurement(Pose2d pose, Matrix<N3, N1> stdDevs, double timestamp) {

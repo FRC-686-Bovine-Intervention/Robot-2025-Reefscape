@@ -1,8 +1,5 @@
 package frc.robot.subsystems.vision.questnav;
 
-import static edu.wpi.first.units.Units.Radians;
-
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -13,7 +10,6 @@ import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.wpilibj.RobotController;
 
 public class QuestNavIOQuest3S implements QuestNavIO {
@@ -28,24 +24,20 @@ public class QuestNavIOQuest3S implements QuestNavIO {
     private final FloatArraySubscriber questQuaternion = nt4Table.getFloatArrayTopic("quaternion").subscribe(new float[]{0.0f, 0.0f, 0.0f, 0.0f});
     private final DoubleSubscriber questBatteryPercent = nt4Table.getDoubleTopic("batteryPercent").subscribe(0.0f);
 
-    private final MutAngle yawOffset = Radians.mutable(0);
-
-    public QuestNavIOQuest3S() {}
+    public QuestNavIOQuest3S() {
+        zeroPosition();
+    }
 
     @Override
     public void updateInputs(QuestNavIOInputs inputs) {
         inputs.isConnected = connected();
         inputs.timestamp = timestamp();
         inputs.batteryPercent = getBatteryPercent();
-        inputs.cameraPose = getPose();
-    }
-
-    // Zero the relative robot heading.
-    public void zeroHeading() {
-        yawOffset.mut_replace(new Rotation3d(getQuaternion()).getMeasureZ());
+        inputs.pose = getPose();
     }
 
     // Zero the absolute 3D position of the robot (similar to long-pressing the quest logo).
+    @Override
     public void zeroPosition() {
         if (questMiso.get() != 99) {
             questMosi.set(1);
@@ -53,6 +45,7 @@ public class QuestNavIOQuest3S implements QuestNavIO {
     }
 
     // Clean up questnav subroutine messages after processing on the headset.
+    @Override
     public void cleanUp() {
         if (questMiso.get() == 99) {
             questMosi.set(0);
@@ -93,9 +86,6 @@ public class QuestNavIOQuest3S implements QuestNavIO {
 
     // Gets the estimated pose of the Quest system, factoring in offsets.
     private Pose3d getPose() {
-        var translation = getTranslation();
-        var rotation = getRotation()
-            .minus(new Rotation3d(VecBuilder.fill(0, 0, 1), yawOffset));
-        return new Pose3d(translation, rotation);
+        return new Pose3d(getTranslation(), getRotation());
     }
 }

@@ -2,9 +2,13 @@ package frc.robot.subsystems.vision.questnav;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.RobotState;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
 import frc.util.VirtualSubsystem;
 
@@ -13,6 +17,7 @@ public class QuestNav extends VirtualSubsystem {
     private final QuestNavIOInputsAutoLogged inputs = new QuestNavIOInputsAutoLogged();
 
     private final QuestNavCameraConstants camMeta;
+    private Transform2d globalOffset = new Transform2d();
 
     private final Alert notConnectedAlert;
 
@@ -29,13 +34,33 @@ public class QuestNav extends VirtualSubsystem {
         Logger.processInputs("Inputs/QuestNav/" + camMeta.hardwareName, inputs);
         io.cleanUp();
 
-        Logger.recordOutput("QuestNav/Pose", inputs.cameraPose);
+        Logger.recordOutput("QuestNav/Pose", inputs.pose);
         Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
 
         notConnectedAlert.set(!inputs.isConnected);
+
+        if (DriverStation.isDisabled()) {
+            resetToPose(RobotState.getInstance().getPose());
+        } else {
+            RobotState
+                .getInstance()
+                .addVisionMeasurement(
+                    getRobotPose(),
+                    VecBuilder.fill(0.00001, 0.00001, 0.00001),
+                    inputs.timestamp
+                );
+        }
     }
 
-    public Pose3d getRobotPose() {
-        return inputs.cameraPose.transformBy(camMeta.mount.getRobotRelative().inverse());
+    private Pose2d getRobotPose() {
+        return 
+            inputs.pose
+                .transformBy(camMeta.mount.getRobotRelative().inverse())
+                .toPose2d()
+                .transformBy(globalOffset);
+    }
+
+    public void resetToPose(Pose2d pose) {
+        this.globalOffset = pose.minus(getRobotPose());
     }
 }

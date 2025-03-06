@@ -11,7 +11,7 @@ public class QuestNavConstants {
         }
     }
 
-    public static final QuestNavCameraConstants questNavCamera = new QuestNavCameraConstants(
+    public static final QuestNavCameraConstants metaQuest3S = new QuestNavCameraConstants(
         "Meta Quest 3S",
         VisionConstants.questNavMount
     );
