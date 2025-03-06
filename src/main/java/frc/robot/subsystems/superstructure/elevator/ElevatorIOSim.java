@@ -16,10 +16,10 @@ public class ElevatorIOSim extends ElevatorIOKraken {
         20,
         12,
         DCMotor.getKrakenX60(1),
-        ElevatorConstants.minLength.in(Meters),
+        ElevatorConstants.minLengthPhysical.in(Meters),
         ElevatorConstants.stageExtension.in(Meters),
         false,
-        ElevatorConstants.minLength.in(Meters)
+        ElevatorConstants.minLengthPhysical.in(Meters)
     );
 
     @Override

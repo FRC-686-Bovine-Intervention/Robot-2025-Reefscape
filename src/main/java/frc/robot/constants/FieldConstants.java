@@ -23,6 +23,7 @@ import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstruc
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
+import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlipped;
@@ -130,7 +131,7 @@ public final class FieldConstants {
             ),
             SuperstructureState.fromParts(
                 Degrees.of(85),
-                ElevatorConstants.minLength,
+                ElevatorConstants.minLengthPhysical,
                 Degrees.of(160)
             )
         );
@@ -423,6 +424,22 @@ public final class FieldConstants {
         }
     }
 
+    public static final class Processor {
+        public static final AllianceFlipped<Pose2d> processorTargetPose = AllianceFlipped.fromBlue(new Pose2d(
+            new Translation2d(
+                Meters.of(6.057646),
+                Algae.radius.times(2).plus(RobotConstants.centerToFrontBumper).plus(Inches.of(6))
+            ),
+            Rotation2d.kCW_90deg
+        ));
+
+        public static final SuperstructureState superstructureState = SuperstructureState.fromParts(
+            PivotConstants.minAngle,
+            ElevatorConstants.minLengthPhysical,
+            Degrees.of(-10)
+        );
+    }
+
     public static final class Barge {
         private final static Pose2d bargeMidpoint = new Pose2d(
             new Translation2d(
@@ -471,7 +488,7 @@ public final class FieldConstants {
             ),
             SuperstructureState.fromParts(
                 Degrees.of(0),
-                ElevatorConstants.maxLength,
+                ElevatorConstants.maxLengthPhysical,
                 Degrees.of(0)
             )
         );

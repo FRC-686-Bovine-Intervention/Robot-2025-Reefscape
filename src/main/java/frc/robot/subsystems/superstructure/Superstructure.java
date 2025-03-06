@@ -64,7 +64,7 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setVoltage(voltage);
-                    this.elevator.setLength(ElevatorConstants.minLength);
+                    this.elevator.setLength(ElevatorConstants.minLengthPhysical);
                     this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
@@ -120,7 +120,7 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setAngle(Degrees.of(90));
-                    this.elevator.setLength(ElevatorConstants.minLength);
+                    this.elevator.setLength(ElevatorConstants.minLengthPhysical);
                     this.wrist.setVoltage(voltage);
                 },
                 (log) -> {
@@ -357,12 +357,12 @@ public class Superstructure extends SubsystemBase {
 
         public static final SuperstructureState idle = SuperstructureState.fromParts(
             Degrees.of(70),
-            ElevatorConstants.minLength,
+            ElevatorConstants.minLengthPhysical,
             Degrees.of(90)
         );
         public static final SuperstructureState defense = SuperstructureState.fromParts(
             PivotConstants.minAngle,
-            ElevatorConstants.minLength,
+            ElevatorConstants.minLengthPhysical,
             Degrees.of(110)
         );
         public static final SuperstructureState climb = new SuperstructureState(
@@ -378,7 +378,7 @@ public class Superstructure extends SubsystemBase {
         public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             return new SuperstructureState(
                 Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians))),
-                Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLength.in(Meters), ElevatorConstants.maxLength.in(Meters))),
+                Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLengthPhysical.in(Meters), ElevatorConstants.maxLengthPhysical.in(Meters))),
                 Radians.of(MathUtil.clamp(wristAngle.in(Radians), WristConstants.minAngle.in(Radians), WristConstants.maxAngle.in(Radians)))
             );
         }
@@ -402,7 +402,7 @@ public class Superstructure extends SubsystemBase {
             var pivotAngle = pivotSpacePose.getTranslation().getAngle().getMeasure().minus(pivotAngleOffset);
             var wristAngle = pivotSpacePose.getRotation().minus(new Rotation2d(pivotAngle)).getMeasure();
             var elevatorHeight = Meters.of(Math.sqrt((pivotToTargetMeters * pivotToTargetMeters) - (elevatorPivotOffsetMeters * elevatorPivotOffsetMeters))).plus(ElevatorConstants.stage2Base.getMeasureX().unaryMinus());
-            var elevatorLength = elevatorHeight.minus(ElevatorConstants.minHeight);
+            var elevatorLength = elevatorHeight.minus(ElevatorConstants.minHeightPhysical);
 
             return new SuperstructureState(pivotAngle, elevatorLength, wristAngle);
         }
@@ -415,8 +415,8 @@ public class Superstructure extends SubsystemBase {
             var pivotRotation = new Rotation2d(pivotAngle);
             return new Transform2d(
                 new Translation2d(
-                    elevatorLength.plus(ElevatorConstants.minHeight).times(pivotRotation.getCos()),
-                    elevatorLength.plus(ElevatorConstants.minHeight).times(pivotRotation.getSin())
+                    elevatorLength.plus(ElevatorConstants.minHeightPhysical).times(pivotRotation.getCos()),
+                    elevatorLength.plus(ElevatorConstants.minHeightPhysical).times(pivotRotation.getSin())
                 ),
                 pivotRotation.plus(new Rotation2d(wristAngle))
             );
