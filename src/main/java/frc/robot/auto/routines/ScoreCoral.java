@@ -21,7 +21,7 @@ import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
+import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.util.flipping.AllianceFlipped;
 import frc.util.misc.MathExtraUtil;
 

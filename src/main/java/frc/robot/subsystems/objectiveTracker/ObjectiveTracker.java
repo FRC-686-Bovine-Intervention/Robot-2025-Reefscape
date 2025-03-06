@@ -16,6 +16,7 @@ import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
+import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.util.VirtualSubsystem;
@@ -36,7 +37,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
     private Optional<Optional<StagedAlgae>> selectedIntakeGoal = Optional.empty();
 
-    private Pose2d targetPose = Pose2d.kZero;
+    private Optional<Pose2d> targetPose = Optional.empty();
+    private Direction targetDirection = Direction.Forward;
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
         System.out.println("[Init] Instantiating ObjectiveTracker");
@@ -79,37 +81,55 @@ public class ObjectiveTracker extends VirtualSubsystem {
             selectedIntakeGoal.get().isEmpty() ? 1 :
             selectedIntakeGoal.get().get().getIndex() + 2
         );
-        
-        Logger.recordOutput("Objective Tracker/Selected Branch", selectedBranch.pose.getOurs());
-        var setpointState = selectedBranch.level.superstructureStates.getForward();
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Pivot Angle", setpointState.pivotAngle);
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Elevator Length", setpointState.elevatorLength);
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Setpoint/Wrist Angle", setpointState.wristAngle);
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Robot", selectedBranch.pipe.robotPose.getOurs().getForward());
-        Logger.recordOutput("Objective Tracker/Branch Robot Vis/Mechs", setpointState.getMechTransforms());
     }
 
     public void determineGoal(Pose2d currentPose, boolean hasCoral, boolean hasAlgae) {
-        final Pose2d reefTargetPose = selectedBranch.pipe.robotPose.getOurs().getClosest(currentPose.getRotation());
-        final SuperstructureState reefTargetState = selectedBranch.level.superstructureStates.getClosest(selectedBranch.pipe.robotPose.getOurs().getForward().getRotation(), currentPose.getRotation());
+        final RobotFlippedRobotPose reefTarget = selectedBranch.pipe.robotPose.getOurs();
+        final Direction reefTargetDirection = reefTarget.getClosestDirection(currentPose.getRotation());
+        final Pose2d reefTargetPose = reefTarget.get(reefTargetDirection);
+        final SuperstructureState reefTargetState = selectedBranch.level.superstructureStates.get(reefTargetDirection);
+
+        final RobotFlippedRobotPose algaeTarget;
+        final Direction algaeTargetDirection;
         final Pose2d algaeTargetPose;
         final SuperstructureState algaeTargetState;
         switch (selectedAlgaeGoal) {
             default:
             case PROCESSOR:
-                algaeTargetPose = Processor.processorTargetPose.getOurs();
-                algaeTargetState = Processor.superstructureState;
+                algaeTarget = Processor.processorTargetPose.getOurs();
+                algaeTargetDirection = algaeTarget.getClosestDirection(currentPose.getRotation());
+                algaeTargetPose = algaeTarget.get(algaeTargetDirection);
+                algaeTargetState = Processor.superstructureState.get(algaeTargetDirection);
             break;
             case OPPONENT_PROCESSOR:
-                algaeTargetPose = Processor.processorTargetPose.getTheirs();
-                algaeTargetState = Processor.superstructureState;
+                algaeTarget = Processor.processorTargetPose.getTheirs();
+                algaeTargetDirection = algaeTarget.getClosestDirection(currentPose.getRotation());
+                algaeTargetPose = algaeTarget.get(algaeTargetDirection);
+                algaeTargetState = Processor.superstructureState.get(algaeTargetDirection);
             break;
             case NET:
-                algaeTargetPose = Barge.centerBargePose.getOurs();
-                algaeTargetState = Barge.superstructurePosition.getClosest(FieldConstants.netForwardRotation.getOurs(), currentPose.getRotation());
+                var bargePoses = new RobotFlippedRobotPose[] {
+                    Barge.leftBargePose.getOurs(),
+                    Barge.centerBargePose.getOurs(),
+                    Barge.rightBargePose.getOurs(),
+                };
+                var closestBargePose = Arrays.stream(bargePoses).sorted(
+                    (a,b) -> {
+                        var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                        var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                        return (int) Math.signum(aDistance - bDistance);
+                    }
+                ).findFirst().get();
+                algaeTarget = closestBargePose;
+                algaeTargetDirection = algaeTarget.getClosestDirection(currentPose.getRotation());
+                algaeTargetPose = algaeTarget.get(algaeTargetDirection);
+                algaeTargetState = Barge.superstructureState.get(algaeTargetDirection);
             break;
         }
-        final Pose2d intakeTargetPose;
+
+        final Optional<RobotFlippedRobotPose> intakeTarget;
+        final Direction intakeTargetDirection;
+        final Optional<Pose2d> intakeTargetPose;
         final SuperstructureState intakeTargetState;
         if (selectedIntakeGoal.isEmpty()) {
             var stationPoses = new RobotFlippedRobotPose[] {
@@ -125,39 +145,53 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
                 return (int) Math.signum(aDistance - bDistance);
             }).findFirst().get();
-            intakeTargetPose = closestStationPose.getClosest(currentPose.getRotation());
-            intakeTargetState = CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), currentPose.getRotation());
+            intakeTarget = Optional.of(closestStationPose);
+            intakeTargetDirection = closestStationPose.getClosestDirection(currentPose.getRotation());
+            intakeTargetPose = Optional.of(closestStationPose.get(intakeTargetDirection));
+            intakeTargetState = CoralStation.intakePosition.get(intakeTargetDirection);
         } else {
             var algaeIntake = selectedIntakeGoal.get();
             if (algaeIntake.isEmpty()) {
-                intakeTargetPose = Pose2d.kZero;
+                intakeTargetPose = Optional.empty();
+                intakeTargetDirection = Direction.Forward;
                 intakeTargetState = SuperstructureState.defense;
             } else {
                 var stagedAlgae = algaeIntake.get();
-                var pose = stagedAlgae.rack.algaeIntakeRobotPose.getOurs();
-                intakeTargetPose = pose.getClosest(currentPose.getRotation());
-                intakeTargetState = stagedAlgae.algaeLevel.superstructurePosition.getClosest(pose.getForward().getRotation(), currentPose.getRotation());
+                var target = stagedAlgae.rack.algaeIntakeRobotPose.getOurs();
+                intakeTarget = Optional.of(target);
+                intakeTargetDirection = target.getClosestDirection(currentPose.getRotation());
+                intakeTargetPose = Optional.of(target.get(intakeTargetDirection));
+                intakeTargetState = stagedAlgae.algaeLevel.superstructurePosition.get(intakeTargetDirection);
             }
         }
 
+        Logger.recordOutput("Objective Tracker/Reef/Target Direction", reefTargetDirection);
         Logger.recordOutput("Objective Tracker/Reef/Target Pose", reefTargetPose);
         Logger.recordOutput("Objective Tracker/Reef/Target Mechs", reefTargetState.getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Algae/Target Direction", algaeTargetDirection);
         Logger.recordOutput("Objective Tracker/Algae/Target Pose", algaeTargetPose);
         Logger.recordOutput("Objective Tracker/Algae/Target Mechs", algaeTargetState.getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Intake/Target Pose", intakeTargetPose);
+        Logger.recordOutput("Objective Tracker/Intake/Target Direction", intakeTargetDirection);
+        Logger.recordOutput("Objective Tracker/Intake/Target Pose", intakeTargetPose.orElse(Pose2d.kZero));
         Logger.recordOutput("Objective Tracker/Intake/Target Mechs", intakeTargetState.getMechTransforms());
 
         if (hasCoral) {
-            targetPose = reefTargetPose;
+            targetPose = Optional.of(reefTargetPose);
+            targetDirection = reefTargetDirection;
         } else if(hasAlgae) {
-            targetPose = algaeTargetPose;
+            targetPose = Optional.of(algaeTargetPose);
+            targetDirection = algaeTargetDirection;
         } else {
             targetPose = intakeTargetPose;
+            targetDirection = intakeTargetDirection;
         }
     }
 
-    public Pose2d getTargetPose() {
+    public Optional<Pose2d> getTargetPose() {
         return targetPose;
+    }
+    public Direction getTargetDirection() {
+        return targetDirection;
     }
 
     public void moveSelectedBranch(int x, int y) {

@@ -105,7 +105,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         commands.add(Commands.sequence(
             Commands.parallel(
                 drive.followBluePath(algaeToBarge),
-                superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructurePosition.getForward())
+                superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructureState.getForward())
             ),
             // Commands.waitSeconds(2)
             intake.eject().until(intake.hasAlgae.negate())
@@ -123,7 +123,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         commands.add(Commands.sequence(
             Commands.parallel(
                 drive.followBluePath(algaeToBarge1),
-                superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructurePosition.getForward())
+                superstructure.goToSetpointSequenced(FieldConstants.Barge.superstructureState.getForward())
             ),
             // Commands.waitSeconds(2)
             intake.eject().until(intake.hasAlgae.negate())

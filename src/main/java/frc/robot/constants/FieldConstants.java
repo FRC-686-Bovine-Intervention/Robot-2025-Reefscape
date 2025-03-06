@@ -175,38 +175,92 @@ public final class FieldConstants {
         }
 
         public static enum Level {
-            Level1(Meters.of(0.592953), Degrees.of(35), Meters.of(0.779254)),
-            Level2(Meters.of(0.792953), Degrees.of(35), Meters.of(0.779254), new Transform2d(
-                new Translation2d(
-                    Inches.of(20),
-                    Inches.of(-5.5)
-                ),
-                new Rotation2d(Degrees.of(-20))
-            ).inverse()),
-            Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254), new Transform2d(
-                new Translation2d(
-                    Inches.of(21),
-                    Inches.of(-5.5)
-                ),
-                new Rotation2d(Degrees.of(-20))
-            ).inverse()),
-            Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750), new Transform2d(
-                new Translation2d(
-                    Inches.of(22),
-                    Inches.of(-2.5)
-                ),
-                new Rotation2d(Degrees.of(-60))
-            ).inverse()),
+            Level1(Meters.of(0.592953), Degrees.of(35), Meters.of(0.779254),
+                RobotFlippedSuperstructureState.fromForwardOnly(
+                    SuperstructureState.fromRobotSpace(
+                        new Pose2d(
+                            new Translation2d(
+                                RobotConstants.centerToFrontBumper.minus(Inches.of(8)),
+                                Meters.of(0.592953)
+                            ),
+                            Rotation2d.fromDegrees(0)
+                        )
+                    )
+                )
+            ),
+            Level2(Meters.of(0.792953), Degrees.of(35), Meters.of(0.779254),
+                RobotFlippedSuperstructureState.fromForwardOnly(
+                    SuperstructureState.fromRobotSpace(
+                        new Pose2d(
+                            new Translation2d(
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)),
+                                Meters.of(0.792953).plus(Inches.of(5.5))
+                            ),
+                            Rotation2d.fromDegrees(-15)
+                        )
+                    )
+                )
+                // new Transform2d(
+                //     new Translation2d(
+                //         Inches.of(20),
+                //         Inches.of(-5.5)
+                //     ),
+                //     new Rotation2d(Degrees.of(-20))
+                // ).inverse()
+            ),
+            Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254),
+                new RobotFlippedSuperstructureState(
+                    SuperstructureState.fromRobotSpace(
+                        new Pose2d(
+                            new Translation2d(
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)),
+                                Meters.of(1.196053).plus(Inches.of(5.5))
+                            ),
+                            Rotation2d.fromDegrees(-15)
+                        )
+                    ),
+                    SuperstructureState.fromRobotSpace(
+                        new Pose2d(
+                            new Translation2d(
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)).unaryMinus(),
+                                Meters.of(0.792953).plus(Inches.of(5.5))
+                            ),
+                            Rotation2d.fromDegrees(180)
+                        )
+                    )
+                )
+                // new Transform2d(
+                //     new Translation2d(
+                //         Inches.of(21),
+                //         Inches.of(-5.5)
+                //     ),
+                //     new Rotation2d(Degrees.of(-20))
+                // ).inverse()
+            ),
+            Level4(Meters.of(1.828663), Degrees.of(90), Meters.of(0.780750),
+                RobotFlippedSuperstructureState.fromForwardOnly(
+                    SuperstructureState.fromRobotSpace(
+                        new Pose2d(
+                            new Translation2d(
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(0)),
+                                Meters.of(1.828663).plus(Inches.of(5.5))
+                            ),
+                            Rotation2d.fromDegrees(-30)
+                        )
+                    )
+                )
+                // new Transform2d(
+                //     new Translation2d(
+                //         Inches.of(22),
+                //         Inches.of(-2.5)
+                //     ),
+                //     new Rotation2d(Degrees.of(-60))
+                // ).inverse()
+            ),
             ;
             private final Transform3d transform;
             public final RobotFlippedSuperstructureState superstructureStates;
-            Level(Distance height, Angle angle, Distance radius) {
-                this(height, angle, radius, SuperstructureConstants.coralScoringForwardTransform, SuperstructureState.zero, SuperstructureState.zero);
-            }
-            Level(Distance height, Angle angle, Distance radius, Transform2d forwardOffsetRobotSpace) {
-                this(height, angle, radius, forwardOffsetRobotSpace, SuperstructureState.zero, SuperstructureState.zero);
-            }
-            Level(Distance height, Angle angle, Distance radius, Transform2d forwardOffsetRobotSpace, SuperstructureState forwardOffset, SuperstructureState backwardOffset) {
+            Level(Distance height, Angle angle, Distance radius, RobotFlippedSuperstructureState superstructureStates) {
                 this.transform = new Transform3d(
                     new Translation3d(
                         radius.unaryMinus(),
@@ -219,18 +273,7 @@ public final class FieldConstants {
                         Degrees.zero()
                     )
                 );
-                this.superstructureStates = RobotFlippedSuperstructureState.fromForwardRobotFlipped(SuperstructureState.fromRobotSpace(
-                    new Pose2d(
-                        new Translation2d(
-                            RobotConstants.centerToFrontBumper.plus(minimumReefRadius).minus(radius),
-                            height
-                        ),
-                        new Rotation2d(
-                            angle.unaryMinus()
-                        )
-                    )
-                    .transformBy(forwardOffsetRobotSpace)
-                ).plus(backwardOffset));
+                this.superstructureStates = superstructureStates;
             }
         }
 
@@ -425,19 +468,19 @@ public final class FieldConstants {
     }
 
     public static final class Processor {
-        public static final AllianceFlipped<Pose2d> processorTargetPose = AllianceFlipped.fromBlue(new Pose2d(
+        public static final AllianceFlipped<RobotFlippedRobotPose> processorTargetPose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardOnly(new Pose2d(
             new Translation2d(
                 Meters.of(6.057646),
                 Algae.radius.times(2).plus(RobotConstants.centerToFrontBumper).plus(Inches.of(6))
             ),
             Rotation2d.kCW_90deg
-        ));
+        )));
 
-        public static final SuperstructureState superstructureState = SuperstructureState.fromParts(
+        public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardOnly(SuperstructureState.fromParts(
             PivotConstants.minAngle,
             ElevatorConstants.minLength,
             Degrees.of(-10)
-        );
+        ));
     }
 
     public static final class Barge {
@@ -470,26 +513,15 @@ public final class FieldConstants {
             Rotation2d.kZero
         );
 
-        public static final AllianceFlipped<Pose2d> rightBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeRightScoringTransform));
-        public static final AllianceFlipped<Pose2d> centerBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeCenterScoringTransform));
-        public static final AllianceFlipped<Pose2d> leftBargePose = AllianceFlipped.fromBlue(bargeMidpoint.transformBy(bargeLeftScoringTransform));
+        public static final AllianceFlipped<RobotFlippedRobotPose> rightBargePose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardPivotFlipped(bargeMidpoint.transformBy(bargeRightScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> centerBargePose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardPivotFlipped(bargeMidpoint.transformBy(bargeCenterScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> leftBargePose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardPivotFlipped(bargeMidpoint.transformBy(bargeLeftScoringTransform)));
 
-        // TODO
-        public static final RobotFlippedSuperstructureState superstructurePosition = new RobotFlippedSuperstructureState(
-            SuperstructureState.fromRobotSpace(
-                new Pose2d(
-                    new Translation2d(
-                        RobotConstants.centerToFrontBumper,
-                        Meters.of(2.26200)
-                    ),
-                    Rotation2d.kZero
-                )
-                .transformBy(SuperstructureConstants.algaeOuttakeForwardTransform)
-            ),
+        public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardPivotFlipped(
             SuperstructureState.fromParts(
-                Degrees.of(0),
-                ElevatorConstants.maxLength,
-                Degrees.of(0)
+                Degrees.of(90),
+                ElevatorConstants.maxHeight,
+                Degrees.of(60)
             )
         );
 

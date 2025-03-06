@@ -27,7 +27,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
@@ -411,61 +410,41 @@ public class Superstructure extends SubsystemBase {
             };
         }
 
-        public SuperstructureState plus(SuperstructureState other) {
-            return newConstrained(
-                this.pivotAngle.plus(other.pivotAngle),
-                this.elevatorLength.plus(other.elevatorLength),
-                this.wristAngle.plus(other.wristAngle)
-            );
-        }
+        // public SuperstructureState plus(SuperstructureState other) {
+        //     return newConstrained(
+        //         this.pivotAngle.plus(other.pivotAngle),
+        //         this.elevatorLength.plus(other.elevatorLength),
+        //         this.wristAngle.plus(other.wristAngle)
+        //     );
+        // }
     }
 
-    @Deprecated
-    public static class SuperstructurePosition {
-        private final Pose2d robotSpacePose;
-
-        private SuperstructurePosition(Pose2d robotSpacePose) {
-            this.robotSpacePose = robotSpacePose;
+    public static enum Direction {
+        Forward(true),
+        Backward(false),
+        ;
+        private final boolean forward;
+        Direction(boolean forward) {
+            this.forward = forward;
         }
-
-        public static SuperstructurePosition fromRobotSpace(Pose2d robotSpace) {
-            return new SuperstructurePosition(robotSpace);
+        public static Direction getClosest(Rotation2d target, Rotation2d current) {
+            if (target.minus(current).getCos() >= 0) {
+                return Direction.Forward;
+            } else {
+                return Direction.Backward;
+            }
         }
-        public static SuperstructurePosition fromPivotSpace(Transform2d pivotSpace) {
-            return fromRobotSpace(PivotConstants.pivotRobotSpace.transformBy(pivotSpace));
+        public boolean isForward() {
+            return this.forward;
         }
-
-        public Pose2d getRobotSpacePose() {
-            return robotSpacePose;
-        }
-        public Transform2d getPivotSpacePose() {
-            return getRobotSpacePose().minus(PivotConstants.pivotRobotSpace);
-        }
-
-        public SuperstructureState getSuperstructureState() {
-            return SuperstructureState.fromRobotSpace(getRobotSpacePose());
+        public boolean isBackward() {
+            return !this.forward;
         }
     }
 
     public static class RobotFlippedSuperstructureState {
         private final SuperstructureState forward;
         private final SuperstructureState backward;
-
-        public static enum Direction {
-            Forward(true),
-            Backward(false),
-            ;
-            private final boolean forward;
-            Direction(boolean forward) {
-                this.forward = forward;
-            }
-            public boolean isForward() {
-                return this.forward;
-            }
-            public boolean isBackward() {
-                return !this.forward;
-            }
-        }
 
         public RobotFlippedSuperstructureState(SuperstructureState forward, SuperstructureState backward) {
             this.forward = forward;
@@ -536,11 +515,16 @@ public class Superstructure extends SubsystemBase {
                 backward
             );
         }
+        public static RobotFlippedSuperstructureState fromForwardOnly(SuperstructureState forward) {
+            return new RobotFlippedSuperstructureState(forward, null);
+        }
+        public static RobotFlippedSuperstructureState fromBackwardOnly(SuperstructureState backward) {
+            return new RobotFlippedSuperstructureState(null, backward);
+        }
 
         public SuperstructureState getForward() {
             return forward;
         }
-
         public SuperstructureState getBackward() {
             return backward;
         }
@@ -552,24 +536,22 @@ public class Superstructure extends SubsystemBase {
             }
         }
 
-        public static Direction getClosestDirection(Rotation2d target, Rotation2d current) {
-            if (target.minus(current).getCos() >= 0) {
-                return Direction.Forward;
+        public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
+            if (forward == null) {
+                return backward;
+            } else if (backward == null) {
+                return forward;
             } else {
-                return Direction.Backward;
+                return get(Direction.getClosest(target, current));
             }
         }
 
-        public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
-            return get(getClosestDirection(target, current));
-        }
-
-        public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
-            return new RobotFlippedSuperstructureState(
-                this.forward.plus(forwardOther),
-                this.backward.plus(backwardsOther)
-            );
-        }
+        // public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
+        //     return new RobotFlippedSuperstructureState(
+        //         this.forward.plus(forwardOther),
+        //         this.backward.plus(backwardsOther)
+        //     );
+        // }
     }
 
     public static class RobotFlippedRobotPose implements AllianceFlippable<RobotFlippedRobotPose> {
@@ -617,15 +599,19 @@ public class Superstructure extends SubsystemBase {
                 backward
             );
         }
+        public static RobotFlippedRobotPose fromForwardOnly(Pose2d forward) {
+            return new RobotFlippedRobotPose(forward, null);
+        }
+        public static RobotFlippedRobotPose fromBackwardOnly(Pose2d backward) {
+            return new RobotFlippedRobotPose(null, backward);
+        }
 
         public Pose2d getForward() {
             return forward;
         }
-
         public Pose2d getBackward() {
             return backward;
         }
-
         public Pose2d get(Direction direction) {
             switch (direction) {
                 default:
@@ -635,11 +621,17 @@ public class Superstructure extends SubsystemBase {
         }
 
         public Direction getClosestDirection(Rotation2d current) {
-            return RobotFlippedSuperstructureState.getClosestDirection(this.forward.getRotation(), current);
+            return Direction.getClosest(this.forward.getRotation(), current);
         }
 
         public Pose2d getClosest(Rotation2d current) {
-            return get(getClosestDirection(current));
+            if (forward == null) {
+                return backward;
+            } else if (backward == null) {
+                return forward;
+            } else {
+                return get(getClosestDirection(current));
+            }
         }
 
         @Override
@@ -650,4 +642,8 @@ public class Superstructure extends SubsystemBase {
             );
         }
     }
+
+    // public static class RobotFlippedTotalState {
+
+    // }
 }
