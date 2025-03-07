@@ -52,11 +52,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
             inputs.algae = -1;
         }
         if (inputs.intake != -1) {
-            selectedIntakeGoal = (inputs.intake > 0) ? (
-                Optional.of(Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 1]))
-            ) : (
-                Optional.empty()
-            );
+            selectedIntakeGoal = 
+                inputs.intake == 0 ?
+                Optional.empty() :
+                inputs.intake == 1 ?
+                Optional.of(Optional.empty()) :
+                Optional.of(Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 2]));
             inputs.intake = -1;
         }
 
