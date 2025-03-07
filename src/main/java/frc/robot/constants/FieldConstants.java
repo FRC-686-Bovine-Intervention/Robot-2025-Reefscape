@@ -133,7 +133,7 @@ public final class FieldConstants {
             SuperstructureState.fromParts(
                 Degrees.of(85),
                 ElevatorConstants.minLengthPhysical,
-                Degrees.of(160)
+                Degrees.of(150)
             )
         );
     }
@@ -182,9 +182,9 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.minus(Inches.of(8)),
-                                Meters.of(0.592953)
+                                Meters.of(0.622953)
                             ),
-                            Rotation2d.fromDegrees(0)
+                            Rotation2d.fromDegrees(10)
                         )
                     )
                 )
@@ -194,8 +194,8 @@ public final class FieldConstants {
                     SuperstructureState.fromRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)),
-                                Meters.of(0.792953).plus(Inches.of(5.5))
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3.5)),
+                                Meters.of(0.792953).plus(Inches.of(10.5))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
@@ -210,25 +210,25 @@ public final class FieldConstants {
                 // ).inverse()
             ),
             Level3(Meters.of(1.196053), Degrees.of(35), Meters.of(0.779254),
-                new RobotFlippedSuperstructureState(
+                RobotFlippedSuperstructureState.fromForwardOnly(
                     SuperstructureState.fromRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)),
-                                Meters.of(1.196053).plus(Inches.of(5.5))
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3.5)),
+                                Meters.of(1.196053).plus(Inches.of(10.5))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
-                    ),
-                    SuperstructureState.fromRobotSpace(
-                        new Pose2d(
-                            new Translation2d(
-                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)).unaryMinus(),
-                                Meters.of(1.196053).plus(Inches.of(5.5))
-                            ),
-                            Rotation2d.fromDegrees(180)
-                        )
                     )
+                    // SuperstructureState.fromRobotSpace(
+                    //     new Pose2d(
+                    //         new Translation2d(
+                    //             RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(8)).unaryMinus(),
+                    //             Meters.of(1.196053).plus(Inches.of(5.5))
+                    //         ),
+                    //         Rotation2d.fromDegrees(180)
+                    //     )
+                    // )
                 )
                 // new Transform2d(
                 //     new Translation2d(
@@ -243,10 +243,10 @@ public final class FieldConstants {
                     SuperstructureState.fromRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(0)),
-                                Meters.of(1.828663).plus(Inches.of(5.5))
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3)),
+                                Meters.of(1.828663).plus(Inches.of(15))
                             ),
-                            Rotation2d.fromDegrees(-30)
+                            Rotation2d.fromDegrees(-25)
                         )
                     )
                 )

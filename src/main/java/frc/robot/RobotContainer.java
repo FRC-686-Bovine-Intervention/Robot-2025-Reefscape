@@ -257,6 +257,9 @@ public class RobotContainer {
                         0
                     );
                 }
+                if (objectiveTracker.getTargetDirection().isBackward()) {
+                    robotSpeeds = robotSpeeds.unaryMinus();
+                }
                 drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
             })
             .withName("Driver Control Field Relative")

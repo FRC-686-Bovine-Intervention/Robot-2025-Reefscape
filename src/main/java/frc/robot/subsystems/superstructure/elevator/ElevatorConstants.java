@@ -44,7 +44,7 @@ public class ElevatorConstants {
     public static final Distance stageExtension = Inches.of(17);
     public static final Distance minLengthPhysical = Meters.zero();
     public static final Distance maxLengthPhysical = stageExtension.times(movingStageCount);
-    public static final Distance maxLengthSoftware = maxLengthPhysical.minus(Inches.of(3));
+    public static final Distance maxLengthSoftware = maxLengthPhysical.minus(Inches.of(1));
     public static final Distance minHeightPhysical = Inches.of(26.5);
     public static final Distance maxHeightPhysical = minHeightPhysical.plus(maxLengthPhysical);
 
