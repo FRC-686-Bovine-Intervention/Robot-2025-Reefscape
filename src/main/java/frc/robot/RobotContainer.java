@@ -257,7 +257,11 @@ public class RobotContainer {
                     );
                 }
                 if (objectiveTracker.getTargetDirection().isBackward()) {
-                    robotSpeeds = robotSpeeds.unaryMinus();
+                    robotSpeeds = new ChassisSpeeds(
+                        -robotSpeeds.vxMetersPerSecond,
+                        robotSpeeds.vyMetersPerSecond,
+                        robotSpeeds.omegaRadiansPerSecond
+                    );
                 }
                 drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
             })

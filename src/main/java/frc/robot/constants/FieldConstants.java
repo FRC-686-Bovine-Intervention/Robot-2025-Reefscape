@@ -123,8 +123,8 @@ public final class FieldConstants {
             SuperstructureState.fromRobotSpace(
                 new Pose2d(
                     new Translation2d(
-                        RobotConstants.centerToFrontBumper,
-                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians))))
+                        RobotConstants.centerToFrontBumper.plus(Coral.radius.times(2)),
+                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians)))).plus(Inches.of(1))
                     ),
                     new Rotation2d(chuteAngle)
                 )
@@ -195,7 +195,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3.5)),
-                                Meters.of(0.792953).plus(Inches.of(10.5))
+                                Meters.of(0.792953).plus(Inches.of(9.5))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
@@ -215,7 +215,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3.5)),
-                                Meters.of(1.196053).plus(Inches.of(9.5))
+                                Meters.of(1.196053).plus(Inches.of(8.5))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
@@ -359,20 +359,22 @@ public final class FieldConstants {
             }
         }
 
-        public static final Pipe[] pipes = new Pipe[Rack.values().length * Side.values().length];
+        public static final Pipe pipeA = new Pipe(Rack.Rack0, Side.Left);
+        public static final Pipe pipeB = new Pipe(Rack.Rack0, Side.Right);
+        public static final Pipe pipeC = new Pipe(Rack.Rack1, Side.Left);
+        public static final Pipe pipeD = new Pipe(Rack.Rack1, Side.Right);
+        public static final Pipe pipeE = new Pipe(Rack.Rack2, Side.Left);
+        public static final Pipe pipeF = new Pipe(Rack.Rack2, Side.Right);
+        public static final Pipe pipeG = new Pipe(Rack.Rack3, Side.Left);
+        public static final Pipe pipeH = new Pipe(Rack.Rack3, Side.Right);
+        public static final Pipe pipeI = new Pipe(Rack.Rack4, Side.Left);
+        public static final Pipe pipeJ = new Pipe(Rack.Rack4, Side.Right);
+        public static final Pipe pipeK = new Pipe(Rack.Rack5, Side.Left);
+        public static final Pipe pipeL = new Pipe(Rack.Rack5, Side.Right);
+        public static final Pipe[] pipes = new Pipe[] {pipeA,pipeB,pipeC,pipeD,pipeE,pipeF,pipeG,pipeH,pipeI,pipeJ,pipeK,pipeL};
         public static final Branch[] branches = new Branch[Rack.values().length * Side.values().length * Level.values().length];
         
         static {
-            for (var rack : Rack.values()) {
-                for (var side : Side.values()) {
-                    pipes[Pipe.getIndex(rack, side)] =
-                        rack.leftPipe.side.equals(side) ?
-                            rack.leftPipe :
-                            rack.rightPipe
-                    ;
-                }
-            }
-
             for (var pipe : pipes) {
                 for (var level : Level.values()) {
                     var branch = new Branch(pipe, level);

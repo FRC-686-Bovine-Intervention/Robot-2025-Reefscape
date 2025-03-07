@@ -54,9 +54,6 @@ public class Intake extends SubsystemBase {
         Logger.processInputs("Inputs/Intake", inputs);
 
         currentSpikeDetector.update(inputs.motor.current);
-        if (currentSpikeDetector.hasSpike()) {
-            hasGamepiece = true;
-        }
 
         Logger.recordOutput("Intake/hasgamepiece", hasGamepiece);
 
@@ -137,6 +134,8 @@ public class Intake extends SubsystemBase {
         return genCommand(
             "Intake",
             intakeVoltage          
-        );
+        ).alongWith(Commands.run(() -> {if (currentSpikeDetector.hasSpike()) {
+            hasGamepiece = true;
+        }}));
     }
 }

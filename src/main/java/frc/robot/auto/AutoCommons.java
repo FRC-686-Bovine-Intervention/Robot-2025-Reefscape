@@ -1,5 +1,6 @@
 package frc.robot.auto;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 
 import java.util.HashMap;
@@ -66,18 +67,20 @@ public class AutoCommons {
     }
 
     public static Command scoreOnReef(PathPlannerPath pathToReef, Level branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var targetState = branchLevel.superstructureStates.get(direction);
         var end = getLastPoint(pathToReef);
         return 
             Commands.deadline(
                 Commands.sequence(
-                    Commands.waitUntil(() -> true), //TODO: Superstructure atSetpoint()
-                    intake.eject().onlyWhile(intake.hasCoral)
+                    Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(1), Inches.of(1), Degrees.of(3))),
+                    Commands.waitSeconds(1),
+                    intake.eject().asProxy().withTimeout(0.75)//.onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose().getTranslation(), Inches.of(24))),
-                    superstructure.goToSetpointSequenced(branchLevel.superstructureStates.get(direction))
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose().getTranslation(), Inches.of(48))),
+                    superstructure.goToSetpointSequenced(targetState).asProxy()
                 ),
-                followPathFlipped(pathToReef, drive)
+                followPathFlipped(pathToReef, drive).asProxy()
             )
         ;
     }
@@ -93,9 +96,9 @@ public class AutoCommons {
     public static Command pickupCoralFromStation(PathPlannerPath pathToStation, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
         return 
             Commands.deadline(
-                intake.intake().until(intake.hasCoral),
-                followPathFlipped(pathToStation, drive),
-                superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction))
+                intake.intake().asProxy().until(intake.hasCoral),
+                followPathFlipped(pathToStation, drive).asProxy(),
+                superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).asProxy()
             )
         ;
     }
@@ -106,8 +109,9 @@ public class AutoCommons {
 
     public static final Map.Entry<String, Pipe>[] pipeOptions =
         IntStream.range(0, FieldConstants.Reef.pipes.length)
-            .mapToObj(i -> Settings.option("Pipe " + FieldConstants.Reef.pipes[i].getLetter(), FieldConstants.Reef.pipes[i]))
-            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
+            .mapToObj(i -> Settings.option(String.valueOf(FieldConstants.Reef.pipes[i].getLetter()), FieldConstants.Reef.pipes[i]))
+            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new)
+    ;
     
     public static final Map.Entry<String, Rack>[] rackOptions = 
         IntStream.range(0, FieldConstants.Reef.Rack.values().length)
@@ -161,10 +165,10 @@ public class AutoCommons {
             if(loadedPaths.containsKey(name)) {
                 return loadedPaths.get(name);
             } else {
-                if(!preloading) new Alert("[AutoPaths] Loading \"" + name + "\" which wasn't preloaded. Please add path to AutoPaths.preload()", AlertType.kWarning).set(true);
+                // if(!preloading) new Alert("[AutoPaths] Loading \"" + name + "\" which wasn't preloaded. Please add path to AutoPaths.preload()", AlertType.kWarning).set(true);
                 try {
                     var path = PathPlannerPath.fromPathFile(name);
-                    loadedPaths.put(name, path);
+                    // loadedPaths.put(name, path);
                     return path;
                 } catch (Exception e) {
                     return null;
@@ -177,10 +181,10 @@ public class AutoCommons {
             if(loadedPaths.containsKey(name)) {
                 return loadedPaths.get(name);
             } else {
-                if(!preloading) new Alert("[AutoPaths] Loading \"" + name + "\" which wasn't preloaded. Please add path to AutoPaths.preload()", AlertType.kWarning).set(true);
+                // if(!preloading) new Alert("[AutoPaths] Loading \"" + name + "\" which wasn't preloaded. Please add path to AutoPaths.preload()", AlertType.kWarning).set(true);
                 try {
                     var path = PathPlannerPath.fromChoreoTrajectory(name);
-                    loadedPaths.put(name, path);
+                    // loadedPaths.put(name, path);
                     return path;
                 } catch (Exception e) {
                     return null;
