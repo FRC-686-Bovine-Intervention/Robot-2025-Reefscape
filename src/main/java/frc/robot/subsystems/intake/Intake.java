@@ -37,7 +37,7 @@ public class Intake extends SubsystemBase {
     public final Trigger hasCoral = new Trigger(() -> hasGamepiece);
     public final Trigger hasAlgae = new Trigger(() -> false);
 
-    private final Current currentThreshold = Amps.of(15);
+    private final Current currentThreshold = Amps.of(19);
     private final Time currentThresholdTime = Seconds.of(0.5);
 
     private final CurrentSpikeDetector currentSpikeDetector = new CurrentSpikeDetector(() -> currentThreshold, () -> currentThresholdTime);

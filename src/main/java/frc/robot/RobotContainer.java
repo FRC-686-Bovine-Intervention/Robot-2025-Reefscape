@@ -10,11 +10,8 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
@@ -30,7 +27,7 @@ import frc.robot.auto.AutoSelector;
 import frc.robot.auto.routines.DrivePastLine;
 import frc.robot.auto.routines.ScoreAlgaeAndCoral;
 import frc.robot.auto.routines.ScoreCoral;
-import frc.robot.constants.FieldConstants;
+import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.Level;
@@ -53,8 +50,6 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIO;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -262,6 +257,9 @@ public class RobotContainer {
                         0
                     );
                 }
+                if (objectiveTracker.getTargetDirection().isBackward()) {
+                    robotSpeeds = robotSpeeds.unaryMinus();
+                }
                 drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
             })
             .withName("Driver Control Field Relative")
@@ -275,8 +273,8 @@ public class RobotContainer {
         // superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.idle));
         intake.setDefaultCommand(intake.idle());
-        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(-60))));
-        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(60))));
+        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
+        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
@@ -316,10 +314,10 @@ public class RobotContainer {
         // ));
 
         // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, 1)));
-        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(0, -1)));
-        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(-1, 0)));
-        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedCoral(1, 0)));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
         driveController.a().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
@@ -335,22 +333,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     if (objectiveTracker.intakeFromCoralStation()) {
-                        var stationPoses = new RobotFlippedRobotPose[] {
-                            CoralStation.leftStationLeft.getOurs(),
-                            CoralStation.leftStationCenter.getOurs(),
-                            CoralStation.leftStationRight.getOurs(),
-                            CoralStation.rightStationLeft.getOurs(),
-                            CoralStation.rightStationCenter.getOurs(),
-                            CoralStation.rightStationRight.getOurs(),
-                        };
-                        var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                            var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                            var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                            return (int) Math.signum(aDistance - bDistance);
-                        }).findFirst().get();
-                        Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
-                        Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
-                        if (RobotFlippedSuperstructureState.useForward(closestStationPose.getForward().getRotation(), drive.getRotation())) {
+                        if (objectiveTracker.getIntakeTargetDirection().isForward()) {
                             return coralStationForwardCommand;
                         } else {
                             return coralStationBackwardCommand;
@@ -361,7 +344,7 @@ public class RobotContainer {
                             return groundAlgaeCommand;
                         } else {
                             var stagedAlgae = algae.get();
-                            if (RobotFlippedSuperstructureState.useForward(stagedAlgae.rack.algaeIntakeRobotPose.getOurs().getRotation(), drive.getRotation())) {
+                            if (objectiveTracker.getIntakeTargetDirection().isForward()) {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
                             } else {
                                 return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
@@ -371,8 +354,8 @@ public class RobotContainer {
                 }
             },
             Set.of(superstructure)
-        ).alongWith(intake.intake()).until(intake.hasCoral)); //Intake/Eject
-        driveController.b().whileTrue(intake.eject());
+        ).alongWith(intake.intake()).until(intake.hasCoral)); //Intake
+        driveController.b().whileTrue(intake.eject()); //Eject
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
         driveController.x().toggleOnTrue(new ContinuouslySwappingCommand( //Extend
             new Supplier<Command>() {
@@ -385,7 +368,7 @@ public class RobotContainer {
                 }
                 public Command get() {
                     var branch = objectiveTracker.getSelectedBranch();
-                    if (branch.pipe.robotPose.getOurs().useForward(drive.getRotation())) {
+                    if (objectiveTracker.getReefTargetDirection().isForward()) {
                         return commands[branch.level.ordinal() * 2];
                     } else {
                         return commands[branch.level.ordinal() * 2 + 1];
@@ -397,13 +380,13 @@ public class RobotContainer {
         driveController.x().and(intake.hasAlgae).toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final Command processorCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(PivotConstants.minAngle, Meters.zero(), Degrees.of(35).unaryMinus()));
-                private final Command netForwardCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(Degrees.of(90), Meters.zero(), Degrees.of(45).unaryMinus()));
-                private final Command netBackwardCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(Degrees.of(90), Meters.zero(), Degrees.of(45)));
+                private final Command netForwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getForward());
+                private final Command netBackwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getBackward());
                 public Command get() {
                     switch (objectiveTracker.getAlgaeGoal()) {
                         default:
                         case NET:
-                            if (RobotFlippedSuperstructureState.useForward(FieldConstants.netForwardRotation.getOurs(), drive.getRotation())) {
+                            if (objectiveTracker.getAlgaeTargetDirection().isForward()) {
                                 return netForwardCommand;
                             } else {
                                 return netBackwardCommand;
@@ -416,52 +399,12 @@ public class RobotContainer {
             },
             Set.of(superstructure)
         ));
-        driveController.leftBumper().and(intake.hasCoral).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> {
-            return Optional.of(objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation()).getRotation());
-        })); //Auto drive
-        driveController.leftBumper().and(intake.hasCoral.negate()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> {
-            var stationPoses = new RobotFlippedRobotPose[] {
-                CoralStation.leftStationLeft.getOurs(),
-                CoralStation.leftStationCenter.getOurs(),
-                CoralStation.leftStationRight.getOurs(),
-                CoralStation.rightStationLeft.getOurs(),
-                CoralStation.rightStationCenter.getOurs(),
-                CoralStation.rightStationRight.getOurs(),
-            };
-            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                return (int) Math.signum(aDistance - bDistance);
-            }).findFirst().get();
-            Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
-            Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
-            return Optional.of(closestStationPose.getClosest(drive.getRotation()).getRotation());
-        }));
-        driveController.rightBumper().and(intake.hasCoral).whileTrue(drive.simplePIDTo(() -> {
-            return objectiveTracker.getSelectedBranch().pipe.robotPose.getOurs().getClosest(drive.getRotation());
-        })); //Auto drive
-        driveController.rightBumper().and(intake.hasCoral.negate()).whileTrue(drive.simplePIDTo(() -> {
-            var stationPoses = new RobotFlippedRobotPose[] {
-                CoralStation.leftStationLeft.getOurs(),
-                CoralStation.leftStationCenter.getOurs(),
-                CoralStation.leftStationRight.getOurs(),
-                CoralStation.rightStationLeft.getOurs(),
-                CoralStation.rightStationCenter.getOurs(),
-                CoralStation.rightStationRight.getOurs(),
-            };
-            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                var aDistance = a.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                var bDistance = b.getClosest(drive.getRotation()).getTranslation().getDistance(drive.getPose().getTranslation());
-                return (int) Math.signum(aDistance - bDistance);
-            }).findFirst().get();
-            Logger.recordOutput("Closest Station/Robot", closestStationPose.getClosest(drive.getRotation()));
-            Logger.recordOutput("Closest Station/Mechs", CoralStation.intakePosition.getClosest(closestStationPose.getForward().getRotation(), drive.getRotation()).getMechTransforms());
-            return closestStationPose.getClosest(drive.getRotation());
-        }));
+        driveController.leftBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getTargetPose().get().getRotation()));
+        driveController.rightBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getTargetPose().get())); //Auto drive
         // driveController.start().toggleOnTrue(null); //Start Climb
         // driveController.back().toggleOnTrue(null); //Climb
         
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs())));
+        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())));
     }
 
     private void configureNotifications() {}
