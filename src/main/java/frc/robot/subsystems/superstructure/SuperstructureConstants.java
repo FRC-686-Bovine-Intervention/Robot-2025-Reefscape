@@ -20,10 +20,10 @@ public class SuperstructureConstants {
 
     public static final Transform2d algaeStagedForwardTransform = new Transform2d(
         new Translation2d(
-            Algae.radius.plus(Inches.of(1)),
-            Inches.zero()
+            Algae.radius.plus(Inches.of(6)),
+            Inches.of(-1)
         ),
-        Rotation2d.kZero
+        Rotation2d.fromDegrees(10)
     ).inverse();
 
     public static final Transform2d coralIntakeForwardTransform = new Transform2d(

@@ -215,7 +215,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3.5)),
-                                Meters.of(1.196053).plus(Inches.of(10.5))
+                                Meters.of(1.196053).plus(Inches.of(9.5))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
