@@ -70,6 +70,11 @@ import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants;
+import frc.robot.subsystems.vision.questnav.QuestNav;
+import frc.robot.subsystems.vision.questnav.QuestNavConstants;
+import frc.robot.subsystems.vision.questnav.QuestNavIO;
+import frc.robot.subsystems.vision.questnav.QuestNavIOQuest3S;
+import frc.robot.subsystems.vision.questnav.QuestNavIOSim;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
@@ -83,7 +88,7 @@ public class RobotContainer {
     public final Intake intake;
     // public final Climber climber;
     public final ApriltagVision apriltagVision;
-    // public final BucketVision bucketVision;
+    public final QuestNav questNav;
     public final ManualOverrides manualOverrides;
     public final ObjectiveTracker objectiveTracker;
 
@@ -130,12 +135,7 @@ public class RobotContainer {
                         new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
                     )
                 );
-                // bucketVision = new BucketVision(
-                //     // new BucketCamera(
-                //     //     BucketVisionConstants.bucketCamera,
-                //     //     new BucketCameraIOPhotonVision(BucketVisionConstants.bucketCamera)
-                //     // )
-                // );
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S());
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
             break;
             case SIM:
@@ -151,9 +151,8 @@ public class RobotContainer {
                     new Wrist(new WristIOSim())
                 );
                 intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
-                // climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
-                // bucketVision = new BucketVision();
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim());
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
             break;
             default:
@@ -171,9 +170,8 @@ public class RobotContainer {
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
-                // climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision();
-                // bucketVision = new BucketVision();
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {});
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
             break;
         }
@@ -185,6 +183,7 @@ public class RobotContainer {
             .addChild(VisionConstants.frontRightMount)
             .addChild(VisionConstants.backLeftMount)
             .addChild(VisionConstants.backRightMount)
+            .addChild(VisionConstants.questNavMount)
             .addChild(superstructure.pivot.mech
                 .addChild(superstructure.elevator.stage2Mech
                     .addChild(superstructure.elevator.stage3Mech
