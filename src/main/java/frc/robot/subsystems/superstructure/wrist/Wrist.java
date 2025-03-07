@@ -1,98 +1,54 @@
 package frc.robot.subsystems.superstructure.wrist;
 
-import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.util.robotStructure.angle.ArmMech;
 
-public class Wrist extends SubsystemBase{
+public class Wrist {
     private final WristIO io;
     private final WristIOInputsAutoLogged inputs = new WristIOInputsAutoLogged();
 
     public final ArmMech mech = new ArmMech(WristConstants.wristBase);
 
     public Wrist(WristIO io) {
+        System.out.println("[Init Wrist] Instantiating Wrist with " + io.getClass().getSimpleName());
         this.io = io;
     }
 
-    @Override
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("Inputs/Wrist", inputs);
+        Logger.processInputs("Inputs/Superstructure/Wrist", inputs);
 
-        mech.set(inputs.encoder.position);
+        var angle = getAngle();
+
+        mech.set(angle);
+
+        Logger.recordOutput("Superstructure/Wrist/Angle", angle);
     }
 
     public Angle getAngle() {
-        return inputs.encoder.position;
+        return WristConstants.sensorToMechanism.apply(inputs.encoder.position);
+    }
+    public AngularVelocity getVelocity() {
+        return WristConstants.sensorToMechanism.apply(inputs.encoder.velocity);
+    }
+    public Voltage getVoltage() {
+        return inputs.motor.motor.appliedVoltage;
     }
     
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
-
     public void setAngle(Measure<AngleUnit> angle) {
         io.setAngle(angle);
     }
-
-    public Command voltage(Supplier<Measure<VoltageUnit>> voltage) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Voltage");
-            }
-
-            @Override
-            public void initialize() {
-
-            }
-            @Override
-            public void execute() {
-                setVoltage(voltage.get());
-            }
-            @Override
-            public void end(boolean interrupted) {
-                io.stop();
-            }
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        };
-    }
-
-    public Command pivotTo(Measure<AngleUnit> angle) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Pivot To");
-            }
-
-            @Override
-            public void initialize() {
-
-            }
-            @Override
-            public void execute() {
-                setAngle(angle);
-            }
-            @Override
-            public void end(boolean interrupted) {
-                io.stop();
-            }
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        };
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        io.setFeedForward(feedForward);
     }
 }

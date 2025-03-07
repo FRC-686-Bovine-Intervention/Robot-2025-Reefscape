@@ -476,6 +476,10 @@ public class Drive extends VirtualSubsystem {
     //     );
     // }
 
+    public final Command simplePIDTo(Supplier<Pose2d> target) {
+        return Commands.parallel(translationSubsystem.simplePIDTo(() -> target.get().getTranslation()), rotationalSubsystem.pidControlledOptionalHeading(() -> Optional.of(target.get().getRotation())));
+    }
+
     public final Translational translationSubsystem;
     public static class Translational extends SubsystemBase {
         public final Drive drive;
@@ -534,6 +538,34 @@ public class Drive extends VirtualSubsystem {
                     fieldVec.get(1),
                     0
                 );
+            };
+        }
+
+        public Command simplePIDTo(Supplier<Translation2d> target) {
+            var subsystem = this;
+            return new Command() {
+                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 2);
+                {
+                    addRequirements(subsystem);
+                    setName("Simple PID To");
+                }
+                @Override
+                public void execute() {
+                    var distTo = drive.getPose().getTranslation().getDistance(target.get());
+                    var vec = target.get().minus(drive.getPose().getTranslation());
+                    var norm = vec.div(vec.getNorm());
+                    var pterm = distTo * driveKP.getAsDouble();
+                    var out = norm.times(pterm);
+                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(
+                        out.getX(),
+                        out.getY(),
+                        0
+                    ), drive.getRotation()));
+                }
+                @Override
+                public void end(boolean interrupted) {
+                    stop();
+                }
             };
         }
     }
@@ -626,7 +658,7 @@ public class Drive extends VirtualSubsystem {
             };
         }
 
-        public Command pidControlledHeading(Supplier<Optional<Rotation2d>> headingSupplier) {
+        public Command pidControlledOptionalHeading(Supplier<Optional<Rotation2d>> headingSupplier) {
             var subsystem = this;
             return new Command() {
                 private final ProfiledPIDController headingPID = new ProfiledPIDController(
@@ -675,9 +707,53 @@ public class Drive extends VirtualSubsystem {
                 }
             };
         }
+        public Command pidControlledHeading(Supplier<Rotation2d> headingSupplier) {
+            var subsystem = this;
+            return new Command() {
+                private final ProfiledPIDController headingPID = new ProfiledPIDController(
+                    DriveConstants.headingKp,
+                    DriveConstants.headingKi,
+                    DriveConstants.headingKd,
+                    new Constraints(
+                        DriveConstants.maxTurnRate.in(RadiansPerSecond),
+                        5000
+                    )
+                );
+                {
+                    addRequirements(subsystem);
+                    setName("PID Controlled Heading");
+                    headingPID.enableContinuousInput(-Math.PI, Math.PI);
+                    headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
+                }
+                @Override
+                public void initialize() {
+                    headingPID.reset(drive.getRotation().getRadians());
+                }
+                @Override
+                public void execute() {
+                    var desiredHeading = headingSupplier.get();
+                    double turnInput = headingPID.calculate(drive.getRotation().getRadians(), desiredHeading.getRadians());
+                    turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
+                    turnInput = MathUtil.clamp(
+                        turnInput, 
+                        -0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble(), 
+                        +0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble()
+                    );
+                    driveVelocity(turnInput * DriveConstants.maxTurnRate.in(RadiansPerSecond));
+                }
+                @Override
+                public void end(boolean interrupted) {
+                    stop();
+                }
+                @Override
+                public boolean isFinished() {
+                    return false;
+                }
+            };
+        }
 
         public Command headingFromJoystick(Joystick joystick, Rotation2d[] snapPoints, Supplier<Rotation2d> forwardDirectionSupplier) {
-            return pidControlledHeading(
+            return pidControlledOptionalHeading(
                 new LazyOptional<Rotation2d>() {
                     private final Timer preciseTurnTimer = new Timer();
                     private final double preciseTurnTimeThreshold = 0.5;
@@ -710,7 +786,7 @@ public class Drive extends VirtualSubsystem {
         }
 
         public Command pointTo(Supplier<Optional<Translation2d>> posToPointTo, Supplier<Rotation2d> forward) {
-            return pidControlledHeading(
+            return pidControlledOptionalHeading(
                 () -> posToPointTo.get().map((pointTo) -> {
                     var FORR = pointTo.minus(RobotState.getInstance().getPose().getTranslation());
                     return new Rotation2d(FORR.getX(), FORR.getY()).minus(forward.get());

@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraFrame;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraIOInputs;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraTarget;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
@@ -14,7 +15,7 @@ import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCame
 public class ApriltagCamera {
     private final ApriltagCameraConstants camMeta;
     private final ApriltagCameraIO io;
-    private final ApriltagCameraIOInputsAutoLogged inputs = new ApriltagCameraIOInputsAutoLogged();
+    private final ApriltagCameraIOInputs inputs = new ApriltagCameraIOInputs();
 
     private final Alert notConnectedAlert;
 
@@ -25,7 +26,7 @@ public class ApriltagCamera {
         notConnectedAlert = new Alert("Apriltag camera \"" + camMeta.hardwareName + "\" is not connected", AlertType.kError);
     }
 
-    public Optional<ApriltagCameraResult> periodic() {
+    public ApriltagCameraResult periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/ApriltagVision/" + camMeta.hardwareName, inputs);
 
@@ -35,26 +36,21 @@ public class ApriltagCamera {
 
     public static class ApriltagCameraResult {
         public final ApriltagCameraConstants camMeta;
-        public final double timestamp;
-        public final ApriltagCameraTarget[] targets;
-        public final Pose3d estimatedRobotPose;
+        public final ApriltagCameraFrame[] frames;
 
-        private ApriltagCameraResult(ApriltagCameraConstants camMeta, double timestamp, ApriltagCameraTarget[] targets, Pose3d estimatedRobotPose) {
+        private ApriltagCameraResult(ApriltagCameraConstants camMeta, ApriltagCameraFrame[] frames) {
             this.camMeta = camMeta;
-            this.timestamp = timestamp;
-            this.targets = targets;
-            this.estimatedRobotPose = estimatedRobotPose;
+            this.frames = frames;
         }
 
-        public static Optional<ApriltagCameraResult> from(ApriltagCameraConstants camMeta, ApriltagCameraIOInputs inputs) {
-            if (!inputs.isConnected || inputs.targets.length <= 0) return Optional.empty();
-
-            return Optional.of(new ApriltagCameraResult(
+        public static ApriltagCameraResult from(ApriltagCameraConstants camMeta, ApriltagCameraIOInputs inputs) {
+            if (!inputs.isConnected) {
+                return new ApriltagCameraResult(camMeta, new ApriltagCameraFrame[0]);
+            }
+            return new ApriltagCameraResult(
                 camMeta,
-                inputs.timestamp,
-                inputs.targets,
-                inputs.estimatedRobotPose
-            ));
+                inputs.frames
+            );
         }
     }
 }

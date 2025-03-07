@@ -19,75 +19,83 @@ public final class VisionConstants {
         }
     }
 
-    public static final CameraMount frontLeftModuleMount = new CameraMount(new Transform3d(
+    public static final CameraMount frontLeftMount = new CameraMount(new Transform3d(
         new Translation3d(
-            Meters.of(+0.220594),
-            Meters.of(+0.280635),
-            Meters.of(+0.234983)
+            Meters.of(-0.083008),
+            Meters.of(+0.244626),
+            Meters.of(+0.396240)
         ),
         new Rotation3d(
             Degrees.of(+0),
             Degrees.of(+0),
-            Degrees.of(+135)
+            Degrees.of(-7.5)
         )
-        .rotateBy(new Rotation3d(
-            Degrees.of(+0),
-            Degrees.of(+0),
-            Degrees.of(+0)
-        ))
+        .rotateBy(
+            new Rotation3d(
+                Degrees.of(+0),
+                Degrees.of(+0),
+                Degrees.of(+0)
+            )
+        )
     ));
-    public static final CameraMount frontRightModuleMount = new CameraMount(new Transform3d(
+    public static final CameraMount frontRightMount = new CameraMount(new Transform3d(
         new Translation3d(
-            Meters.of(+0.220594),
-            Meters.of(-0.280635),
-            Meters.of(+0.234983)
+            Meters.of(-0.083008),
+            Meters.of(-0.244626),
+            Meters.of(+0.396240)
         ),
         new Rotation3d(
             Degrees.of(+0),
             Degrees.of(+0),
-            Degrees.of(-135)
+            Degrees.of(+7.5)
         )
-        .rotateBy(new Rotation3d(
-            Degrees.of(+0),
-            Degrees.of(+0),
-            Degrees.of(+0)
-        ))
+        .rotateBy(
+            new Rotation3d(
+                Degrees.of(+0),
+                Degrees.of(+0),
+                Degrees.of(+0)
+            )
+        )
     ));
-    public static final CameraMount backLeftModuleMount = new CameraMount(new Transform3d(
+    public static final CameraMount backLeftMount = new CameraMount(new Transform3d(
         new Translation3d(
-            Meters.of(-0.209274),// Meters.of(-0.208321),
-            Meters.of(+0.255268),// Meters.of(+0.254315),
-            Meters.of(+0.234983)// Meters.of(+0.234983)
+            Meters.of(-0.175207),
+            Meters.of(+0.254154),
+            Meters.of(+0.403667)
         ),
         new Rotation3d(
             Degrees.of(+0),
             Degrees.of(+0),
-            Degrees.of(+5)
+            Degrees.of(+175)
         )
-        .rotateBy(new Rotation3d(
-            Degrees.of(+0),
-            Degrees.of(-20),
-            Degrees.of(+0)
-        ))
+        .rotateBy(
+            new Rotation3d(
+                Degrees.of(+0),
+                Degrees.of(-15),
+                Degrees.of(+0)
+            )
+        )
     ));
-    public static final CameraMount backRightModuleMount = new CameraMount(new Transform3d(
+    public static final CameraMount backRightMount = new CameraMount(new Transform3d(
         new Translation3d(
-            Meters.of(-0.209274),
-            Meters.of(-0.255268),
-            Meters.of(+0.234983)
+            Meters.of(-0.175207),
+            Meters.of(-0.254154),
+            Meters.of(+0.403667)
         ),
         new Rotation3d(
             Degrees.of(+0),
             Degrees.of(+0),
-            Degrees.of(-5)
+            Degrees.of(-175)
         )
-        .rotateBy(new Rotation3d(
-            Degrees.of(+0),
-            Degrees.of(-20),
-            Degrees.of(+0)
-        ))
+        .rotateBy(
+            new Rotation3d(
+                Degrees.of(+0),
+                Degrees.of(-15),
+                Degrees.of(+0)
+            )
+        )
     ));
-    public static final CameraMount flagStickMount = new CameraMount(new Transform3d(
+    public static final CameraMount driveCamMount = new CameraMount(new Transform3d(
         new Translation3d(
             Meters.of(-0.219548),
             Meters.of(-0.195904),
@@ -104,4 +112,5 @@ public final class VisionConstants {
             Degrees.of(+0)
         ))
     ));
+    public static final CameraMount questNavMount = new CameraMount(new Transform3d());
 }

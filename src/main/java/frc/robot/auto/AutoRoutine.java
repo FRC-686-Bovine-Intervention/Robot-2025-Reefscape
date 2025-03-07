@@ -95,8 +95,8 @@ public abstract class AutoRoutine {
         @Deprecated(forRemoval = false)
         public static AutoQuestion<Boolean> testBoolean(String name, boolean defaultOption) {
             return new AutoQuestion<Boolean>(name) {
-                private final Map.Entry<String, Boolean> falseOption = Map.entry("False", false);
-                private final Map.Entry<String, Boolean> trueOption = Map.entry("True", true);
+                private final Map.Entry<String, Boolean> falseOption = Settings.option("False", false);
+                private final Map.Entry<String, Boolean> trueOption = Settings.option("True", true);
                 @Override
                 protected Settings<Boolean> generateSettings() {
                     return Settings.from(

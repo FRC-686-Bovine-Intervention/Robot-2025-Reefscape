@@ -4,20 +4,22 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import frc.robot.constants.RobotConstants;
 
-public class ElevatorIOSim extends ElevatorIOFalcon {
+public class ElevatorIOSim extends ElevatorIOKraken {
     private final ElevatorSim elevatorSim = new ElevatorSim(
-        1,
-        1,
-        DCMotor.getFalcon500(2),
-        0,
-        2,
+        20,
+        12,
+        DCMotor.getKrakenX60(1),
+        ElevatorConstants.minLengthPhysical.in(Meters),
+        ElevatorConstants.stageExtension.in(Meters),
         false,
-        0
+        ElevatorConstants.minLengthPhysical.in(Meters)
     );
 
     @Override
@@ -25,16 +27,21 @@ public class ElevatorIOSim extends ElevatorIOFalcon {
         var motorSimState = motor.getSimState();
         var cancoderSimState = cancoder.getSimState();
 
-        elevatorSim.setInputVoltage(motorSimState.getMotorVoltage());
+        elevatorSim.setInputVoltage(-motorSimState.getMotorVoltage());
         elevatorSim.update(RobotConstants.rioUpdatePeriodSecs);
 
         var position = Radians.of(elevatorSim.getPositionMeters() / ElevatorConstants.sprocketRadius.in(Meters));
         var velocity = RadiansPerSecond.of(elevatorSim.getVelocityMetersPerSecond() / ElevatorConstants.sprocketRadius.in(Meters));
 
-        cancoderSimState.setRawPosition(position);
-        cancoderSimState.setVelocity(velocity);
+        cancoderSimState.setRawPosition(position.div(-ElevatorConstants.sensorToMechanism.ratio()));
+        cancoderSimState.setVelocity(velocity.div(-ElevatorConstants.sensorToMechanism.ratio()));
 
         motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+
+        Logger.recordOutput("DEBUG/leftsimstate voltage", -motorSimState.getMotorVoltage());
+        Logger.recordOutput("DEBUG/sim position", position);
+        Logger.recordOutput("DEBUG/sim velocity", velocity);
+        Logger.recordOutput("DEBUG/ratio", -ElevatorConstants.sensorToMechanism.ratio());
 
         super.updateInputs(inputs);
     }

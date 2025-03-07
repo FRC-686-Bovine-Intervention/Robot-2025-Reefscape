@@ -1,125 +1,62 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.Volts;
-
-import java.util.function.DoubleSupplier;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Second;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.util.robotStructure.linear.ExtenderMech;
 
-public class Elevator extends SubsystemBase{
+public class Elevator {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
-    public final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.elevatorBase);
-    public final ExtenderMech stage3Mech = new ExtenderMech(new Transform3d(
-        new Translation3d(
-            Meters.of(0.012700),
-            Meters.of(0),
-            Meters.of(0)
-        ),
-        new Rotation3d(
-            Degrees.of(0),
-            Degrees.of(0),
-            Degrees.of(0)
-        )
-    ));
-    public final ExtenderMech stage4Mech = new ExtenderMech(new Transform3d(
-        new Translation3d(
-            Meters.of(0.012700),
-            Meters.of(0),
-            Meters.of(0)
-        ),
-        new Rotation3d(
-            Degrees.of(0),
-            Degrees.of(0),
-            Degrees.of(0)
-        )
-    ));
+    public final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.stage2Base);
+    public final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
+    public final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
 
     public Elevator(ElevatorIO io) {
+        System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
         this.io = io;
     }
 
-    @Override
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("Inputs/Elevator", inputs);
+        Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
 
-        var stageDist = ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians));
+        var stageDist = getLength().div(ElevatorConstants.movingStageCount);
 
         stage2Mech.set(stageDist);
         stage3Mech.set(stageDist);
         stage4Mech.set(stageDist);
 
-        Logger.recordOutput("Elevator/Total Length", stageDist.times(ElevatorConstants.movingStages));
+        Logger.recordOutput("Superstructure/Elevator/Length", getLength());
     }
 
     public Distance getLength() {
-        return ElevatorConstants.sprocketRadius.times(inputs.encoder.position.in(Radians)).times(ElevatorConstants.movingStages);
+        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount);
+    }
+    public LinearVelocity getVelocity() {
+        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount);
+    }
+    public Voltage getVoltage() {
+        return inputs.motor.motor.appliedVoltage;
     }
 
-    public void setLength(Measure<DistanceUnit> dist) {
-        io.setLength(dist);
-    }
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
-
-    public Command elevateTo(Measure<DistanceUnit> dist) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Elevate To");
-            }
-            @Override
-            public void initialize() {
-                execute();
-            }
-            @Override
-            public void execute() {
-                setLength(dist);
-            }
-            @Override
-            public void end(boolean interrupted) {
-                io.stop();
-            }
-        };
+    public void setLength(Measure<DistanceUnit> length) {
+        io.setLength(length);
     }
-
-    public Command voltage(DoubleSupplier voltage) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Voltage");
-            }
-            @Override
-            public void initialize() {
-                execute();
-            }
-            @Override
-            public void execute() {
-                io.setVoltage(Volts.of(voltage.getAsDouble()));
-            }
-            @Override
-            public void end(boolean interrupted) {
-                io.stop();
-            }
-        };
+    public void setFeedForward(Measure<VoltageUnit> feedForward) {
+        io.setFeedForward(feedForward);
     }
 }

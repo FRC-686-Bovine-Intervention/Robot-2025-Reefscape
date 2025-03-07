@@ -45,8 +45,8 @@ export let intake = -1;
 let client = new NT4_Client(
   window.location.hostname,
   "ObjectiveSelector",
-  (topic) => {}, // Topic Announce
-  () => {}, // Topic Unannounce
+  (topic) => { }, // Topic Announce
+  () => { }, // Topic Unannounce
   (topic, timestamp, value) => {
     if (topic.name === matchTimeAdvantagekitToDashboardTopic) {
       matchTime = Math.max(0, value);
@@ -125,11 +125,11 @@ window.onload = () => {
 };
 
 export function sendSelectedBranch(rack, side) {
-  const { rack: prevRack, side: prevSide, level: level } = getCoral(coral);
+  const { rack: prevRack, side: prevSide, level } = getCoral(coral);
   if (prevRack !== rack || prevSide !== side) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, level, side })
+      getCoralIdx({ rack, side, level })
     );
   }
 }
@@ -139,7 +139,7 @@ export function sendSelectedLevel(level) {
   if (prevLevel !== level) {
     client.addSample(
       coralDashboardToRobotTopic,
-      getCoralIdx({ rack, level, side })
+      getCoralIdx({ rack, side, level })
     );
   }
 }
