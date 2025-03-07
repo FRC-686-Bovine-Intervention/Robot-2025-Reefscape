@@ -17,7 +17,8 @@ public class QuestNav extends VirtualSubsystem {
     private final QuestNavIOInputsAutoLogged inputs = new QuestNavIOInputsAutoLogged();
 
     private final QuestNavCameraConstants camMeta;
-    private Transform2d globalOffset = new Transform2d();
+
+    private Transform2d offset = new Transform2d();
 
     private final Alert notConnectedAlert;
 
@@ -42,25 +43,28 @@ public class QuestNav extends VirtualSubsystem {
         if (DriverStation.isDisabled()) {
             resetToPose(RobotState.getInstance().getPose());
         } else {
-            RobotState
-                .getInstance()
-                .addVisionMeasurement(
-                    getRobotPose(),
-                    VecBuilder.fill(0.00001, 0.00001, 0.00001),
-                    inputs.timestamp
-                );
+            // RobotState
+            //     .getInstance()
+            //     .addVisionMeasurement(
+            //         getRobotPose(),
+            //         VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
+            //         inputs.timestamp
+            //     );
         }
     }
 
+    private Pose2d getRobotCenter() {
+        return inputs.pose.transformBy(new Transform2d(
+            camMeta.mount.getRobotRelative().getTranslation().toTranslation2d(),
+            camMeta.mount.getRobotRelative().getRotation().toRotation2d()
+        ).inverse());
+    }
+
     private Pose2d getRobotPose() {
-        return 
-            inputs.pose
-                .transformBy(camMeta.mount.getRobotRelative().inverse())
-                .toPose2d()
-                .transformBy(globalOffset);
+        return getRobotCenter().transformBy(offset);
     }
 
     public void resetToPose(Pose2d pose) {
-        this.globalOffset = pose.minus(getRobotPose());
+        this.offset = getRobotCenter().minus(pose);
     }
 }
