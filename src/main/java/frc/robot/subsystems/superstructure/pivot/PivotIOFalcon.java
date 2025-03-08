@@ -32,7 +32,7 @@ import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
 public class PivotIOFalcon implements PivotIO {
     protected final TalonFX leftMotor = HardwareDevices.pivotLeftMotorID.talonFX();
-    protected final TalonFX rightMotor = HardwareDevices.pivotRightMotorID.talonFX();
+    // protected final TalonFX rightMotor = HardwareDevices.pivotRightMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.pivotEncoderID.cancoder();
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
@@ -93,15 +93,15 @@ public class PivotIOFalcon implements PivotIO {
         motorConfig.MotorOutput
             .withInverted(InvertedValue.CounterClockwise_Positive)
         ;
-        rightMotor.getConfigurator().apply(motorConfig);
+        // rightMotor.getConfigurator().apply(motorConfig);
         // rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             RobotConstants.rioUpdateFrequency,
             leftMotor.getRotorPosition(),
             leftMotor.getRotorVelocity(),
-            rightMotor.getRotorPosition(),
-            rightMotor.getRotorVelocity(),
+            // rightMotor.getRotorPosition(),
+            // rightMotor.getRotorVelocity(),
             cancoder.getPosition(),
             cancoder.getVelocity()
         );
@@ -109,13 +109,13 @@ public class PivotIOFalcon implements PivotIO {
             DriveConstants.odometryLoopFrequency.div(2),
             leftMotor.getMotorVoltage(),
             leftMotor.getStatorCurrent(),
-            leftMotor.getDeviceTemp(),
-            rightMotor.getMotorVoltage(),
-            rightMotor.getStatorCurrent(),
-            rightMotor.getDeviceTemp()
+            leftMotor.getDeviceTemp()
+            // rightMotor.getMotorVoltage(),
+            // rightMotor.getStatorCurrent(),
+            // rightMotor.getDeviceTemp()
         );
         leftMotor.optimizeBusUtilization();
-        rightMotor.optimizeBusUtilization();
+        // rightMotor.optimizeBusUtilization();
         cancoder.optimizeBusUtilization();
     }
 
@@ -123,7 +123,7 @@ public class PivotIOFalcon implements PivotIO {
     public void updateInputs(PivotIOInputs inputs) {
         inputs.encoder.updateFrom(cancoder);
         inputs.leftMotor.updateFrom(leftMotor);
-        inputs.rightMotor.updateFrom(rightMotor);
+        // inputs.rightMotor.updateFrom(rightMotor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();

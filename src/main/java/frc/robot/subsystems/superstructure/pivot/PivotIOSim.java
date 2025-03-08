@@ -24,7 +24,7 @@ public class PivotIOSim extends PivotIOFalcon {
     @Override
     public void updateInputs(PivotIOInputs inputs) {
         var leftSimState = leftMotor.getSimState();
-        var rightSimState = rightMotor.getSimState();
+        // var rightSimState = rightMotor.getSimState();
         var cancoderSimState = cancoder.getSimState();
 
         pivotSim.setInputVoltage(-leftSimState.getMotorVoltage());
@@ -37,7 +37,7 @@ public class PivotIOSim extends PivotIOFalcon {
         cancoderSimState.setVelocity(velocity.unaryMinus());
 
         leftSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-        rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        // rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
         super.updateInputs(inputs);
     }
