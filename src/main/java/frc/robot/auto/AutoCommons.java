@@ -98,10 +98,16 @@ public class AutoCommons {
     }
 
     public static Command pickupCoralFromStation(PathPlannerPath pathToStation, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToStation));
+        var endRotation = AllianceFlipUtil.apply(pathToStation.getGoalEndState().rotation());
+        var end = new Pose2d(endTranslation, endRotation);
         return 
             Commands.deadline(
                 intake.intake().asProxy().until(intake.hasCoral),
-                followPathFlipped(pathToStation, drive).asProxy(),
+                Commands.sequence(
+                    followPathFlipped(pathToStation, drive).asProxy(),
+                    drive.simplePIDTo(() -> end).asProxy()
+                ),
                 superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).asProxy()
             )
         ;
