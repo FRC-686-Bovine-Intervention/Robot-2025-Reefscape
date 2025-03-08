@@ -16,8 +16,6 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
@@ -68,19 +66,25 @@ public class AutoCommons {
 
     public static Command scoreOnReef(PathPlannerPath pathToReef, Level branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
         var targetState = branchLevel.superstructureStates.get(direction);
-        var end = getLastPoint(pathToReef);
+        var endTranslation = getLastPoint(pathToReef);
+        var endRotation = pathToReef.getGoalEndState().rotation();
+        var end = new Pose2d(endTranslation, endRotation);
         return 
             Commands.deadline(
                 Commands.sequence(
                     Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(1), Inches.of(1), Degrees.of(3))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(3), Degrees.of(2))),
                     Commands.waitSeconds(1),
                     intake.eject().asProxy().withTimeout(0.75)//.onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose().getTranslation(), Inches.of(48))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Inches.of(48))),
                     superstructure.goToSetpointSequenced(targetState).asProxy()
                 ),
-                followPathFlipped(pathToReef, drive).asProxy()
+                Commands.sequence(
+                    followPathFlipped(pathToReef, drive).asProxy(),
+                    drive.simplePIDTo(() -> end).asProxy()
+                )
             )
         ;
     }

@@ -231,9 +231,7 @@ public class Superstructure extends SubsystemBase {
                 var extending = setpoint.elevatorLength.gt(initialState.elevatorLength);
                 var elevatorMovingSignificant = !MeasureUtil.isNear(setpoint.elevatorLength, initialState.elevatorLength, Inches.of(36));
                 var wristDown = setpoint.wristAngle.lt(initialState.wristAngle.minus(Degrees.of(30)));
-                // pivotMoveCondition = () -> extending || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
-                // elevatorMoveCondition = () -> !extending || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
-                // wristMoveCondition = () -> !extending || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
+                var pivotBackToForward = initialState.pivotAngle.gt(Degrees.of(80));
                 this.pivotTarget = new Supplier<Angle>() {
                     private Angle cached = initialState.pivotAngle;
                     @Override
@@ -250,7 +248,15 @@ public class Superstructure extends SubsystemBase {
                             }
                         } else {
                             if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(10))) {
-                                cached = setpoint.pivotAngle;
+                                if (pivotBackToForward) {
+                                    if (MeasureUtil.isNear(setpoint.wristAngle, wrist.getAngle(), Degrees.of(3))) {
+                                        cached = setpoint.pivotAngle;
+                                    } else {
+                                        cached = Degrees.of(60);
+                                    }
+                                } else {
+                                    cached = setpoint.pivotAngle;
+                                }
                             } else {
                                 if (elevatorMovingSignificant) {
                                     cached = Degrees.of(90);
@@ -280,7 +286,11 @@ public class Superstructure extends SubsystemBase {
                     private Angle cached = initialState.wristAngle;
                     @Override
                     public Angle get() {
-                        if (extending) {
+                        if (pivotBackToForward) {
+                            if (MeasureUtil.isNear(pivotTarget.get(), pivot.getAngle(), Degrees.of(2))) {
+                                cached = setpoint.wristAngle;
+                            }
+                        } else if (extending) {
                             if (wristDown) {
                                 if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30))) {
                                     cached = setpoint.wristAngle;

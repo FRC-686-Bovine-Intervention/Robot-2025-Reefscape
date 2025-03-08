@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -23,6 +24,8 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
+import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -91,7 +94,29 @@ public class PivotIOFalcon implements PivotIO {
             .withInverted(InvertedValue.CounterClockwise_Positive)
         ;
         rightMotor.getConfigurator().apply(motorConfig);
-        rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
+        // rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
+
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            RobotConstants.rioUpdateFrequency,
+            leftMotor.getRotorPosition(),
+            leftMotor.getRotorVelocity(),
+            rightMotor.getRotorPosition(),
+            rightMotor.getRotorVelocity(),
+            cancoder.getPosition(),
+            cancoder.getVelocity()
+        );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            DriveConstants.odometryLoopFrequency.div(2),
+            leftMotor.getMotorVoltage(),
+            leftMotor.getStatorCurrent(),
+            leftMotor.getDeviceTemp(),
+            rightMotor.getMotorVoltage(),
+            rightMotor.getStatorCurrent(),
+            rightMotor.getDeviceTemp()
+        );
+        leftMotor.optimizeBusUtilization();
+        rightMotor.optimizeBusUtilization();
+        cancoder.optimizeBusUtilization();
     }
 
     @Override
@@ -114,12 +139,12 @@ public class PivotIOFalcon implements PivotIO {
             leftMotor.getConfigurator().apply(config);
         }
 
-        Logger.recordOutput("Superstructure/Pivot/Motor/posiion", leftMotor.getPosition().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Pivot/Motor/veloctiy", leftMotor.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Position", leftMotor.getClosedLoopReference().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Velocity", leftMotor.getClosedLoopReferenceSlope().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Pivot/Motor/PID error", leftMotor.getClosedLoopError().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Pivot/Motor/Out", leftMotor.getClosedLoopOutput().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Pivot/Motor/posiion", leftMotor.getPosition().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Pivot/Motor/veloctiy", leftMotor.getVelocity().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Position", leftMotor.getClosedLoopReference().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Velocity", leftMotor.getClosedLoopReferenceSlope().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Pivot/Motor/PID error", leftMotor.getClosedLoopError().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Pivot/Motor/Out", leftMotor.getClosedLoopOutput().getValueAsDouble());
     }
 
     // Set Voltage

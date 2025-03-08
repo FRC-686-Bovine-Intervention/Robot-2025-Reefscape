@@ -54,15 +54,15 @@ public class AutoManager extends VirtualSubsystem {
                 } else {
                     System.out.println(String.format("[AutoManager] Autonomous finished in %.2f seconds", autoTime));
                 }
-                Leds.getInstance().autonomousFinishedAnimation.setFlagCommand()
-                    .until(() -> (overrun) ? (
-                        GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.hasBeenSince(3)
-                    ) : (
-                        GameState.getInstance().AUTONOMOUS_ALLOTTED_TIMESTAMP.hasBeenSince(0)
-                    ))
-                    .withName("Autonomous LED Notif")
-                    .schedule()
-                ;
+                // Leds.getInstance().autonomousFinishedAnimation.setFlagCommand()
+                //     .until(() -> (overrun) ? (
+                //         GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.hasBeenSince(3)
+                //     ) : (
+                //         GameState.getInstance().AUTONOMOUS_ALLOTTED_TIMESTAMP.hasBeenSince(0)
+                //     ))
+                //     .withName("Autonomous LED Notif")
+                //     .schedule()
+                // ;
             })
             .withName("AUTO " + auto.name)
         ;
