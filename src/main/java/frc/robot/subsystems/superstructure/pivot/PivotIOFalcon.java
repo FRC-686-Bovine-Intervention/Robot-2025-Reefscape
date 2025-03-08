@@ -36,8 +36,8 @@ public class PivotIOFalcon implements PivotIO {
 
     private final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Pivot/Profile",
-        DegreesPerSecond.of(90),
-        DegreesPerSecondPerSecond.of(90)
+        DegreesPerSecond.of(135),
+        DegreesPerSecondPerSecond.of(180)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Pivot/FF",

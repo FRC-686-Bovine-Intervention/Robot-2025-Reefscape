@@ -18,37 +18,37 @@ public final class AutoConstants {
 
     public static final Distance startLineX = Inches.of(297.490611);
     public static final Distance startX = startLineX.minus(RobotConstants.centerToFrontBumper);
-    public static final AllianceFlipped<Pose2d> startBlueCageMiddle = 
+    public static final AllianceFlipped<Pose2d> startLeftMiddleCage = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
             FieldConstants.Barge.Cage.MiddleCage.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startBlueCageOuter = 
+    public static final AllianceFlipped<Pose2d> startLeftLeftCage = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
             FieldConstants.Barge.Cage.OuterCage.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startBlueCageInner =
+    public static final AllianceFlipped<Pose2d> startLeftRightCage =
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
             FieldConstants.Barge.Cage.InnerCage.robotPose.getBlue().getMeasureY(),
             Rotation2d.k180deg
         ));
-        public static final AllianceFlipped<Pose2d> startRedCageMiddle = 
+        public static final AllianceFlipped<Pose2d> startRightMiddleCage = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
             FieldConstants.fieldWidth.minus(FieldConstants.Barge.Cage.MiddleCage.robotPose.getBlue().getMeasureY()),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startRedCageOuter = 
+    public static final AllianceFlipped<Pose2d> startRightRightCage = 
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
             FieldConstants.fieldWidth.minus(FieldConstants.Barge.Cage.OuterCage.robotPose.getBlue().getMeasureY()),
             Rotation2d.k180deg
         ));
-    public static final AllianceFlipped<Pose2d> startRedCageInner =
+    public static final AllianceFlipped<Pose2d> startRightLeftCage =
         AllianceFlipped.fromBlue(new Pose2d(
             startX,
             FieldConstants.fieldWidth.minus(FieldConstants.Barge.Cage.InnerCage.robotPose.getBlue().getMeasureY()),

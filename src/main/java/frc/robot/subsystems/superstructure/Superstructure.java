@@ -45,6 +45,8 @@ public class Superstructure extends SubsystemBase {
     public final Elevator elevator;
     public final Wrist wrist;
 
+    // public final LoggedInternalButton atSetpoint = new LoggedInternalButton("Superstructure/At Setpoint");
+
     public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         System.out.println("[Init Superstructure] Instantiating Superstructure");
         this.pivot = pivot;
@@ -196,43 +198,6 @@ public class Superstructure extends SubsystemBase {
         return goToSetpointSequenced(SuperstructureState.fold);
     }
 
-    public Command pivotVoltage(DoubleSupplier voltage) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Pivot Voltage");
-            }
-            @Override
-            public void initialize() {
-
-            }
-            @Override
-            public void execute() {
-                pivot.setVoltage(Volts.of(voltage.getAsDouble()));
-                elevator.setVoltage(Volts.zero());
-            }
-        };
-    }
-    public Command elevatorVoltage(DoubleSupplier voltage) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Elevator Voltage");
-            }
-            @Override
-            public void initialize() {
-
-            }
-            @Override
-            public void execute() {
-                pivot.setVoltage(Volts.zero());
-                elevator.setVoltage(Volts.of(voltage.getAsDouble()));
-            }
-        };
-    }
-
     public Command goToSetpoint(SuperstructureState setpoint) {
         var subsystem = this;
         return new Command() {
@@ -278,7 +243,7 @@ public class Superstructure extends SubsystemBase {
                                 if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
                                     cached = setpoint.pivotAngle;
                                 } else {
-                                    cached = Degrees.of(90);
+                                    cached = Degrees.of(85);
                                 }
                             } else {
                                 cached = setpoint.pivotAngle;
@@ -462,6 +427,14 @@ public class Superstructure extends SubsystemBase {
         //         this.wristAngle.plus(other.wristAngle)
         //     );
         // }
+
+        public boolean isNear(SuperstructureState other, Angle pivotTolerance, Distance elevatorTolerance, Angle wristTolerance) {
+            return
+                MeasureUtil.isNear(other.pivotAngle, this.pivotAngle, pivotTolerance) &&
+                MeasureUtil.isNear(other.elevatorLength, this.elevatorLength, elevatorTolerance) &&
+                MeasureUtil.isNear(other.wristAngle, this.wristAngle, wristTolerance)
+            ;
+        }
     }
 
     public static enum Direction {
@@ -682,8 +655,8 @@ public class Superstructure extends SubsystemBase {
         @Override
         public RobotFlippedRobotPose flip(FieldFlipType flipType) {
             return new RobotFlippedRobotPose(
-                AllianceFlipUtil.flip(this.forward, flipType),
-                AllianceFlipUtil.flip(this.backward, flipType)
+                (this.forward == null) ? null : AllianceFlipUtil.flip(this.forward, flipType),
+                (this.backward == null) ? null : AllianceFlipUtil.flip(this.backward, flipType)
             );
         }
     }

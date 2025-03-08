@@ -1,7 +1,6 @@
 package frc.robot.auto.routines;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntFunction;
@@ -9,13 +8,14 @@ import java.util.stream.IntStream;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
+import static frc.robot.auto.AutoCommons.pipeOptions;
 import frc.robot.auto.AutoCommons;
 import frc.robot.auto.AutoCommons.AutoPaths;
+import frc.robot.auto.AutoCommons.CoralStationPosition;
 import frc.robot.auto.AutoConstants;
 import frc.robot.auto.AutoRoutine;
-import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Pipe;
 import frc.robot.subsystems.drive.Drive;
@@ -31,12 +31,33 @@ public class ScoreCoral extends AutoRoutine {
     // scoring coral 1 (1/2 reef pipes - 1)
     // scoring coral 2 (1/2 reef pipes - 2)
     // which part of the coral station (close, mid, far)
-    
-    private static final Map.Entry<String, Pipe>[] pipeOptions =
-        IntStream.range(0, FieldConstants.Reef.pipes.length)
-            .mapToObj(i -> Settings.option("Pipe " + FieldConstants.Reef.pipes[i].getLetter(), FieldConstants.Reef.pipes[i]))
-            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
 
+    private static final AutoQuestion<AllianceFlipped<Pose2d>> startPosition = new AutoQuestion<AllianceFlipped<Pose2d>>("Starting Position") {
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftLeftCage = Settings.option("LL", AutoConstants.startLeftLeftCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftMiddleCage = Settings.option("LM", AutoConstants.startLeftMiddleCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startLeftRightCage = Settings.option("LR", AutoConstants.startLeftRightCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startDeadCenter = Settings.option("C", AutoConstants.startDeadCenter);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightLeftCage = Settings.option("RL", AutoConstants.startRightLeftCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightMiddleCage = Settings.option("RM", AutoConstants.startRightMiddleCage);
+        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRightRightCage = Settings.option("RR", AutoConstants.startRightRightCage);
+
+        @Override
+        protected Settings<AllianceFlipped<Pose2d>> generateSettings() {
+            return Settings.from(startDeadCenter, startLeftLeftCage, startLeftMiddleCage, startLeftRightCage, startDeadCenter, startRightLeftCage, startRightMiddleCage, startRightRightCage);
+        }
+    };
+
+    private static final AutoQuestion<CoralStationPosition> stationPosition = new AutoQuestion<CoralStationPosition>("Coral Station Position") {
+        private static final Map.Entry<String, CoralStationPosition> stationFar = Settings.option("Far", CoralStationPosition.FAR);
+        private static final Map.Entry<String, CoralStationPosition> stationMid = Settings.option("Mid", CoralStationPosition.MID);
+        private static final Map.Entry<String, CoralStationPosition> stationClose = Settings.option("Close", CoralStationPosition.CLOSE);
+        
+        @Override
+        protected Settings<CoralStationPosition> generateSettings() {
+            return Settings.from(stationClose, stationClose, stationMid, stationFar);
+        }
+    };
+    
     private static boolean isRightCoralStation(Pipe pipe){
         return MathExtraUtil.isWithin(pipe.getIndex(), 1, 6);
     }
@@ -44,14 +65,32 @@ public class ScoreCoral extends AutoRoutine {
     private static final AutoQuestion<Pipe> scorePreloadPipe = new AutoQuestion<Pipe>("Score Preload Pipe") {
         @Override
         protected Settings<Pipe> generateSettings() {
-            var options = Arrays
-                .stream(pipeOptions, 2, pipeOptions.length)
-                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
-            return Settings.from(
-                options[0],
-                options
-            );
+            var startPosition = ScoreCoral.startPosition.getResponse();
+            if (
+                startPosition == AutoConstants.startLeftLeftCage ||
+                startPosition == AutoConstants.startLeftMiddleCage ||
+                startPosition == AutoConstants.startLeftRightCage
+            ) {
+                return Settings.from(pipeOptions[8],
+                    pipeOptions[8],
+                    pipeOptions[9],
+                    pipeOptions[10],
+                    pipeOptions[11]
+                );
+            } else if (
+                startPosition == AutoConstants.startRightLeftCage ||
+                startPosition == AutoConstants.startRightMiddleCage ||
+                startPosition == AutoConstants.startRightRightCage
+            ) {
+                return Settings.from(pipeOptions[5],
+                    pipeOptions[2],
+                    pipeOptions[3],
+                    pipeOptions[4],
+                    pipeOptions[5]
+                );
+            } else {
+                return Settings.from(pipeOptions[7], pipeOptions);
+            }
         }
 
     };
@@ -91,71 +130,18 @@ public class ScoreCoral extends AutoRoutine {
         }
     };
 
-    private enum CoralStationPosition{
-        CLOSE,
-        MID,
-        FAR
-    }
-    private static final AutoQuestion<CoralStationPosition> stationPosition = new AutoQuestion<CoralStationPosition>("Coral Station Position") {
-        private static final Map.Entry<String, CoralStationPosition> stationFar = Settings.option("Far", CoralStationPosition.FAR);
-        private static final Map.Entry<String, CoralStationPosition> stationMid = Settings.option("Mid", CoralStationPosition.MID);
-        private static final Map.Entry<String, CoralStationPosition> stationClose = Settings.option("Close", CoralStationPosition.CLOSE);
-        
-        @Override
-        protected Settings<CoralStationPosition> generateSettings() {
-            return Settings.from(stationClose, stationClose, stationMid, stationFar);
-        }
-    };
-
-    private static final AutoQuestion<AllianceFlipped<Pose2d>> startPosition = new AutoQuestion<AllianceFlipped<Pose2d>>("Starting Position") {
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startDeadCenter = Settings.option("Dead Center", AutoConstants.startDeadCenter);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startBlueCageMiddle = Settings.option("Middle Blue Cage", AutoConstants.startBlueCageMiddle);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startBlueCageInner = Settings.option("Inner Blue Cage", AutoConstants.startBlueCageInner);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startBlueCageOuter = Settings.option("Outer Blue Cage", AutoConstants.startBlueCageOuter);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRedCageMiddle = Settings.option("Middle Red Cage", AutoConstants.startRedCageMiddle);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRedCageInner = Settings.option("Inner Red Cage", AutoConstants.startRedCageInner);
-        private static final Map.Entry<String, AllianceFlipped<Pose2d>> startRedCageOuter = Settings.option("Outer Red Cage", AutoConstants.startRedCageOuter);
-
-
-        @Override
-        protected Settings<AllianceFlipped<Pose2d>> generateSettings() {
-            switch(scorePreloadPipe.getResponse().getIndex()){
-                case 0:
-                return Settings.from(startBlueCageMiddle, startBlueCageMiddle, startBlueCageOuter);
-                case 1:
-                return Settings.from(startRedCageMiddle, startRedCageMiddle, startRedCageOuter);
-                case 2:
-                return Settings.from(startRedCageMiddle, startRedCageMiddle, startRedCageOuter);
-                case 3:
-                return Settings.from(startRedCageMiddle, startRedCageMiddle, startRedCageOuter);
-                case 4:
-                return Settings.from(startRedCageInner, startRedCageInner);
-                case 5:
-                return Settings.from(startRedCageInner, startBlueCageInner);
-                case 6:
-                return Settings.from(startDeadCenter, startDeadCenter);
-                case 7:
-                return Settings.from(startDeadCenter, startDeadCenter);
-                case 8:
-                return Settings.from(startBlueCageInner, startBlueCageInner);
-                case 9:
-                return Settings.from(startBlueCageInner, startBlueCageInner);
-                case 10:
-                return Settings.from(startBlueCageMiddle, startBlueCageMiddle, startBlueCageOuter);
-                case 11:
-                return Settings.from(startBlueCageMiddle, startBlueCageMiddle, startBlueCageOuter);
-                default:
-                return null;
-            }
-        }
-    };
-
     private final Drive drive;
     private final Superstructure superstructure;
     private final Intake intake;
 
     public ScoreCoral(RobotContainer robot) {
-        super("ScoreCoral", List.of(scorePreloadPipe, startPosition, scoreCoral1, scoreCoral2, stationPosition));
+        super("ScoreCoral", List.of(
+            startPosition,
+            stationPosition,
+            scorePreloadPipe,
+            scoreCoral1,
+            scoreCoral2
+        ));
         this.drive = robot.drive;
         this.superstructure = robot.superstructure;
         this.intake = robot.intake;
@@ -173,8 +159,8 @@ public class ScoreCoral extends AutoRoutine {
 
         String startToScorePath;
         if (
-            startPosition.equals(AutoConstants.startRedCageOuter) ||
-            startPosition.equals(AutoConstants.startBlueCageOuter)
+            startPosition.equals(AutoConstants.startRightRightCage) ||
+            startPosition.equals(AutoConstants.startLeftLeftCage)
         ) {
             startToScorePath = "Remote Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
         } else {
@@ -221,10 +207,11 @@ public class ScoreCoral extends AutoRoutine {
         );
         commands.add(AutoCommons.scoreOnReef(stationToScore2, Level.Level4, Direction.Forward, drive, superstructure, intake));
 
-        return
-            AutoCommons.setOdometryFlipped(startPosition, drive)
-            .andThen(commands.toArray(Command[]::new))
-        ;
+        return Commands.parallel(
+            AutoCommons.setOdometryFlipped(startPosition, drive),
+            Commands.runOnce(() -> intake.setHasGamepiece(true)),
+            Commands.sequence(commands.toArray(Command[]::new))
+        );
     }
 
     private static char getBranchLetterFromIndex(int index){
