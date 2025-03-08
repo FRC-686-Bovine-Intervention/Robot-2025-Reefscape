@@ -27,13 +27,13 @@ public class DrivePastLine extends AutoRoutine{
         return Commands.runEnd(
             () -> drive.runRobotSpeeds(
                 ChassisSpeeds.fromRobotRelativeSpeeds(
-                    MetersPerSecond.of(3),
+                    MetersPerSecond.of(1),
                     MetersPerSecond.zero(),
                     DegreesPerSecond.zero(),
                     Rotation2d.k180deg
                 )),
             () -> drive.stop(),
             drive.translationSubsystem, drive.rotationalSubsystem
-        ).raceWith(Commands.waitSeconds(0.5));
+        ).raceWith(Commands.waitSeconds(1.5));
     }
 }

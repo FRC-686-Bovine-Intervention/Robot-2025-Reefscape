@@ -138,12 +138,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
         final SuperstructureState intakeTargetState;
         if (selectedIntakeGoal.isEmpty()) {
             var stationPoses = new RobotFlippedRobotPose[] {
-                // CoralStation.leftStationLeft.getOurs(),
+                CoralStation.leftStationLeft.getOurs(),
                 CoralStation.leftStationCenter.getOurs(),
                 CoralStation.leftStationRight.getOurs(),
-                // CoralStation.rightStationLeft.getOurs(),
-                // CoralStation.rightStationCenter.getOurs(),
-                // CoralStation.rightStationRight.getOurs(),
+                CoralStation.rightStationLeft.getOurs(),
+                CoralStation.rightStationCenter.getOurs(),
+                CoralStation.rightStationRight.getOurs(),
             };
             var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
                 var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());

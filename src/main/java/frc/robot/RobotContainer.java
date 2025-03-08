@@ -276,8 +276,8 @@ public class RobotContainer {
         // superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.idle));
         intake.setDefaultCommand(intake.idle());
-        SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
-        SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
+        // SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
+        // SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
         // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
         // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
