@@ -29,7 +29,7 @@ public class ObjectiveSelectorIOServer implements ObjectiveSelectorIO {
         cagePublisher = table.getIntegerTopic("cage_robot_to_dashboard").publish();
         cageSubscriber = table.getIntegerTopic("cage_dashboard_to_robot").subscribe(-1);
     
-        WebServer.start(686, Filesystem.getDeployDirectory().getPath() + "/objective_selector");
+        WebServer.start(5801, Filesystem.getDeployDirectory().getPath() + "/objective_selector");
     }
 
     @Override
