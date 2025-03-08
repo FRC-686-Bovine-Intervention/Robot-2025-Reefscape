@@ -52,7 +52,6 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
@@ -91,6 +90,8 @@ public class RobotContainer {
     public final QuestNav questNav;
     public final ManualOverrides manualOverrides;
     public final ObjectiveTracker objectiveTracker;
+
+    public final AutoManager autoManager;
 
     // Controllers
     private final XboxController driveController = new XboxController(0);
@@ -207,6 +208,13 @@ public class RobotContainer {
 
         System.out.println("[Init RobotContainer] Configuring Autonomous Modes");
         configureAutos();
+        AutoPaths.preload();
+        var selector = new AutoSelector("Auto Selector");
+        selector.addDefaultRoutine(new ScoreCoral(this));
+        selector.addRoutine(new ScoreAlgaeAndCoral(this));
+        selector.addRoutine(new DrivePastLine(this));
+
+        autoManager = new AutoManager(selector);
 
         System.out.println("[Init RobotContainer] Configuring System Check");
         configureSystemCheck();
@@ -420,13 +428,7 @@ public class RobotContainer {
     private void configureNotifications() {}
 
     private void configureAutos() {
-        AutoPaths.preload();
-        var selector = new AutoSelector("Auto Selector");
-        selector.addDefaultRoutine(new ScoreCoral(this));
-        selector.addRoutine(new ScoreAlgaeAndCoral(this));
-        selector.addRoutine(new DrivePastLine(this));
-
-        new AutoManager(selector);
+        
     }
 
     private void configureSystemCheck() {

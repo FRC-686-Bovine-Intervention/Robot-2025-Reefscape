@@ -23,14 +23,27 @@ public class AutoManager extends VirtualSubsystem {
 
     @Override
     public void periodic() {
-        autoEnabled.update();
-        if(autoEnabled.risingEdge()) {
-            autonomousCommand = selector.getSelectedAutoCommand();
-            if(autonomousCommand != null) {
-                autonomousCommand.schedule();
-            }
+        // autoEnabled.update();
+        // if(autoEnabled.risingEdge()) {
+        //     autonomousCommand = selector.getSelectedAutoCommand();
+        //     if(autonomousCommand != null) {
+        //         autonomousCommand.schedule();
+        //     }
+        // }
+        // if(autoEnabled.fallingEdge() && autonomousCommand != null) {
+        //     autonomousCommand.cancel();
+        // }
+    }
+
+    public void startAuto() {
+        autonomousCommand = selector.getSelectedAutoCommand();
+        if (autonomousCommand != null) {
+            autonomousCommand.schedule();
         }
-        if(autoEnabled.fallingEdge() && autonomousCommand != null) {
+    }
+
+    public void endAuto() {
+        if(autonomousCommand != null) {
             autonomousCommand.cancel();
         }
     }

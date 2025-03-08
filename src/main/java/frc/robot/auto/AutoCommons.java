@@ -66,8 +66,8 @@ public class AutoCommons {
 
     public static Command scoreOnReef(PathPlannerPath pathToReef, Level branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
         var targetState = branchLevel.superstructureStates.get(direction);
-        var endTranslation = getLastPoint(pathToReef);
-        var endRotation = pathToReef.getGoalEndState().rotation();
+        var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
+        var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
         return 
             Commands.deadline(
