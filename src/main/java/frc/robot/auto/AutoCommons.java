@@ -74,8 +74,8 @@ public class AutoCommons {
                 Commands.sequence(
                     Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(1), Inches.of(1), Degrees.of(3))),
                     Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(3), Degrees.of(2))),
-                    Commands.waitSeconds(1),
-                    intake.eject().asProxy().withTimeout(0.75)//.onlyWhile(intake.hasCoral)
+                    Commands.waitSeconds(0.75),
+                    intake.eject().asProxy().withTimeout(0.5)//.onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
                     Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Inches.of(48))),
