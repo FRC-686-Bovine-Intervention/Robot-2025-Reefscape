@@ -68,28 +68,39 @@ public class ScoreCoral extends AutoRoutine {
             var startPosition = ScoreCoral.startPosition.getResponse();
             if (
                 startPosition == AutoConstants.startLeftLeftCage ||
-                startPosition == AutoConstants.startLeftMiddleCage ||
-                startPosition == AutoConstants.startLeftRightCage
+                startPosition == AutoConstants.startLeftMiddleCage
             ) {
-                return Settings.from(pipeOptions[8],
-                    pipeOptions[8],
-                    pipeOptions[9],
+                return Settings.from(pipeOptions[10],
+                    pipeOptions[0],
                     pipeOptions[10],
                     pipeOptions[11]
                 );
-            } else if (
-                startPosition == AutoConstants.startRightLeftCage ||
-                startPosition == AutoConstants.startRightMiddleCage ||
-                startPosition == AutoConstants.startRightRightCage
-            ) {
-                return Settings.from(pipeOptions[5],
-                    pipeOptions[2],
-                    pipeOptions[3],
+            } else if (startPosition == AutoConstants.startLeftRightCage) {
+                return Settings.from(pipeOptions[8],
+                    pipeOptions[8],
+                    pipeOptions[9]
+                );
+            } else if (startPosition == AutoConstants.startDeadCenter) {
+                return Settings.from(pipeOptions[6],
+                    pipeOptions[6],
+                    pipeOptions[7]
+                );
+            } else if (startPosition == AutoConstants.startRightLeftCage) {
+                return Settings.from(pipeOptions[4],
                     pipeOptions[4],
                     pipeOptions[5]
                 );
+            } else if (
+                startPosition == AutoConstants.startRightMiddleCage ||
+                startPosition == AutoConstants.startRightRightCage
+            ) {
+                return Settings.from(pipeOptions[3],
+                    pipeOptions[1],
+                    pipeOptions[2],
+                    pipeOptions[3]
+                );
             } else {
-                return Settings.from(pipeOptions[7], pipeOptions);
+                return null;
             }
         }
 

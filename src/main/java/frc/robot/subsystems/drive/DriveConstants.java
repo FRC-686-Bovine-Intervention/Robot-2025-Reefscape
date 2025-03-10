@@ -40,7 +40,7 @@ import frc.util.mechanismUtil.Wheel;
 import frc.util.misc.GeomUtil;
 
 public final class DriveConstants {
-    public static final double odometryLoopFrequencyHz = 100;
+    public static final double odometryLoopFrequencyHz = RobotConstants.rioUpdateFrequencyHz;
     public static final Frequency odometryLoopFrequency = Hertz.of(odometryLoopFrequencyHz);
 
     /**Distance between the front and back wheels*/

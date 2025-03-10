@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -24,6 +25,8 @@ import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
+import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -87,6 +90,22 @@ public class ElevatorIOKraken implements ElevatorIO {
         pidConsts.update(motorConfig.Slot0);
 
         motor.getConfigurator().apply(motorConfig);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            RobotConstants.rioUpdateFrequency,
+            motor.getRotorPosition(),
+            motor.getRotorVelocity(),
+            cancoder.getPosition(),
+            cancoder.getVelocity()
+        );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            DriveConstants.odometryLoopFrequency.div(2),
+            motor.getMotorVoltage(),
+            motor.getStatorCurrent(),
+            motor.getDeviceTemp()
+        );
+        motor.optimizeBusUtilization();
+        cancoder.optimizeBusUtilization();
     }
     
     @Override
@@ -108,12 +127,12 @@ public class ElevatorIOKraken implements ElevatorIO {
             motor.getConfigurator().apply(config);
         }
 
-        Logger.recordOutput("Superstructure/Elevator/Motor/posiion", motor.getPosition().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Elevator/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Elevator/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Elevator/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Elevator/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
-        Logger.recordOutput("Superstructure/Elevator/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Elevator/Motor/posiion", motor.getPosition().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Elevator/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Elevator/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Elevator/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Elevator/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
+        // Logger.recordOutput("Superstructure/Elevator/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
     }
 
     @Override

@@ -147,13 +147,17 @@ public class Robot extends LoggedRobot {
     public void disabledExit() {}
 
     @Override
-    public void autonomousInit() {}
+    public void autonomousInit() {
+        robotContainer.autoManager.startAuto();
+    }
 
     @Override
     public void autonomousPeriodic() {}
 
     @Override
-    public void autonomousExit() {}
+    public void autonomousExit() {
+        robotContainer.autoManager.endAuto();
+    }
 
     @Override
     public void teleopInit() {}
