@@ -35,8 +35,11 @@ public class QuestNav extends VirtualSubsystem {
         Logger.processInputs("Inputs/QuestNav/" + camMeta.hardwareName, inputs);
         io.cleanUp();
 
-        Logger.recordOutput("QuestNav/Pose", inputs.pose);
-        Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
+        Logger.recordOutput("QuestNav/Mount", camMeta.mount.getFieldRelative());
+
+        Logger.recordOutput("QuestNav/RawPose", inputs.pose);
+        Logger.recordOutput("QuestNav/RobotCenter", getRobotCenter());
+        Logger.recordOutput("QuestNav/OffsetPose", getRobotPose());
 
         notConnectedAlert.set(!inputs.isConnected);
 
@@ -54,17 +57,20 @@ public class QuestNav extends VirtualSubsystem {
     }
 
     private Pose2d getRobotCenter() {
-        return inputs.pose.transformBy(new Transform2d(
-            camMeta.mount.getRobotRelative().getTranslation().toTranslation2d(),
-            camMeta.mount.getRobotRelative().getRotation().toRotation2d()
-        ).inverse());
+        return new Pose2d(
+            inputs.pose.getTranslation().minus(camMeta.mount.getRobotRelative().getTranslation().toTranslation2d()),
+            inputs.pose.getRotation().minus(camMeta.mount.getRobotRelative().getRotation().toRotation2d())
+        );
     }
 
     private Pose2d getRobotPose() {
-        return getRobotCenter().transformBy(offset);
+        return new Pose2d(
+            getRobotCenter().getTranslation().plus(offset.getTranslation()),
+            getRobotCenter().getRotation().plus(offset.getRotation())
+        );
     }
 
     public void resetToPose(Pose2d pose) {
-        this.offset = getRobotCenter().minus(pose);
+        this.offset = new Transform2d(pose.getTranslation().minus(getRobotCenter().getTranslation()), pose.getRotation().minus(getRobotCenter().getRotation()));
     }
 }
