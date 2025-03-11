@@ -42,25 +42,25 @@ public class HardwareDevices {
     public static final CANDevice backRightTurnMotorID = rio.id(4);
 
     // Pivot
-    public static final CANDevice pivotLeftMotorID = canivore.id(5);
-    public static final CANDevice pivotRightMotorID = canivore.id(6);
-    public static final CANDevice pivotEncoderID = canivore.id(5);
+    public static final CANDevice pivotLeftMotorID = rio.id(5);
+    public static final CANDevice pivotRightMotorID = rio.id(6);
+    public static final CANDevice pivotEncoderID = rio.id(5);
 
     // Elevator
-    public static final CANDevice elevatorMotorID = canivore.id(7);
-    public static final CANDevice elevatorEncoderID = canivore.id(7);
+    public static final CANDevice elevatorMotorID = rio.id(7);
+    public static final CANDevice elevatorEncoderID = rio.id(7);
 
     // Wrist
-    public static final CANDevice wristMotorID = canivore.id(8);
-    public static final CANDevice wristEncoderID = canivore.id(8);
+    public static final CANDevice wristMotorID = rio.id(8);
+    public static final CANDevice wristEncoderID = rio.id(8);
 
     // Intake
-    public static final CANDevice intakeMotorID = canivore.id(9);
+    public static final CANDevice intakeMotorID = rio.id(9);
     public static final DIOPort coralSensor = DIOPort.port(1);
     public static final DIOPort algaeSensor = DIOPort.port(2);
 
     // Climber
-    public static final CANDevice climberChainMotorID = canivore.id(10);
+    public static final CANDevice climberChainMotorID = rio.id(10);
     public static final CANDevice climberCageMotorID = rio.id(10);
 
     // RIO

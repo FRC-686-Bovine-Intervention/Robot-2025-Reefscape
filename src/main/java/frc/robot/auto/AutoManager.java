@@ -23,14 +23,27 @@ public class AutoManager extends VirtualSubsystem {
 
     @Override
     public void periodic() {
-        autoEnabled.update();
-        if(autoEnabled.risingEdge()) {
-            autonomousCommand = selector.getSelectedAutoCommand();
-            if(autonomousCommand != null) {
-                autonomousCommand.schedule();
-            }
+        // autoEnabled.update();
+        // if(autoEnabled.risingEdge()) {
+        //     autonomousCommand = selector.getSelectedAutoCommand();
+        //     if(autonomousCommand != null) {
+        //         autonomousCommand.schedule();
+        //     }
+        // }
+        // if(autoEnabled.fallingEdge() && autonomousCommand != null) {
+        //     autonomousCommand.cancel();
+        // }
+    }
+
+    public void startAuto() {
+        autonomousCommand = selector.getSelectedAutoCommand();
+        if (autonomousCommand != null) {
+            autonomousCommand.schedule();
         }
-        if(autoEnabled.fallingEdge() && autonomousCommand != null) {
+    }
+
+    public void endAuto() {
+        if(autonomousCommand != null) {
             autonomousCommand.cancel();
         }
     }
@@ -54,15 +67,15 @@ public class AutoManager extends VirtualSubsystem {
                 } else {
                     System.out.println(String.format("[AutoManager] Autonomous finished in %.2f seconds", autoTime));
                 }
-                Leds.getInstance().autonomousFinishedAnimation.setFlagCommand()
-                    .until(() -> (overrun) ? (
-                        GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.hasBeenSince(3)
-                    ) : (
-                        GameState.getInstance().AUTONOMOUS_ALLOTTED_TIMESTAMP.hasBeenSince(0)
-                    ))
-                    .withName("Autonomous LED Notif")
-                    .schedule()
-                ;
+                // Leds.getInstance().autonomousFinishedAnimation.setFlagCommand()
+                //     .until(() -> (overrun) ? (
+                //         GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.hasBeenSince(3)
+                //     ) : (
+                //         GameState.getInstance().AUTONOMOUS_ALLOTTED_TIMESTAMP.hasBeenSince(0)
+                //     ))
+                //     .withName("Autonomous LED Notif")
+                //     .schedule()
+                // ;
             })
             .withName("AUTO " + auto.name)
         ;

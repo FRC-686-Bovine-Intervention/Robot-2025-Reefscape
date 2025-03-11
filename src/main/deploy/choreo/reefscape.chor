@@ -4,6 +4,27 @@
  "type":"Swerve",
  "variables":{
   "expressions":{
+   "BlueCageInnerY":{
+    "dimension":"Length",
+    "var":{
+     "exp":"5.0784252 m",
+     "val":5.0784252
+    }
+   },
+   "BlueCageMiddleY":{
+    "dimension":"Length",
+    "var":{
+     "exp":"6.169025 m",
+     "val":6.169025
+    }
+   },
+   "BlueCageOuterY":{
+    "dimension":"Length",
+    "var":{
+     "exp":"7.2596248 m",
+     "val":7.2596248
+    }
+   },
    "BranchA":{
     "dimension":"Length",
     "var":{
@@ -60,6 +81,13 @@
      "val":-2.198916029617455
     }
    },
+   "FieldWidth":{
+    "dimension":"Length",
+    "var":{
+     "exp":"317 in",
+     "val":8.0518
+    }
+   },
    "FrameLength":{
     "dimension":"Length",
     "var":{
@@ -77,8 +105,8 @@
    "MaxVelocity":{
     "dimension":"LinVel",
     "var":{
-     "exp":"1 m / s",
-     "val":1.0
+     "exp":"2 m / s",
+     "val":2.0
     }
    },
    "RackDelta":{
@@ -86,6 +114,27 @@
     "var":{
      "exp":"60 deg",
      "val":1.0471975511965976
+    }
+   },
+   "RedCageInnerY":{
+    "dimension":"Length",
+    "var":{
+     "exp":"FieldWidth - BlueCageInnerY",
+     "val":2.9733748
+    }
+   },
+   "RedCageMiddleY":{
+    "dimension":"Length",
+    "var":{
+     "exp":"FieldWidth - BlueCageMiddleY",
+     "val":1.8827749999999996
+    }
+   },
+   "RedCageOuterY":{
+    "dimension":"Length",
+    "var":{
+     "exp":"FieldWidth - BlueCageOuterY",
+     "val":0.7921752
     }
    },
    "ReefInnerRadius":{
@@ -538,6 +587,62 @@
      "val":5.235987755982988
     }
    },
+   "StartBlueCageInner":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"BlueCageInnerY",
+     "val":5.0784252
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartBlueCageMiddle":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"BlueCageMiddleY",
+     "val":6.169025
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartBlueCageOuter":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"BlueCageOuterY",
+     "val":7.2596248
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartDeadCenter":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"FieldWidth / 2",
+     "val":4.0259
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
    "StartFarLeft":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
@@ -588,6 +693,48 @@
     "y":{
      "exp":"ReefH.y",
      "val":4.190185002600001
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartRedCageInner":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"RedCageInnerY",
+     "val":2.9733748
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartRedCageMiddle":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"RedCageMiddleY",
+     "val":1.8827749999999996
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartRedCageOuter":{
+    "x":{
+     "exp":"StartingLineX - CenterToBumper",
+     "val":7.1244615194
+    },
+    "y":{
+     "exp":"RedCageOuterY",
+     "val":0.7921752
     },
     "heading":{
      "exp":"180 deg",

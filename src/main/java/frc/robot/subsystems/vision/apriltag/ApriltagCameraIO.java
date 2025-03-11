@@ -11,7 +11,7 @@ public interface ApriltagCameraIO {
 
     public class ApriltagCameraIOInputs implements LoggableInputs {
         public boolean isConnected;
-        public ApriltagCameraFrame[] frames;
+        public ApriltagCameraFrame[] frames = new ApriltagCameraFrame[0];
         // public double timestamp;
         // public ApriltagCameraTarget[] targets = new ApriltagCameraTarget[0];
         // public Pose3d estimatedRobotPose = new Pose3d();

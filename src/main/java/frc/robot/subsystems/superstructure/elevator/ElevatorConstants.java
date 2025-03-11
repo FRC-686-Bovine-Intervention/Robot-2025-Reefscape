@@ -42,10 +42,11 @@ public class ElevatorConstants {
     // public static final Distance sprocketRadius = Inches.of(0.25).times(16).div(Math.PI*2);
 
     public static final Distance stageExtension = Inches.of(17);
-    public static final Distance minLength = Meters.zero();
-    public static final Distance maxLength = stageExtension.times(movingStageCount);
-    public static final Distance minHeight = Inches.of(26.5);
-    public static final Distance maxHeight = minHeight.plus(maxLength);
+    public static final Distance minLengthPhysical = Meters.zero();
+    public static final Distance maxLengthPhysical = stageExtension.times(movingStageCount);
+    public static final Distance maxLengthSoftware = maxLengthPhysical.minus(Inches.of(0));
+    public static final Distance minHeightPhysical = Inches.of(26.5);
+    public static final Distance maxHeightPhysical = minHeightPhysical.plus(maxLengthPhysical);
 
     public static final GearRatio motorToMechanism = new GearRatio()
         .planetary(1.0/5.0)
