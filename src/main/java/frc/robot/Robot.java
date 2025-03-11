@@ -28,6 +28,8 @@ import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
 
 public class Robot extends LoggedRobot {
+    private final RobotContainer robotContainer;
+
     public Robot() {
         Leds.getInstance();
         System.out.println("[Init Robot] Recording AdvantageKit Metadata");
@@ -114,7 +116,7 @@ public class Robot extends LoggedRobot {
         ;
 
         System.out.println("[Init Robot] Instantiating RobotContainer");
-        new RobotContainer();
+        this.robotContainer = new RobotContainer();
         System.out.println("[Init Robot] Starting Deploy Webserver");
         WebServer.start(5800, Filesystem.getDeployDirectory().getPath() + "/elastic");
 
@@ -128,6 +130,7 @@ public class Robot extends LoggedRobot {
         GameState.getInstance().periodic();
         VirtualSubsystem.periodicAll();
         CommandScheduler.getInstance().run();
+        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
@@ -144,13 +147,17 @@ public class Robot extends LoggedRobot {
     public void disabledExit() {}
 
     @Override
-    public void autonomousInit() {}
+    public void autonomousInit() {
+        robotContainer.autoManager.startAuto();
+    }
 
     @Override
     public void autonomousPeriodic() {}
 
     @Override
-    public void autonomousExit() {}
+    public void autonomousExit() {
+        robotContainer.autoManager.endAuto();
+    }
 
     @Override
     public void teleopInit() {}

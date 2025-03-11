@@ -7,8 +7,8 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -27,7 +27,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState.Direction;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
@@ -45,6 +44,8 @@ public class Superstructure extends SubsystemBase {
     public final Pivot pivot;
     public final Elevator elevator;
     public final Wrist wrist;
+
+    // public final LoggedInternalButton atSetpoint = new LoggedInternalButton("Superstructure/At Setpoint");
 
     public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         System.out.println("[Init Superstructure] Instantiating Superstructure");
@@ -64,7 +65,7 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setVoltage(voltage);
-                    this.elevator.setLength(ElevatorConstants.minLength);
+                    this.elevator.setLength(ElevatorConstants.minLengthPhysical);
                     this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
@@ -120,7 +121,7 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setAngle(Degrees.of(90));
-                    this.elevator.setLength(ElevatorConstants.minLength);
+                    this.elevator.setLength(ElevatorConstants.minLengthPhysical);
                     this.wrist.setVoltage(voltage);
                 },
                 (log) -> {
@@ -197,43 +198,6 @@ public class Superstructure extends SubsystemBase {
         return goToSetpointSequenced(SuperstructureState.fold);
     }
 
-    public Command pivotVoltage(DoubleSupplier voltage) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Pivot Voltage");
-            }
-            @Override
-            public void initialize() {
-
-            }
-            @Override
-            public void execute() {
-                pivot.setVoltage(Volts.of(voltage.getAsDouble()));
-                elevator.setVoltage(Volts.zero());
-            }
-        };
-    }
-    public Command elevatorVoltage(DoubleSupplier voltage) {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Elevator Voltage");
-            }
-            @Override
-            public void initialize() {
-
-            }
-            @Override
-            public void execute() {
-                pivot.setVoltage(Volts.zero());
-                elevator.setVoltage(Volts.of(voltage.getAsDouble()));
-            }
-        };
-    }
-
     public Command goToSetpoint(SuperstructureState setpoint) {
         var subsystem = this;
         return new Command() {
@@ -258,52 +222,107 @@ public class Superstructure extends SubsystemBase {
                 setName("Superstructure Setpoint Sequenced");
             }
             private SuperstructureState initialState;
-            private BooleanSupplier pivotMoveCondition;
-            private BooleanSupplier elevatorMoveCondition;
-            private BooleanSupplier wristMoveCondition;
-            private boolean pivotMoving;
-            private boolean elevatorMoving;
-            private boolean wristMoving;
+            private Supplier<Angle> pivotTarget;
+            private Supplier<Distance> elevatorTarget;
+            private Supplier<Angle> wristTarget;
             @Override
             public void initialize() {
-                pivotMoving = false;
-                elevatorMoving = false;
-                wristMoving = false;
-                initialState = getCurrentState();
-                var elevatorFirst = setpoint.elevatorLength.lt(initialState.elevatorLength);
-                pivotMoveCondition = () -> !elevatorFirst || MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5));
-                elevatorMoveCondition = () -> elevatorFirst || MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(5));
-                wristMoveCondition = () -> elevatorFirst || (MeasureUtil.isNear(setpoint.pivotAngle, pivot.getAngle(), Degrees.of(10)) && MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30)));
+                this.initialState = getCurrentState();
+                var extending = setpoint.elevatorLength.gt(initialState.elevatorLength);
+                var elevatorMovingSignificant = !MeasureUtil.isNear(setpoint.elevatorLength, initialState.elevatorLength, Inches.of(36));
+                var wristDown = setpoint.wristAngle.lt(initialState.wristAngle.minus(Degrees.of(30)));
+                var pivotBackToForward = initialState.pivotAngle.gt(Degrees.of(80));
+                this.pivotTarget = new Supplier<Angle>() {
+                    private Angle cached = initialState.pivotAngle;
+                    @Override
+                    public Angle get() {
+                        if (extending) {
+                            if (wristDown) {
+                                if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
+                                    cached = setpoint.pivotAngle;
+                                } else {
+                                    cached = Degrees.of(85);
+                                }
+                            } else {
+                                cached = setpoint.pivotAngle;
+                            }
+                        } else {
+                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(10))) {
+                                if (pivotBackToForward) {
+                                    if (MeasureUtil.isNear(setpoint.wristAngle, wrist.getAngle(), Degrees.of(3))) {
+                                        cached = setpoint.pivotAngle;
+                                    } else {
+                                        cached = Degrees.of(60);
+                                    }
+                                } else {
+                                    cached = setpoint.pivotAngle;
+                                }
+                            } else {
+                                if (elevatorMovingSignificant) {
+                                    cached = Degrees.of(90);
+                                } else {
+                                    cached = initialState.pivotAngle;
+                                }
+                            }
+                        }
+                        return cached;
+                    }
+                };
+                this.elevatorTarget = new Supplier<Distance>() {
+                    private Distance cached = initialState.elevatorLength;
+                    @Override
+                    public Distance get() {
+                        if (extending) {
+                            if (MeasureUtil.isNear(pivotTarget.get(), pivot.getAngle(), Degrees.of(5))) {
+                                cached = setpoint.elevatorLength;
+                            }
+                        } else {
+                            return setpoint.elevatorLength;
+                        }
+                        return cached;
+                    }
+                };
+                this.wristTarget = new Supplier<Angle>() {
+                    private Angle cached = initialState.wristAngle;
+                    @Override
+                    public Angle get() {
+                        if (pivotBackToForward) {
+                            if (MeasureUtil.isNear(pivotTarget.get(), pivot.getAngle(), Degrees.of(2))) {
+                                cached = setpoint.wristAngle;
+                            }
+                        } else if (extending) {
+                            if (wristDown) {
+                                if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(30))) {
+                                    cached = setpoint.wristAngle;
+                                } else {
+                                    cached = initialState.wristAngle;
+                                }
+                            } else {
+                                cached = setpoint.wristAngle;
+                            }
+                        } else {
+                            if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(5))) {
+                                cached = setpoint.wristAngle;
+                            } else {
+                                cached = Degrees.of(10);
+                            }
+                        }
+                        return cached;
+                    }
+                };
             }
             @Override
             public void execute() {
-                if (!pivotMoving) {
-                    pivotMoving = pivotMoveCondition.getAsBoolean();
-                }
-                if (!elevatorMoving) {
-                    elevatorMoving = elevatorMoveCondition.getAsBoolean();
-                }
-                if (!wristMoving) {
-                    wristMoving = wristMoveCondition.getAsBoolean();
-                }
-                if (pivotMoving) {
-                    pivot.setAngle(setpoint.pivotAngle);
-                } else {
-                    pivot.setAngle(initialState.pivotAngle);
-                }
-                if (elevatorMoving) {
-                    elevator.setLength(setpoint.elevatorLength);
-                } else {
-                    elevator.setLength(initialState.elevatorLength);
-                }
-                if (wristMoving) {
-                    wrist.setAngle(setpoint.wristAngle);
-                } else {
-                    wrist.setAngle(initialState.wristAngle);
-                }
-                Logger.recordOutput("Superstructure/Setpoint/Pivot Moving", pivotMoving);
-                Logger.recordOutput("Superstructure/Setpoint/Elevator Moving", elevatorMoving);
-                Logger.recordOutput("Superstructure/Setpoint/Wrist Moving", wristMoving);
+                var pivotSetpoint = pivotTarget.get();
+                var elevatorSetpoint = elevatorTarget.get();
+                var wristSetpoint = wristTarget.get();
+                pivot.setAngle(pivotSetpoint);
+                elevator.setLength(elevatorSetpoint);
+                wrist.setAngle(wristSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Pivot Setpoint", pivotSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Elevator Setpoint", elevatorSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Wrist Setpoint", wristSetpoint);
+                Logger.recordOutput("Superstructure/Setpoint/Mech Transforms", new SuperstructureState(pivotSetpoint, elevatorSetpoint, wristSetpoint).getMechTransforms());
             }
             @Override
             public void end(boolean interrupted) {
@@ -325,12 +344,12 @@ public class Superstructure extends SubsystemBase {
 
         public static final SuperstructureState idle = SuperstructureState.fromParts(
             Degrees.of(70),
-            ElevatorConstants.minLength,
+            ElevatorConstants.minLengthPhysical,
             Degrees.of(90)
         );
         public static final SuperstructureState defense = SuperstructureState.fromParts(
             PivotConstants.minAngle,
-            ElevatorConstants.minLength,
+            ElevatorConstants.minLengthPhysical,
             Degrees.of(110)
         );
         public static final SuperstructureState climb = new SuperstructureState(
@@ -346,7 +365,7 @@ public class Superstructure extends SubsystemBase {
         public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             return new SuperstructureState(
                 Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians))),
-                Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLength.in(Meters), ElevatorConstants.maxLength.in(Meters))),
+                Meters.of(MathUtil.clamp(elevatorLength.in(Meters), ElevatorConstants.minLengthPhysical.in(Meters), ElevatorConstants.maxLengthPhysical.in(Meters))),
                 Radians.of(MathUtil.clamp(wristAngle.in(Radians), WristConstants.minAngle.in(Radians), WristConstants.maxAngle.in(Radians)))
             );
         }
@@ -370,9 +389,9 @@ public class Superstructure extends SubsystemBase {
             var pivotAngle = pivotSpacePose.getTranslation().getAngle().getMeasure().minus(pivotAngleOffset);
             var wristAngle = pivotSpacePose.getRotation().minus(new Rotation2d(pivotAngle)).getMeasure();
             var elevatorHeight = Meters.of(Math.sqrt((pivotToTargetMeters * pivotToTargetMeters) - (elevatorPivotOffsetMeters * elevatorPivotOffsetMeters))).plus(ElevatorConstants.stage2Base.getMeasureX().unaryMinus());
-            var elevatorLength = elevatorHeight.minus(ElevatorConstants.minHeight);
+            var elevatorLength = elevatorHeight.minus(ElevatorConstants.minHeightPhysical);
 
-            return new SuperstructureState(pivotAngle, elevatorLength, wristAngle);
+            return SuperstructureState.newConstrained(pivotAngle, elevatorLength, wristAngle);
         }
 
         public static SuperstructureState fromRobotSpace(Pose2d robotSpacePose) {
@@ -383,8 +402,8 @@ public class Superstructure extends SubsystemBase {
             var pivotRotation = new Rotation2d(pivotAngle);
             return new Transform2d(
                 new Translation2d(
-                    elevatorLength.plus(ElevatorConstants.minHeight).times(pivotRotation.getCos()),
-                    elevatorLength.plus(ElevatorConstants.minHeight).times(pivotRotation.getSin())
+                    elevatorLength.plus(ElevatorConstants.minHeightPhysical).times(pivotRotation.getCos()),
+                    elevatorLength.plus(ElevatorConstants.minHeightPhysical).times(pivotRotation.getSin())
                 ),
                 pivotRotation.plus(new Rotation2d(wristAngle))
             );
@@ -411,61 +430,49 @@ public class Superstructure extends SubsystemBase {
             };
         }
 
-        public SuperstructureState plus(SuperstructureState other) {
-            return newConstrained(
-                this.pivotAngle.plus(other.pivotAngle),
-                this.elevatorLength.plus(other.elevatorLength),
-                this.wristAngle.plus(other.wristAngle)
-            );
+        // public SuperstructureState plus(SuperstructureState other) {
+        //     return newConstrained(
+        //         this.pivotAngle.plus(other.pivotAngle),
+        //         this.elevatorLength.plus(other.elevatorLength),
+        //         this.wristAngle.plus(other.wristAngle)
+        //     );
+        // }
+
+        public boolean isNear(SuperstructureState other, Angle pivotTolerance, Distance elevatorTolerance, Angle wristTolerance) {
+            return
+                MeasureUtil.isNear(other.pivotAngle, this.pivotAngle, pivotTolerance) &&
+                MeasureUtil.isNear(other.elevatorLength, this.elevatorLength, elevatorTolerance) &&
+                MeasureUtil.isNear(other.wristAngle, this.wristAngle, wristTolerance)
+            ;
         }
     }
 
-    @Deprecated
-    public static class SuperstructurePosition {
-        private final Pose2d robotSpacePose;
-
-        private SuperstructurePosition(Pose2d robotSpacePose) {
-            this.robotSpacePose = robotSpacePose;
+    public static enum Direction {
+        Forward(true),
+        Backward(false),
+        ;
+        private final boolean forward;
+        Direction(boolean forward) {
+            this.forward = forward;
         }
-
-        public static SuperstructurePosition fromRobotSpace(Pose2d robotSpace) {
-            return new SuperstructurePosition(robotSpace);
+        public static Direction getClosest(Rotation2d target, Rotation2d current) {
+            if (target.minus(current).getCos() >= 0) {
+                return Direction.Forward;
+            } else {
+                return Direction.Backward;
+            }
         }
-        public static SuperstructurePosition fromPivotSpace(Transform2d pivotSpace) {
-            return fromRobotSpace(PivotConstants.pivotRobotSpace.transformBy(pivotSpace));
+        public boolean isForward() {
+            return this.forward;
         }
-
-        public Pose2d getRobotSpacePose() {
-            return robotSpacePose;
-        }
-        public Transform2d getPivotSpacePose() {
-            return getRobotSpacePose().minus(PivotConstants.pivotRobotSpace);
-        }
-
-        public SuperstructureState getSuperstructureState() {
-            return SuperstructureState.fromRobotSpace(getRobotSpacePose());
+        public boolean isBackward() {
+            return !this.forward;
         }
     }
 
     public static class RobotFlippedSuperstructureState {
         private final SuperstructureState forward;
         private final SuperstructureState backward;
-
-        public static enum Direction {
-            Forward(true),
-            Backward(false),
-            ;
-            private final boolean forward;
-            Direction(boolean forward) {
-                this.forward = forward;
-            }
-            public boolean isForward() {
-                return this.forward;
-            }
-            public boolean isBackward() {
-                return !this.forward;
-            }
-        }
 
         public RobotFlippedSuperstructureState(SuperstructureState forward, SuperstructureState backward) {
             this.forward = forward;
@@ -536,11 +543,16 @@ public class Superstructure extends SubsystemBase {
                 backward
             );
         }
+        public static RobotFlippedSuperstructureState fromForwardOnly(SuperstructureState forward) {
+            return new RobotFlippedSuperstructureState(forward, null);
+        }
+        public static RobotFlippedSuperstructureState fromBackwardOnly(SuperstructureState backward) {
+            return new RobotFlippedSuperstructureState(null, backward);
+        }
 
         public SuperstructureState getForward() {
             return forward;
         }
-
         public SuperstructureState getBackward() {
             return backward;
         }
@@ -552,24 +564,22 @@ public class Superstructure extends SubsystemBase {
             }
         }
 
-        public static Direction getClosestDirection(Rotation2d target, Rotation2d current) {
-            if (target.minus(current).getCos() >= 0) {
-                return Direction.Forward;
+        public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
+            if (forward == null) {
+                return backward;
+            } else if (backward == null) {
+                return forward;
             } else {
-                return Direction.Backward;
+                return get(Direction.getClosest(target, current));
             }
         }
 
-        public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
-            return get(getClosestDirection(target, current));
-        }
-
-        public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
-            return new RobotFlippedSuperstructureState(
-                this.forward.plus(forwardOther),
-                this.backward.plus(backwardsOther)
-            );
-        }
+        // public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
+        //     return new RobotFlippedSuperstructureState(
+        //         this.forward.plus(forwardOther),
+        //         this.backward.plus(backwardsOther)
+        //     );
+        // }
     }
 
     public static class RobotFlippedRobotPose implements AllianceFlippable<RobotFlippedRobotPose> {
@@ -598,7 +608,7 @@ public class Superstructure extends SubsystemBase {
                 forward,
                 forward.transformBy(new Transform2d(
                     new Translation2d(
-                        PivotConstants.pivotRobotSpace.getMeasureX().times(-2),
+                        PivotConstants.pivotRobotSpace.getMeasureX().times(2),
                         Meters.zero()
                     ),
                     Rotation2d.k180deg
@@ -609,7 +619,7 @@ public class Superstructure extends SubsystemBase {
             return new RobotFlippedRobotPose(
                 backward.transformBy(new Transform2d(
                     new Translation2d(
-                        PivotConstants.pivotRobotSpace.getMeasureX().times(-2),
+                        PivotConstants.pivotRobotSpace.getMeasureX().times(2),
                         Meters.zero()
                     ),
                     Rotation2d.k180deg
@@ -617,15 +627,19 @@ public class Superstructure extends SubsystemBase {
                 backward
             );
         }
+        public static RobotFlippedRobotPose fromForwardOnly(Pose2d forward) {
+            return new RobotFlippedRobotPose(forward, null);
+        }
+        public static RobotFlippedRobotPose fromBackwardOnly(Pose2d backward) {
+            return new RobotFlippedRobotPose(null, backward);
+        }
 
         public Pose2d getForward() {
             return forward;
         }
-
         public Pose2d getBackward() {
             return backward;
         }
-
         public Pose2d get(Direction direction) {
             switch (direction) {
                 default:
@@ -635,7 +649,13 @@ public class Superstructure extends SubsystemBase {
         }
 
         public Direction getClosestDirection(Rotation2d current) {
-            return RobotFlippedSuperstructureState.getClosestDirection(this.forward.getRotation(), current);
+            if (forward == null) {
+                return Direction.Backward;
+            } else if (backward == null) {
+                return Direction.Forward;
+            } else {
+                return Direction.getClosest(forward.getRotation(), current);
+            }
         }
 
         public Pose2d getClosest(Rotation2d current) {
@@ -645,8 +665,80 @@ public class Superstructure extends SubsystemBase {
         @Override
         public RobotFlippedRobotPose flip(FieldFlipType flipType) {
             return new RobotFlippedRobotPose(
-                AllianceFlipUtil.flip(this.forward, flipType),
-                AllianceFlipUtil.flip(this.backward, flipType)
+                (this.forward == null) ? null : AllianceFlipUtil.flip(this.forward, flipType),
+                (this.backward == null) ? null : AllianceFlipUtil.flip(this.backward, flipType)
+            );
+        }
+    }
+
+    public static class RobotFlippedTotalState implements AllianceFlippable<RobotFlippedTotalState> {
+        private final Pose2d forwardRobotPose;
+        private final SuperstructureState forwardSuperstructureState;
+        private final Pose2d backwardRobotPose;
+        private final SuperstructureState backwardSuperstructureState;
+
+        private RobotFlippedTotalState(Pose2d forwardRobotPose, SuperstructureState forwardSuperstructureState, Pose2d backwardRobotPose, SuperstructureState backwardSuperstructureState) {
+            this.forwardRobotPose = forwardRobotPose;
+            this.forwardSuperstructureState = forwardSuperstructureState;
+            this.backwardRobotPose = backwardRobotPose;
+            this.backwardSuperstructureState = backwardSuperstructureState;
+        }
+
+        public static RobotFlippedTotalState combine(RobotFlippedRobotPose robotPose, RobotFlippedSuperstructureState superstructureState) {
+            Pose2d forwardRobotPose = null;
+            SuperstructureState forwardSuperstructureState = null;
+            Pose2d backwardRobotPose = null;
+            SuperstructureState backwardSuperstructureState = null;
+            if (robotPose.forward != null && superstructureState.forward != null) {
+                forwardRobotPose = robotPose.getForward();
+                forwardSuperstructureState = superstructureState.getForward();
+            }
+            if (robotPose.backward != null && superstructureState.backward != null) {
+                backwardRobotPose = robotPose.getBackward();
+                backwardSuperstructureState = superstructureState.getBackward();
+            }
+            return new RobotFlippedTotalState(forwardRobotPose, forwardSuperstructureState, backwardRobotPose, backwardSuperstructureState);
+        }
+
+        public Pose2d getRobotPose(Direction direction) {
+            switch (direction) {
+                default:
+                case Forward:   return forwardRobotPose;
+                case Backward:  return backwardRobotPose;
+            }
+        }
+        public SuperstructureState getSuperstructureState(Direction direction) {
+            switch (direction) {
+                default:
+                case Forward:   return forwardSuperstructureState;
+                case Backward:  return backwardSuperstructureState;
+            }
+        }
+
+        public Direction getClosestDirection(Rotation2d current) {
+            if (forwardRobotPose == null) {
+                return Direction.Backward;
+            } else if (backwardRobotPose == null) {
+                return Direction.Forward;
+            } else {
+                return Direction.getClosest(forwardRobotPose.getRotation(), current);
+            }
+        }
+
+        public Pose2d getClosestRobotPose(Rotation2d current) {
+            return getRobotPose(getClosestDirection(current));
+        }
+        public SuperstructureState getClosestSuperstructureState(Rotation2d current) {
+            return getSuperstructureState(getClosestDirection(current));
+        }
+
+        @Override
+        public RobotFlippedTotalState flip(FieldFlipType flipType) {
+            return new RobotFlippedTotalState(
+                (this.forwardRobotPose == null) ? null : AllianceFlipUtil.flip(this.forwardRobotPose, flipType),
+                this.forwardSuperstructureState,
+                (this.backwardRobotPose == null) ? null : AllianceFlipUtil.flip(this.backwardRobotPose, flipType),
+                this.backwardSuperstructureState
             );
         }
     }

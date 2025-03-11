@@ -37,7 +37,7 @@ public class Intake extends SubsystemBase {
     public final Trigger hasCoral = new Trigger(() -> hasGamepiece);
     public final Trigger hasAlgae = new Trigger(() -> false);
 
-    private final Current currentThreshold = Amps.of(15);
+    private final Current currentThreshold = Amps.of(17);
     private final Time currentThresholdTime = Seconds.of(0.5);
 
     private final CurrentSpikeDetector currentSpikeDetector = new CurrentSpikeDetector(() -> currentThreshold, () -> currentThresholdTime);
@@ -54,9 +54,6 @@ public class Intake extends SubsystemBase {
         Logger.processInputs("Inputs/Intake", inputs);
 
         currentSpikeDetector.update(inputs.motor.current);
-        if (currentSpikeDetector.hasSpike()) {
-            hasGamepiece = true;
-        }
 
         Logger.recordOutput("Intake/hasgamepiece", hasGamepiece);
 
@@ -137,6 +134,8 @@ public class Intake extends SubsystemBase {
         return genCommand(
             "Intake",
             intakeVoltage          
-        );
+        ).alongWith(Commands.run(() -> {if (currentSpikeDetector.hasSpike()) {
+            hasGamepiece = true;
+        }}));
     }
 }

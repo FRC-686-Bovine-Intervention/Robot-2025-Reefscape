@@ -136,9 +136,17 @@ public class ModuleIOFalcon550 implements ModuleIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency,
-            driveMotor.getPosition(),
-            driveMotor.getVelocity()
+            driveMotor.getRotorPosition(),
+            driveMotor.getRotorVelocity()
         );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            DriveConstants.odometryLoopFrequency.div(2),
+            driveMotor.getMotorVoltage(),
+            driveMotor.getStatorCurrent(),
+            driveMotor.getDeviceTemp(),
+            driveMotor.getFault_DeviceTemp()
+        );
+        driveMotor.optimizeBusUtilization();
 
         // zeroEncoders();
 

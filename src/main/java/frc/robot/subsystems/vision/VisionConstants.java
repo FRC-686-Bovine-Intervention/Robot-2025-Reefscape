@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -111,5 +112,17 @@ public final class VisionConstants {
             Degrees.of(+30),
             Degrees.of(+0)
         ))
+    ));
+    public static final CameraMount questNavMount = new CameraMount(new Transform3d(
+        new Translation3d(
+            Inches.of(-10.378),
+            Inches.of(9.504),
+            Inches.of(-9.965)
+        ),
+        new Rotation3d(
+            Degrees.of(+0),
+            Degrees.of(+0),
+            Degrees.of(+90)
+        )
     ));
 }
