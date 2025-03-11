@@ -105,8 +105,8 @@
    "MaxVelocity":{
     "dimension":"LinVel",
     "var":{
-     "exp":"2 m / s",
-     "val":2.0
+     "exp":"1 m / s",
+     "val":1.0
     }
    },
    "RackDelta":{
@@ -587,48 +587,6 @@
      "val":5.235987755982988
     }
    },
-   "StartBlueCageInner":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"BlueCageInnerY",
-     "val":5.0784252
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "StartBlueCageMiddle":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"BlueCageMiddleY",
-     "val":6.169025
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "StartBlueCageOuter":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"BlueCageOuterY",
-     "val":7.2596248
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
    "StartDeadCenter":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
@@ -643,63 +601,49 @@
      "val":3.141592653589793
     }
    },
-   "StartFarLeft":{
+   "StartLeftLeftCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
      "val":7.1244615194
     },
     "y":{
-     "exp":"ReefJ.y",
-     "val":5.202351007224322
+     "exp":"BlueCageOuterY",
+     "val":7.2596248
     },
     "heading":{
      "exp":"180 deg",
      "val":3.141592653589793
     }
    },
-   "StartFarRight":{
+   "StartLeftMiddleCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
      "val":7.1244615194
     },
     "y":{
-     "exp":"ReefE.y",
-     "val":2.849402992775678
+     "exp":"BlueCageMiddleY",
+     "val":6.169025
     },
     "heading":{
      "exp":"180 deg",
      "val":3.141592653589793
     }
    },
-   "StartLeftCage":{
+   "StartLeftRightCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
      "val":7.1244615194
     },
     "y":{
-     "exp":"ReefI.y",
-     "val":5.038043004624322
+     "exp":"BlueCageInnerY",
+     "val":5.0784252
     },
     "heading":{
      "exp":"180 deg",
      "val":3.141592653589793
     }
    },
-   "StartLeftCenter":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"ReefH.y",
-     "val":4.190185002600001
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "StartRedCageInner":{
+   "StartRightLeftCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
      "val":7.1244615194
@@ -713,7 +657,7 @@
      "val":3.141592653589793
     }
    },
-   "StartRedCageMiddle":{
+   "StartRightMiddleCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
      "val":7.1244615194
@@ -727,7 +671,7 @@
      "val":3.141592653589793
     }
    },
-   "StartRedCageOuter":{
+   "StartRightRightCage":{
     "x":{
      "exp":"StartingLineX - CenterToBumper",
      "val":7.1244615194
@@ -735,62 +679,6 @@
     "y":{
      "exp":"RedCageOuterY",
      "val":0.7921752
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "StartRemoteLeft":{
-    "x":{
-     "exp":"StartFarLeft.x",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"StartFarLeft.y + CenterToBumper * 3",
-     "val":6.497751007224322
-    },
-    "heading":{
-     "exp":"StartFarLeft.heading",
-     "val":3.141592653589793
-    }
-   },
-   "StartRemoteRight":{
-    "x":{
-     "exp":"StartFarRight.x",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"StartFarRight.y - CenterToBumper * 3",
-     "val":1.5540029927756782
-    },
-    "heading":{
-     "exp":"StartFarRight.heading",
-     "val":3.141592653589793
-    }
-   },
-   "StartRightCage":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"ReefF.y",
-     "val":3.013710995375678
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "StartRightCenter":{
-    "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
-    },
-    "y":{
-     "exp":"ReefG.y",
-     "val":3.861568997400001
     },
     "heading":{
      "exp":"180 deg",
