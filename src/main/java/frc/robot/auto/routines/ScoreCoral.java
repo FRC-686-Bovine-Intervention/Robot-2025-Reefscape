@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
+
+import static frc.robot.auto.AutoCommons.getStartingPositionAsString;
 import static frc.robot.auto.AutoCommons.pipeOptions;
 import frc.robot.auto.AutoCommons;
 import frc.robot.auto.AutoCommons.AutoPaths;
@@ -72,23 +74,33 @@ public class ScoreCoral extends AutoRoutine {
             ) {
                 return Settings.from(pipeOptions[10],
                     pipeOptions[0],
+                    pipeOptions[8],
+                    pipeOptions[9],
                     pipeOptions[10],
                     pipeOptions[11]
                 );
             } else if (startPosition == AutoConstants.startLeftRightCage) {
                 return Settings.from(pipeOptions[8],
+                    pipeOptions[6],
+                    pipeOptions[7],
                     pipeOptions[8],
                     pipeOptions[9]
                 );
             } else if (startPosition == AutoConstants.startDeadCenter) {
                 return Settings.from(pipeOptions[6],
+                    pipeOptions[4],
+                    pipeOptions[5],
                     pipeOptions[6],
-                    pipeOptions[7]
+                    pipeOptions[7],
+                    pipeOptions[8],
+                    pipeOptions[9]
                 );
             } else if (startPosition == AutoConstants.startRightLeftCage) {
                 return Settings.from(pipeOptions[4],
                     pipeOptions[4],
-                    pipeOptions[5]
+                    pipeOptions[5],
+                    pipeOptions[6],
+                    pipeOptions[7]
                 );
             } else if (
                 startPosition == AutoConstants.startRightMiddleCage ||
@@ -97,7 +109,9 @@ public class ScoreCoral extends AutoRoutine {
                 return Settings.from(pipeOptions[3],
                     pipeOptions[1],
                     pipeOptions[2],
-                    pipeOptions[3]
+                    pipeOptions[3],
+                    pipeOptions[4],
+                    pipeOptions[5]
                 );
             } else {
                 return null;
@@ -169,20 +183,13 @@ public class ScoreCoral extends AutoRoutine {
         boolean shouldUseForwardCoralStation = false;
 
         String startToScorePath;
-        if (
-            startPosition.equals(AutoConstants.startRightRightCage) ||
-            startPosition.equals(AutoConstants.startLeftLeftCage)
-        ) {
-            startToScorePath = "Remote Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
-        } else {
-            startToScorePath = "Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
-        }
+        startToScorePath = getStartingPositionAsString(startPosition) + " To " + getPipeLetterFromIndex(scorePreloadPipe.getIndex());
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(AutoCommons.scoreOnReef(startToScorePreload, Level.Level4, Direction.Forward, drive, superstructure, intake));
 
 
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
+            getPipeLetterFromIndex(scorePreloadPipe.getIndex()) +
             " To Station " +
             getStationPositionAsString(stationPosition) +
             (shouldUseForwardCoralStation ? " Forward" : "")
@@ -195,13 +202,13 @@ public class ScoreCoral extends AutoRoutine {
             + getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
             + " To "
-            + getBranchLetterFromIndex(scoreCoral1.getIndex())
+            + getPipeLetterFromIndex(scoreCoral1.getIndex())
         );
         commands.add(AutoCommons.scoreOnReef(stationToScore1, Level.Level4, Direction.Forward, drive, superstructure, intake));
 
 
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(scoreCoral1.getIndex())+
+            getPipeLetterFromIndex(scoreCoral1.getIndex())+
             " To Station "+
             getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
@@ -214,7 +221,7 @@ public class ScoreCoral extends AutoRoutine {
             + getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
             + " To "
-            + getBranchLetterFromIndex(scoreCoral2.getIndex())
+            + getPipeLetterFromIndex(scoreCoral2.getIndex())
         );
         commands.add(AutoCommons.scoreOnReef(stationToScore2, Level.Level4, Direction.Forward, drive, superstructure, intake));
 
@@ -225,7 +232,7 @@ public class ScoreCoral extends AutoRoutine {
         );
     }
 
-    private static char getBranchLetterFromIndex(int index){
+    private static char getPipeLetterFromIndex(int index){
         return (char) (index + 'A');
     }
     private String getStationPositionAsString(CoralStationPosition _stationPosition){

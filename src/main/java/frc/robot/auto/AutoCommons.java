@@ -157,6 +157,26 @@ public class AutoCommons {
         };
     }
 
+    public static String getStartingPositionAsString(AllianceFlipped<Pose2d> startingPosition){
+        if(startingPosition == AutoConstants.startDeadCenter){
+            return "StartDeadCenter";
+        } else if(startingPosition == AutoConstants.startLeftLeftCage){
+            return "StartLeftLeftCage";
+        } else if(startingPosition == AutoConstants.startLeftMiddleCage){
+            return "StartLeftMiddleCage";
+        } else if(startingPosition == AutoConstants.startLeftRightCage){
+            return "StartLeftRightCage";
+        } else if(startingPosition == AutoConstants.startRightLeftCage){
+            return "StartRightLeftCage";
+        } else if(startingPosition == AutoConstants.startRightMiddleCage){
+            return "StartRightMiddleCage";
+        } else if(startingPosition == AutoConstants.startRightRightCage){
+            return "StartRightRightCage";
+        } else{
+            return null;
+        }
+    }
+
     public static class AutoPaths {
         private static final Map<String, PathPlannerPath> loadedPaths = new HashMap<>();
         private static boolean preloading;
