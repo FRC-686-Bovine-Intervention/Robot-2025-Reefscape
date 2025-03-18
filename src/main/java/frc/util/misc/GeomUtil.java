@@ -91,4 +91,14 @@ public class GeomUtil {
             +rot.getSin(), +rot.getCos()
 		);
     }
+
+    public static class PoseUtils {
+        public static Pose2d plus(Pose2d a, Pose2d b) {
+            return new Pose2d(a.getTranslation().plus(b.getTranslation()), a.getRotation().plus(b.getRotation()));
+        }
+
+        public static Pose2d minus(Pose2d a, Pose2d b) {
+            return new Pose2d(a.getTranslation().minus(b.getTranslation()), a.getRotation().minus(b.getRotation()));
+        }
+    }
 }
