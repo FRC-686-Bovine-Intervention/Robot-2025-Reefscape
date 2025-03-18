@@ -1,8 +1,10 @@
 package frc.robot.subsystems.vision.questnav;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import static edu.wpi.first.units.Units.Degrees;
+
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.FloatArraySubscriber;
 import edu.wpi.first.networktables.IntegerPublisher;
@@ -20,7 +22,6 @@ public class QuestNavIOQuest3S implements QuestNavIO {
     
     private final DoubleSubscriber questTimestamp = nt4Table.getDoubleTopic("timestamp").subscribe(0.0f);
     private final FloatArraySubscriber questPosition = nt4Table.getFloatArrayTopic("position").subscribe(new float[]{0.0f, 0.0f, 0.0f});
-    // private final FloatArraySubscriber questQuaternion = nt4Table.getFloatArrayTopic("quaternion").subscribe(new float[]{0.0f, 0.0f, 0.0f, 0.0f});
     private final FloatArraySubscriber questEulerAngles = nt4Table.getFloatArrayTopic("eulerAngles").subscribe(new float[]{0.0f, 0.0f, 0.0f});
     private final DoubleSubscriber questBatteryPercent = nt4Table.getDoubleTopic("batteryPercent").subscribe(0.0f);
 
@@ -66,36 +67,21 @@ public class QuestNavIOQuest3S implements QuestNavIO {
     private double getBatteryPercent() {
         return questBatteryPercent.get();
     }
-
-    // // Gets the Quaternion of the Quest.
-    // private Quaternion getQuaternion() {
-    //     float[] qqFloats = questQuaternion.get();
-    //     return new Quaternion(qqFloats[0], qqFloats[1], qqFloats[2], qqFloats[3]);
-    // }
-
-    // // Returns the rotation as a Rotation3d object.
-    // private Rotation3d getRotation() {
-    //     return new Rotation3d(getQuaternion());
-    // }
-
-    private float getOculusYaw() {
-        float[] eulerAngles = questEulerAngles.get();
-        var ret = -eulerAngles[1];
-        ret %= 360;
-        if (ret < 0) {
-          ret += 360;
-        }
-        return ret;
+    
+    // Returns the position as a Translation3d object.
+    private Translation3d getTranslation() {
+        float[] questnavPosition = questPosition.get();
+        return new Translation3d(questnavPosition[2], -questnavPosition[0], questnavPosition[1]);
     }
 
-    // Returns the position as a Translation2d object.
-    private Translation2d getTranslation() {
-        float[] questnavPosition = questPosition.get();
-        return new Translation2d(questnavPosition[2], -questnavPosition[0]);
+    // Returns the rotation as a Rotation3d object.
+    public Rotation3d getRawRotation() {
+        float[] eulerAngles = questEulerAngles.get();
+        return new Rotation3d(Degrees.of(-eulerAngles[2]), Degrees.of(eulerAngles[0]), Degrees.of(-eulerAngles[1]));
     }
 
     // Gets the estimated pose of the Quest system, factoring in offsets.
-    private Pose2d getPose() {
-        return new Pose2d(getTranslation(), Rotation2d.fromDegrees(getOculusYaw()));
+    private Pose3d getPose() {
+        return new Pose3d(getTranslation(), getRawRotation());
     }
 }
