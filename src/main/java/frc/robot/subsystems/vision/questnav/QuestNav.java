@@ -39,7 +39,6 @@ public class QuestNav extends VirtualSubsystem {
         io.cleanUp();
 
         Logger.recordOutput("QuestNav/RawPose", getRawPose());
-        Logger.recordOutput("QuestNav/RawPoseRelativeToReset", getRawPoseRelativeToReset());
         Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
 
         notConnectedAlert.set(!inputs.isConnected);
@@ -47,7 +46,7 @@ public class QuestNav extends VirtualSubsystem {
 
         if (DriverStation.isDisabled()) {
             resetToPose(new Pose2d(4, 2, new Rotation2d(0)));
-        } else {
+        } else if (inputs.isConnected) {
             // RobotState
             //     .getInstance()
             //     .addVisionMeasurement(
@@ -62,20 +61,12 @@ public class QuestNav extends VirtualSubsystem {
         return inputs.pose;
     }
 
-    private Pose3d getRawPoseRelativeToReset() {
-        return PoseUtils.minus(PoseUtils.plus(getRawPose(), questGlobalOffset), robotResetPose);
-    }
-
-    private Pose3d getRobotPose() {        
-        return PoseUtils.plus(getRawPoseRelativeToReset(), robotResetPose).plus(camMeta.mount.getRobotRelative().inverse());
+    private Pose3d getRobotPose() {
+        return PoseUtils.plus(getRawPose(), questGlobalOffset).plus(camMeta.mount.getRobotRelative().inverse());
     }
 
     public void resetToPose(Pose2d pose) {
-        resetToPose(new Pose3d(pose));
-    }
-
-    public void resetToPose(Pose3d pose) {
-        this.robotResetPose = pose;
-        this.questGlobalOffset = PoseUtils.minus(pose, getRawPose());
+        this.robotResetPose = new Pose3d(pose);
+        this.questGlobalOffset = PoseUtils.minus(this.robotResetPose, getRawPose());
     }
 }
