@@ -30,7 +30,6 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.TalonFXTempAlerts;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
@@ -116,14 +115,18 @@ public class ModuleIOFalcon550 implements ModuleIO {
         driveMotor.getConfigurator().apply(driveConfig);
 
         var turnConfig = new SparkMaxConfig();
-        turnConfig.idleMode(IdleMode.kCoast)
+        turnConfig
+            .idleMode(IdleMode.kCoast)
             .inverted(false)
             .smartCurrentLimit(40)
-            .absoluteEncoder
-                .inverted(true)
             // .signals
             //     .absoluteEncoderPositionPeriodMs((int) RobotConstants.rioUpdatePeriod.in(Milliseconds))
         ;
+        turnConfig.absoluteEncoder
+            .zeroOffset(config.encoderZeroOffset.in(Rotations))
+            .inverted(true)
+        ;
+
         // turnMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus5, 20);
         // turnMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus0, 20);
 
@@ -132,7 +135,6 @@ public class ModuleIOFalcon550 implements ModuleIO {
             0,
             1
         );
-        SmartDashboard.putData("Drive/" + config.name, turnPID);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency,
