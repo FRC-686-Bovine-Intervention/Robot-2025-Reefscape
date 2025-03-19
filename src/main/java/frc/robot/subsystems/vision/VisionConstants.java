@@ -115,9 +115,15 @@ public final class VisionConstants {
     ));
     public static final CameraMount questNavMount = new CameraMount(new Transform3d(
         new Translation3d(
-            Inches.of(10.205609),
-            Inches.of(-9.533769),
-            Inches.of(9.965000).plus(Inches.of(1.404976))
+            // Inches.of(-10.205609),
+            // Inches.of(9.533769),
+            // Inches.of(9.965000).plus(Inches.of(1.404976)),
+            // Meters.of(-2.5370868085013534),
+            // Meters.of(-0.12617771865644645),
+            // Meters.zero()
+            Inches.of(10),
+            Inches.of(-10),
+            Inches.zero()
         ),
         new Rotation3d(
             Degrees.of(+0),

@@ -2,14 +2,12 @@ package frc.robot.subsystems.vision.questnav;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import frc.robot.RobotState;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
 import frc.util.VirtualSubsystem;
 import frc.util.misc.GeomUtil.PoseUtils;
@@ -23,8 +21,8 @@ public class QuestNav extends VirtualSubsystem {
     private final Alert notConnectedAlert;
     private final Alert lowBatteryAlert;
 
-    private Pose2d robotResetPose = new Pose2d();
-    private Pose2d questGlobalOffset = new Pose2d();
+    private Pose3d robotResetPose = new Pose3d();
+    private Pose3d questGlobalOffset = new Pose3d();
 
     public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io) {
         this.camMeta = camMeta;
@@ -50,38 +48,33 @@ public class QuestNav extends VirtualSubsystem {
         if (DriverStation.isDisabled()) {
             resetToPose(new Pose2d(4, 2, new Rotation2d(0)));
         } else {
-            RobotState
-                .getInstance()
-                .addVisionMeasurement(
-                    getRobotPose(),
-                    VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
-                    inputs.timestamp
-                );
+            // RobotState
+            //     .getInstance()
+            //     .addVisionMeasurement(
+            //         getRobotPose().toPose2d(),
+            //         VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
+            //         inputs.timestamp
+            //     );
         }
     }
 
-    private Pose2d getRawPose() {
-        return inputs.pose.toPose2d();
+    private Pose3d getRawPose() {
+        return inputs.pose;
     }
 
-    private Pose2d getRawPoseRelativeToReset() {
+    private Pose3d getRawPoseRelativeToReset() {
         return PoseUtils.minus(PoseUtils.plus(getRawPose(), questGlobalOffset), robotResetPose);
     }
 
-    private Pose2d getRobotPose() {        
-        var questToRobotTransform = 
-            new Transform2d(
-                camMeta.mount.getRobotRelative().getTranslation().toTranslation2d(),
-                camMeta.mount.getRobotRelative().getRotation().toRotation2d()
-            ).inverse();
-        var questOffsetPose = new Pose2d().transformBy(questToRobotTransform);
-        var questOffsetRelativeToReset = getRawPoseRelativeToReset().minus(questOffsetPose);
-        var robotTranslation = robotResetPose.transformBy(questOffsetRelativeToReset).transformBy(questToRobotTransform).getTranslation();
-        var robotRotation = getRawPose().rotateBy(questToRobotTransform.getRotation()).getRotation();
-        return new Pose2d(robotTranslation, robotRotation);
+    private Pose3d getRobotPose() {        
+        return PoseUtils.plus(getRawPoseRelativeToReset(), robotResetPose).plus(camMeta.mount.getRobotRelative().inverse());
     }
 
     public void resetToPose(Pose2d pose) {
+        resetToPose(new Pose3d(pose));
+    }
+
+    public void resetToPose(Pose3d pose) {
         this.robotResetPose = pose;
         this.questGlobalOffset = PoseUtils.minus(pose, getRawPose());
     }

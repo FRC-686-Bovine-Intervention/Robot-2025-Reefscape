@@ -97,8 +97,16 @@ public class GeomUtil {
             return new Pose2d(a.getTranslation().plus(b.getTranslation()), a.getRotation().plus(b.getRotation()));
         }
 
+        public static Pose3d plus(Pose3d a, Pose3d b) {
+            return new Pose3d(a.getTranslation().plus(b.getTranslation()), a.getRotation().plus(b.getRotation()));
+        }
+
         public static Pose2d minus(Pose2d a, Pose2d b) {
             return new Pose2d(a.getTranslation().minus(b.getTranslation()), a.getRotation().minus(b.getRotation()));
+        }
+
+        public static Pose3d minus(Pose3d a, Pose3d b) {
+            return new Pose3d(a.getTranslation().minus(b.getTranslation()), a.getRotation().minus(b.getRotation()));
         }
     }
 }

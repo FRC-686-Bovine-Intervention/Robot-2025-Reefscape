@@ -15,7 +15,7 @@ public class QuestNavIOSim implements QuestNavIO {
     @Override
     public void updateInputs(QuestNavIOInputs inputs) {
         var rotation = Rotation2d.fromRotations(rotJoystick.getRawAxis(2));
-        var translation = new Translation2d(Inches.of(10.205609),Inches.of(9.533769)).rotateBy(rotation);
+        var translation = new Translation2d(Inches.of(10),Inches.of(10)).rotateBy(rotation);
 
         inputs.batteryPercent = 100;
         inputs.isConnected = true;
