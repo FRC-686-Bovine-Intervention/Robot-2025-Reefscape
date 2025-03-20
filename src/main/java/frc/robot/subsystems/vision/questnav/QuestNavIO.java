@@ -10,7 +10,7 @@ public interface QuestNavIO {
         public boolean isConnected;
         public double timestamp;
         public double batteryPercent;
-        public Pose2d pose;
+        public Pose2d pose = new Pose2d();
     }
 
     public default void updateInputs(QuestNavIOInputs inputs) {}
