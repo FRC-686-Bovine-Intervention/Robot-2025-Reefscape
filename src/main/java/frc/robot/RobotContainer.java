@@ -423,6 +423,8 @@ public class RobotContainer {
         // driveController.back().toggleOnTrue(null); //Climb
         
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())));
+
+        SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
     }
 
     private void configureNotifications() {}
