@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -57,13 +58,13 @@ public class QuestNav extends VirtualSubsystem {
         if (DriverStation.isDisabled()) {
             resetPose(RobotState.getInstance().getPose());
         } else if (inputs.isConnected) {
-            // RobotState
-            //     .getInstance()
-            //     .addVisionMeasurement(
-            //         getRobotPose().toPose2d(),
-            //         VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
-            //         inputs.timestamp
-            //     );
+            RobotState
+                .getInstance()
+                .addVisionMeasurement(
+                    getRobotPose(),
+                    VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
+                    inputs.timestamp
+                );
         }
 
         rollingAvg.addPose(getRobotPose());
