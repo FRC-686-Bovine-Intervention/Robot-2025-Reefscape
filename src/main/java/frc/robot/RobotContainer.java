@@ -66,6 +66,7 @@ import frc.robot.subsystems.superstructure.wrist.WristIOKraken;
 import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera;
+import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIOPhotonVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVision;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants;
@@ -171,7 +172,24 @@ public class RobotContainer {
                     new Wrist(new WristIO() {})
                 );
                 intake = new Intake(new IntakeIO() {});
-                apriltagVision = new ApriltagVision();
+                apriltagVision = new ApriltagVision(
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontLeftApriltagCamera,
+                        new ApriltagCameraIO() {}
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontRightApriltagCamera,
+                        new ApriltagCameraIO() {}
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backLeftApriltagCamera,
+                        new ApriltagCameraIO() {}
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backRightApriltagCamera,
+                        new ApriltagCameraIO() {}
+                    )
+                );
                 questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {});
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
             break;
