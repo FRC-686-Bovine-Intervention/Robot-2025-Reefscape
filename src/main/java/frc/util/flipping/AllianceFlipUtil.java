@@ -14,7 +14,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.constants.FieldConstants;
-import frc.util.misc.GeomUtil;
+import frc.util.geometry.GeomUtil;
 
 public class AllianceFlipUtil {
     public static enum FieldFlipType {

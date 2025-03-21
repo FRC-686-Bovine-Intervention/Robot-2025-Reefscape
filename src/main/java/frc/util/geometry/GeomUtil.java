@@ -1,4 +1,4 @@
-package frc.util.misc;
+package frc.util.geometry;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
@@ -92,21 +92,9 @@ public class GeomUtil {
 		);
     }
 
-    public static class PoseUtils {
-        public static Pose2d plus(Pose2d a, Pose2d b) {
-            return new Pose2d(a.getTranslation().plus(b.getTranslation()), a.getRotation().plus(b.getRotation()));
-        }
-
-        public static Pose3d plus(Pose3d a, Pose3d b) {
-            return new Pose3d(a.getTranslation().plus(b.getTranslation()), a.getRotation().plus(b.getRotation()));
-        }
-
-        public static Pose2d minus(Pose2d a, Pose2d b) {
-            return new Pose2d(a.getTranslation().minus(b.getTranslation()), a.getRotation().minus(b.getRotation()));
-        }
-
-        public static Pose3d minus(Pose3d a, Pose3d b) {
-            return new Pose3d(a.getTranslation().minus(b.getTranslation()), a.getRotation().minus(b.getRotation()));
+    public static class TransformUtil {
+        public static Transform2d toTransform2d(Transform3d a) {
+            return new Transform2d(a.getTranslation().toTranslation2d(), a.getRotation().toRotation2d());
         }
     }
 }

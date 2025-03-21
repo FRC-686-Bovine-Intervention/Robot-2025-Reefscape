@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
@@ -119,6 +120,6 @@ public final class VisionConstants {
             Inches.of(9.5),
             Inches.zero()
         ),
-        new Rotation3d()
+        new Rotation3d(Degrees.zero(), Degrees.zero(), Degrees.of(-90))
     ));
 }

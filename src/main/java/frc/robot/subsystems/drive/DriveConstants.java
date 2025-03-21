@@ -33,11 +33,11 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
+import frc.util.geometry.GeomUtil;
 import frc.util.hardwareID.can.CANDevice;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.mechanismUtil.GearRatio;
 import frc.util.mechanismUtil.Wheel;
-import frc.util.misc.GeomUtil;
 
 public final class DriveConstants {
     public static final double odometryLoopFrequencyHz = RobotConstants.rioUpdateFrequencyHz;
