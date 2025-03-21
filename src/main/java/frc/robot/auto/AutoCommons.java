@@ -32,7 +32,7 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipped;
-import frc.util.misc.GeomUtil;
+import frc.util.geometry.GeomUtil;
 
 public class AutoCommons {
     public static Translation2d getFirstPoint(PathPlannerPath path) {

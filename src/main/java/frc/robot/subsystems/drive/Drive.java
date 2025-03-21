@@ -66,8 +66,8 @@ import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
 import frc.util.flipping.AllianceFlipUtil;
+import frc.util.geometry.GeomUtil;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
-import frc.util.misc.GeomUtil;
 import frc.util.robotStructure.Root;
 
 public class Drive extends VirtualSubsystem {

@@ -35,9 +35,9 @@ import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
+import frc.util.geometry.GeomUtil;
 import frc.util.flipping.AllianceFlippable;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
-import frc.util.misc.GeomUtil;
 import frc.util.misc.MeasureUtil;
 
 public class Superstructure extends SubsystemBase {

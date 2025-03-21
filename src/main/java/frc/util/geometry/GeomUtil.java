@@ -1,4 +1,4 @@
-package frc.util.misc;
+package frc.util.geometry;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
@@ -90,5 +90,11 @@ public class GeomUtil {
 			+rot.getCos(), -rot.getSin(),
             +rot.getSin(), +rot.getCos()
 		);
+    }
+
+    public static class TransformUtil {
+        public static Transform2d toTransform2d(Transform3d a) {
+            return new Transform2d(a.getTranslation().toTranslation2d(), a.getRotation().toRotation2d());
+        }
     }
 }
