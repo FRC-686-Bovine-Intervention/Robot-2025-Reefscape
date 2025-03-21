@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.controllers.Joystick.Axis;
 
 public class XboxController {
-    private final edu.wpi.first.wpilibj.XboxController hid;
+    public final edu.wpi.first.wpilibj.XboxController hid;
     public final Joystick leftStick;
     public final Joystick rightStick;
 

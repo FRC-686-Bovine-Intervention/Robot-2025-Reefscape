@@ -1,14 +1,13 @@
 package frc.robot.subsystems.climber;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Volts;
-
-import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
@@ -17,56 +16,121 @@ public class Climber extends SubsystemBase {
     private final ClimberIO io;
     private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
 
-    public static final LoggedTunableMeasure<VoltageUnit> idleVoltage = new LoggedTunableMeasure<>("Climber/Voltages/Idle", Volts.of(1));
-    public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Climber/Voltages/Idle", Volts.of(4));
+    private static final LoggedTunableMeasure<VoltageUnit> prepareVoltage = new LoggedTunableMeasure<>("Climber/Prepare/Volts", Volts.of(0.5));
+    private static final LoggedTunableMeasure<CurrentUnit> prepareCurrent = new LoggedTunableMeasure<>("Climber/Prepare/Current", Amps.of(50));
+    private static final LoggedTunableMeasure<VoltageUnit> climbVoltage = new LoggedTunableMeasure<>("Climber/Climb/Volts", Volts.of(1));
+    private static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Climber/Hold/Volts", Volts.of(1));
+    private static final LoggedTunableMeasure<VoltageUnit> idleVoltage = new LoggedTunableMeasure<>("Climber/Idle/Volts", Volts.of(-0.1));
 
     public Climber(ClimberIO io) {
-        System.out.println("[Init Climber] Instantiated Climber with " + io.getClass().getSimpleName());
+        System.out.println("[Init Climber] Instantiating Climber with " + io.getClass().getSimpleName());
         this.io = io;
-        SmartDashboard.putData(this);
     }
 
     @Override
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Climber", inputs);
-    } 
-
-    private Command genCommand(
-        String name,
-        Supplier<Measure<VoltageUnit>> voltage
-    ) {
+    }
+    
+    public Command prepareClimb() {
         var subsystem = this;
         return new Command() {
+            private boolean hitSpike = false;
+            private final Timer timer = new Timer();
             {
-                setName(name);
                 addRequirements(subsystem);
+                setName("Prepare Climb");
             }
-
-            @Override 
+            @Override
             public void initialize() {
-                
+                hitSpike = false;                
             }
             @Override
             public void execute() {
-                io.setMotorVoltage(voltage.get());
+                if (hitSpike) {
+                    io.setCoastVoltage(Volts.of(0));
+                } else {
+                    if (inputs.chainMotor.motor.current.gt(prepareCurrent.get())) {
+                        timer.start();
+                    } else {
+                        timer.stop();
+                        timer.reset();
+                    }
+                    if (timer.hasElapsed(0.2)) {
+                        hitSpike = true;
+                    }
+                    io.setCoastVoltage(prepareVoltage.get());
+                }
             }
             @Override
             public void end(boolean interrupted) {
-                io.setMotorVoltage(Volts.zero());
+                io.setCoastVoltage(Volts.of(0));
             }
-        };     
+        };
     }
+    
+    public Command climb() {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Climb");
+            }
+            @Override
+            public void initialize() {
 
-    public Command stop() {
-        return genCommand("Stop", Volts::zero);
+            }
+            @Override
+            public void execute() {
+                io.setBrakeVoltage(climbVoltage.get());
+            }
+            @Override
+            public void end(boolean interrupted) {
+
+            }
+        };
     }
+    public Command hold() {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Hold");
+            }
+            @Override
+            public void initialize() {
 
+            }
+            @Override
+            public void execute() {
+                io.setBrakeVoltage(holdVoltage.get());
+            }
+            @Override
+            public void end(boolean interrupted) {
+
+            }
+        };
+    }
     public Command idle() {
-        return genCommand("Idle", idleVoltage);
-    }
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Idle");
+            }
+            @Override
+            public void initialize() {
 
-    public Command intake() {
-        return genCommand("Intake", intakeVoltage);
+            }
+            @Override
+            public void execute() {
+                io.setCoastVoltage(idleVoltage.get());
+            }
+            @Override
+            public void end(boolean interrupted) {
+
+            }
+        };
     }
 }

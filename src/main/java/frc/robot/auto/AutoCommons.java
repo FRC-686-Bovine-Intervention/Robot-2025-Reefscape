@@ -103,7 +103,7 @@ public class AutoCommons {
         var end = new Pose2d(endTranslation, endRotation);
         return 
             Commands.deadline(
-                intake.intake().asProxy().until(intake.hasCoral),
+                intake.intakeCoral().asProxy().until(intake.hasCoral),
                 Commands.sequence(
                     followPathFlipped(pathToStation, drive).asProxy(),
                     drive.simplePIDTo(() -> end).asProxy()

@@ -186,16 +186,24 @@ public class Superstructure extends SubsystemBase {
         return goToSetpointSequenced(SuperstructureState.defense);
     }
 
-    public Command prepareToClimb() {
+    public Command prepareClimb() {
         return goToSetpointSequenced(SuperstructureState.climb);
     }
 
     public Command climb() {
-        return goToSetpointSequenced(getCurrentState());
-    }
-
-    public Command fold() {
-        return goToSetpointSequenced(SuperstructureState.fold);
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Climb");
+            }
+            @Override
+            public void execute() {
+                pivot.setCoastMode();
+                elevator.setLength(ElevatorConstants.minLengthPhysical);
+                wrist.setAngle(Degrees.of(0));
+            }
+        };
     }
 
     public Command goToSetpoint(SuperstructureState setpoint) {
@@ -249,7 +257,7 @@ public class Superstructure extends SubsystemBase {
                         } else {
                             if (MeasureUtil.isNear(setpoint.elevatorLength, elevator.getLength(), Inches.of(10))) {
                                 if (pivotBackToForward) {
-                                    if (MeasureUtil.isNear(setpoint.wristAngle, wrist.getAngle(), Degrees.of(3))) {
+                                    if (MeasureUtil.isNear(setpoint.wristAngle, wrist.getAngle(), Degrees.of(7))) {
                                         cached = setpoint.pivotAngle;
                                     } else {
                                         cached = Degrees.of(60);
@@ -340,8 +348,6 @@ public class Superstructure extends SubsystemBase {
         public final Distance elevatorLength;
         public final Angle wristAngle;
 
-        public static final SuperstructureState zero = new SuperstructureState(Degrees.zero(), Meters.zero(), Degrees.zero());
-
         public static final SuperstructureState idle = SuperstructureState.fromParts(
             Degrees.of(70),
             ElevatorConstants.minLengthPhysical,
@@ -352,15 +358,10 @@ public class Superstructure extends SubsystemBase {
             ElevatorConstants.minLengthPhysical,
             Degrees.of(110)
         );
-        public static final SuperstructureState climb = new SuperstructureState(
-            Degrees.of(100), 
-            Meters.zero(),
-            Degrees.of(50).minus(Degrees.of(70))
-        );
-        public static final SuperstructureState fold = new SuperstructureState(
-            Degrees.of(-20), 
-            Meters.zero(),
-            Degrees.of(90).minus(Degrees.of(70))
+        public static final SuperstructureState climb = fromParts(
+            Degrees.of(90),
+            ElevatorConstants.minLengthPhysical,
+            Degrees.of(90)
         );
         public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             return new SuperstructureState(
