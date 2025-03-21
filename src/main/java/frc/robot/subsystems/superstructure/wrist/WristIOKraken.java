@@ -64,7 +64,7 @@ public class WristIOKraken implements WristIO {
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.Clockwise_Positive)
+            .withInverted(InvertedValue.CounterClockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback

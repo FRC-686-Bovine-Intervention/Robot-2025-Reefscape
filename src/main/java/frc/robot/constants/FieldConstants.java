@@ -123,8 +123,8 @@ public final class FieldConstants {
             SuperstructureState.fromRobotSpace(
                 new Pose2d(
                     new Translation2d(
-                        RobotConstants.centerToFrontBumper.plus(Coral.radius.times(2)),
-                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians)))).plus(Inches.of(1))
+                        RobotConstants.centerToFrontBumper.minus(Inches.of(3)),//.plus(Coral.radius.times(2)),
+                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians)))).plus(Inches.of(-2.75))
                     ),
                     new Rotation2d(chuteAngle)
                 )
@@ -133,7 +133,7 @@ public final class FieldConstants {
             SuperstructureState.fromParts(
                 Degrees.of(85),
                 ElevatorConstants.minLengthPhysical,
-                Degrees.of(150)
+                Degrees.of(148)
             )
         );
     }
@@ -484,7 +484,7 @@ public final class FieldConstants {
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardOnly(SuperstructureState.fromParts(
             PivotConstants.minAngle,
             ElevatorConstants.minLengthPhysical,
-            Degrees.of(-10)
+            Degrees.of(10)
         ));
     }
 
