@@ -484,7 +484,7 @@ public final class FieldConstants {
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardOnly(SuperstructureState.fromParts(
             PivotConstants.minAngle,
             ElevatorConstants.minLengthPhysical,
-            Degrees.of(-10)
+            Degrees.of(10)
         ));
     }
 

@@ -31,6 +31,7 @@ import frc.robot.auto.routines.ScoreAlgaeAndCoral;
 import frc.robot.auto.routines.ScoreCoral;
 import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
+import frc.robot.constants.FieldConstants.Processor;
 import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
@@ -57,6 +58,7 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
+import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
@@ -283,7 +285,7 @@ public class RobotContainer {
             .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.25))
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
 
@@ -341,7 +343,7 @@ public class RobotContainer {
             new Supplier<Command>() {
                 private final Command coralStationForwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
                 private final Command coralStationBackwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
-                private final Command groundAlgaeCommand = superstructure.goToSetpointSequenced(SuperstructureState.defense).raceWith(intake.intakeAlgae().until(intake.hasAlgae));
+                private final Command groundAlgaeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-30))).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
                 private final Command[] stagedAlgaeCommands = new Command[AlgaeLevel.values().length * 2];
                 {
                     for (var level : AlgaeLevel.values()) {
@@ -398,7 +400,7 @@ public class RobotContainer {
             );
             private final Command algaeCommand = new ContinuouslySwappingCommand(
                 new Supplier<Command>() {
-                    private final Command processorCommand = superstructure.goToSetpointSequenced(SuperstructureState.newConstrained(PivotConstants.minAngle, Meters.zero(), Degrees.of(35).unaryMinus()));
+                    private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
                     private final Command netForwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getForward());
                     private final Command netBackwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getBackward());
                     public Command get() {
