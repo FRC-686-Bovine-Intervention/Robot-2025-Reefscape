@@ -49,7 +49,7 @@ public class ElevatorConstants {
     public static final Distance maxHeightPhysical = minHeightPhysical.plus(maxLengthPhysical);
 
     public static final GearRatio motorToMechanism = new GearRatio()
-        .planetary(1.0/5.0)
+        .planetary(1.0/4.0)
         .planetary(1.0/4.0)
     ;
     public static final GearRatio sensorToMechanism = new GearRatio()
