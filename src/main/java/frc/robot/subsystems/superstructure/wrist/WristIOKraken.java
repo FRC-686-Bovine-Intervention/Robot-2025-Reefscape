@@ -42,7 +42,7 @@ public class WristIOKraken implements WristIO {
         "Wrist/FF",
         0,
         0,
-        10,
+        5,
         0
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
