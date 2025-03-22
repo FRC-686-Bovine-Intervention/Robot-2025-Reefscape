@@ -22,7 +22,7 @@ public class ApriltagVision extends VirtualSubsystem {
 
     private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
     private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
-    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 0.4);
+    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 3);
 
     public ApriltagVision(ApriltagCamera... cameras) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");
