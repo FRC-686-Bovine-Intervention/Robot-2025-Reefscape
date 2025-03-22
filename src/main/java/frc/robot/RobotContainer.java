@@ -357,7 +357,7 @@ public class RobotContainer {
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
-        driveController.a().toggleOnTrue(new ContinuouslySwappingCommand(
+        driveController.b().toggleOnTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final Command coralStationForwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
                 private final Command coralStationBackwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
@@ -393,7 +393,7 @@ public class RobotContainer {
             },
             Set.of(superstructure, intake)
         )); //Intake
-        driveController.b().whileTrue(intake.eject()); //Eject
+        driveController.a().whileTrue(intake.eject()); //Eject
         driveController.y().toggleOnTrue(superstructure.defense()); //Defense
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
             private final Command coralCommand = new ContinuouslySwappingCommand( //Extend
