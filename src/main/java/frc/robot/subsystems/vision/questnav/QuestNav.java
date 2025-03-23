@@ -3,6 +3,7 @@ package frc.robot.subsystems.vision.questnav;
 import static edu.wpi.first.units.Units.Degrees;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,6 +16,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.InternalButton;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
@@ -36,6 +38,8 @@ public class QuestNav extends VirtualSubsystem {
 
     private final RollingAveragePose2d rollingAvg;
 
+    public final LoggedNetworkBoolean isDisabled = new LoggedNetworkBoolean("QuestNav/Quest Disabled");
+
     public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io) {
         this.camMeta = camMeta;
         this.io = io;
@@ -56,12 +60,12 @@ public class QuestNav extends VirtualSubsystem {
         lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
 
         if (DriverStation.isDisabled()) {
-            resetPose(RobotState.getInstance().getPose());
-        } else if (inputs.isConnected) {
+            setPose(RobotState.getInstance().getPose());
+        } else if (inputs.isConnected && !isDisabled.get()) {
             RobotState
                 .getInstance()
                 .addVisionMeasurement(
-                    getRobotPose(),
+                    getAverageRobotPose(),
                     VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
                     inputs.timestamp
                 );
@@ -75,7 +79,7 @@ public class QuestNav extends VirtualSubsystem {
         Logger.recordOutput("QuestNav/AverageRobotPose", getAverageRobotPose());
     }
 
-    public void resetPose(Pose2d pose) {
+    public void setPose(Pose2d pose) {
         rollingAvg.reset();
         this.questResetPose = getRawPose();
         this.robotResetPose = pose;
