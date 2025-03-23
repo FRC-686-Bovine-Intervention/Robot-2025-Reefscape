@@ -87,6 +87,10 @@ public class PivotIOFalcon implements PivotIO {
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);
 
+        profileConsts.hasChanged(hashCode());
+        ffConsts.hasChanged(hashCode());
+        pidConsts.hasChanged(hashCode());
+
         leftMotor.getConfigurator().apply(motorConfig);
 
         motorConfig.MotorOutput
