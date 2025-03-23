@@ -157,6 +157,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         } else {
             var algaeIntake = selectedIntakeGoal.get();
             if (algaeIntake.isEmpty()) {
+                intakeTarget = Optional.empty();
                 intakeTargetPose = Optional.empty();
                 intakeTargetDirection = Direction.Forward;
                 intakeTargetState = SuperstructureState.defense;

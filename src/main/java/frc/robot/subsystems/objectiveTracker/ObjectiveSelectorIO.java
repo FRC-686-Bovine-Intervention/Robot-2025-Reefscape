@@ -16,5 +16,4 @@ public interface ObjectiveSelectorIO {
     public default void setCoral(int objective) {}
     public default void setAlgae(int objective) {}
     public default void setIntake(int objective) {}
-    public default void setCage(int objective) {}
 }
