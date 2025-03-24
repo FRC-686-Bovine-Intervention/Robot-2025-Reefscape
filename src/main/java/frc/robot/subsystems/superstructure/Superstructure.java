@@ -363,6 +363,13 @@ public class Superstructure extends SubsystemBase {
             ElevatorConstants.minLengthPhysical,
             Degrees.of(90)
         );
+
+        private SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
+            this.pivotAngle = pivotAngle;
+            this.elevatorLength = elevatorLength;
+            this.wristAngle = wristAngle;
+        }
+
         public static SuperstructureState newConstrained(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             return new SuperstructureState(
                 Radians.of(MathUtil.clamp(pivotAngle.in(Radians), PivotConstants.minAngle.in(Radians), PivotConstants.maxAngle.in(Radians))),
@@ -371,17 +378,11 @@ public class Superstructure extends SubsystemBase {
             );
         }
 
-        private SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
-            this.pivotAngle = pivotAngle;
-            this.elevatorLength = elevatorLength;
-            this.wristAngle = wristAngle;
-        }
-
         public static SuperstructureState fromParts(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
-            return new SuperstructureState(pivotAngle, elevatorLength, wristAngle.minus(pivotAngle));
+            return SuperstructureState.newConstrained(pivotAngle, elevatorLength, wristAngle.minus(pivotAngle));
         }
 
-        public static SuperstructureState fromPivotSpace(Transform2d pivotSpacePose) {
+        public static SuperstructureState fromWristAxisPivotSpace(Transform2d pivotSpacePose) {
             var pivotToTargetMeters = pivotSpacePose.getTranslation().getNorm();
             var elevatorPivotOffsetMeters = ElevatorConstants.pivotOffset.in(Meters);
 
@@ -394,9 +395,21 @@ public class Superstructure extends SubsystemBase {
 
             return SuperstructureState.newConstrained(pivotAngle, elevatorLength, wristAngle);
         }
+        public static SuperstructureState fromCoralTipPivotSpace(Transform2d coralTipPivotSpace) {
+            return fromWristAxisPivotSpace(coralTipPivotSpace.plus(SuperstructureConstants.coralTipToWristAxis));
+        }
+        public static SuperstructureState fromAlgaeCenterPivotSpace(Transform2d algaeCenterPivotSpace) {
+            return fromWristAxisPivotSpace(algaeCenterPivotSpace.plus(SuperstructureConstants.algaeCenterToWristAxis));
+        }
 
-        public static SuperstructureState fromRobotSpace(Pose2d robotSpacePose) {
-            return fromPivotSpace(robotSpacePose.minus(PivotConstants.pivotRobotSpace));
+        public static SuperstructureState fromWristAxisRobotSpace(Pose2d robotSpacePose) {
+            return fromWristAxisPivotSpace(robotSpacePose.minus(PivotConstants.pivotRobotSpace));
+        }
+        public static SuperstructureState fromCoralTipRobotSpace(Pose2d coralTipRobotSpace) {
+            return fromCoralTipPivotSpace(coralTipRobotSpace.minus(PivotConstants.pivotRobotSpace));
+        }
+        public static SuperstructureState fromAlgaeCenterRobotSpace(Pose2d algaeCenterRobotSpace) {
+            return fromAlgaeCenterPivotSpace(algaeCenterRobotSpace.minus(PivotConstants.pivotRobotSpace));
         }
 
         public Transform2d toPivotSpace() {
@@ -484,7 +497,7 @@ public class Superstructure extends SubsystemBase {
             var robotSpacePose = forward.toRobotSpace();
             return new RobotFlippedSuperstructureState(
                 forward,
-                SuperstructureState.fromRobotSpace(new Pose2d(
+                SuperstructureState.fromWristAxisRobotSpace(new Pose2d(
                     new Translation2d(
                         -robotSpacePose.getX(),
                         robotSpacePose.getY()
@@ -499,7 +512,7 @@ public class Superstructure extends SubsystemBase {
         public static RobotFlippedSuperstructureState fromBackwardRobotFlipped(SuperstructureState backward) {
             var robotSpacePose = backward.toRobotSpace();
             return new RobotFlippedSuperstructureState(
-                SuperstructureState.fromRobotSpace(new Pose2d(
+                SuperstructureState.fromWristAxisRobotSpace(new Pose2d(
                     new Translation2d(
                         -robotSpacePose.getX(),
                         robotSpacePose.getY()
@@ -516,7 +529,7 @@ public class Superstructure extends SubsystemBase {
             var pivotSpacePose = forward.toPivotSpace();
             return new RobotFlippedSuperstructureState(
                 forward,
-                SuperstructureState.fromPivotSpace(new Transform2d(
+                SuperstructureState.fromWristAxisPivotSpace(new Transform2d(
                     new Translation2d(
                         -pivotSpacePose.getX(),
                         pivotSpacePose.getY()
@@ -531,7 +544,7 @@ public class Superstructure extends SubsystemBase {
         public static RobotFlippedSuperstructureState fromBackwardPivotFlipped(SuperstructureState backward) {
             var pivotSpacePose = backward.toPivotSpace();
             return new RobotFlippedSuperstructureState(
-                SuperstructureState.fromPivotSpace(new Transform2d(
+                SuperstructureState.fromWristAxisPivotSpace(new Transform2d(
                     new Translation2d(
                         -pivotSpacePose.getX(),
                         pivotSpacePose.getY()

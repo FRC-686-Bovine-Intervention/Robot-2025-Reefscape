@@ -133,7 +133,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
             break;
         }
 
-        final Optional<RobotFlippedRobotPose> intakeTarget;
         final Optional<Pose2d> intakeTargetPose;
         final SuperstructureState intakeTargetState;
         if (selectedIntakeGoal.isEmpty()) {
@@ -150,7 +149,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
                 return (int) Math.signum(aDistance - bDistance);
             }).findFirst().get();
-            intakeTarget = Optional.of(closestStationPose);
             intakeTargetDirection = closestStationPose.getClosestDirection(currentPose.getRotation());
             intakeTargetPose = Optional.of(closestStationPose.get(intakeTargetDirection));
             intakeTargetState = CoralStation.intakePosition.get(intakeTargetDirection);
@@ -162,11 +160,10 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 intakeTargetState = SuperstructureState.defense;
             } else {
                 var stagedAlgae = algaeIntake.get();
-                var target = stagedAlgae.rack.algaeIntakeRobotPose.getOurs();
-                intakeTarget = Optional.of(target);
-                intakeTargetDirection = target.getClosestDirection(currentPose.getRotation());
-                intakeTargetPose = Optional.of(target.get(intakeTargetDirection));
-                intakeTargetState = stagedAlgae.algaeLevel.superstructurePosition.get(intakeTargetDirection);
+                final var totalState = stagedAlgae.totalState.getOurs();
+                intakeTargetDirection = totalState.getClosestDirection(currentPose.getRotation());
+                intakeTargetPose = Optional.of(totalState.getRobotPose(intakeTargetDirection));
+                intakeTargetState = totalState.getSuperstructureState(intakeTargetDirection);
             }
         }
 

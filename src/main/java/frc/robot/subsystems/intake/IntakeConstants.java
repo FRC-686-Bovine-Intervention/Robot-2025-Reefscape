@@ -1,29 +1,37 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import frc.robot.constants.FieldConstants.Algae;
-import frc.robot.constants.FieldConstants.Coral;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 
 public final class IntakeConstants {
     public static final Transform3d coralPose = new Transform3d(
         new Translation3d(
-            Inches.of(5.5).plus(Coral.length.div(2)),
+            SuperstructureConstants.wristAxisToCoralTip.getTranslation().getMeasureX(),
             Inches.zero(),
-            Inches.zero()
+            SuperstructureConstants.wristAxisToCoralTip.getTranslation().getMeasureY()
         ),
-        Rotation3d.kZero
+        new Rotation3d(
+            Degrees.zero(),
+            SuperstructureConstants.wristAxisToCoralTip.getRotation().getMeasure().unaryMinus(),
+            Degrees.zero()
+        )
     );
     public static final Transform3d algaePose = new Transform3d(
         new Translation3d(
-            Inches.of(9.5).plus(Algae.radius),
+            SuperstructureConstants.wristAxisToAlgaeCenter.getTranslation().getMeasureX(),
             Inches.zero(),
-            Inches.zero()
+            SuperstructureConstants.wristAxisToAlgaeCenter.getTranslation().getMeasureY()
         ),
-        Rotation3d.kZero
+        new Rotation3d(
+            Degrees.zero(),
+            SuperstructureConstants.wristAxisToAlgaeCenter.getRotation().getMeasure().unaryMinus(),
+            Degrees.zero()
+        )
     );
 
     public static final boolean coralSensorInverted = true;
