@@ -22,6 +22,11 @@ public class MeasureUtil {
     }
 
     @SuppressWarnings("unchecked")
+    public static <U extends Unit> Measure<U> clamp(Measure<U> value, Measure<U> low, Measure<U> high) {
+        return (Measure<U>)value.unit().ofBaseUnits(MathUtil.clamp(value.baseUnitMagnitude(), low.baseUnitMagnitude(), high.baseUnitMagnitude()));
+    }
+
+    @SuppressWarnings("unchecked")
     public static <U extends Unit> Measure<U> interpolate(Measure<U> start, Measure<U> end, double t) {
         return (Measure<U>)start.unit().ofBaseUnits(MathUtil.interpolate(start.baseUnitMagnitude(), end.baseUnitMagnitude(), t));
     }
