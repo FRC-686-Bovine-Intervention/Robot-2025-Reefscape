@@ -26,7 +26,8 @@ public class Intake extends SubsystemBase {
 
     public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(6));
     public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(6).unaryMinus());
-    public static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold", Volts.of(0.3));
+    public static final LoggedTunableMeasure<VoltageUnit> coralHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Coral", Volts.of(0.3));
+    public static final LoggedTunableMeasure<VoltageUnit> algaeHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Algae", Volts.of(1));
 
     public final GamepiecePose coralPose = new GamepiecePose(IntakeConstants.coralPose);
     public final GamepiecePose algaePose = new GamepiecePose(IntakeConstants.algaePose);
@@ -121,7 +122,13 @@ public class Intake extends SubsystemBase {
     public Command idle() {
         return genCommand(
             "Idle",
-            holdVoltage
+            () -> {
+                if (hasAlgae.getAsBoolean()) {
+                    return algaeHoldVoltage.get();
+                } else {
+                    return coralHoldVoltage.get();
+                }
+            }
         );
     }
 

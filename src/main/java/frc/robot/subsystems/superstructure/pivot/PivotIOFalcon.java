@@ -39,7 +39,7 @@ public class PivotIOFalcon implements PivotIO {
     private final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Pivot/Profile",
         DegreesPerSecond.of(135),
-        DegreesPerSecondPerSecond.of(180)
+        DegreesPerSecondPerSecond.of(270)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Pivot/FF",
@@ -86,6 +86,10 @@ public class PivotIOFalcon implements PivotIO {
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);
+
+        profileConsts.hasChanged(hashCode());
+        ffConsts.hasChanged(hashCode());
+        pidConsts.hasChanged(hashCode());
 
         leftMotor.getConfigurator().apply(motorConfig);
 

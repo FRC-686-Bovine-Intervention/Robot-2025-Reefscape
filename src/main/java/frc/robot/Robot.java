@@ -122,7 +122,6 @@ public class Robot extends LoggedRobot {
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
         Perspective.getCurrent();
-        Shuffleboard.selectTab("Teleoperated");
     }
 
     @Override
