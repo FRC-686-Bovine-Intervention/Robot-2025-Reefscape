@@ -111,6 +111,10 @@ public class ModuleIOFalcon550 implements ModuleIO {
         driveFFConsts.update(driveConfig.Slot0);
         drivePIDConsts.update(driveConfig.Slot0);
         driveProfileConsts.update(driveConfig.MotionMagic);
+
+        driveFFConsts.hasChanged(hashCode());
+        drivePIDConsts.hasChanged(hashCode());
+        driveProfileConsts.hasChanged(hashCode());
         
         driveMotor.getConfigurator().apply(driveConfig);
 
