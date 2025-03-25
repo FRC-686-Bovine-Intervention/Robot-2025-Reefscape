@@ -492,7 +492,7 @@ public final class FieldConstants {
         private final static Pose2d bargeMidpoint = new Pose2d(
             new Translation2d(
                 Meters.of(8.774113),
-                Meters.of(6.130925)
+                Meters.of(6.130925).minus(Meters.of(1.0907522).div(2))
             ),
             Rotation2d.kZero
         );
