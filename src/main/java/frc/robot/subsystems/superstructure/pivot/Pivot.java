@@ -49,4 +49,8 @@ public class Pivot {
     public void setFeedForward(Measure<VoltageUnit> feedForward) {
         io.setFeedForward(feedForward);
     }
+
+    public void setCoastMode() {
+        io.setCoastMode();
+    }
 }

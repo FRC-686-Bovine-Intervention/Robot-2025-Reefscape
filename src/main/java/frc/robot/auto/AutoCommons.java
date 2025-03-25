@@ -32,7 +32,7 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipped;
-import frc.util.misc.GeomUtil;
+import frc.util.geometry.GeomUtil;
 
 public class AutoCommons {
     public static Translation2d getFirstPoint(PathPlannerPath path) {
@@ -72,10 +72,10 @@ public class AutoCommons {
         return 
             Commands.deadline(
                 Commands.sequence(
-                    Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(1), Inches.of(1), Degrees.of(3))),
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(3), Degrees.of(2))),
+                    Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
                     Commands.waitSeconds(0.75),
-                    intake.eject().asProxy().withTimeout(0.5)//.onlyWhile(intake.hasCoral)
+                    intake.eject().asProxy().onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
                     Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Inches.of(48))),
@@ -103,7 +103,7 @@ public class AutoCommons {
         var end = new Pose2d(endTranslation, endRotation);
         return 
             Commands.deadline(
-                intake.intake().asProxy().until(intake.hasCoral),
+                intake.intakeCoral().asProxy().until(intake.hasCoral),
                 Commands.sequence(
                     followPathFlipped(pathToStation, drive).asProxy(),
                     drive.simplePIDTo(() -> end).asProxy()

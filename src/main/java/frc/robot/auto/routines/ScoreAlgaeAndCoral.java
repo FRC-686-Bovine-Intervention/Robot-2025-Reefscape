@@ -99,7 +99,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 superstructure.goToSetpointSequenced(scorePreloadPipe.rack.stagedAlgae.algaeLevel.superstructurePosition.getForward())
             ),
             // Commands.waitSeconds(2)
-            intake.intake().until(intake.hasAlgae)
+            intake.intakeAlgae().until(intake.hasAlgae)
         ));
         var algaeToBarge = AutoPaths.loadChoreoTrajectory(scorePreloadPipe.rack.ordinal() + " To " + AutoCommons.getBargePositionAsString(bargePosition));
         commands.add(Commands.sequence(
@@ -117,7 +117,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
                 superstructure.goToSetpointSequenced(scoreAlgae.stagedAlgae.algaeLevel.superstructurePosition.getForward())
             ),
             // Commands.waitSeconds(2)
-            intake.intake().until(intake.hasAlgae)
+            intake.intakeAlgae().until(intake.hasAlgae)
         ));
         var algaeToBarge1 = AutoPaths.loadChoreoTrajectory(scoreAlgae.ordinal() + " To " + AutoCommons.getBargePositionAsString(bargePosition));
         commands.add(Commands.sequence(

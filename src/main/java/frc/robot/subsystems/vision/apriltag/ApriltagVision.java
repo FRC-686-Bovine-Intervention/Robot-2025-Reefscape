@@ -22,7 +22,7 @@ public class ApriltagVision extends VirtualSubsystem {
 
     private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
     private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
-    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 0.4);
+    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 3);
 
     public ApriltagVision(ApriltagCamera... cameras) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");
@@ -45,11 +45,10 @@ public class ApriltagVision extends VirtualSubsystem {
         );
         var results = Arrays.stream(cameras).map(ApriltagCamera::periodic).toArray(ApriltagCameraResult[]::new);
         for (var result : results) {
+            var loggingKey = "Vision/Apriltags/Results/" + result.camMeta.hardwareName;
+            var akitPose3d = new Pose3d[0];
+            var akitTargetCorners = new Translation2d[0];
             for (var frame : result.frames) {
-                if (frame.targets.length == 0) continue;
-    
-                var loggingKey = "Vision/Apriltags/Results/" + result.camMeta.hardwareName;
-    
                 var usableTags = Arrays
                     .stream(frame.targets)
                     .map((target) -> {
@@ -63,6 +62,9 @@ public class ApriltagVision extends VirtualSubsystem {
                 ;
                 Logger.recordOutput(loggingKey + "/Targets/Tag IDs", Arrays.stream(usableTags).mapToInt((tag) -> tag.ID).toArray());
                 Logger.recordOutput(loggingKey + "/Targets/Tag Poses", Arrays.stream(usableTags).map((tag) -> tag.pose).toArray(Pose3d[]::new));
+                akitTargetCorners = Arrays.stream(frame.targets).flatMap((target) -> Arrays.stream(target.corners)).toArray(Translation2d[]::new);
+
+                if (frame.targets.length == 0) continue;
     
                 // final because averageTagDist mapToDouble needs it
                 final Pose3d cameraPose3d;
@@ -106,8 +108,9 @@ public class ApriltagVision extends VirtualSubsystem {
                 Logger.recordOutput(loggingKey + "/Robot pose null", false);
                 Logger.recordOutput(loggingKey + "/Camera pose null", false);
                 var robotPose2d = robotPose3d.toPose2d();
+                akitPose3d = new Pose3d[]{robotPose3d};
                 Logger.recordOutput(loggingKey + "/Poses/Robot2d", robotPose2d);
-                Logger.recordOutput(loggingKey + "/Poses/Robot3d", robotPose3d);
+                // Logger.recordOutput(loggingKey + "/Poses/Robot3d", robotPose3d);
                 Logger.recordOutput(loggingKey + "/Poses/Camera3d", cameraPose3d);
     
                 // Filtering
@@ -158,9 +161,9 @@ public class ApriltagVision extends VirtualSubsystem {
                     VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev),
                     frame.timestamp
                 );
-
-                Logger.recordOutput(loggingKey + "/Targets/Target Corners", Arrays.stream(frame.targets).flatMap((target) -> Arrays.stream(target.corners)).toArray(Translation2d[]::new));
             }
+            Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
+            Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
         }
     }
 

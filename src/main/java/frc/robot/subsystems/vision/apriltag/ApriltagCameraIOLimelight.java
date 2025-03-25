@@ -6,7 +6,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
 import frc.robot.subsystems.vision.apriltag.LimelightHelpers.LimelightTarget_Fiducial;
-import frc.util.misc.GeomUtil;
+import frc.util.geometry.GeomUtil;
 
 @Deprecated
 public class ApriltagCameraIOLimelight implements ApriltagCameraIO {

@@ -123,8 +123,8 @@ public final class FieldConstants {
             SuperstructureState.fromRobotSpace(
                 new Pose2d(
                     new Translation2d(
-                        RobotConstants.centerToFrontBumper.plus(Coral.radius.times(2)),
-                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians)))).plus(Inches.of(1))
+                        RobotConstants.centerToFrontBumper.minus(Inches.of(3)),//.plus(Coral.radius.times(2)),
+                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians)))).plus(Inches.of(-2.75))
                     ),
                     new Rotation2d(chuteAngle)
                 )
@@ -133,7 +133,7 @@ public final class FieldConstants {
             SuperstructureState.fromParts(
                 Degrees.of(85),
                 ElevatorConstants.minLengthPhysical,
-                Degrees.of(150)
+                Degrees.of(148)
             )
         );
     }
@@ -243,7 +243,7 @@ public final class FieldConstants {
                     SuperstructureState.fromRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(2)),
+                                RobotConstants.centerToFrontBumper.minus(Coral.length).minus(Inches.of(3)),
                                 Meters.of(1.828663).plus(Inches.of(15))
                             ),
                             Rotation2d.fromDegrees(-30)
@@ -484,7 +484,7 @@ public final class FieldConstants {
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardOnly(SuperstructureState.fromParts(
             PivotConstants.minAngle,
             ElevatorConstants.minLengthPhysical,
-            Degrees.of(-10)
+            Degrees.of(10)
         ));
     }
 
@@ -492,7 +492,7 @@ public final class FieldConstants {
         private final static Pose2d bargeMidpoint = new Pose2d(
             new Translation2d(
                 Meters.of(8.774113),
-                Meters.of(6.130925)
+                Meters.of(6.130925).minus(Meters.of(1.0907522).div(2))
             ),
             Rotation2d.kZero
         );
