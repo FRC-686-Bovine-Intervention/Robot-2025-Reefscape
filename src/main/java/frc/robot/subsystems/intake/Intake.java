@@ -125,8 +125,10 @@ public class Intake extends SubsystemBase {
             () -> {
                 if (hasAlgae.getAsBoolean()) {
                     return algaeHoldVoltage.get();
-                } else {
+                } else if (hasCoral.getAsBoolean()) {
                     return coralHoldVoltage.get();
+                } else {
+                    return Volts.zero();
                 }
             }
         );

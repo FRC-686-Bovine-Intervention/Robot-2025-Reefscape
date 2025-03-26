@@ -44,7 +44,7 @@ public class SuperstructureConstants {
 
     public static final Transform2d wristAxisToCoralTip = new Transform2d(
         new Translation2d(
-            Inches.of(6).plus(Coral.length),
+            Inches.of(17.25),
             Inches.zero()
         ),
         Rotation2d.kZero

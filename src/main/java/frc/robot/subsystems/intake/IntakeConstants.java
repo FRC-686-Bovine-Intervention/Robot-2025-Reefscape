@@ -6,12 +6,13 @@ import static edu.wpi.first.units.Units.Inches;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 
 public final class IntakeConstants {
     public static final Transform3d coralPose = new Transform3d(
         new Translation3d(
-            SuperstructureConstants.wristAxisToCoralTip.getTranslation().getMeasureX(),
+            SuperstructureConstants.wristAxisToCoralTip.getTranslation().getMeasureX().minus(Coral.length.div(2)),
             Inches.zero(),
             SuperstructureConstants.wristAxisToCoralTip.getTranslation().getMeasureY()
         ),
