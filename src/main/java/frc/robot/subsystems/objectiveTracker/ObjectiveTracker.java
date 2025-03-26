@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
@@ -18,6 +19,7 @@ import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedTotalState;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.util.VirtualSubsystem;
@@ -38,11 +40,24 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
     private Optional<Optional<StagedAlgae>> selectedIntakeGoal = Optional.empty();
 
-    private Optional<Pose2d> targetPose = Optional.empty();
-    private Direction reefTargetDirection = Direction.Forward;
-    private Direction algaeTargetDirection = Direction.Forward;
-    private Direction intakeTargetDirection = Direction.Forward;
-    private Direction targetDirection = Direction.Forward;
+    public static enum ObjectiveType {
+        IntakeCoral(false),
+        IntakeAlgae(true),
+        ScoreCoral(true),
+        ScoreAlgae(false),
+        ;
+        public final boolean isReefObjective;
+        ObjectiveType(boolean isReefObjective) {
+            this.isReefObjective = isReefObjective;
+        }
+    }
+
+    private ObjectiveData intakeCoralTarget;
+    private ObjectiveData intakeAlgaeTarget;
+    private ObjectiveData scoreCoralTarget;
+    private ObjectiveData scoreAlgaeTarget;
+    private Optional<ObjectiveData> target;
+    private Optional<ObjectiveType> typeOverride;
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
         System.out.println("[Init] Instantiating ObjectiveTracker");
@@ -91,27 +106,47 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
 
     public void determineGoal(Pose2d currentPose, boolean hasCoral, boolean hasAlgae) {
-        final RobotFlippedTotalState reefTotalState = selectedBranch.totalState.getOurs();
-        reefTargetDirection = reefTotalState.getClosestDirection(currentPose.getRotation());
-        final Pose2d reefTargetPose = reefTotalState.getRobotPose(reefTargetDirection);
-        final SuperstructureState reefTargetState = reefTotalState.getSuperstructureState(reefTargetDirection);
+        var stationPoses = new RobotFlippedRobotPose[] {
+            CoralStation.leftStationLeft.getOurs(),
+            CoralStation.leftStationCenter.getOurs(),
+            CoralStation.leftStationRight.getOurs(),
+            CoralStation.rightStationLeft.getOurs(),
+            CoralStation.rightStationCenter.getOurs(),
+            CoralStation.rightStationRight.getOurs(),
+        };
+        var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
+            var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            return (int) Math.signum(aDistance - bDistance);
+        }).findFirst().get();
+        intakeCoralTarget = ObjectiveData.fromParts(closestStationPose, CoralStation.intakePosition, currentPose.getRotation(), ObjectiveType.IntakeCoral);
 
-        final RobotFlippedRobotPose algaeTarget;
-        final Pose2d algaeTargetPose;
-        final SuperstructureState algaeTargetState;
+        var stagedAlgae = new StagedAlgae[] {
+            Rack.Rack0.stagedAlgae,
+            Rack.Rack1.stagedAlgae,
+            Rack.Rack2.stagedAlgae,
+            Rack.Rack3.stagedAlgae,
+            Rack.Rack4.stagedAlgae,
+            Rack.Rack5.stagedAlgae,
+        };
+        var closestAlgae = Arrays.stream(stagedAlgae).sorted((a,b) -> {
+            var aDistance = a.rack.algaeIntakeRobotPose.getOurs().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            var bDistance = b.rack.algaeIntakeRobotPose.getOurs().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            return (int) Math.signum(aDistance - bDistance);
+        }).findFirst().get();
+        intakeAlgaeTarget = ObjectiveData.fromTotalState(closestAlgae.totalState.getOurs(), currentPose.getRotation(), ObjectiveType.IntakeAlgae);
+
+        this.scoreCoralTarget = ObjectiveData.fromTotalState(selectedBranch.totalState.getOurs(), currentPose.getRotation(), ObjectiveType.ScoreCoral);
+
         switch (selectedAlgaeGoal) {
             default:
             case PROCESSOR:
-                algaeTarget = Processor.processorTargetPose.getOurs();
-                algaeTargetDirection = algaeTarget.getClosestDirection(currentPose.getRotation());
-                algaeTargetPose = algaeTarget.get(algaeTargetDirection);
-                algaeTargetState = Processor.superstructureState.get(algaeTargetDirection);
+                var algaeScoreTarget = Processor.processorTargetPose.getOurs();
+                scoreAlgaeTarget = ObjectiveData.fromParts(algaeScoreTarget, Processor.superstructureState, currentPose.getRotation(), ObjectiveType.ScoreAlgae);
             break;
             case OPPONENT_PROCESSOR:
-                algaeTarget = Processor.processorTargetPose.getTheirs();
-                algaeTargetDirection = algaeTarget.getClosestDirection(currentPose.getRotation());
-                algaeTargetPose = algaeTarget.get(algaeTargetDirection);
-                algaeTargetState = Processor.superstructureState.get(algaeTargetDirection);
+                var algaeScoreTarget2 = Processor.processorTargetPose.getTheirs();
+                scoreAlgaeTarget = ObjectiveData.fromParts(algaeScoreTarget2, Processor.superstructureState, currentPose.getRotation(), ObjectiveType.ScoreAlgae);
             break;
             case NET:
                 var bargePoses = new RobotFlippedRobotPose[] {
@@ -126,85 +161,78 @@ public class ObjectiveTracker extends VirtualSubsystem {
                         return (int) Math.signum(aDistance - bDistance);
                     }
                 ).findFirst().get();
-                algaeTarget = closestBargePose;
-                algaeTargetDirection = algaeTarget.getClosestDirection(currentPose.getRotation());
-                algaeTargetPose = algaeTarget.get(algaeTargetDirection);
-                algaeTargetState = Barge.superstructureState.get(algaeTargetDirection);
+                scoreAlgaeTarget = ObjectiveData.fromParts(closestBargePose, Barge.superstructureState, currentPose.getRotation(), ObjectiveType.ScoreAlgae);
             break;
         }
 
-        final Optional<Pose2d> intakeTargetPose;
-        final SuperstructureState intakeTargetState;
-        if (selectedIntakeGoal.isEmpty()) {
-            var stationPoses = new RobotFlippedRobotPose[] {
-                CoralStation.leftStationLeft.getOurs(),
-                CoralStation.leftStationCenter.getOurs(),
-                CoralStation.leftStationRight.getOurs(),
-                CoralStation.rightStationLeft.getOurs(),
-                CoralStation.rightStationCenter.getOurs(),
-                CoralStation.rightStationRight.getOurs(),
-            };
-            var closestStationPose = Arrays.stream(stationPoses).sorted((a,b) -> {
-                var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                return (int) Math.signum(aDistance - bDistance);
-            }).findFirst().get();
-            intakeTargetDirection = closestStationPose.getClosestDirection(currentPose.getRotation());
-            intakeTargetPose = Optional.of(closestStationPose.get(intakeTargetDirection));
-            intakeTargetState = CoralStation.intakePosition.get(intakeTargetDirection);
-        } else {
-            var algaeIntake = selectedIntakeGoal.get();
-            if (algaeIntake.isEmpty()) {
-                intakeTargetPose = Optional.empty();
-                intakeTargetDirection = Direction.Forward;
-                intakeTargetState = SuperstructureState.defense;
-            } else {
-                var stagedAlgae = algaeIntake.get();
-                final var totalState = stagedAlgae.totalState.getOurs();
-                intakeTargetDirection = totalState.getClosestDirection(currentPose.getRotation());
-                intakeTargetPose = Optional.of(totalState.getRobotPose(intakeTargetDirection));
-                intakeTargetState = totalState.getSuperstructureState(intakeTargetDirection);
-            }
-        }
-
-        Logger.recordOutput("Objective Tracker/Reef/Target Direction", reefTargetDirection);
-        Logger.recordOutput("Objective Tracker/Reef/Target Pose", reefTargetPose);
-        Logger.recordOutput("Objective Tracker/Reef/Target Mechs", reefTargetState.getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Algae/Target Direction", algaeTargetDirection);
-        Logger.recordOutput("Objective Tracker/Algae/Target Pose", algaeTargetPose);
-        Logger.recordOutput("Objective Tracker/Algae/Target Mechs", algaeTargetState.getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Intake/Target Direction", intakeTargetDirection);
-        Logger.recordOutput("Objective Tracker/Intake/Target Pose", intakeTargetPose.orElse(Pose2d.kZero));
-        Logger.recordOutput("Objective Tracker/Intake/Target Mechs", intakeTargetState.getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralTarget.targetDirection);
+        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralTarget.targetPose);
+        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralTarget.targetState.getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", intakeAlgaeTarget.targetDirection);
+        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", intakeAlgaeTarget.targetPose);
+        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeTarget.targetState.getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralTarget.targetDirection);
+        Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralTarget.targetPose);
+        Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralTarget.targetState.getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Score/Algae/Target Direction", scoreAlgaeTarget.targetDirection);
+        Logger.recordOutput("Objective Tracker/Score/Algae/Target Pose", scoreAlgaeTarget.targetPose);
+        Logger.recordOutput("Objective Tracker/Score/Algae/Target Mechs", scoreAlgaeTarget.targetState.getMechTransforms());
 
         cachedBranch = selectedBranch;
 
-        if (hasCoral) {
-            targetPose = Optional.of(reefTargetPose);
-            targetDirection = reefTargetDirection;
-        } else if(hasAlgae) {
-            targetPose = Optional.of(algaeTargetPose);
-            targetDirection = algaeTargetDirection;
+        if (typeOverride.isEmpty()) {
+            if (hasCoral && hasAlgae) {
+                var distToCoral = scoreCoralTarget.targetPose.getTranslation().getDistance(currentPose.getTranslation());
+                var distToAlgae = scoreAlgaeTarget.targetPose.getTranslation().getDistance(currentPose.getTranslation());
+                if (distToCoral < distToAlgae) {
+                    target = Optional.of(scoreCoralTarget);
+                } else {
+                    target = Optional.of(scoreAlgaeTarget);
+                }
+            } else if (hasCoral) {
+                target = Optional.of(scoreCoralTarget);
+            } else if (hasAlgae) {
+                target = Optional.of(scoreAlgaeTarget);
+            } else {
+                target = Optional.of(intakeCoralTarget);
+            }
         } else {
-            targetPose = intakeTargetPose;
-            targetDirection = intakeTargetDirection;
+            switch (typeOverride.get()) {
+                default:
+                case IntakeCoral:
+                    target = Optional.of(intakeCoralTarget);
+                break;
+                case IntakeAlgae:
+                    target = Optional.of(intakeAlgaeTarget);
+                break;
+                case ScoreCoral:
+                    target = Optional.of(scoreCoralTarget);
+                break;
+                case ScoreAlgae:
+                    target = Optional.of(scoreAlgaeTarget);
+                break;
+            }
         }
     }
 
-    public Optional<Pose2d> getTargetPose() {
-        return targetPose;
+    public ObjectiveData getIntakeCoralObjective() {
+        return intakeCoralTarget;
     }
-    public Direction getTargetDirection() {
-        return targetDirection;
+    public ObjectiveData getIntakeAlgaeObjective() {
+        return intakeAlgaeTarget;
     }
-    public Direction getReefTargetDirection() {
-        return reefTargetDirection;
+    public ObjectiveData getScoreCoralObjective() {
+        return scoreCoralTarget;
     }
-    public Direction getAlgaeTargetDirection() {
-        return algaeTargetDirection;
+    public ObjectiveData getScoreAlgaeObjective() {
+        return scoreAlgaeTarget;
     }
-    public Direction getIntakeTargetDirection() {
-        return intakeTargetDirection;
+    public Optional<ObjectiveData> getCurrentObjective() {
+        return target;
+    }
+
+    public void setTypeOverride(Optional<ObjectiveType> typeOverride) {
+        this.typeOverride = typeOverride;
     }
 
     public void moveSelectedBranch(int x, int y) {
@@ -234,5 +262,55 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     public AlgaeGoal getAlgaeGoal() {
         return selectedAlgaeGoal;
+    }
+
+    public static class ObjectiveData {
+        public final Pose2d targetPose;
+        public final SuperstructureState targetState;
+        public final Direction targetDirection;
+        public final ObjectiveType objectiveType;
+
+        private ObjectiveData(Pose2d targetPose, SuperstructureState targetState, Direction targetDirection, ObjectiveType objectiveType) {
+            this.targetPose = targetPose;
+            this.targetState = targetState;
+            this.targetDirection = targetDirection;
+            this.objectiveType = objectiveType;
+        }
+
+        public static ObjectiveData fromTotalState(RobotFlippedTotalState totalState, Rotation2d currentRotation, ObjectiveType objectiveType) {
+            var direction = totalState.getClosestDirection(currentRotation);
+            return new ObjectiveData(
+                totalState.getRobotPose(direction),
+                totalState.getSuperstructureState(direction),
+                direction,
+                objectiveType
+            );
+        }
+        public static ObjectiveData fromParts(RobotFlippedRobotPose pose, RobotFlippedSuperstructureState state, Rotation2d currentRotation, ObjectiveType objectiveType) {
+            var direction = pose.getClosestDirection(currentRotation);
+            return new ObjectiveData(
+                pose.get(direction),
+                state.get(direction),
+                direction,
+                objectiveType
+            );
+        }
+        public static ObjectiveData fromRaw(Pose2d pose, SuperstructureState state, Direction direction, ObjectiveType objectiveType) {
+            return new ObjectiveData(
+                pose,
+                state,
+                direction,
+                objectiveType
+            );
+        }
+
+        public static class IntakeAlgaeObjective extends ObjectiveData {
+            public final StagedAlgae algae;
+
+            private IntakeAlgaeObjective(StagedAlgae algae, Rotation2d currentRotation) {
+                var direction = algae.totalState.getOurs().getClosestDirection(currentRotation);
+                super(algae.totalState.getOurs().getRobotPose(direction), algae.totalState.getOurs().getSuperstructureState(direction), direction, ObjectiveType.IntakeAlgae);
+            }
+        }
     }
 }
