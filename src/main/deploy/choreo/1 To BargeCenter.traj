@@ -15,14 +15,14 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"Reef1.x", "val":3.8522001783323745}, "y":{"exp":"Reef1.y", "val":2.9223444381084143}, "heading":{"exp":"Reef1.heading", "val":1.0471975511965976}, "intervals":38, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"4.722402095794678 m", "val":4.722402095794678}, "y":{"exp":"1.930877447128296 m", "val":1.930877447128296}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":99, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
+    {"x":{"exp":"Reef1.x", "val":3.8522001783323745}, "y":{"exp":"Reef1.y", "val":2.9223444381084143}, "heading":{"exp":"Reef1.heading", "val":1.0471975511965976}, "intervals":25, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"4.722402095794678 m", "val":4.722402095794678}, "y":{"exp":"1.930877447128296 m", "val":1.930877447128296}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":45, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"BargeCenter.x", "val":7.1244615194}, "y":{"exp":"BargeCenter.y", "val":6.130925}, "heading":{"exp":"BargeCenter.heading", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"17.548 m", "val":17.548}, "h":{"exp":"8.052 m", "val":8.052}}}, "enabled":false},
-    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":1.0}}}, "enabled":true}],
+    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.5}}}, "enabled":true}],
   "targetDt":{
    "exp":"0.05 s",
    "val":0.05
