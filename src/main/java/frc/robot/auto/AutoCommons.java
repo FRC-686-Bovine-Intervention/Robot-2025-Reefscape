@@ -22,9 +22,9 @@ import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.CoralStation;
-import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Pipe;
-import frc.robot.constants.FieldConstants.Reef.Rack;
+import frc.robot.constants.FieldConstants.Reef.ReefObject.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.ReefObject.PipeObject;
+import frc.robot.constants.FieldConstants.Reef.ReefObject.RackObject;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.Intake;
@@ -64,8 +64,8 @@ public class AutoCommons {
         ;
     }
 
-    public static Command scoreOnReef(PathPlannerPath pathToReef, Level branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        var targetState = branchLevel.superstructureStates.get(direction);
+    public static Command scoreOnReef(PathPlannerPath pathToReef, BranchLevel branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var targetState = branchLevel.scoringSuperstructureStates.get(direction);
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
         var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
@@ -117,16 +117,16 @@ public class AutoCommons {
         return Commands.none();
     }
 
-    public static final Map.Entry<String, Pipe>[] pipeOptions =
-        IntStream.range(0, FieldConstants.Reef.pipes.length)
+    public static final Map.Entry<String, PipeObject>[] pipeOptions =
+        IntStream.range(0, 12)
             .mapToObj(i -> Settings.option(String.valueOf(FieldConstants.Reef.pipes[i].getLetter()), FieldConstants.Reef.pipes[i]))
-            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new)
+            .toArray((IntFunction<Map.Entry<String, PipeObject>[]>) Map.Entry[]::new)
     ;
     
-    public static final Map.Entry<String, Rack>[] rackOptions = 
+    public static final Map.Entry<String, RackObject>[] rackOptions = 
         IntStream.range(0, FieldConstants.Reef.Rack.values().length)
         .mapToObj(i -> Settings.option("Rack " + i, FieldConstants.Reef.Rack.values()[i]))
-        .toArray((IntFunction<Map.Entry<String, Rack>[]>) Map.Entry[]::new);
+        .toArray((IntFunction<Map.Entry<String, RackObject>[]>) Map.Entry[]::new);
 
     public static enum BargePosition {
         LEFT,

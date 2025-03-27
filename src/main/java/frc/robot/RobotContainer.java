@@ -5,13 +5,11 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -32,9 +30,9 @@ import frc.robot.auto.routines.ScoreCoral;
 import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Processor;
-import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
-import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Rack;
+import frc.robot.constants.FieldConstants.Reef;
+import frc.robot.constants.FieldConstants.Reef.ReefObject.AlgaeLevelEnum;
+import frc.robot.constants.FieldConstants.Reef.ReefObject.BranchLevel;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIO;
@@ -291,7 +289,7 @@ public class RobotContainer {
                         0
                     );
                 }
-                if (objectiveTracker.getTargetDirection().isBackward()) {
+                if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getTargetDirection().isForward()).isEmpty()) {
                     robotSpeeds = new ChassisSpeeds(
                         -robotSpeeds.vxMetersPerSecond,
                         robotSpeeds.vyMetersPerSecond,
@@ -352,10 +350,10 @@ public class RobotContainer {
         // ));
 
         // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
-        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
-        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
-        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
+        // driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
+        // driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
+        // driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
+        // driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
         driveController.a().whileTrue(intake.eject()); //Eject
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
@@ -363,7 +361,7 @@ public class RobotContainer {
                 private final Command coralStationForwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
                 private final Command coralStationBackwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
                 public Command get() {
-                    if (objectiveTracker.getIntakeCoralObjective().targetDirection.isForward()) {
+                    if (objectiveTracker.getIntakeCoralObjective().getTargetDirection().isForward()) {
                         return coralStationForwardCommand;
                     } else {
                         return coralStationBackwardCommand;
@@ -383,19 +381,19 @@ public class RobotContainer {
         });
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command[] stagedAlgaeCommands = new Command[AlgaeLevel.values().length * 2];
+                private final Command[] stagedAlgaeCommands = new Command[AlgaeLevelEnum.values().length * 2];
                 {
-                    for (var level : AlgaeLevel.values()) {
-                        stagedAlgaeCommands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.superstructurePosition.getForward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
-                        stagedAlgaeCommands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.superstructurePosition.getBackward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
+                    for (var level : AlgaeLevelEnum.values()) {
+                        stagedAlgaeCommands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.intakeSuperstructureStates.getForward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
+                        stagedAlgaeCommands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.intakeSuperstructureStates.getBackward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
                     }
                 }
                 public Command get() {
                     var targetAlgae = objectiveTracker.getIntakeAlgaeObjective();
-                    if (targetAlgae.targetDirection.isForward()) {
-                        return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
+                    if (targetAlgae.getTargetDirection().isForward()) {
+                        return stagedAlgaeCommands[targetAlgae.algae.level.ordinal() * 2];
                     } else {
-                        return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
+                        return stagedAlgaeCommands[targetAlgae.algae.level.ordinal() * 2 + 1];
                     }
                 }
             },
@@ -429,19 +427,19 @@ public class RobotContainer {
 
         final Command coralScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command[] commands = new Command[Level.values().length * 2];
+                private final Command[] commands = new Command[BranchLevel.values().length * 2];
                 {
-                    for (var level : Level.values()) {
-                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.superstructureStates.getForward());
-                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.superstructureStates.getBackward());
+                    for (var level : BranchLevel.values()) {
+                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.scoringSuperstructureStates.getForward());
+                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.scoringSuperstructureStates.getBackward());
                     }
                 }
                 public Command get() {
-                    var branch = objectiveTracker.getSelectedBranch();
-                    if (objectiveTracker.getReefTargetDirection().isForward()) {
-                        return commands[branch.level.ordinal() * 2];
+                    var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
+                    if (objectiveTracker.getScoreCoralObjective().getTargetDirection().isForward()) {
+                        return commands[scoreCoralObjective.branch.level.ordinal() * 2];
                     } else {
-                        return commands[branch.level.ordinal() * 2 + 1];
+                        return commands[scoreCoralObjective.branch.level.ordinal() * 2 + 1];
                     }
                 }
             },
@@ -456,7 +454,7 @@ public class RobotContainer {
                     switch (objectiveTracker.getAlgaeGoal()) {
                         default:
                         case NET:
-                            if (objectiveTracker.getAlgaeTargetDirection().isForward()) {
+                            if (objectiveTracker.getScoreAlgaeObjective().getTargetDirection().isForward()) {
                                 return netForwardCommand;
                             } else {
                                 return netBackwardCommand;
@@ -489,8 +487,8 @@ public class RobotContainer {
                 }
             }
         });
-        driveController.leftBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getTargetPose().get().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getTargetPose().get())); //Auto drive
+        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
+        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getCurrentObjective().get().getTargetPose())); //Auto drive
         // driveController.start().toggleOnTrue(
         //     Commands.parallel(
         //         climber.prepareClimb(),
@@ -507,7 +505,7 @@ public class RobotContainer {
         //     )
         // );
         
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())).ignoringDisable(true));
+        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
 
         SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
     }
