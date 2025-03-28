@@ -23,8 +23,8 @@ import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
-import frc.robot.constants.FieldConstants.Reef.PipeObject;
-import frc.robot.constants.FieldConstants.Reef.StagedAlgaeObject;
+import frc.robot.constants.FieldConstants.Reef.PipeConcept;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.Intake;
@@ -117,16 +117,16 @@ public class AutoCommons {
         return Commands.none();
     }
 
-    public static final Map.Entry<String, AllianceFlipped<PipeObject>>[] pipeOptions =
+    public static final Map.Entry<String, PipeConcept>[] pipeOptions =
         IntStream.range(0, 12)
-        .mapToObj(i -> Settings.option(Character.toString('A' + i), new AllianceFlipped<PipeObject>(Reef.reefs.getBlue().pipes[i], Reef.reefs.getRed().pipes[i])))
-        .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
+        .mapToObj(i -> Settings.option(Character.toString('A' + i), Reef.pipes[i]))
+        .toArray((IntFunction<Map.Entry<String, PipeConcept>[]>) Map.Entry[]::new)
     ;
     
-    public static final Map.Entry<String, AllianceFlipped<StagedAlgaeObject>>[] algaeOptions = 
+    public static final Map.Entry<String, StagedAlgaeConcept>[] algaeOptions = 
         IntStream.range(0, 6)
-        .mapToObj(i -> Settings.option("Rack " + i, new AllianceFlipped<StagedAlgaeObject>(Reef.reefs.getBlue().stagedAlgae[i], Reef.reefs.getRed().stagedAlgae[i])))
-        .toArray((IntFunction<Map.Entry<String, AllianceFlipped<StagedAlgaeObject>>[]>) Map.Entry[]::new)
+        .mapToObj(i -> Settings.option("Rack " + i, Reef.stagedAlgae[i]))
+        .toArray((IntFunction<Map.Entry<String, StagedAlgaeConcept>[]>) Map.Entry[]::new)
     ;
 
     public static enum BargePosition {
