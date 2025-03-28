@@ -22,9 +22,11 @@ import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.CoralStation;
+import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.ReefObject.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.ReefObject.PipeObject;
 import frc.robot.constants.FieldConstants.Reef.ReefObject.RackObject;
+import frc.robot.constants.FieldConstants.Reef.ReefObject.StagedAlgaeObject;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.Intake;
@@ -117,16 +119,17 @@ public class AutoCommons {
         return Commands.none();
     }
 
-    public static final Map.Entry<String, PipeObject>[] pipeOptions =
+    public static final Map.Entry<String, AllianceFlipped<PipeObject>>[] pipeOptions =
         IntStream.range(0, 12)
-            .mapToObj(i -> Settings.option(String.valueOf(FieldConstants.Reef.pipes[i].getLetter()), FieldConstants.Reef.pipes[i]))
-            .toArray((IntFunction<Map.Entry<String, PipeObject>[]>) Map.Entry[]::new)
+        .mapToObj(i -> Settings.option(Character.toString('A' + i), new AllianceFlipped<PipeObject>(Reef.reefs.getBlue().pipes[i], Reef.reefs.getRed().pipes[i])))
+        .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
     ;
     
-    public static final Map.Entry<String, RackObject>[] rackOptions = 
-        IntStream.range(0, FieldConstants.Reef.Rack.values().length)
-        .mapToObj(i -> Settings.option("Rack " + i, FieldConstants.Reef.Rack.values()[i]))
-        .toArray((IntFunction<Map.Entry<String, RackObject>[]>) Map.Entry[]::new);
+    public static final Map.Entry<String, AllianceFlipped<StagedAlgaeObject>>[] algaeOptions = 
+        IntStream.range(0, 6)
+        .mapToObj(i -> Settings.option("Rack " + i, new AllianceFlipped<StagedAlgaeObject>(Reef.reefs.getBlue().stagedAlgae[i], Reef.reefs.getRed().stagedAlgae[i])))
+        .toArray((IntFunction<Map.Entry<String, AllianceFlipped<StagedAlgaeObject>>[]>) Map.Entry[]::new)
+    ;
 
     public static enum BargePosition {
         LEFT,

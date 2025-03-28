@@ -16,7 +16,7 @@ public class AllianceFlipped<T> {
     private final T blue;
     private final T red;
 
-    private AllianceFlipped(T blue, T red) {
+    public AllianceFlipped(T blue, T red) {
         this.blue = blue;
         this.red = red;
     }

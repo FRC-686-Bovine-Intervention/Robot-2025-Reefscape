@@ -80,10 +80,6 @@ public class Intake extends SubsystemBase {
         );
     }
 
-    public void setHasGamepiece(boolean has) {
-        this.hasGamepiece = has;
-    }
-
     private Command genCommand(
         String name,
         Supplier<Measure<VoltageUnit>> voltage
@@ -140,15 +136,6 @@ public class Intake extends SubsystemBase {
             ejectVoltage
         ).alongWith(Commands.runOnce(() -> hasGamepiece = false));
     }
-
-    // public Command intake(){
-    //     return genCommand(
-    //         "Intake",
-    //         intakeVoltage          
-    //     ).alongWith(Commands.run(() -> {if (currentSpikeDetector.hasSpike()) {
-    //         hasGamepiece = true;
-    //     }}));
-    // }
 
     public Command intakeCoral() {
         var subsystem = this;

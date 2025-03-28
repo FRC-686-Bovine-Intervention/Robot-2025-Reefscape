@@ -197,19 +197,22 @@ public final class FieldConstants {
                     Rotation2d.kZero
                 );
 
+                public final int id;
                 public final Pose2d intersectionPose;
 
                 public final RobotFlippedRobotPose centerRobotPose;
 
-                private RackObject(Pose2d intersectionPose) {
+                private RackObject(Pose2d intersectionPose, int id) {
                     this.intersectionPose = intersectionPose;
                     this.centerRobotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.intersectionPose.transformBy(robotTransform));
+                    this.id = id;
                 }
             }
 
             public static final class PipeObject {
                 public final RackObject rack;
                 public final Side side;
+                public final int id;
 
                 public final Pose2d pipeCenterPose;
                 public final RobotFlippedRobotPose robotPose;
@@ -217,6 +220,7 @@ public final class FieldConstants {
                 private PipeObject(RackObject rack, Side side) {
                     this.rack = rack;
                     this.side = side;
+                    this.id = this.rack.id * 2 + this.side.ordinal();
 
                     this.pipeCenterPose = this.rack.intersectionPose.transformBy(this.side.pipeCenterTransform);
                     this.robotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.pipeCenterPose.transformBy(new Transform2d(
@@ -226,6 +230,10 @@ public final class FieldConstants {
                         ),
                         Rotation2d.kZero
                     )));
+                }
+
+                public String getLetter() {
+                    return Character.toString('A' + id);
                 }
             }
 
@@ -370,10 +378,13 @@ public final class FieldConstants {
 
                 var rackDelta = Rotation2d.fromDegrees(60);
                 for (int rackIndex = 0; rackIndex < 6; rackIndex++) {
-                    var rack = new RackObject(new Pose2d(
-                        reefCenter.getTranslation(),
-                        reefCenter.getRotation().plus(rackDelta.times(rackIndex))
-                    ));
+                    var rack = new RackObject(
+                        new Pose2d(
+                            reefCenter.getTranslation(),
+                            reefCenter.getRotation().plus(rackDelta.times(rackIndex))
+                        ),
+                        rackIndex
+                    );
                     racks[rackIndex] = rack;
 
                     for (var side : Side.values()) {
