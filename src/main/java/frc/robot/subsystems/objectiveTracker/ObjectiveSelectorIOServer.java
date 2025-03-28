@@ -13,6 +13,8 @@ public class ObjectiveSelectorIOServer implements ObjectiveSelectorIO {
     private final IntegerSubscriber algaeSubscriber;
     private final IntegerPublisher intakePublisher;
     private final IntegerSubscriber intakeSubscriber;
+    private final IntegerPublisher cagePublisher;
+    private final IntegerSubscriber cageSubscriber;
 
     public ObjectiveSelectorIOServer() {
         System.out.println("[Init] Creating ObjectiveSelectorIOServer");
@@ -24,6 +26,8 @@ public class ObjectiveSelectorIOServer implements ObjectiveSelectorIO {
         algaeSubscriber = table.getIntegerTopic("algae_dashboard_to_robot").subscribe(-1);
         intakePublisher = table.getIntegerTopic("intake_robot_to_dashboard").publish();
         intakeSubscriber = table.getIntegerTopic("intake_dashboard_to_robot").subscribe(-1);
+        cagePublisher = table.getIntegerTopic("cage_robot_to_dashboard").publish();
+        cageSubscriber = table.getIntegerTopic("cage_dashboard_to_robot").subscribe(-1);
     
         WebServer.start(5801, Filesystem.getDeployDirectory().getPath() + "/objective_selector");
     }
@@ -38,6 +42,9 @@ public class ObjectiveSelectorIOServer implements ObjectiveSelectorIO {
         }
         if (intakeSubscriber.readQueueValues().length > 0) {
             inputs.intake = (int) intakeSubscriber.get();
+        }
+        if(cageSubscriber.readQueueValues().length > 0) {
+            inputs.cage = (int) cageSubscriber.get();
         }
     }
 
@@ -54,5 +61,10 @@ public class ObjectiveSelectorIOServer implements ObjectiveSelectorIO {
     @Override
     public void setIntake(int objective) {
         intakePublisher.set(objective);
+    }
+
+    @Override
+    public void setCage(int objective) {
+        cagePublisher.set(objective);
     }
 }

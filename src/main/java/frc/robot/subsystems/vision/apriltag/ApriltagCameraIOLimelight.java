@@ -2,10 +2,11 @@ package frc.robot.subsystems.vision.apriltag;
 
 import java.util.Arrays;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
 import frc.robot.subsystems.vision.apriltag.LimelightHelpers.LimelightTarget_Fiducial;
-import frc.util.misc.GeomUtil;
+import frc.util.geometry.GeomUtil;
 
 @Deprecated
 public class ApriltagCameraIOLimelight implements ApriltagCameraIO {
@@ -35,10 +36,10 @@ public class ApriltagCameraIOLimelight implements ApriltagCameraIO {
 
         double latencySeconds = (result.latency_capture + result.latency_pipeline + result.latency_jsonParse) / 1000.0;
         var timestamp = Timer.getTimestamp() - latencySeconds;
-        inputs.timestamp = timestamp;
+        // inputs.timestamp = timestamp;
 
-        inputs.targets = Arrays.stream(result.targets_Fiducials).map(ApriltagCameraIOLimelight::targetFromLLTarget).toArray(ApriltagCameraTarget[]::new);
-        inputs.estimatedRobotPose = result.getBotPose3d_wpiBlue();
+        // inputs.targets = Arrays.stream(result.targets_Fiducials).map(ApriltagCameraIOLimelight::targetFromLLTarget).toArray(ApriltagCameraTarget[]::new);
+        // inputs.estimatedRobotPose = result.getBotPose3d_wpiBlue();
     }
 
     private static ApriltagCameraTarget targetFromLLTarget(LimelightTarget_Fiducial limelightTarget) {
@@ -46,7 +47,8 @@ public class ApriltagCameraIOLimelight implements ApriltagCameraIO {
             (int) limelightTarget.fiducialID,
             GeomUtil.toTransform3d(limelightTarget.getTargetPose_CameraSpace()),
             GeomUtil.toTransform3d(limelightTarget.getTargetPose_CameraSpace()),
-            0
+            0,
+            new Translation2d[0]
         );
     }
 }

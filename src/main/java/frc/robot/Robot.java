@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -17,11 +15,6 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -29,16 +22,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.leds.Leds;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
-import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
-import frc.util.rust.iter.Iterator;
 
 public class Robot extends LoggedRobot {
+    private final RobotContainer robotContainer;
+
     public Robot() {
         Leds.getInstance();
         System.out.println("[Init Robot] Recording AdvantageKit Metadata");
@@ -125,13 +116,12 @@ public class Robot extends LoggedRobot {
         ;
 
         System.out.println("[Init Robot] Instantiating RobotContainer");
-        new RobotContainer();
+        this.robotContainer = new RobotContainer();
         System.out.println("[Init Robot] Starting Deploy Webserver");
         WebServer.start(5800, Filesystem.getDeployDirectory().getPath() + "/elastic");
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
         Perspective.getCurrent();
-        Shuffleboard.selectTab("Teleoperated");
     }
 
     @Override
@@ -139,16 +129,11 @@ public class Robot extends LoggedRobot {
         GameState.getInstance().periodic();
         VirtualSubsystem.periodicAll();
         CommandScheduler.getInstance().run();
+        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
         Mechanism3d.logAscopeAxes();
-        Logger.recordOutput("All Coral", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.branchPose.getOurs()).collect_array(Pose3d[]::new));
-        Logger.recordOutput("All Scoring Positions", Iterator.of(FieldConstants.Reef.branches).map((node) -> node.robotPose.getOurs()).collect_array(Pose2d[]::new));
-        Logger.recordOutput("ASCOPE DEBUGGING/Pivot Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).inverse());
-        Logger.recordOutput("ASCOPE DEBUGGING/Stage 2 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).inverse());
-        Logger.recordOutput("ASCOPE DEBUGGING/Stage 3 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).inverse());
-        Logger.recordOutput("ASCOPE DEBUGGING/Stage 4 Origin", PivotConstants.pivotBase.plus(new Transform3d(Translation3d.kZero, new Rotation3d(Degrees.zero(),Degrees.of(-20),Degrees.zero()))).plus(ElevatorConstants.stage2Base).plus(ElevatorConstants.stage3Base).plus(ElevatorConstants.stage4Base).inverse());
     }
 
     @Override
@@ -161,13 +146,17 @@ public class Robot extends LoggedRobot {
     public void disabledExit() {}
 
     @Override
-    public void autonomousInit() {}
+    public void autonomousInit() {
+        robotContainer.autoManager.startAuto();
+    }
 
     @Override
     public void autonomousPeriodic() {}
 
     @Override
-    public void autonomousExit() {}
+    public void autonomousExit() {
+        robotContainer.autoManager.endAuto();
+    }
 
     @Override
     public void teleopInit() {}

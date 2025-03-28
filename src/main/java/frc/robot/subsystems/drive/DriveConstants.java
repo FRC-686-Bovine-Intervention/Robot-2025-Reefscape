@@ -33,14 +33,14 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
+import frc.util.geometry.GeomUtil;
 import frc.util.hardwareID.can.CANDevice;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.mechanismUtil.GearRatio;
 import frc.util.mechanismUtil.Wheel;
-import frc.util.misc.GeomUtil;
 
 public final class DriveConstants {
-    public static final double odometryLoopFrequencyHz = 100;
+    public static final double odometryLoopFrequencyHz = RobotConstants.rioUpdateFrequencyHz;
     public static final Frequency odometryLoopFrequency = Hertz.of(odometryLoopFrequencyHz);
 
     /**Distance between the front and back wheels*/
@@ -54,14 +54,16 @@ public final class DriveConstants {
         public final CANDevice turnMotorID;
         public final InvertedValue driveInverted;
         public final Angle encoderOffset;
+        public final Angle encoderZeroOffset;
         public final Translation2d moduleTranslation;
         public final Vector<N2> positiveRotVec;
-        ModuleConstants(String name, CANDevice driveMotorID, CANDevice turnMotorID, InvertedValue driveInverted, Angle cancoderOffset, Translation2d moduleTranslation) {
+        ModuleConstants(String name, CANDevice driveMotorID, CANDevice turnMotorID, InvertedValue driveInverted, Angle encoderOffset, Angle encoderZeroOffset, Translation2d moduleTranslation) {
             this.name = name;
             this.driveMotorID = driveMotorID;
             this.turnMotorID = turnMotorID;
             this.driveInverted = driveInverted;
-            this.encoderOffset = cancoderOffset;
+            this.encoderOffset = encoderOffset;
+            this.encoderZeroOffset = encoderZeroOffset;
             this.moduleTranslation = moduleTranslation;
             this.positiveRotVec = GeomUtil.vectorFromRotation(this.moduleTranslation.getAngle().plus(Rotation2d.fromDegrees(90)));
         }
@@ -73,6 +75,7 @@ public final class DriveConstants {
             HardwareDevices.frontLeftDriveMotorID, HardwareDevices.frontLeftTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.25),
+            Rotations.of(0.7326064),
             new Translation2d(
                 trackWidthX.div(+2),
                 trackWidthY.div(+2)
@@ -83,6 +86,7 @@ public final class DriveConstants {
             HardwareDevices.frontRightDriveMotorID, HardwareDevices.frontRightTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
             Rotations.of(0),
+            Rotations.of(0.7325602),
             new Translation2d(
                 trackWidthX.div(+2),
                 trackWidthY.div(-2)
@@ -93,6 +97,7 @@ public final class DriveConstants {
             HardwareDevices.backLeftDriveMotorID, HardwareDevices.backLeftTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.5),
+            Rotations.of(0.6867877),
             new Translation2d(
                 trackWidthX.div(-2),
                 trackWidthY.div(+2)
@@ -103,6 +108,7 @@ public final class DriveConstants {
             HardwareDevices.backRightDriveMotorID, HardwareDevices.backRightTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
             Rotations.of(0.75),
+            Rotations.of(0.8682748),
             new Translation2d(
                 trackWidthX.div(-2),
                 trackWidthY.div(-2)
@@ -130,7 +136,7 @@ public final class DriveConstants {
         .gear(10).gear(60).axle()
     ;
     // public static final double driveWheelGearReduction = 1.0 / (1.0/4.0);
-    public static final double driveWheelGearReduction = 4.71;
+    public static final double driveWheelGearReduction = 5.08;
     public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
 
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);

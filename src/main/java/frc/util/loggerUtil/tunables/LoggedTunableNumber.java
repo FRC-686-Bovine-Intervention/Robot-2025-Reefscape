@@ -96,7 +96,13 @@ public class LoggedTunableNumber implements DoubleSupplier {
     }
 
     public static boolean hasChanged(int id, LoggedTunableNumber... tunableNumbers) {
-        return Arrays.stream(tunableNumbers).anyMatch(tunableNumber -> tunableNumber.hasChanged(id));
+        var out = false;
+        for (var tunable : tunableNumbers) {
+            if (tunable.hasChanged(id)) {
+                out = true;
+            }
+        }
+        return out;
     }
 
     @Override
