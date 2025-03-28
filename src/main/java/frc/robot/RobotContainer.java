@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
@@ -31,8 +32,8 @@ import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Processor;
 import frc.robot.constants.FieldConstants.Reef;
-import frc.robot.constants.FieldConstants.Reef.ReefObject.AlgaeLevelEnum;
-import frc.robot.constants.FieldConstants.Reef.ReefObject.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIO;
@@ -54,6 +55,7 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIO;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedCommand;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -358,14 +360,9 @@ public class RobotContainer {
         driveController.a().whileTrue(intake.eject()); //Eject
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command coralStationForwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
-                private final Command coralStationBackwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
+                private final RobotFlippedCommand coralStationCommands = CoralStation.intakePosition.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).raceWith(intake.intakeCoral().until(intake.hasCoral)));
                 public Command get() {
-                    if (objectiveTracker.getIntakeCoralObjective().getTargetDirection().isForward()) {
-                        return coralStationForwardCommand;
-                    } else {
-                        return coralStationBackwardCommand;
-                    }
+                    return coralStationCommands.get(objectiveTracker.getIntakeCoralObjective().getTargetDirection());
                 }
             },
             Set.of(superstructure, intake)
@@ -381,19 +378,14 @@ public class RobotContainer {
         });
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command[] stagedAlgaeCommands = new Command[AlgaeLevelEnum.values().length * 2];
-                {
-                    for (var level : AlgaeLevelEnum.values()) {
-                        stagedAlgaeCommands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.intakeSuperstructureStates.getForward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
-                        stagedAlgaeCommands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.intakeSuperstructureStates.getBackward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
-                    }
-                }
+                private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae()))).toArray(RobotFlippedCommand[]::new);;
                 public Command get() {
-                    var targetAlgae = objectiveTracker.getIntakeAlgaeObjective();
-                    if (targetAlgae.getTargetDirection().isForward()) {
-                        return stagedAlgaeCommands[targetAlgae.algae.level.ordinal() * 2];
+                    var optStagedAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
+                    if (optStagedAlgaeObjective.isEmpty()) {
+                        return new InstantCommand();
                     } else {
-                        return stagedAlgaeCommands[targetAlgae.algae.level.ordinal() * 2 + 1];
+                        var stagedAlgaeObjective = optStagedAlgaeObjective.get();
+                        return stagedAlgaeCommands[stagedAlgaeObjective.algae.level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
                     }
                 }
             },
@@ -427,19 +419,14 @@ public class RobotContainer {
 
         final Command coralScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command[] commands = new Command[BranchLevel.values().length * 2];
-                {
-                    for (var level : BranchLevel.values()) {
-                        commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.scoringSuperstructureStates.getForward());
-                        commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.scoringSuperstructureStates.getBackward());
-                    }
-                }
+                private final RobotFlippedCommand[] branchCommands = Arrays.stream(BranchLevel.values()).map((level) -> level.scoringSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state))).toArray(RobotFlippedCommand[]::new);
+                private final Command level1 = Commands.none();
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
-                    if (objectiveTracker.getScoreCoralObjective().getTargetDirection().isForward()) {
-                        return commands[scoreCoralObjective.branch.level.ordinal() * 2];
+                    if (true) {
+                        return branchCommands[scoreCoralObjective.branch.level.ordinal()].get(scoreCoralObjective.getTargetDirection());
                     } else {
-                        return commands[scoreCoralObjective.branch.level.ordinal() * 2 + 1];
+                        return level1;
                     }
                 }
             },
@@ -447,18 +434,13 @@ public class RobotContainer {
         ).withName("Extend to Reef");
         final Command algaeScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
+                private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
-                private final Command netForwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getForward());
-                private final Command netBackwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getBackward());
                 public Command get() {
-                    switch (objectiveTracker.getAlgaeGoal()) {
+                    switch (objectiveTracker.getScoreAlgaeObjective().algaeGoal) {
                         default:
                         case NET:
-                            if (objectiveTracker.getScoreAlgaeObjective().getTargetDirection().isForward()) {
-                                return netForwardCommand;
-                            } else {
-                                return netBackwardCommand;
-                            }
+                            return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
                         case PROCESSOR:
                         case OPPONENT_PROCESSOR:
                             return processorCommand;

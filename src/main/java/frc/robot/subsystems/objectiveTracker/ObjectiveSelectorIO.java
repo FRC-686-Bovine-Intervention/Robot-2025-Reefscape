@@ -9,6 +9,11 @@ public interface ObjectiveSelectorIO {
         public int algae;   // 0 (net), 1 (processor), 2 (opponent's processor)
         public int intake;  // 0 (coral station), 1 (ground algae), 2 - 7 (staged algae)
         public int cage;
+        public int[] branchQueue = new int[0]; // Add coral = id of branch, Remove coral = id of branch-37
+        public int[] level1Count = new int[0]; // Value = coral count
+        public int[] toggledAlgae = new int[0]; // Add algae = id of algae, Remove algae = id of algae-7
+        public boolean[] coop = new boolean[0]; // Value = coop state
+        public int[] priorityList = new int[0];
     }
 
     public default void updateInputs(ObjectiveSelectorIOInputs inputs) {}

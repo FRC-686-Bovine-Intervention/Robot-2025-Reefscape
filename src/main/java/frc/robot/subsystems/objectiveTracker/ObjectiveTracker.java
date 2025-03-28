@@ -2,18 +2,27 @@ package frc.robot.subsystems.objectiveTracker;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.constants.FieldConstants.Barge;
+import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Processor;
 import frc.robot.constants.FieldConstants.Reef;
-import frc.robot.constants.FieldConstants.Reef.ReefObject.BranchObject;
-import frc.robot.constants.FieldConstants.Reef.ReefObject.StagedAlgaeObject;
+import frc.robot.constants.FieldConstants.Reef.BranchConcept;
+import frc.robot.constants.FieldConstants.Reef.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.BranchObject;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeObject;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
@@ -25,14 +34,112 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ObjectiveSelectorIO io;
     private final ObjectiveSelectorIOInputsAutoLogged inputs = new ObjectiveSelectorIOInputsAutoLogged();
 
-    public enum AlgaeGoal {
+    public static enum AlgaeGoal {
         NET,
         PROCESSOR,
         OPPONENT_PROCESSOR,
         ;
     }
 
+    public static enum Priority {
+        Level4Fill(Optional.of(BranchLevel.Level4)) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                for (int i = 24; i < 36; i++) {
+                    if (branchStates[i] == false) return false;
+                }
+                return true;
+            }
+        },
+        Level3Fill(Optional.of(BranchLevel.Level3)) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                for (int i = 12; i < 24; i++) {
+                    if (branchStates[i] == false) return false;
+                }
+                return true;
+            }
+        },
+        Level2Fill(Optional.of(BranchLevel.Level2)) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                for (int i = 0; i < 12; i++) {
+                    if (branchStates[i] == false) return false;
+                }
+                return true;
+            }
+        },
+        Level1Fill(Optional.empty()) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                return false;
+            }
+        },
+        Level4RP(Optional.of(BranchLevel.Level4)) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                var count = 0;
+                for (int i = 24; i < 36; i++) {
+                    if (branchStates[i] == true) count++;
+                    if (count >= 5) return true;
+                }
+                return false;
+            }
+        },
+        Level3RP(Optional.of(BranchLevel.Level3)) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                var count = 0;
+                for (int i = 12; i < 24; i++) {
+                    if (branchStates[i] == true) count++;
+                    if (count >= 5) return true;
+                }
+                return false;
+            }
+        },
+        Level2RP(Optional.of(BranchLevel.Level2)) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                var count = 0;
+                for (int i = 0; i < 12; i++) {
+                    if (branchStates[i] == true) count++;
+                    if (count >= 5) return true;
+                }
+                return false;
+            }
+        },
+        Level1RP(Optional.empty()) {
+            @Override
+            public boolean completed(boolean[] branchStates) {
+                return false; //TODO: Level 1 count
+            }
+        },
+        ;
+        public final Optional<BranchLevel> level;
+        Priority(Optional<BranchLevel> level) {
+            this.level = level;
+        }
+        public boolean completed(boolean[] branchStates) {
+            return false;
+        }
+    }
+
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
+
+    private final boolean[] branchStates = new boolean[] {
+        false,false,true,false,true,true,true,true,true,true,true,true,
+        true,true,true,true,true,true,true,false,true,false,true,true,
+        true,true,true,false,true,true,true,true,true,true,true,true,
+    };
+    private final boolean[] algaeStates = new boolean[] {true,true,true,false,true,true};
+
+    private final Set<BranchConcept> availableBranches = new HashSet<>(36);
+    private final Set<BranchConcept> availableUnblockedBranches = new HashSet<>(36);
+
+    private final Set<StagedAlgaeConcept> availableAlgae = new HashSet<>(6);
+
+    private final List<Priority> fullStrategy = List.of(Priority.values());
+    private final List<Priority> uncompletedPriorities = List.of(Priority.values());
 
     public static enum ObjectiveType {
         IntakeCoral(false),
@@ -46,16 +153,20 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
 
-    private NonReefObjective intakeCoralTarget;
-    private IntakeAlgaeObjective intakeAlgaeTarget;
-    private ScoreCoralObjective scoreCoralTarget;
-    private ScoreAlgaeObjective scoreAlgaeTarget;
+    private NonReefObjective intakeCoralObjective;
+    private Optional<IntakeAlgaeObjective> intakeAlgaeObjective;
+    private ScoreCoralObjective scoreCoralObjective;
+    private ScoreAlgaeObjective scoreAlgaeObjective;
     private Optional<Objective> target;
-    private Optional<ObjectiveType> typeOverride;
+    private Optional<ObjectiveType> typeOverride = Optional.empty();
 
     public ObjectiveTracker(ObjectiveSelectorIO io) {
-        System.out.println("[Init] Instantiating ObjectiveTracker");
+        System.out.println("[Init ObjectiveTracker] Instantiating ObjectiveTracker with " + io.getClass().getSimpleName());
         this.io = io;
+
+        updateBranches();
+        updateAlgae();
+        updateUnblockedBranches();
     }
 
     @Override
@@ -97,6 +208,74 @@ public class ObjectiveTracker extends VirtualSubsystem {
         // );
 
         // Logger.recordOutput("Objective Tracker/Selected Branch", selectedBranch.pose.getOurs());
+
+        var branchesChanged = false;
+        for (var changedBranch : inputs.branchQueue) {
+            branchesChanged = true;
+            var branchState = changedBranch >= 0;
+            var branchID = branchState ? changedBranch : changedBranch + 37;
+            branchStates[branchID] = branchState;
+        }
+        var algaeChanged = false;
+        for (var changedBranch : inputs.toggledAlgae) {
+            algaeChanged = true;
+            var algaeState = changedBranch >= 0;
+            var algaeID = algaeState ? changedBranch : changedBranch + 37;
+            algaeStates[algaeID] = algaeState;
+        }
+
+        if (branchesChanged) {
+            updateBranches();
+        }
+
+        if (algaeChanged) {
+            updateAlgae();
+        }
+
+        if (algaeChanged || branchesChanged) {
+            updateUnblockedBranches();
+        }
+    }
+
+    private void updateBranches() {
+        availableBranches.clear();
+        var filledBranches = new ArrayList<Pose3d>(36);
+        for (int i = 0; i < branchStates.length; i++) {
+            if (branchStates[i] == false) {
+                availableBranches.add(Reef.branches[i]);
+            } else {
+                filledBranches.add(Reef.reefs.getOurs().branches[i].branchTip.transformBy(Coral.branchPlacement));
+            }
+        }
+        Logger.recordOutput("Objective Tracker/Reef/Coral", filledBranches.toArray(Pose3d[]::new));
+    }
+    private void updateAlgae() {
+        availableAlgae.clear();
+        var filledAlgae = new ArrayList<Pose3d>(36);
+        for (int i = 0; i < algaeStates.length; i++) {
+            if (algaeStates[i] == true) {
+                availableAlgae.add(Reef.stagedAlgae[i]);
+                filledAlgae.add(Reef.reefs.getOurs().stagedAlgae[i].centerPose);
+            }
+        }
+        Logger.recordOutput("Objective Tracker/Reef/Algae", filledAlgae.toArray(Pose3d[]::new));
+    }
+    private void updateUnblockedBranches() {
+        availableUnblockedBranches.clear();
+        for (var availableBranch : availableBranches) {
+            var blocked = false;
+            if (availableBranch.level != BranchLevel.Level4) {
+                for (var stagedAlgae : availableAlgae) {
+                    if (stagedAlgae.rack != availableBranch.pipe.rack) continue;
+                    if (stagedAlgae.level == StagedAlgaeLevel.High && availableBranch.level == BranchLevel.Level2) continue;
+                    blocked = true;
+                    break;
+                }
+            }
+            if (!blocked) {
+                availableUnblockedBranches.add(availableBranch);
+            }
+        }
     }
 
     public void determineGoal(Pose2d currentPose, boolean hasCoral, boolean hasAlgae) {
@@ -113,78 +292,110 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
             return (int) Math.signum(aDistance - bDistance);
         }).findFirst().get();
-        this.intakeCoralTarget = NonReefObjective.fromParts(closestStationPose, CoralStation.intakePosition, currentPose.getRotation(), ObjectiveType.IntakeCoral);
+        this.intakeCoralObjective = NonReefObjective.fromParts(closestStationPose, CoralStation.intakePosition, currentPose.getRotation(), ObjectiveType.IntakeCoral);
 
-        var closestAlgae = Arrays.stream(Reef.reefs.getOurs().stagedAlgae).sorted((a,b) -> {
+        var closestAlgae = availableAlgae.stream().map((algae) -> algae.getOurs()).sorted((a,b) -> {
             var aDistance = a.intakeTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
             var bDistance = b.intakeTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
             return (int) Math.signum(aDistance - bDistance);
-        }).findFirst().get();
-        this.intakeAlgaeTarget = new IntakeAlgaeObjective(closestAlgae, currentPose.getRotation());
+        }).findFirst();
+        this.intakeAlgaeObjective = closestAlgae.map((algae) -> new IntakeAlgaeObjective(algae, currentPose.getRotation()));
 
-        this.scoreCoralTarget = new ScoreCoralObjective(Reef.reefs.getOurs().branches[0], currentPose.getRotation());
+        var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
+            .sorted((a,b) -> {
+                var aDistance = a.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                var bDistance = b.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                return (int) Math.signum(aDistance - bDistance);
+            })
+            .limit(6)
+            .toList()
+        ;
+        var targetBranch = availableUnblockedBranches.stream()
+            .map((branch) -> branch.getOurs())
+            .filter((branch) -> closestPipes.contains(branch.pipe))
+            .sorted((a,b) -> {
+                if (a.level == b.level) {
+                    var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    return (int) Math.signum(aDistance - bDistance);
+                } else {
+                    for (var priority : uncompletedPriorities) {
+                        if (priority.level.isEmpty()) continue;
+                        if (a.level == priority.level.get()) return -1;
+                        if (b.level == priority.level.get()) return 1;
+                    }
+                    return 0;
+                }
+            })
+            .findFirst()
+        ;
+        if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
+            this.scoreCoralObjective = new ScoreCoralObjective(Reef.reefs.getOurs().branches[0], currentPose.getRotation());
+        } else {
+            this.scoreCoralObjective = new ScoreCoralObjective(targetBranch.get(), currentPose.getRotation());
+        }
 
-        this.scoreAlgaeTarget = new ScoreAlgaeObjective(selectedAlgaeGoal, currentPose);
+        this.scoreAlgaeObjective = new ScoreAlgaeObjective(selectedAlgaeGoal, currentPose);
 
-        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralTarget.getTargetDirection());
-        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralTarget.getTargetPose());
-        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralTarget.getTargetState().getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", intakeAlgaeTarget.getTargetDirection());
-        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", intakeAlgaeTarget.getTargetPose());
-        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeTarget.getTargetState().getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralTarget.getTargetDirection());
-        Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralTarget.getTargetPose());
-        Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralTarget.getTargetState().getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Score/Algae/Target Direction", scoreAlgaeTarget.getTargetDirection());
-        Logger.recordOutput("Objective Tracker/Score/Algae/Target Pose", scoreAlgaeTarget.getTargetPose());
-        Logger.recordOutput("Objective Tracker/Score/Algae/Target Mechs", scoreAlgaeTarget.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralObjective.getTargetDirection());
+        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralObjective.getTargetPose());
+        Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralObjective.getTargetState().getMechTransforms());
+        // Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", intakeAlgaeObjective.getTargetDirection());
+        // Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", intakeAlgaeObjective.getTargetPose());
+        // Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralObjective.getTargetDirection());
+        Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralObjective.getTargetPose());
+        Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Score/Algae/Target Direction", scoreAlgaeObjective.getTargetDirection());
+        Logger.recordOutput("Objective Tracker/Score/Algae/Target Pose", scoreAlgaeObjective.getTargetPose());
+        Logger.recordOutput("Objective Tracker/Score/Algae/Target Mechs", scoreAlgaeObjective.getTargetState().getMechTransforms());
 
         if (typeOverride.isEmpty()) {
             if (hasCoral && hasAlgae) {
-                var distToCoral = scoreCoralTarget.getTargetPose().getTranslation().getDistance(currentPose.getTranslation());
-                var distToAlgae = scoreAlgaeTarget.getTargetPose().getTranslation().getDistance(currentPose.getTranslation());
+                var distToCoral = scoreCoralObjective.getTargetPose().getTranslation().getDistance(currentPose.getTranslation());
+                var distToAlgae = scoreAlgaeObjective.getTargetPose().getTranslation().getDistance(currentPose.getTranslation());
                 if (distToCoral < distToAlgae) {
-                    target = Optional.of(scoreCoralTarget);
+                    target = Optional.of(scoreCoralObjective);
                 } else {
-                    target = Optional.of(scoreAlgaeTarget);
+                    target = Optional.of(scoreAlgaeObjective);
                 }
             } else if (hasCoral) {
-                target = Optional.of(scoreCoralTarget);
+                target = Optional.of(scoreCoralObjective);
             } else if (hasAlgae) {
-                target = Optional.of(scoreAlgaeTarget);
+                target = Optional.of(scoreAlgaeObjective);
             } else {
-                target = Optional.of(intakeCoralTarget);
+                target = Optional.of(intakeCoralObjective);
             }
         } else {
             switch (typeOverride.get()) {
                 default:
                 case IntakeCoral:
-                    target = Optional.of(intakeCoralTarget);
+                    target = Optional.of(intakeCoralObjective);
                 break;
                 case IntakeAlgae:
-                    target = Optional.of(intakeAlgaeTarget);
+                    target = intakeAlgaeObjective.map((objective) -> objective);
                 break;
                 case ScoreCoral:
-                    target = Optional.of(scoreCoralTarget);
+                    target = Optional.of(scoreCoralObjective);
                 break;
                 case ScoreAlgae:
-                    target = Optional.of(scoreAlgaeTarget);
+                    target = Optional.of(scoreAlgaeObjective);
                 break;
             }
         }
     }
 
     public NonReefObjective getIntakeCoralObjective() {
-        return intakeCoralTarget;
+        return intakeCoralObjective;
     }
-    public IntakeAlgaeObjective getIntakeAlgaeObjective() {
-        return intakeAlgaeTarget;
+    public Optional<IntakeAlgaeObjective> getIntakeAlgaeObjective() {
+        return intakeAlgaeObjective;
     }
     public ScoreCoralObjective getScoreCoralObjective() {
-        return scoreCoralTarget;
+        return scoreCoralObjective;
     }
     public ScoreAlgaeObjective getScoreAlgaeObjective() {
-        return scoreAlgaeTarget;
+        return scoreAlgaeObjective;
     }
     public Optional<Objective> getCurrentObjective() {
         return target;
@@ -199,15 +410,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
     //         placedCoral.add(selectedBranch);
     //     }
     // }
-
-    private BranchObject cachedBranch;
-    public BranchObject getSelectedBranch() {
-        return cachedBranch;
-    }
-
-    public AlgaeGoal getAlgaeGoal() {
-        return selectedAlgaeGoal;
-    }
 
     public static interface Objective {
         public Pose2d getTargetPose();

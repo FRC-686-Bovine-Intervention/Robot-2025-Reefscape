@@ -43,8 +43,8 @@ public class AllianceFlipped<T> {
         }
     }
 
-    public AllianceFlipped<T> map(Function<T, T> mappingFunction) {
-        return new AllianceFlipped<T>(mappingFunction.apply(this.blue), mappingFunction.apply(this.red));
+    public <U> AllianceFlipped<U> map(Function<T, U> mappingFunction) {
+        return new AllianceFlipped<U>(mappingFunction.apply(this.blue), mappingFunction.apply(this.red));
     }
 
     public static <T extends AllianceFlippable<T>> AllianceFlipped<T> fromBlue(T blue) {
