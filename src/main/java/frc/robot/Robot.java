@@ -129,7 +129,7 @@ public class Robot extends LoggedRobot {
         GameState.getInstance().periodic();
         VirtualSubsystem.periodicAll();
         CommandScheduler.getInstance().run();
-        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
+        // robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
