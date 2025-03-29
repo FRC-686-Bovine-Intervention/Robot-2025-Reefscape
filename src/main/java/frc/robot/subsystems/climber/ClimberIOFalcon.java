@@ -66,6 +66,10 @@ public class ClimberIOFalcon implements ClimberIO {
             .withReverseLimitAutosetPositionValue(Degrees.of(0))
         ;
 
+        motorConfig.Feedback
+            .withSensorToMechanismRatio(-1.0/ClimberConstants.sensorToMechanismRatio.ratio())
+        ;
+
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);

@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Rotations;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import frc.util.mechanismUtil.GearRatio;
 
 public final class ClimberConstants {
     // TBD
@@ -13,4 +14,11 @@ public final class ClimberConstants {
     // TBD
 
     public static final Angle climberMinimumAngle = Rotations.of(0);
+
+    public static final GearRatio sensorToMechanismRatio = new GearRatio()
+        .planetary(1.0/3.0)
+        .planetary(1.0/4.0)
+        .planetary(1.0/4.0)
+        .gear(40).gear(50).axle()
+    ;
 }
