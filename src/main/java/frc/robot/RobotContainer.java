@@ -470,8 +470,8 @@ public class RobotContainer {
                 }
             }
         });
-        driveController.leftBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getTargetPose().get().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getTargetPose().get(), true))); //Auto drive
+        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
+        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getCurrentObjective().get().getTargetPose(), objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective))); //Auto drive
         // driveController.start().toggleOnTrue(
         //     Commands.parallel(
         //         climber.prepareClimb(),
