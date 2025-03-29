@@ -20,11 +20,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.CoralStation;
-import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Pipe;
-import frc.robot.constants.FieldConstants.Reef.Rack;
+import frc.robot.constants.FieldConstants.Reef;
+import frc.robot.constants.FieldConstants.Reef.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.PipeObject;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeObject;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.Intake;
@@ -64,8 +64,8 @@ public class AutoCommons {
         ;
     }
 
-    public static Command scoreOnReef(PathPlannerPath pathToReef, Level branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        var targetState = branchLevel.superstructureStates.get(direction);
+    public static Command scoreOnReef(PathPlannerPath pathToReef, BranchLevel branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var targetState = branchLevel.scoringSuperstructureStates.get(direction);
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
         var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
@@ -117,16 +117,17 @@ public class AutoCommons {
         return Commands.none();
     }
 
-    public static final Map.Entry<String, Pipe>[] pipeOptions =
-        IntStream.range(0, FieldConstants.Reef.pipes.length)
-            .mapToObj(i -> Settings.option(String.valueOf(FieldConstants.Reef.pipes[i].getLetter()), FieldConstants.Reef.pipes[i]))
-            .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new)
+    public static final Map.Entry<String, AllianceFlipped<PipeObject>>[] pipeOptions =
+        IntStream.range(0, 12)
+        .mapToObj(i -> Settings.option(Character.toString('A' + i), new AllianceFlipped<PipeObject>(Reef.reefs.getBlue().pipes[i], Reef.reefs.getRed().pipes[i])))
+        .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
     ;
     
-    public static final Map.Entry<String, Rack>[] rackOptions = 
-        IntStream.range(0, FieldConstants.Reef.Rack.values().length)
-        .mapToObj(i -> Settings.option("Rack " + i, FieldConstants.Reef.Rack.values()[i]))
-        .toArray((IntFunction<Map.Entry<String, Rack>[]>) Map.Entry[]::new);
+    public static final Map.Entry<String, AllianceFlipped<StagedAlgaeObject>>[] algaeOptions = 
+        IntStream.range(0, 6)
+        .mapToObj(i -> Settings.option("Rack " + i, new AllianceFlipped<StagedAlgaeObject>(Reef.reefs.getBlue().stagedAlgae[i], Reef.reefs.getRed().stagedAlgae[i])))
+        .toArray((IntFunction<Map.Entry<String, AllianceFlipped<StagedAlgaeObject>>[]>) Map.Entry[]::new)
+    ;
 
     public static enum BargePosition {
         LEFT,

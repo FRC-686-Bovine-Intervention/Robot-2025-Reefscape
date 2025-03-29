@@ -9,7 +9,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import java.util.ArrayList;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -28,7 +28,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
@@ -37,8 +36,8 @@ import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
-import frc.util.geometry.GeomUtil;
 import frc.util.flipping.AllianceFlippable;
+import frc.util.geometry.GeomUtil;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.MeasureUtil;
 
@@ -612,12 +611,12 @@ public class Superstructure extends SubsystemBase {
             }
         }
 
-        // public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
-        //     return new RobotFlippedSuperstructureState(
-        //         this.forward.plus(forwardOther),
-        //         this.backward.plus(backwardsOther)
-        //     );
-        // }
+        public RobotFlippedCommand mapToCommand(Function<SuperstructureState, Command> mappingFunction) {
+            return new RobotFlippedCommand(
+                mappingFunction.apply(getForward()),
+                mappingFunction.apply(getBackward())
+            );
+        }
     }
 
     public static class RobotFlippedRobotPose implements AllianceFlippable<RobotFlippedRobotPose> {
@@ -778,6 +777,30 @@ public class Superstructure extends SubsystemBase {
                 (this.backwardRobotPose == null) ? null : AllianceFlipUtil.flip(this.backwardRobotPose, flipType),
                 this.backwardSuperstructureState
             );
+        }
+    }
+
+    public static class RobotFlippedCommand {
+        private final Command forward;
+        private final Command backward;
+
+        public RobotFlippedCommand(Command forward, Command backward) {
+            this.forward = forward;
+            this.backward = backward;
+        }
+
+        public Command getForward() {
+            return forward;
+        }
+        public Command getBackward() {
+            return backward;
+        }
+        public Command get(Direction direction) {
+            switch (direction) {
+                default:
+                case Forward:   return getForward();
+                case Backward:  return getBackward();
+            }
         }
     }
 }
