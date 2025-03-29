@@ -310,6 +310,7 @@ public class RobotContainer {
         // superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
         // superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.idle));
+        climber.setDefaultCommand(climber.idle());
         intake.setDefaultCommand(intake.idle());
         // SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
         // SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
@@ -467,7 +468,7 @@ public class RobotContainer {
         });
         driveController.leftBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getTargetPose().get().getRotation()));
         driveController.rightBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getTargetPose().get())); //Auto drive
-        driveController.start().toggleOnTrue(
+        /*driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
                 superstructure.prepareClimb()
@@ -481,7 +482,7 @@ public class RobotContainer {
                     climber.hold()
                 )
             )
-        );
+        );*/
         
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())).ignoringDisable(true));
 

@@ -1,11 +1,12 @@
 package frc.robot.subsystems.climber;
 
-import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.units.CurrentUnit;
+import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,11 +17,13 @@ public class Climber extends SubsystemBase {
     private final ClimberIO io;
     private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
 
-    private static final LoggedTunableMeasure<VoltageUnit> prepareVoltage = new LoggedTunableMeasure<>("Climber/Prepare/Volts", Volts.of(0.5));
-    private static final LoggedTunableMeasure<CurrentUnit> prepareCurrent = new LoggedTunableMeasure<>("Climber/Prepare/Current", Amps.of(50));
-    private static final LoggedTunableMeasure<VoltageUnit> climbVoltage = new LoggedTunableMeasure<>("Climber/Climb/Volts", Volts.of(1));
-    private static final LoggedTunableMeasure<VoltageUnit> holdVoltage = new LoggedTunableMeasure<>("Climber/Hold/Volts", Volts.of(1));
-    private static final LoggedTunableMeasure<VoltageUnit> idleVoltage = new LoggedTunableMeasure<>("Climber/Idle/Volts", Volts.of(-0.1));
+    private static final LoggedTunableMeasure<VoltageUnit> idleVoltage = new LoggedTunableMeasure<>("Climber/Idle Voltage", Volts.of(-3));
+    private static final LoggedTunableMeasure<AngleUnit> ratchetEngageAngle = new LoggedTunableMeasure<>("Climber/Ratchet/Engage Angle", Degrees.of(0));
+    private static final LoggedTunableMeasure<AngleUnit> ratchetDisengageAngle = new LoggedTunableMeasure<>("Climber/Ratchet/Disengage Angle", Degrees.of(90));
+    private static final LoggedTunableMeasure<AngleUnit> deployAngle = new LoggedTunableMeasure<>("Climber/Deploy Angle", Rotations.of(5));
+    private static final LoggedTunableMeasure<AngleUnit> climbAngle = new LoggedTunableMeasure<>("Climber/Climb Angle", Rotations.of(1));
+
+    private boolean ratchetEngaged = true;
 
     public Climber(ClimberIO io) {
         System.out.println("[Init Climber] Instantiating Climber with " + io.getClass().getSimpleName());
@@ -32,40 +35,97 @@ public class Climber extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Climber", inputs);
     }
+
+    public Command idle() {
+        var subsystem = this;
+        return new Command() {
+            private final Timer ratchetTimer = new Timer();
+            {
+                addRequirements(subsystem);
+                setName("Idle");
+            }
+            @Override
+            public void initialize() {               
+            }
+
+            @Override
+            public void execute() {
+                io.setRatchetServoAngle(ratchetDisengageAngle.get());
+                if(ratchetEngaged){
+                    ratchetTimer.start();
+                    //CHANGE THE TIME LIMIT
+                    if(ratchetTimer.hasElapsed(500000000)){
+                        ratchetEngaged = false;
+                    }
+                } else {
+                    ratchetTimer.stop();
+                    ratchetTimer.reset();
+                    io.setVoltage(idleVoltage.get());
+                }
+            }
+            @Override
+            public void end(boolean interrupted) {
+                
+            }
+        };
+    }
     
     public Command prepareClimb() {
         var subsystem = this;
         return new Command() {
-            private boolean hitSpike = false;
-            private final Timer timer = new Timer();
+            private final Timer ratchetTimer = new Timer();
             {
                 addRequirements(subsystem);
                 setName("Prepare Climb");
             }
             @Override
-            public void initialize() {
-                hitSpike = false;                
+            public void initialize() {               
             }
+
             @Override
             public void execute() {
-                if (hitSpike) {
-                    io.setCoastVoltage(Volts.of(0));
+                io.setRatchetServoAngle(ratchetDisengageAngle.get());
+                if(ratchetEngaged){
+                    ratchetTimer.start();
+                    //CHANGE THE TIME LIMIT
+                    if(ratchetTimer.hasElapsed(500000000)){
+                        ratchetEngaged = false;
+                    }
                 } else {
-                    if (inputs.motor.motor.current.gt(prepareCurrent.get())) {
-                        timer.start();
-                    } else {
-                        timer.stop();
-                        timer.reset();
-                    }
-                    if (timer.hasElapsed(0.2)) {
-                        hitSpike = true;
-                    }
-                    io.setCoastVoltage(prepareVoltage.get());
+                    ratchetTimer.stop();
+                    ratchetTimer.reset();
+                    io.setAngle(deployAngle.get());
                 }
             }
             @Override
             public void end(boolean interrupted) {
-                io.setCoastVoltage(Volts.of(0));
+                
+            }
+        };
+    }
+
+    public Command climb() {
+        var subsystem = this;
+        return new Command() {
+
+            {
+                addRequirements(subsystem);
+                setName("Climb");
+            }
+            @Override
+            public void initialize() {   
+
+            }
+
+            @Override
+            public void execute() {
+                io.setRatchetServoAngle(ratchetEngageAngle.get());
+                ratchetEngaged = true;
+                io.setAngle(climbAngle.get());
+            }
+            @Override
+            public void end(boolean interrupted) {
+                
             }
         };
     }
