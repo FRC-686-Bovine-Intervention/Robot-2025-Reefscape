@@ -56,6 +56,7 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIO;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -468,21 +469,18 @@ public class RobotContainer {
         });
         driveController.leftBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getTargetPose().get().getRotation()));
         driveController.rightBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getTargetPose().get())); //Auto drive
-        /*driveController.start().toggleOnTrue(
+        driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
-                superstructure.prepareClimb()
+                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
             )
         ); //Start Climb
         driveController.back().toggleOnTrue(
             Commands.parallel(
-                superstructure.climb(),
-                Commands.sequence(
-                    climber.climb().until(() -> superstructure.pivot.getAngle().lt(Degrees.of(21))),
-                    climber.hold()
-                )
+                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState),
+                climber.climb()
             )
-        );*/
+        );
         
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())).ignoringDisable(true));
 
