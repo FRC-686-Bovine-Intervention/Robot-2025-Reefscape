@@ -544,7 +544,7 @@ public class Drive extends VirtualSubsystem {
         public Command simplePIDTo(Supplier<Translation2d> target) {
             var subsystem = this;
             return new Command() {
-                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 2);
+                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 3);
                 {
                     addRequirements(subsystem);
                     setName("Simple PID To");

@@ -101,16 +101,20 @@ public class ModuleIOFalcon550 implements ModuleIO {
         //     .withVoltageOpenLoopRampPeriod(Seconds.of(0.1875))
         // ;
         driveConfig.CurrentLimits
-            .withSupplyCurrentLimit(Amps.of(55))
-            .withSupplyCurrentLowerLimit(Amps.of(55))
-            .withSupplyCurrentLowerTime(Seconds.of(0))
+            // .withSupplyCurrentLimit(Amps.of(70))
+            // .withSupplyCurrentLowerLimit(Amps.of(70))
+            // .withSupplyCurrentLowerTime(Seconds.of(0))
             .withSupplyCurrentLimitEnable(true)
-            .withStatorCurrentLimit(Amps.of(55))
+            .withStatorCurrentLimit(Amps.of(80))
             .withStatorCurrentLimitEnable(true)
         ;
         driveFFConsts.update(driveConfig.Slot0);
         drivePIDConsts.update(driveConfig.Slot0);
         driveProfileConsts.update(driveConfig.MotionMagic);
+
+        driveFFConsts.hasChanged(hashCode());
+        drivePIDConsts.hasChanged(hashCode());
+        driveProfileConsts.hasChanged(hashCode());
         
         driveMotor.getConfigurator().apply(driveConfig);
 
