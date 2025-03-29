@@ -13,7 +13,7 @@ import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 
 public class ClimberIOFalcon implements ClimberIO {
-    protected final TalonFX chainMotor = HardwareDevices.climberChainMotorID.talonFX();
+    protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
 
     private final VoltageOut coastVoltage = new VoltageOut(0).withOverrideBrakeDurNeutral(false);
     private final VoltageOut brakeVoltage = new VoltageOut(0).withOverrideBrakeDurNeutral(true);
@@ -26,21 +26,21 @@ public class ClimberIOFalcon implements ClimberIO {
             .withNeutralMode(NeutralModeValue.Coast)
         ;
 
-        chainMotor.getConfigurator().apply(motorConfig);
+        motor.getConfigurator().apply(motorConfig);
     }
 
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
-        inputs.chainMotor.updateFrom(chainMotor);
+        inputs.chainMotor.updateFrom(motor);
     }
 
     @Override
     public void setCoastVoltage(Measure<VoltageUnit> voltage) {
-        chainMotor.setControl(coastVoltage.withOutput(voltage.in(Volts)));
+        motor.setControl(coastVoltage.withOutput(voltage.in(Volts)));
     }
 
     @Override
     public void setBrakeVoltage(Measure<VoltageUnit> voltage) {
-        chainMotor.setControl(brakeVoltage.withOutput(voltage.in(Volts)));
+        motor.setControl(brakeVoltage.withOutput(voltage.in(Volts)));
     }
 }

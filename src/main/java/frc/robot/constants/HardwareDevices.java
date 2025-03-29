@@ -60,8 +60,8 @@ public class HardwareDevices {
     public static final DIOPort algaeSensor = DIOPort.port(2);
 
     // Climber
-    public static final CANDevice climberChainMotorID = rio.id(10);
-    public static final CANDevice climberCageMotorID = rio.id(10);
+    public static final CANDevice climberMotorID = rio.id(10);
+    public static final CANDevice climberEncoderID = rio.id(10);
 
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);
