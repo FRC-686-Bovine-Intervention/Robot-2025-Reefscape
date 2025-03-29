@@ -10,7 +10,7 @@ public interface ClimberIO {
     
     @AutoLog
     public class ClimberIOInputs {
-        public LoggedEncodedMotor chainMotor = new LoggedEncodedMotor();
+        public LoggedEncodedMotor motor = new LoggedEncodedMotor();
     }
 
     public default void updateInputs(ClimberIOInputs inputs) {}

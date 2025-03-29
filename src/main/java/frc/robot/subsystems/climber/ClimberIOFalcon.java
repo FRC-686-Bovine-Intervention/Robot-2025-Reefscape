@@ -31,7 +31,7 @@ public class ClimberIOFalcon implements ClimberIO {
 
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
-        inputs.chainMotor.updateFrom(motor);
+        inputs.motor.updateFrom(motor);
     }
 
     @Override

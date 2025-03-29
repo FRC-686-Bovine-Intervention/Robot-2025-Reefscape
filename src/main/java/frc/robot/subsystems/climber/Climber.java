@@ -51,7 +51,7 @@ public class Climber extends SubsystemBase {
                 if (hitSpike) {
                     io.setCoastVoltage(Volts.of(0));
                 } else {
-                    if (inputs.chainMotor.motor.current.gt(prepareCurrent.get())) {
+                    if (inputs.motor.motor.current.gt(prepareCurrent.get())) {
                         timer.start();
                     } else {
                         timer.stop();
