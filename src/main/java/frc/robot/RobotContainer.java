@@ -423,8 +423,8 @@ public class RobotContainer {
                 private final Command level1 = Commands.none();
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
-                    if (true) {
-                        return branchCommands[scoreCoralObjective.branch.level.ordinal()].get(scoreCoralObjective.getTargetDirection());
+                    if (scoreCoralObjective.branchLevel.isPresent()) {
+                        return branchCommands[scoreCoralObjective.branchLevel.get().ordinal()].get(scoreCoralObjective.getTargetDirection());
                     } else {
                         return level1;
                     }
