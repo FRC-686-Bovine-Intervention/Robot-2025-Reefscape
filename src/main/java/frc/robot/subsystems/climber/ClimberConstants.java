@@ -16,9 +16,8 @@ public final class ClimberConstants {
     public static final Angle climberMinimumAngle = Rotations.of(0);
 
     public static final GearRatio sensorToMechanismRatio = new GearRatio()
-        .planetary(1.0/3.0)
-        .planetary(1.0/4.0)
-        .planetary(1.0/4.0)
+        .planetary(1.0/5.0)
+        .planetary(1.0/5.0)
         .gear(40).gear(50).axle()
     ;
 }
