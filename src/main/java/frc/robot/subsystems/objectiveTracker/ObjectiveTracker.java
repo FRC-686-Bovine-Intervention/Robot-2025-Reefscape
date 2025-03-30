@@ -134,6 +134,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     private Mode mode = Mode.Dumb;
 
+    private int level1Count = 0;
+
     private final boolean[] branchStates = new boolean[] {
         false,false,true,false,true,true,true,true,true,true,true,true,
         true,true,true,true,true,true,true,false,true,false,true,true,
@@ -146,7 +148,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     private final Set<StagedAlgaeConcept> availableAlgae = new HashSet<>(6);
 
-    private final List<Priority> fullStrategy = List.of(Priority.values());
+    private final List<Priority> fullStrategy = new ArrayList<>(List.of(Priority.values()));
     private final List<Priority> uncompletedPriorities = List.of(Priority.values());
 
     public static enum ObjectiveType {
@@ -206,6 +208,15 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var branchID = branchState ? changedBranch : changedBranch + 36;
             branchStates[branchID] = branchState;
         }
+        inputs.branchQueue = new int[0];
+
+        var level1Changed = false;
+        for (var changedLevel1 : inputs.level1Queue) {
+            level1Changed = true;
+            level1Count += changedLevel1;
+        }
+        inputs.level1Queue = new int[0];
+
         var algaeChanged = false;
         for (var changedBranch : inputs.algaeQueue) {
             algaeChanged = true;
@@ -213,6 +224,18 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var algaeID = algaeState ? changedBranch : changedBranch + 6;
             algaeStates[algaeID] = algaeState;
         }
+        inputs.algaeQueue = new int[0];
+
+        var strategyChanged = false;
+        for (var changedPriority : inputs.priorityListQueue) {
+            strategyChanged = true;
+            var oldIndex = changedPriority[0];
+            var newIndex = changedPriority[1];
+            var removedItem = fullStrategy.remove(oldIndex);
+            System.out.println(oldIndex + ", " + newIndex);
+            fullStrategy.add(newIndex, removedItem);
+        }
+        inputs.priorityListQueue = new int[0][0];
 
         if (branchesChanged) {
             updateBranches();
@@ -227,10 +250,10 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         io.setCoralState(branchStates);
-        io.setLevel1Count(inputs.level1Count);
+        io.setLevel1Count(level1Count);
         io.setAlgaeState(algaeStates);
         io.setCoopState(inputs.coop);
-        io.setPriorityList(inputs.priorityList);
+        io.setPriorityList(fullStrategy.stream().mapToInt(Enum::ordinal).toArray());
     }
 
     private void updateBranches() {

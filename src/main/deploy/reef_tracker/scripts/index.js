@@ -1,5 +1,3 @@
-"use strict";
-
 import { NT4_Client } from "../lib/NT4.js";
 
 const toRobotPrefix = "/ReefControls/ToRobot/";
@@ -180,16 +178,19 @@ function updateUI() {
     }
     if (count >= 5) rpLevelCount++;
     element.innerText = count;
-    priorityDOM.filter((element) => element.dataset.level - 1 == index).forEach((element) => {
-      const neededCount = element.dataset.count;
-      const percentage = Math.min(count / neededCount, 1);
-      if (neededCount) element.style.setProperty("--percentage-complete", percentage);
-      if (percentage === 1) {
-        element.classList.add("complete");
-      } else {
-        element.classList.remove("complete");
-      }
-    });
+    priorityDOM
+      .filter((element) => element.dataset.level - 1 == index)
+      .forEach((element) => {
+        const neededCount = element.dataset.count;
+        const percentage = Math.min(count / neededCount, 1);
+        if (neededCount)
+          element.style.setProperty("--percentage-complete", percentage);
+        if (percentage === 1) {
+          element.classList.add("complete");
+        } else {
+          element.classList.remove("complete");
+        }
+      });
   });
 
   pipeDOM.forEach((element, index) => {
@@ -305,12 +306,12 @@ window.addEventListener("load", () => {
 
   bind(l1AddDOM, () => {
     if (mode === "DUMB") return;
-    ntClient.addSample(toRobotPrefix + l1TopicName, l1State + 1);
+    ntClient.addSample(toRobotPrefix + l1TopicName, +1);
   });
   bind(l1SubtractDOM, () => {
     if (mode === "DUMB") return;
     if (l1State > 0) {
-      ntClient.addSample(toRobotPrefix + l1TopicName, l1State - 1);
+      ntClient.addSample(toRobotPrefix + l1TopicName, -1);
     }
   });
 
@@ -327,19 +328,16 @@ window.addEventListener("load", () => {
   Sortable.create(priorityListDOM, {
     animation: 150,
     onUpdate: (event) => {
-      const a = event.newDraggableIndex;
-      const b = event.oldDraggableIndex;
-      const temp = [...priorityListState];
-      const [movedItem] = temp.splice(b, 1);
-      temp.splice(a, 0, movedItem);
+      const a = event.oldDraggableIndex;
+      const b = event.newDraggableIndex;
       ntClient.addSample(
         toRobotPrefix + priorityListTopicName,
-        packInt(temp, 3)
+        packInt([a, b], 3)
       );
       priorityUpdatedIndicated.style.display = "none";
     },
     ghostClass: "selected",
-    chosenClass: "chosen"
+    chosenClass: "chosen",
   });
 });
 

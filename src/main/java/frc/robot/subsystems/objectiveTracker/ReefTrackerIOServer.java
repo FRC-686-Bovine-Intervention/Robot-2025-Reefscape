@@ -119,8 +119,12 @@ public class ReefTrackerIOServer implements ReefTrackerIO {
                 inputs.branchQueue[inputs.branchQueue.length - branchQueueValues.length + i] = (int) branchQueueValues[i];
             }
         }
-        if (l1CountSubscriber.readQueue().length > 0) {
-            inputs.level1Count = (int) l1CountSubscriber.get();
+        var l1QueueValues = l1CountSubscriber.readQueueValues();
+        if (l1QueueValues.length > 0) {
+            inputs.level1Queue = Arrays.copyOf(inputs.level1Queue, inputs.level1Queue.length + l1QueueValues.length);
+            for (int i = 0; i < inputs.level1Queue.length; i++) {
+                inputs.level1Queue[inputs.level1Queue.length - l1QueueValues.length + i] = (int) l1QueueValues[i];
+            }
         }
         var algaeQueueValues = algaeQueueSubscriber.readQueueValues();
         if (algaeQueueValues.length > 0) {
@@ -132,12 +136,12 @@ public class ReefTrackerIOServer implements ReefTrackerIO {
         if (coopSubscriber.readQueue().length > 0) {
             inputs.coop = coopSubscriber.get();
         }
-        if (priorityListSubscriber.readQueue().length > 0) {
-            inputs.priorityList = new int[8];
-            var n = (int) priorityListSubscriber.get();
-            for (int i = inputs.priorityList.length - 1; i >= 0; i--) {
-                inputs.priorityList[i] = n & 0b111;
-                n >>= 3;
+        var priorityListQueueValues = priorityListSubscriber.readQueueValues();
+        if (priorityListQueueValues.length > 0) {
+            inputs.priorityListQueue = Arrays.copyOf(inputs.priorityListQueue, inputs.priorityListQueue.length + priorityListQueueValues.length);
+            for (int i = 0; i < inputs.priorityListQueue.length; i++) {
+                var value = (int) priorityListQueueValues[i];
+                inputs.priorityListQueue[inputs.priorityListQueue.length - priorityListQueueValues.length + i] = new int[] {(value >> 3) & 0b111, value & 0b111};
             }
         }
     }
