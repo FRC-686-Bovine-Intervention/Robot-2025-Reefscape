@@ -46,7 +46,6 @@ const ntClient = new NT4_Client(
       coopState = value;
     } else if (topic.name === toDashboardPrefix + priorityListTopicName) {
       priorityListState = unpackInt(value, 24, 3);
-      console.log(priorityListState);
     } else {
       return;
     }
@@ -71,7 +70,6 @@ const ntClient = new NT4_Client(
         bottom: "0",
         backgroundColor: "rgba(0, 0, 0, 0.75)",
         zIndex: "1000",
-        pointerEvents: "none",
       });
 
       document.body.appendChild(overlay);
@@ -104,7 +102,7 @@ window.addEventListener("load", () => {
   ntClient.publishTopic(toRobotPrefix + l1TopicName, "int");
   ntClient.publishTopic(toRobotPrefix + algaeTopicName, "int");
   ntClient.publishTopic(toRobotPrefix + coopTopicName, "boolean");
-  ntClient.publishTopic(toRobotPrefix + priorityListTopicName, "int");
+  ntClient.publishTopic(toRobotPrefix + priorityListTopicName, "int[]");
   ntClient.connect();
 });
 
@@ -123,6 +121,7 @@ const algaeGoalDOM = [
 const modeToggleDOM = document.getElementById("mode");
 const priorityListDOM = document.getElementById("priority_list");
 const priorityDOM = Array.from(priorityListDOM.querySelectorAll(".priority"));
+const prioritySlotDOM = priorityDOM.map((element) => element.parentElement);
 const priorityItems = new Map(
   priorityDOM.map((item) => [item.dataset.idx, item])
 );
@@ -145,9 +144,9 @@ function updateUI() {
 
   modeToggleDOM.checked = mode === "SMART";
 
-  priorityListState.forEach((idx) => {
+  priorityListState.forEach((idx, i) => {
     const item = priorityItems.get(String(idx));
-    if (item) priorityListDOM.appendChild(item);
+    if (item) prioritySlotDOM[i].appendChild(item);
     priorityUpdatedIndicated.style.display = "";
   });
 
@@ -258,6 +257,8 @@ function bind(element, callback) {
   });
 }
 
+let swaps = [];
+
 window.addEventListener("load", () => {
   bind(modeToggleDOM, () => {
     ntClient.addSample(toRobotPrefix + modeTopicName, mode === "SMART" ? 1 : 0);
@@ -325,19 +326,18 @@ window.addEventListener("load", () => {
     });
   });
 
-  Sortable.create(priorityListDOM, {
-    animation: 150,
-    onUpdate: (event) => {
-      const a = event.oldDraggableIndex;
-      const b = event.newDraggableIndex;
-      ntClient.addSample(
-        toRobotPrefix + priorityListTopicName,
-        packInt([a, b], 3)
-      );
-      priorityUpdatedIndicated.style.display = "none";
-    },
-    ghostClass: "selected",
-    chosenClass: "chosen",
+  const swapy = Swapy.createSwapy(priorityListDOM);
+  swapy.onSwap((event) => {
+    swaps.push([parseInt(event.fromSlot), parseInt(event.toSlot)]);
+  });
+
+  swapy.onSwapEnd(() => {
+    ntClient.addSample(
+      toRobotPrefix + priorityListTopicName,
+      swaps.map((swap) => packInt(swap, 3))
+    );
+    swaps = [];
+    priorityUpdatedIndicated.style.display = "none";
   });
 });
 
@@ -376,4 +376,8 @@ function packInt(values, size) {
     n = (n << size) | values[i];
   }
   return n;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

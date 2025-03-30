@@ -6,6 +6,7 @@ import edu.wpi.first.net.WebServer;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.IntegerArraySubscriber;
 import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -34,7 +35,7 @@ public class ReefTrackerIOServer implements ReefTrackerIO {
     private final IntegerSubscriber l1CountSubscriber; 
     private final IntegerSubscriber algaeQueueSubscriber;
     private final BooleanSubscriber coopSubscriber;
-    private final IntegerSubscriber priorityListSubscriber;
+    private final IntegerArraySubscriber priorityListSubscriber;
     
     private final IntegerPublisher modePublisher;
     private final IntegerPublisher coralGoalPublisher;
@@ -84,8 +85,8 @@ public class ReefTrackerIOServer implements ReefTrackerIO {
                 .subscribe(false, PubSubOption.keepDuplicates(true));
         priorityListSubscriber =
             inputTable
-                .getIntegerTopic(priorityListTopicName)
-                .subscribe(0, PubSubOption.keepDuplicates(true));
+                .getIntegerArrayTopic(priorityListTopicName)
+                .subscribe(new long[] {}, PubSubOption.keepDuplicates(true));
 
         var outputTable = NetworkTableInstance.getDefault().getTable(toDashboardTable);
 
@@ -138,10 +139,13 @@ public class ReefTrackerIOServer implements ReefTrackerIO {
         }
         var priorityListQueueValues = priorityListSubscriber.readQueueValues();
         if (priorityListQueueValues.length > 0) {
-            inputs.priorityListQueue = Arrays.copyOf(inputs.priorityListQueue, inputs.priorityListQueue.length + priorityListQueueValues.length);
-            for (int i = 0; i < inputs.priorityListQueue.length; i++) {
-                var value = (int) priorityListQueueValues[i];
-                inputs.priorityListQueue[inputs.priorityListQueue.length - priorityListQueueValues.length + i] = new int[] {(value >> 3) & 0b111, value & 0b111};
+            for (int i = 0; i < priorityListQueueValues.length; i++) {
+                var swaps = priorityListQueueValues[i];
+                inputs.priorityListQueue = Arrays.copyOf(inputs.priorityListQueue, inputs.priorityListQueue.length + swaps.length);
+                for (int j = 0; j < swaps.length; j++) {
+                    var swap = (int) swaps[j];
+                    inputs.priorityListQueue[inputs.priorityListQueue.length - swaps.length + j] = new int[] {(swap >> 3) & 0b111, swap & 0b111};
+                }
             }
         }
     }

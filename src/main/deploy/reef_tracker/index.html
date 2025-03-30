@@ -20,33 +20,97 @@
         </label>
         <p>Smart</p>
       </div>
-      <ul id="priority_list">
+      <div id="priority_list">
         <p>Priority List <span class="updated">✅</span></p>
-        <li class="priority" data-idx="0" data-level="4" data-count="12">
-          <span>Level 4 Fill</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="1" data-level="3" data-count="12">
-          <span>Level 3 Fill</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="2" data-level="2" data-count="12">
-          <span>Level 2 Fill</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="3" data-level="1" data-count="12">
-          <span>Level 1 Fill</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="4" data-level="4" data-count="5">
-          <span>Level 4 Ranking Point</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="5" data-level="3" data-count="5">
-          <span>Level 3 Ranking Point</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="6" data-level="2" data-count="5">
-          <span>Level 2 Ranking Point</span><span class="progress-bar"></span>
-        </li>
-        <li class="priority" data-idx="7" data-level="1" data-count="5">
-          <span>Level 1 Ranking Point</span><span class="progress-bar"></span>
-        </li>        
-      </ul>
+        <div data-swapy-slot="0">
+          <div
+            class="priority"
+            data-swapy-item="0"
+            data-idx="0"
+            data-level="4"
+            data-count="12"
+          >
+            <span>Level 4 Fill</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="1">
+          <div
+            class="priority"
+            data-swapy-item="1"
+            data-idx="1"
+            data-level="3"
+            data-count="12"
+          >
+            <span>Level 3 Fill</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="2">
+          <div
+            class="priority"
+            data-swapy-item="2"
+            data-idx="2"
+            data-level="2"
+            data-count="12"
+          >
+            <span>Level 2 Fill</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="3">
+          <div
+            class="priority"
+            data-swapy-item="3"
+            data-idx="3"
+            data-level="1"
+            data-count="12"
+          >
+            <span>Level 1 Fill</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="4">
+          <div
+            class="priority"
+            data-swapy-item="4"
+            data-idx="4"
+            data-level="4"
+            data-count="5"
+          >
+            <span>Level 4 Ranking Point</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="5">
+          <div
+            class="priority"
+            data-swapy-item="5"
+            data-idx="5"
+            data-level="3"
+            data-count="5"
+          >
+            <span>Level 3 Ranking Point</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="6">
+          <div
+            class="priority"
+            data-swapy-item="6"
+            data-idx="6"
+            data-level="2"
+            data-count="5"
+          >
+            <span>Level 2 Ranking Point</span><span class="progress-bar"></span>
+          </div>
+        </div>
+        <div data-swapy-slot="7">
+          <div
+            class="priority"
+            data-swapy-item="7"
+            data-idx="7"
+            data-level="1"
+            data-count="5"
+          >
+            <span>Level 1 Ranking Point</span><span class="progress-bar"></span>
+          </div>
+        </div>
+      </div>
       <div id="algae_goal">
         <div class="primary">
           <div class="button" id="net">
@@ -183,7 +247,7 @@
         </div>
       </div>
     </div>
-    <script src="./lib/Sortable.min.js"></script>
+    <script src="./lib/swapy.min.js"></script>
     <script src="./scripts/index.js" type="module" defer></script>
   </body>
 </html>

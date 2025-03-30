@@ -2,6 +2,7 @@ package frc.robot.subsystems.objectiveTracker;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -231,9 +232,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             strategyChanged = true;
             var oldIndex = changedPriority[0];
             var newIndex = changedPriority[1];
-            var removedItem = fullStrategy.remove(oldIndex);
-            System.out.println(oldIndex + ", " + newIndex);
-            fullStrategy.add(newIndex, removedItem);
+            Collections.swap(fullStrategy, oldIndex, newIndex);
         }
         inputs.priorityListQueue = new int[0][0];
 
