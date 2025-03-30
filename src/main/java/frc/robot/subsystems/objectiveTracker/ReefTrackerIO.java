@@ -5,29 +5,28 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ReefTrackerIO {
     @AutoLog
     public static class ReefTrackerIOInputs {
-        public int coralGoal = 0;
-        public int algaeGoal = 0;
+        public int coralGoal;                   // 0 to 47 (coral nodes) // id of the branch
+        public int algaeGoal;                   // 0 (net), 1 (processor), 2 (opponent's processor)
 
-        public int selectedLevel = 0;
-        public int level1State = 0;
-        public int level2State = 0;
-        public int level3State = 0;
-        public int level4State = 0;
-        public int algaeState = 0;
-        public boolean coopState = false;
+        public int[] branchQueue = new int[0];  // Add coral = id of branch, Remove coral = id of branch-36
+        public int level1Count = 0;             // coral count in trough
+        public int[] algaeQueue = new int[0];   // Add algae = id of algae,  Remove algae = id of algae-6
+        public int[] priorityList = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
+        public boolean coop = false;            // coop state
+
+        public int mode = 0;                    // 0 = smart, 1 = dumb
     }
 
     public default void updateInputs(ReefTrackerIOInputs inputs) {}
 
 
+    default void setMode(int value) {}
     default void setCoralGoal(int value) {}
     default void setAlgaeGoal(int value) {}
     
-    default void setSelectedLevel(int value) {}
-    default void setLevel1State(int value) {}
-    default void setLevel2State(int value) {}
-    default void setLevel3State(int value) {}
-    default void setLevel4State(int value) {}
-    default void setAlgaeState(int value) {}
+    default void setCoralState(boolean[] value) {}
+    default void setLevel1Count(int value) {}
+    default void setAlgaeState(boolean[] value) {}
     default void setCoopState(boolean value) {}
+    default void setPriorityList(int[] value) {}
 }

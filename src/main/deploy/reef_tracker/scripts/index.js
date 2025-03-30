@@ -1,20 +1,30 @@
-import { NT4_Client } from "./NT4.js";
+"use strict";
 
-// ***** NETWORKTABLES *****
+import { NT4_Client } from "../lib/NT4.js";
 
 const toRobotPrefix = "/ReefControls/ToRobot/";
 const toDashboardPrefix = "/ReefControls/ToDashboard/";
 
+const modeTopicName = "Mode";
 const coralGoalTopicName = "CoralGoal";
 const algaeGoalTopicName = "AlgaeGoal";
 
-const selectedLevelTopicName = "SelectedLevel";
+const coralTopicName = "Coral";
 const l1TopicName = "Level1";
-const l2TopicName = "Level2";
-const l3TopicName = "Level3";
-const l4TopicName = "Level4";
 const algaeTopicName = "Algae";
 const coopTopicName = "Coop";
+const priorityListTopicName = "PriorityList";
+
+let mode = "SMART";
+let coralGoal = 0;
+let algaeGoal = 0;
+let l1State = 0;
+let coralState = [];
+let algaeState = [];
+let coopState = 0;
+let priorityListState = [];
+
+let selectedLevel = 0;
 
 const ntClient = new NT4_Client(
   window.location.hostname,
@@ -22,24 +32,23 @@ const ntClient = new NT4_Client(
   (topic) => {}, // Topic Announce
   (topic) => {}, // Topic Unannounce
   (topic, timestamp, value) => {
-    if (topic.name === toDashboardPrefix + coralGoalTopicName) {
+    if (topic.name === toDashboardPrefix + modeTopicName) {
+      mode = value === 0 ? "SMART" : "DUMB";
+    } else if (topic.name === toDashboardPrefix + coralGoalTopicName) {
       coralGoal = value;
     } else if (topic.name === toDashboardPrefix + algaeGoalTopicName) {
       algaeGoal = value;
-    } else if (topic.name === toDashboardPrefix + selectedLevelTopicName) {
-      selectedLevel = value;
+    } else if (topic.name === toDashboardPrefix + coralTopicName) {
+      coralState = convertIntToBooleanArr(value, 36);
     } else if (topic.name === toDashboardPrefix + l1TopicName) {
       l1State = value;
-    } else if (topic.name === toDashboardPrefix + l2TopicName) {
-      l2State = value;
-    } else if (topic.name === toDashboardPrefix + l3TopicName) {
-      l3State = value;
-    } else if (topic.name === toDashboardPrefix + l4TopicName) {
-      l4State = value;
     } else if (topic.name === toDashboardPrefix + algaeTopicName) {
-      algaeState = value;
+      algaeState = convertIntToBooleanArr(value, 6);
     } else if (topic.name === toDashboardPrefix + coopTopicName) {
       coopState = value;
+    } else if (topic.name === toDashboardPrefix + priorityListTopicName) {
+      priorityListState = unpackInt(value, 24, 3);
+      console.log(priorityListState);
     } else {
       return;
     }
@@ -76,52 +85,29 @@ const ntClient = new NT4_Client(
 window.addEventListener("load", () => {
   ntClient.subscribe(
     [
+      toDashboardPrefix + modeTopicName,
       toDashboardPrefix + coralGoalTopicName,
       toDashboardPrefix + algaeGoalTopicName,
-      toDashboardPrefix + selectedLevelTopicName,
+      toDashboardPrefix + coralTopicName,
       toDashboardPrefix + l1TopicName,
-      toDashboardPrefix + l2TopicName,
-      toDashboardPrefix + l3TopicName,
-      toDashboardPrefix + l4TopicName,
       toDashboardPrefix + algaeTopicName,
       toDashboardPrefix + coopTopicName,
+      toDashboardPrefix + priorityListTopicName,
     ],
     false,
     false,
     0.02
   );
 
+  ntClient.publishTopic(toRobotPrefix + modeTopicName, "int");
   ntClient.publishTopic(toRobotPrefix + coralGoalTopicName, "int");
   ntClient.publishTopic(toRobotPrefix + algaeGoalTopicName, "int");
-
-  ntClient.publishTopic(toRobotPrefix + selectedLevelTopicName, "int");
+  ntClient.publishTopic(toRobotPrefix + coralTopicName, "double");
   ntClient.publishTopic(toRobotPrefix + l1TopicName, "int");
-  ntClient.publishTopic(toRobotPrefix + l2TopicName, "int");
-  ntClient.publishTopic(toRobotPrefix + l3TopicName, "int");
-  ntClient.publishTopic(toRobotPrefix + l4TopicName, "int");
   ntClient.publishTopic(toRobotPrefix + algaeTopicName, "int");
   ntClient.publishTopic(toRobotPrefix + coopTopicName, "boolean");
+  ntClient.publishTopic(toRobotPrefix + priorityListTopicName, "int");
   ntClient.connect();
-});
-
-let DUMB_MODE = localStorage.getItem("DUMB_MODE") === "true" || false;
-let coralGoal = 0;
-let algaeGoal = 0;
-
-let selectedLevel = 0;
-let l1State = 0;
-let l2State = 0;
-let l3State = 0;
-let l4State = 0;
-let algaeState = 0;
-let coopState = false;
-
-const dumbModeToggleDOM = document.getElementById("dumb_mode");
-dumbModeToggleDOM.checked = DUMB_MODE;
-dumbModeToggleDOM.addEventListener("change", (e) => {
-  DUMB_MODE = e.target.checked;
-  localStorage.setItem("DUMB_MODE", DUMB_MODE);
-  updateUI();
 });
 
 const levelDOM = Array.from(document.querySelectorAll(".level")).reverse();
@@ -131,26 +117,46 @@ const algaeDOM = Array.from(document.querySelectorAll(".algae"));
 const l1AddDOM = document.getElementById("add");
 const l1SubtractDOM = document.getElementById("subtract");
 const coopDOM = document.getElementById("coop");
-const netDOM = document.getElementById("net");
-const processorDOM = document.getElementById("processor");
-const oppProcessorDOM = document.getElementById("opp_processor");
-const algaeGoalDOM = [netDOM, processorDOM, oppProcessorDOM];
+const algaeGoalDOM = [
+  document.getElementById("net"),
+  document.getElementById("processor"),
+  document.getElementById("opp_processor"),
+];
+const modeToggleDOM = document.getElementById("mode");
+const priorityListDOM = document.getElementById("priority_list");
+const priorityDOM = Array.from(priorityListDOM.querySelectorAll(".priority"));
+const priorityItems = new Map(
+  priorityDOM.map((item) => [item.dataset.idx, item])
+);
+const priorityUpdatedIndicated = document.querySelector(
+  "#priority_list .updated"
+);
 
 function updateUI() {
-  if (DUMB_MODE) {
+  if (mode === "DUMB") {
     l1AddDOM.style.display = "none";
     l1SubtractDOM.style.display = "none";
     coopDOM.style.display = "none";
+    priorityListDOM.style.display = "none";
   } else {
     l1AddDOM.style.display = "";
     l1SubtractDOM.style.display = "";
     coopDOM.style.display = "";
+    priorityListDOM.style.display = "";
   }
+
+  modeToggleDOM.checked = mode === "SMART";
+
+  priorityListState.forEach((idx) => {
+    const item = priorityItems.get(String(idx));
+    if (item) priorityListDOM.appendChild(item);
+    priorityUpdatedIndicated.style.display = "";
+  });
 
   levelDOM.forEach((element, index) => {
     if (
-      (!DUMB_MODE && index > 0 && selectedLevel === index - 1) ||
-      (DUMB_MODE && getCoral(coralGoal).level === index)
+      (mode === "SMART" && index > 0 && selectedLevel === index - 1) ||
+      (mode === "DUMB" && getCoral(coralGoal).level === index)
     ) {
       element.classList.add("selected");
     } else {
@@ -160,32 +166,37 @@ function updateUI() {
 
   let rpLevelCount = 0;
   levelCounterDOM.forEach((element, index) => {
-    if (DUMB_MODE) {
+    if (mode === "DUMB") {
       element.innerHTML = "L" + (index + 1);
       return;
     }
+    let count = 0;
     if (index === 0) {
-      element.innerText = l1State;
-      if (l1State >= 5) rpLevelCount++;
+      count = l1State;
     } else {
-      let count = 0;
-      let levelState = [l2State, l3State, l4State][index - 1];
       for (let i = 0; i < 12; i++) {
-        if (((1 << i) & levelState) > 0) {
-          count++;
-        }
+        count += coralState[getCoralID({ level: index - 1, pipe: i })] ? 1 : 0;
       }
-      element.innerText = count;
-      if (count >= 5) rpLevelCount++;
     }
+    if (count >= 5) rpLevelCount++;
+    element.innerText = count;
+    priorityDOM.filter((element) => element.dataset.level - 1 == index).forEach((element) => {
+      const neededCount = element.dataset.count;
+      const percentage = Math.min(count / neededCount, 1);
+      if (neededCount) element.style.setProperty("--percentage-complete", percentage);
+      if (percentage === 1) {
+        element.classList.add("complete");
+      } else {
+        element.classList.remove("complete");
+      }
+    });
   });
 
   pipeDOM.forEach((element, index) => {
-    let levelState = [l2State, l3State, l4State][selectedLevel];
     if (
-      (!DUMB_MODE && ((1 << index) & levelState) > 0) ||
-      (DUMB_MODE &&
-        getCoral(coralGoal).rack * 2 + getCoral(coralGoal).side === index)
+      (mode === "SMART" &&
+        coralState[getCoralID({ level: selectedLevel, pipe: index })]) ||
+      (mode === "DUMB" && getCoral(coralGoal).pipe === index)
     ) {
       element.classList.add("selected");
     } else {
@@ -194,14 +205,14 @@ function updateUI() {
   });
 
   algaeDOM.forEach((element, index) => {
-    if (DUMB_MODE) {
+    if (mode === "DUMB") {
       element.style.display = "none";
       return;
     } else {
       element.style.display = "";
     }
 
-    if (((1 << index) & algaeState) > 0) {
+    if (!algaeState[index]) {
       element.classList.add("selected");
     } else {
       element.classList.remove("selected");
@@ -214,7 +225,7 @@ function updateUI() {
     } else {
       element.classList.remove("selected");
     }
-  })
+  });
 
   if (coopState) {
     coopDOM.classList.add("selected");
@@ -232,8 +243,14 @@ function bind(element, callback) {
     }
   };
 
-  element.addEventListener("touchstart", activate);
-  element.addEventListener("click", activate);
+  element.addEventListener("touchstart", (event) => {
+    event.preventDefault();
+    activate();
+  });
+  element.addEventListener("click", (event) => {
+    event.preventDefault();
+    activate();
+  });
   element.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     activate();
@@ -241,74 +258,60 @@ function bind(element, callback) {
 }
 
 window.addEventListener("load", () => {
+  bind(modeToggleDOM, () => {
+    ntClient.addSample(toRobotPrefix + modeTopicName, mode === "SMART" ? 1 : 0);
+  });
+
   levelDOM.forEach((element, index) => {
     bind(element, () => {
-      if (DUMB_MODE) {
+      if (mode === "DUMB") {
         ntClient.addSample(
           toRobotPrefix + coralGoalTopicName,
-          getCoralBin({ ...getCoral(coralGoal), level: index })
+          getCoralID({ ...getCoral(coralGoal), level: index })
         );
       } else if (index > 0) {
-        ntClient.addSample(toRobotPrefix + selectedLevelTopicName, index - 1);
+        selectedLevel = index - 1;
+        updateUI();
       }
     });
   });
 
   pipeDOM.forEach((element, index) => {
     bind(element, () => {
-      if (DUMB_MODE) {
+      if (mode === "DUMB") {
         ntClient.addSample(
           toRobotPrefix + coralGoalTopicName,
-          getCoralBin({
+          getCoralID({
             ...getCoral(coralGoal),
-            rack: Math.floor(index / 2),
-            side: index % 2,
+            pipe: index,
           })
         );
         return;
       }
-      switch (selectedLevel) {
-        case 0:
-          ntClient.addSample(
-            toRobotPrefix + l2TopicName,
-            l2State ^ (1 << index)
-          );
-          break;
-        case 1:
-          ntClient.addSample(
-            toRobotPrefix + l3TopicName,
-            l3State ^ (1 << index)
-          );
-          break;
-        case 2:
-          ntClient.addSample(
-            toRobotPrefix + l4TopicName,
-            l4State ^ (1 << index)
-          );
-          break;
-      }
+      const id = getCoralID({ level: selectedLevel, pipe: index });
+      const offset = coralState[id] ? 36 : 0;
+      ntClient.addSample(toRobotPrefix + coralTopicName, id - offset);
     });
   });
 
   algaeDOM.forEach((element, index) => {
     bind(element, () => {
-      if (DUMB_MODE) return;
-      ntClient.addSample(
-        toRobotPrefix + algaeTopicName,
-        algaeState ^ (1 << index)
-      );
+      if (mode === "DUMB") return;
+      const id = index;
+      const offset = algaeState[id] ? 6 : 0;
+      ntClient.addSample(toRobotPrefix + algaeTopicName, id - offset);
     });
   });
 
   bind(l1AddDOM, () => {
-    if (DUMB_MODE) return;
+    if (mode === "DUMB") return;
+    ntClient.addSample(toRobotPrefix + l1TopicName, l1State + 1);
+  });
+  bind(l1SubtractDOM, () => {
+    if (mode === "DUMB") return;
     if (l1State > 0) {
       ntClient.addSample(toRobotPrefix + l1TopicName, l1State - 1);
     }
-  });
-  bind(l1SubtractDOM, () => {
-    if (DUMB_MODE) return;
-    ntClient.addSample(toRobotPrefix + l1TopicName, l1State + 1);
   });
 
   bind(coopDOM, () => {
@@ -318,32 +321,61 @@ window.addEventListener("load", () => {
   algaeGoalDOM.forEach((element, index) => {
     bind(element, () => {
       ntClient.addSample(toRobotPrefix + algaeGoalTopicName, index);
-    })
+    });
+  });
+
+  Sortable.create(priorityListDOM, {
+    animation: 150,
+    onUpdate: (event) => {
+      const a = event.newDraggableIndex;
+      const b = event.oldDraggableIndex;
+      const temp = [...priorityListState];
+      const [movedItem] = temp.splice(b, 1);
+      temp.splice(a, 0, movedItem);
+      ntClient.addSample(
+        toRobotPrefix + priorityListTopicName,
+        packInt(temp, 3)
+      );
+      priorityUpdatedIndicated.style.display = "none";
+    },
+    ghostClass: "selected",
+    chosenClass: "chosen"
   });
 });
 
-// DUMB MODE
-/*
-  4 bits for rack: [0 - 11]
-  1 bit for side: [0, 1]
-  2 bits for level: [0 - 3]
-*/
-const RACK_BITS = 4;
-const SIDE_BITS = 1;
-const LEVEL_BITS = 2;
-
-function createBinaryOnes(numBits) {
-  return Math.pow(2, numBits) - 1;
+function getCoralID({ pipe, level }) {
+  return level * 12 + pipe;
 }
 
-export function getCoral(bin) {
-  return {
-    rack: (bin >> (LEVEL_BITS + SIDE_BITS)) & createBinaryOnes(RACK_BITS),
-    side: (bin >> LEVEL_BITS) & createBinaryOnes(SIDE_BITS),
-    level: bin & createBinaryOnes(LEVEL_BITS),
-  };
+function getCoral(id) {
+  return { pipe: id % 12, level: Math.floor(id / 12) };
 }
 
-export function getCoralBin({ rack, side, level }) {
-  return (rack << (SIDE_BITS + LEVEL_BITS)) | (side << LEVEL_BITS) | level;
+function convertIntToBooleanArr(n, len) {
+  if (typeof n !== "bigint") {
+    n = BigInt(n);
+  }
+  const arr = [];
+  for (let i = len - 1; i >= 0; i--) {
+    arr[i] = (n & 1n) === 1n;
+    n = n >> 1n;
+  }
+  return arr;
+}
+
+function unpackInt(n, totalBits, size) {
+  let values = [];
+  for (let i = 0; i < totalBits / size; i++) {
+    values.unshift(n & ((1 << size) - 1));
+    n >>= size;
+  }
+  return values;
+}
+
+function packInt(values, size) {
+  let n = 0;
+  for (let i = 0; i < values.length; i++) {
+    n = (n << size) | values[i];
+  }
+  return n;
 }

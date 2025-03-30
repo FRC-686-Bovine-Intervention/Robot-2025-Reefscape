@@ -13,12 +13,40 @@
   <body>
     <div id="controls">
       <div class="toggle">
-        <p>Dumb Mode</p>
+        <p>Dumb</p>
         <label class="switch">
-          <input id="dumb_mode" type="checkbox" />
+          <input id="mode" type="checkbox" />
           <span class="slider round"></span>
         </label>
+        <p>Smart</p>
       </div>
+      <ul id="priority_list">
+        <p>Priority List <span class="updated">✅</span></p>
+        <li class="priority" data-idx="0" data-level="4" data-count="12">
+          <span>Level 4 Fill</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="1" data-level="3" data-count="12">
+          <span>Level 3 Fill</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="2" data-level="2" data-count="12">
+          <span>Level 2 Fill</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="3" data-level="1" data-count="12">
+          <span>Level 1 Fill</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="4" data-level="4" data-count="5">
+          <span>Level 4 Ranking Point</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="5" data-level="3" data-count="5">
+          <span>Level 3 Ranking Point</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="6" data-level="2" data-count="5">
+          <span>Level 2 Ranking Point</span><span class="progress-bar"></span>
+        </li>
+        <li class="priority" data-idx="7" data-level="1" data-count="5">
+          <span>Level 1 Ranking Point</span><span class="progress-bar"></span>
+        </li>        
+      </ul>
       <div id="algae_goal">
         <div class="primary">
           <div class="button" id="net">
@@ -148,13 +176,14 @@
           <div class="level"><span class="level-text">0</span></div>
           <div class="level"><span class="level-text">0</span></div>
           <div class="level">
-            <span id="add" class="button">-</span>
+            <span id="subtract" class="button">-</span>
             <span class="level-text">0</span>
-            <span id="subtract" class="button">+</span>
+            <span id="add" class="button">+</span>
           </div>
         </div>
       </div>
     </div>
-    <script src="./scripts/index.js" type="module"></script>
+    <script src="./lib/Sortable.min.js"></script>
+    <script src="./scripts/index.js" type="module" defer></script>
   </body>
 </html>

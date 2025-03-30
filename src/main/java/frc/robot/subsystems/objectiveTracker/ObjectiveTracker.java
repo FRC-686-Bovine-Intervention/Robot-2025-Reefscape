@@ -31,14 +31,19 @@ import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.util.VirtualSubsystem;
 
 public class ObjectiveTracker extends VirtualSubsystem {
-    private final ObjectiveSelectorIO io;
-    private final ObjectiveSelectorIOInputsAutoLogged inputs = new ObjectiveSelectorIOInputsAutoLogged();
+    private final ReefTrackerIO io;
+    private final ReefTrackerIOInputsAutoLogged inputs = new ReefTrackerIOInputsAutoLogged();
 
     public static enum AlgaeGoal {
         NET,
         PROCESSOR,
         OPPONENT_PROCESSOR,
         ;
+    }
+
+    public static enum Mode {
+        Smart,
+        Dumb,
     }
 
     public static enum Priority {
@@ -125,11 +130,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
 
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
+    private BranchConcept selectedCoralGoal = Reef.branches[0];
+
+    private Mode mode = Mode.Dumb;
 
     private final boolean[] branchStates = new boolean[] {
         false,false,true,false,true,true,true,true,true,true,true,true,
         true,true,true,true,true,true,true,false,true,false,true,true,
-        true,true,true,false,true,true,true,true,true,true,true,true,
+        false,false,false,false,false,false,false,false,false,false,false,false,
     };
     private final boolean[] algaeStates = new boolean[] {true,true,true,false,true,true};
 
@@ -160,7 +168,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<Objective> target;
     private Optional<ObjectiveType> typeOverride = Optional.empty();
 
-    public ObjectiveTracker(ObjectiveSelectorIO io) {
+    public ObjectiveTracker(ReefTrackerIO io) {
         System.out.println("[Init ObjectiveTracker] Instantiating ObjectiveTracker with " + io.getClass().getSimpleName());
         this.io = io;
 
@@ -174,53 +182,35 @@ public class ObjectiveTracker extends VirtualSubsystem {
         io.updateInputs(inputs);
         Logger.processInputs("Objective Tracker", inputs);
 
-        // if (inputs.coral != -1) {
-        //     var rack = inputs.coral >> 3 & 0b1111;
-        //     var side = inputs.coral >> 2 & 0b1;
-        //     var level = inputs.coral & 0b11;
-        //     selectedBranch = FieldConstants.Reef.getBranch(rack, side, level);
-        //     inputs.coral = -1;
-        // }
-        if (inputs.algae != -1) {
-            selectedAlgaeGoal = AlgaeGoal.values()[inputs.algae];
-            inputs.algae = -1;
+        if (inputs.mode != -1) {
+            mode = Mode.values()[inputs.mode];
+            inputs.mode = -1;
         }
-        // if (inputs.intake != -1) {
-        //     selectedIntakeGoal = 
-        //         inputs.intake == 0 ?
-        //         Optional.empty() :
-        //         inputs.intake == 1 ?
-        //         Optional.of(Optional.empty()) :
-        //         Optional.of(Optional.of(FieldConstants.Reef.stagedAlgae[inputs.intake - 2]));
-        //     inputs.intake = -1;
-        // }
+        if (inputs.coralGoal != -1) {
+            selectedCoralGoal = Reef.branches[inputs.coralGoal];
+            inputs.coralGoal = -1;
+        }
+        if (inputs.algaeGoal != -1) {
+            selectedAlgaeGoal = AlgaeGoal.values()[inputs.algaeGoal];
+            inputs.algaeGoal = -1;
+        }
 
-        // io.setCoral(
-        //     selectedBranch.pipe.rack.ordinal() << 3 |
-        //     selectedBranch.pipe.side.ordinal() << 2 |
-        //     selectedBranch.level.ordinal()
-        // );
-        io.setAlgae(selectedAlgaeGoal.ordinal());
-        // io.setIntake(
-        //     selectedIntakeGoal.isEmpty() ? 0 :
-        //     selectedIntakeGoal.get().isEmpty() ? 1 :
-        //     selectedIntakeGoal.get().get().getIndex() + 2
-        // );
-
-        // Logger.recordOutput("Objective Tracker/Selected Branch", selectedBranch.pose.getOurs());
+        io.setMode(mode.ordinal());
+        io.setCoralGoal(selectedCoralGoal.id);
+        io.setAlgaeGoal(selectedAlgaeGoal.ordinal());
 
         var branchesChanged = false;
         for (var changedBranch : inputs.branchQueue) {
             branchesChanged = true;
             var branchState = changedBranch >= 0;
-            var branchID = branchState ? changedBranch : changedBranch + 37;
+            var branchID = branchState ? changedBranch : changedBranch + 36;
             branchStates[branchID] = branchState;
         }
         var algaeChanged = false;
-        for (var changedBranch : inputs.toggledAlgae) {
+        for (var changedBranch : inputs.algaeQueue) {
             algaeChanged = true;
             var algaeState = changedBranch >= 0;
-            var algaeID = algaeState ? changedBranch : changedBranch + 37;
+            var algaeID = algaeState ? changedBranch : changedBranch + 6;
             algaeStates[algaeID] = algaeState;
         }
 
@@ -235,6 +225,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
         if (algaeChanged || branchesChanged) {
             updateUnblockedBranches();
         }
+
+        io.setCoralState(branchStates);
+        io.setLevel1Count(inputs.level1Count);
+        io.setAlgaeState(algaeStates);
+        io.setCoopState(inputs.coop);
+        io.setPriorityList(inputs.priorityList);
     }
 
     private void updateBranches() {
