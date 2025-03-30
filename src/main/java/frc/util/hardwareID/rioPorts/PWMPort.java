@@ -2,6 +2,7 @@ package frc.util.hardwareID.rioPorts;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.PWM;
+import edu.wpi.first.wpilibj.Servo;
 
 public class PWMPort {
     public final int port;
@@ -19,5 +20,8 @@ public class PWMPort {
     }
     public AddressableLED addressableLED() {
         return new AddressableLED(port);
+    }
+    public Servo servo() {
+        return new Servo(port);
     }
 }

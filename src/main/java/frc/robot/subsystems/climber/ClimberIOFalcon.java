@@ -10,7 +10,6 @@ import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -28,7 +27,7 @@ import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
 public class ClimberIOFalcon implements ClimberIO {
     protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
-    protected final Servo servo = new Servo(HardwareDevices.climberServoPort);
+    protected final Servo servo = HardwareDevices.climberServoPort.servo();
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
@@ -45,7 +44,7 @@ public class ClimberIOFalcon implements ClimberIO {
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Climber/PID",
-        0,
+        4,
         0,
         0
     );
