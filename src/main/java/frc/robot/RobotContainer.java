@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -50,6 +51,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOFalcon;
 import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIO;
 import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
@@ -130,22 +132,26 @@ public class RobotContainer {
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera),
+                        Leds.getInstance().flAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontRightApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera),
+                        Leds.getInstance().frAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backLeftApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera),
+                        Leds.getInstance().blAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backRightApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera),
+                        Leds.getInstance().brAprilConnection
                     )
                 );
-                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S());
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S(), Leds.getInstance().questNavConnection);
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
             break;
             case SIM:
@@ -160,10 +166,32 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOSim()),
                     new Wrist(new WristIOSim())
                 );
-                intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                // intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
                 climber = new Climber(new ClimberIO() {});
-                apriltagVision = new ApriltagVision();
-                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim());
+                apriltagVision = new ApriltagVision(
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontLeftApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().flAprilConnection
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontRightApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().frAprilConnection
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backLeftApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().blAprilConnection
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backRightApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().brAprilConnection
+                    )
+                );
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim(), Leds.getInstance().questNavConnection);
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
             break;
             default:
@@ -185,22 +213,26 @@ public class RobotContainer {
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().flAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontRightApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().frAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backLeftApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().blAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backRightApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().brAprilConnection
                     )
                 );
-                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {});
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {}, Leds.getInstance().questNavConnection);
                 objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
             break;
         }
@@ -471,28 +503,47 @@ public class RobotContainer {
         });
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
         driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getCurrentObjective().get().getTargetPose())); //Auto drive
-        // driveController.start().toggleOnTrue(
-        //     Commands.parallel(
-        //         climber.prepareClimb(),
-        //         superstructure.prepareClimb()
-        //     )
-        // ); //Start Climb
-        // driveController.back().toggleOnTrue(
-        //     Commands.parallel(
-        //         superstructure.climb(),
-        //         Commands.sequence(
-        //             climber.climb().until(() -> superstructure.pivot.getAngle().lt(Degrees.of(21))),
-        //             climber.hold()
-        //         )
-        //     )
-        // );
+        driveController.start().toggleOnTrue(
+            // Commands.parallel(
+            //     climber.prepareClimb(),
+            //     superstructure.prepareClimb()
+            // )
+            Leds.getInstance().prepareClimbing.setFlagCommand()
+        ); //Start Climb
+        driveController.back().toggleOnTrue(
+            // Commands.parallel(
+            //     superstructure.climb(),
+            //     Commands.sequence(
+            //         climber.climb().until(() -> superstructure.pivot.getAngle().lt(Degrees.of(21))),
+            //         climber.hold()
+            //     )
+            // )
+            Leds.getInstance().climbingComplete.setFlagCommand()
+        );
         
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
 
         SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
     }
 
-    private void configureNotifications() {}
+    private void configureNotifications() {
+        intake.hasCoral
+            .onTrue(
+                Leds.getInstance().coralAcquired.setFlagCommand().withTimeout(1).alongWith(driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(1))
+            )
+            .whileTrue(
+                Leds.getInstance().coralSecured.setFlagCommand().ignoringDisable(true)
+            )
+        ;
+        intake.hasAlgae
+            .onTrue(
+                Leds.getInstance().algaeAcquired.setFlagCommand().withTimeout(1).alongWith(driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(1))
+            )
+            .whileTrue(
+                Leds.getInstance().algaeSecured.setFlagCommand().ignoringDisable(true)
+            )
+        ;
+    }
 
     private void configureAutos() {
         

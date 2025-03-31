@@ -134,7 +134,7 @@ public class Intake extends SubsystemBase {
         return genCommand(
             "Eject",
             ejectVoltage
-        ).alongWith(Commands.runOnce(() -> hasGamepiece = false));
+        );
     }
 
     public Command intakeCoral() {

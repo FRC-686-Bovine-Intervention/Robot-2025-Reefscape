@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.Degrees;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -20,6 +19,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
 import frc.util.VirtualSubsystem;
 import frc.util.geometry.GeomUtil.TransformUtil;
+import frc.util.led.animation.StatusLightAnimation;
 import frc.util.geometry.RollingAveragePose2d;
 
 public class QuestNav extends VirtualSubsystem {
@@ -30,15 +30,17 @@ public class QuestNav extends VirtualSubsystem {
 
     private final Alert notConnectedAlert;
     private final Alert lowBatteryAlert;
+    private final StatusLightAnimation connectionAnimation;
 
     private Pose2d questResetPose = new Pose2d();
     private Pose2d robotResetPose = new Pose2d();
 
     private final RollingAveragePose2d rollingAvg;
 
-    public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io) {
+    public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io, StatusLightAnimation connectionAnimation) {
         this.camMeta = camMeta;
         this.io = io;
+        this.connectionAnimation = connectionAnimation;
         
         this.rollingAvg = new RollingAveragePose2d(2);
 
@@ -54,6 +56,7 @@ public class QuestNav extends VirtualSubsystem {
 
         notConnectedAlert.set(!inputs.isConnected);
         lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
+        connectionAnimation.setStatus(inputs.isConnected);
 
         if (DriverStation.isDisabled()) {
             resetPose(RobotState.getInstance().getPose());
