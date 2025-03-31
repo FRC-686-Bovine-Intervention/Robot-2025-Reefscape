@@ -22,6 +22,7 @@ import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
@@ -33,6 +34,7 @@ import frc.util.loggerUtil.tunables.LoggedTunablePID;
 public class ClimberIOFalcon implements ClimberIO {
     protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
     protected final Servo servo = HardwareDevices.climberServoPort.servo();
+    protected final DigitalInput sensor = HardwareDevices.climberSensor.input();
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
@@ -110,6 +112,8 @@ public class ClimberIOFalcon implements ClimberIO {
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
         inputs.motor.updateFrom(motor);
+
+        inputs.sensor = sensor.get() ^ ClimberConstants.climberSensorInverted;
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();

@@ -62,6 +62,7 @@ public class HardwareDevices {
     // Climber
     public static final CANDevice climberMotorID = rio.id(10);
     public static final PWMPort climberServoPort = PWMPort.port(1);
+    public static final DIOPort climberSensor = DIOPort.port(3);
 
     // RIO
     public static final PWMPort ledPort = PWMPort.port(0);

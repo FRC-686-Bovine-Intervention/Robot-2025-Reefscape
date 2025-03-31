@@ -12,6 +12,8 @@ public interface ClimberIO {
     @AutoLog
     public class ClimberIOInputs {
         public LoggedEncodedMotor motor = new LoggedEncodedMotor();
+
+        public boolean sensor = false;
     }
 
     public default void updateInputs(ClimberIOInputs inputs) {}
