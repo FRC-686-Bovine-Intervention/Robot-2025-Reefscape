@@ -50,6 +50,9 @@ public class Leds extends VirtualSubsystem {
         
         var fullSideStrips = fullLeftStrip.parallel(fullRightStrip);
 
+        var bottomSideStrip = sideStrips.substrip(0, 14);
+        var topSideStrip = fullSideStrips.substrip(14, 40);
+
         autonomousFinishedAnimation = new AutonomousFinishedAnimation(sideStrips, hardwareStrip);
         estopped = new FillAnimation(hardwareStrip, Color.kRed);
         allianceColorAnimation = new AllianceColorAnimation(fullSideStrips);
@@ -66,12 +69,12 @@ public class Leds extends VirtualSubsystem {
         prepareClimbing = new FlashingAnimation(fullSideStrips, WaveFunction.Sawtooth.frequency(1), InterpolationFunction.linear.gradient(Color.kBlack, Color.kTeal));
         climbing = new BarAnimation(sideStrips.parallel(backMirrorStrip), InterpolationFunction.linear.gradient(Color.kBlack, Color.kTeal));
         climbingComplete = new FlashingAnimation(fullSideStrips, WaveFunction.Modulo.frequency(0.5), Gradient.rainbow);
-        level4Targeted = new FillAnimation(fullSideStrips, Color.kGreenYellow);
-        level3Targeted = new FillAnimation(fullSideStrips, Color.kAquamarine);
-        level2Targeted = new FillAnimation(fullSideStrips, Color.kYellow);
-        level1Targeted = new FillAnimation(fullSideStrips, Color.kRed);
-        removeAlgae = new FlashingAnimation(fullSideStrips, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kAquamarine));
-        
+        level4Targeted = new FillAnimation(bottomSideStrip, Color.kGreenYellow);
+        level3Targeted = new FillAnimation(bottomSideStrip, Color.kAquamarine);
+        level2Targeted = new FillAnimation(bottomSideStrip, Color.kYellow);
+        level1Targeted = new FillAnimation(bottomSideStrip, Color.kRed);
+        removeAlgae = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kAquamarine));
+        goToOppositeSideOfReef = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kYellow));
 
         loadingNotifier = new Notifier(() -> {
             synchronized(this) {
@@ -114,6 +117,7 @@ public class Leds extends VirtualSubsystem {
     public final FillAnimation level2Targeted;
     public final FillAnimation level1Targeted;
     public final FlashingAnimation removeAlgae;
+    public final FlashingAnimation goToOppositeSideOfReef;
 
     private int skippedFrames = 0;
     private static final int frameSkipAmount = 15;
@@ -142,13 +146,14 @@ public class Leds extends VirtualSubsystem {
             blAprilConnection.apply();
             brAprilConnection.apply();
             questNavConnection.apply();
+        } else {
+            level1Targeted.applyIfFlagged();
+            level2Targeted.applyIfFlagged();
+            level3Targeted.applyIfFlagged();
+            level4Targeted.applyIfFlagged();
+            removeAlgae.applyIfFlagged();
+            goToOppositeSideOfReef.applyIfFlagged();
         }
-
-        level1Targeted.applyIfFlagged();
-        level2Targeted.applyIfFlagged();
-        level3Targeted.applyIfFlagged();
-        level4Targeted.applyIfFlagged();
-        removeAlgae.applyIfFlagged();
 
         coralSecured.applyIfFlagged();
         coralAcquired.applyIfFlagged();
