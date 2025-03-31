@@ -146,6 +146,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     };
     private int level1Count = 6;
     private final boolean[] algaeStates = new boolean[] {true,true,true,false,false,false};
+    private boolean coopState = false;
 
     private final Set<BranchConcept> availableBranches = new HashSet<>(36);
     private final Set<BranchConcept> availableUnblockedBranches = new HashSet<>(36);
@@ -189,7 +190,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<IntakeAlgaeObjective> intakeAlgaeObjective;
     private ScoreCoralObjective scoreCoralObjective;
     private ScoreAlgaeObjective scoreAlgaeObjective;
-    private Optional<Objective> target;
+    private Optional<Objective> target = Optional.empty();
     private Optional<ObjectiveType> typeOverride = Optional.empty();
 
     public ObjectiveTracker(ReefTrackerIO io) {
@@ -228,25 +229,22 @@ public class ObjectiveTracker extends VirtualSubsystem {
             branchesChanged = true;
             var branchState = changedBranch >= 0;
             var branchID = branchState ? changedBranch : changedBranch + 36;
-            branchStates[branchID] = branchState;
+            branchStates[(int) branchID] = branchState;
         }
-        inputs.branchQueue = new int[0];
 
         var level1Changed = false;
         for (var changedLevel1 : inputs.level1Queue) {
             level1Changed = true;
             level1Count += changedLevel1;
         }
-        inputs.level1Queue = new int[0];
 
         var algaeChanged = false;
         for (var changedBranch : inputs.algaeQueue) {
             algaeChanged = true;
             var algaeState = changedBranch >= 0;
             var algaeID = algaeState ? changedBranch : changedBranch + 6;
-            algaeStates[algaeID] = algaeState;
+            algaeStates[(int) algaeID] = algaeState;
         }
-        inputs.algaeQueue = new int[0];
 
         var strategyChanged = false;
         for (var changedPriority : inputs.priorityListQueue) {
@@ -255,7 +253,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var newIndex = changedPriority[1];
             Collections.swap(fullStrategy, oldIndex, newIndex);
         }
-        inputs.priorityListQueue = new int[0][0];
+
+        var coopChanged = false;
+        for (var changedCoop : inputs.coop) {
+            coopChanged = true;
+            coopState = changedCoop;
+        }
 
         if (branchesChanged) {
             updateBranches();
@@ -269,9 +272,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
             updateUnblockedBranches();
         }
 
-        uncompletedPriorities.clear();
-        uncompletedPriorities.addAll(fullStrategy);
-        uncompletedPriorities.removeIf((priority) -> priority.isCompleted(branchStates, level1Count));
+        if (strategyChanged) {
+            uncompletedPriorities.clear();
+            uncompletedPriorities.addAll(fullStrategy);
+        }
+
+        if (branchesChanged || strategyChanged) {
+            uncompletedPriorities.removeIf((priority) -> priority.isCompleted(branchStates, level1Count));
+        }
 
         for (var priority : fullStrategy) {
             Logger.recordOutput(
@@ -292,8 +300,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
         io.setCoralState(branchStates);
         io.setLevel1Count(level1Count);
         io.setAlgaeState(algaeStates);
-        io.setCoopState(inputs.coop);
+        io.setCoopState(coopState);
         io.setPriorityList(fullStrategy.stream().mapToInt(Enum::ordinal).toArray());
+
+        Logger.recordOutput("Objective Tracker/Priorities/Strategy/Full", fullStrategy.toArray(Priority[]::new));
+        Logger.recordOutput("Objective Tracker/Priorities/Strategy/Uncomplete", uncompletedPriorities.toArray(Priority[]::new));
     }
 
     private void updateBranches() {

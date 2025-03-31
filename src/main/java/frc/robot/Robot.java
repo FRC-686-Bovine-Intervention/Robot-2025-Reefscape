@@ -17,7 +17,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -129,7 +128,7 @@ public class Robot extends LoggedRobot {
         GameState.getInstance().periodic();
         VirtualSubsystem.periodicAll();
         CommandScheduler.getInstance().run();
-        // robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
+        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
         VirtualSubsystem.postCommandPeriodicAll();
         RobotState.getInstance().log();
         Mechanism3d.logAscopeComponents();
