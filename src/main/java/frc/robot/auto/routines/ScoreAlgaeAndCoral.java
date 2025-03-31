@@ -15,13 +15,12 @@ import frc.robot.auto.AutoRoutine;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
-import frc.robot.constants.FieldConstants.Reef.PipeObject;
-import frc.robot.constants.FieldConstants.Reef.StagedAlgaeObject;
+import frc.robot.constants.FieldConstants.Reef.PipeConcept;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
-import frc.util.flipping.AllianceFlipped;
 
 public class ScoreAlgaeAndCoral extends AutoRoutine{
 
@@ -30,9 +29,9 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
     //Where to pick up second algae
     //Where to score second algae
 
-    private static final AutoQuestion<AllianceFlipped<PipeObject>> scorePreloadPipe = new AutoQuestion<AllianceFlipped<PipeObject>>("Score Preload Pipe") {
+    private static final AutoQuestion<PipeConcept> scorePreloadPipe = new AutoQuestion<PipeConcept>("Score Preload Pipe") {
         @Override
-        protected Settings<AllianceFlipped<PipeObject>> generateSettings() {
+        protected Settings<PipeConcept> generateSettings() {
             return Settings.from(
                 AutoCommons.pipeOptions[6],
                 AutoCommons.pipeOptions[6],
@@ -51,9 +50,9 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         }
     };
 
-    private static final AutoQuestion<AllianceFlipped<StagedAlgaeObject>> intakeAlgae2 = new AutoQuestion<AllianceFlipped<StagedAlgaeObject>>("2nd Algae Rack") {
+    private static final AutoQuestion<StagedAlgaeConcept> intakeAlgae2 = new AutoQuestion<StagedAlgaeConcept>("2nd Algae Rack") {
         @Override
-        protected Settings<AllianceFlipped<StagedAlgaeObject>> generateSettings() {
+        protected Settings<StagedAlgaeConcept> generateSettings() {
             return Settings.from(
                 AutoCommons.algaeOptions[2],
                 AutoCommons.algaeOptions[2],
@@ -83,10 +82,10 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         var commands = new ArrayList<Command>();
         var startPosition = AutoConstants.startDeadCenter;
 
-        var startToScorePreload = AutoPaths.loadChoreoTrajectory("Start To " + scorePreloadPipe.getOurs().getLetter());
+        var startToScorePreload = AutoPaths.loadChoreoTrajectory("Start To " + scorePreloadPipe.getLetter());
         commands.add(AutoCommons.scoreOnReef(startToScorePreload, BranchLevel.Level4, Direction.Forward, drive, superstructure, intake));
 
-        var preloadToAlgae = AutoPaths.loadChoreoTrajectory(scorePreloadPipe.getOurs().getLetter() + " To " + "3");
+        var preloadToAlgae = AutoPaths.loadChoreoTrajectory(scorePreloadPipe.getLetter() + " To " + "3");
         commands.add(Commands.sequence(
             Commands.parallel(
                 drive.followBluePath(preloadToAlgae),

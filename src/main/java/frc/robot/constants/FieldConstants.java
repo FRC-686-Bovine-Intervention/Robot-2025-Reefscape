@@ -1,6 +1,5 @@
 package frc.robot.constants;
 
-import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
@@ -149,22 +148,6 @@ public final class FieldConstants {
             )
         );
 
-        public static enum Side {
-            Left(Meters.of(+0.164309)),
-            Right(Meters.of(-0.164309)),
-            ;
-            private final Transform2d pipeCenterTransform;
-            Side(Distance yOffset) {
-                this.pipeCenterTransform = new Transform2d(
-                    new Translation2d(
-                        Meters.of(0.526750).unaryMinus(),
-                        yOffset
-                    ),
-                    Rotation2d.kZero
-                );
-            }
-        }
-
         public static final AllianceFlipped<ReefObject> reefs = AllianceFlipped.fromBlue(new ReefObject(new Pose2d(reefCenter.getBlue(), Rotation2d.kZero)));
 
         public static final class ReefObject implements AllianceFlippable<ReefObject> {
@@ -238,6 +221,22 @@ public final class FieldConstants {
             }
         }
 
+        public static enum Side {
+            Left(Meters.of(+0.164309)),
+            Right(Meters.of(-0.164309)),
+            ;
+            private final Transform2d pipeCenterTransform;
+            Side(Distance yOffset) {
+                this.pipeCenterTransform = new Transform2d(
+                    new Translation2d(
+                        Meters.of(0.526750).unaryMinus(),
+                        yOffset
+                    ),
+                    Rotation2d.kZero
+                );
+            }
+        }
+
         public static final class PipeObject {
             public final RackObject rack;
             public final Side side;
@@ -282,6 +281,17 @@ public final class FieldConstants {
             }
         }
 
+        public static final RobotFlippedSuperstructureState level1SuperstructureStates = RobotFlippedSuperstructureState.fromForwardOnly(
+            SuperstructureState.fromCoralTipRobotSpace(
+                new Pose2d(
+                    new Translation2d(
+                        RobotConstants.centerToFrontBumper.plus(Coral.length),
+                        Inches.of(18).plus(Inches.of(7))
+                    ),
+                    Rotation2d.fromDegrees(20)
+                )
+            )
+        );
         public static enum BranchLevel {
             Level2(Meters.of(0.792953), Meters.of(0.252504), Degrees.of(35),
                 RobotFlippedSuperstructureState.fromForwardOnly(

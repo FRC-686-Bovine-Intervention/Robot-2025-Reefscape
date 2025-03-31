@@ -13,6 +13,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.CoralStation;
@@ -21,15 +22,18 @@ import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.BranchObject;
+import frc.robot.constants.FieldConstants.Reef.RackObject;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeObject;
+import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedTotalState;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.util.VirtualSubsystem;
+import frc.util.loggerUtil.LoggerUtil;
 
 public class ObjectiveTracker extends VirtualSubsystem {
     private final ReefTrackerIO io;
@@ -50,7 +54,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     public static enum Priority {
         Level4Fill(Optional.of(BranchLevel.Level4)) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 for (int i = 24; i < 36; i++) {
                     if (branchStates[i] == false) return false;
                 }
@@ -59,7 +63,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         },
         Level3Fill(Optional.of(BranchLevel.Level3)) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 for (int i = 12; i < 24; i++) {
                     if (branchStates[i] == false) return false;
                 }
@@ -68,7 +72,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         },
         Level2Fill(Optional.of(BranchLevel.Level2)) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 for (int i = 0; i < 12; i++) {
                     if (branchStates[i] == false) return false;
                 }
@@ -77,13 +81,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
         },
         Level1Fill(Optional.empty()) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 return false;
             }
         },
         Level4RP(Optional.of(BranchLevel.Level4)) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 var count = 0;
                 for (int i = 24; i < 36; i++) {
                     if (branchStates[i] == true) count++;
@@ -94,7 +98,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         },
         Level3RP(Optional.of(BranchLevel.Level3)) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 var count = 0;
                 for (int i = 12; i < 24; i++) {
                     if (branchStates[i] == true) count++;
@@ -105,7 +109,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         },
         Level2RP(Optional.of(BranchLevel.Level2)) {
             @Override
-            public boolean completed(boolean[] branchStates) {
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
                 var count = 0;
                 for (int i = 0; i < 12; i++) {
                     if (branchStates[i] == true) count++;
@@ -116,8 +120,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
         },
         Level1RP(Optional.empty()) {
             @Override
-            public boolean completed(boolean[] branchStates) {
-                return false; //TODO: Level 1 count
+            public boolean isCompleted(boolean[] branchStates, int level1Count) {
+                return level1Count >= 5;
             }
         },
         ;
@@ -125,7 +129,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Priority(Optional<BranchLevel> level) {
             this.level = level;
         }
-        public boolean completed(boolean[] branchStates) {
+        public boolean isCompleted(boolean[] branchStates, int level1Count) {
             return false;
         }
     }
@@ -135,22 +139,40 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     private Mode mode = Mode.Dumb;
 
-    private int level1Count = 0;
-
     private final boolean[] branchStates = new boolean[] {
         false,false,true,false,true,true,true,true,true,true,true,true,
-        true,true,true,true,true,true,true,false,true,false,true,true,
         false,false,false,false,false,false,false,false,false,false,false,false,
+        true,true,true,false,true,true,true,true,true,true,true,true,
     };
-    private final boolean[] algaeStates = new boolean[] {true,true,true,false,true,true};
+    private int level1Count = 6;
+    private final boolean[] algaeStates = new boolean[] {true,true,true,false,false,false};
+    private boolean coopState = false;
 
     private final Set<BranchConcept> availableBranches = new HashSet<>(36);
     private final Set<BranchConcept> availableUnblockedBranches = new HashSet<>(36);
 
     private final Set<StagedAlgaeConcept> availableAlgae = new HashSet<>(6);
 
-    private final List<Priority> fullStrategy = new ArrayList<>(List.of(Priority.values()));
-    private final List<Priority> uncompletedPriorities = List.of(Priority.values());
+    private final List<Priority> fullStrategy = new ArrayList<>(List.of(
+        Priority.Level4RP,
+        Priority.Level3RP,
+        Priority.Level2RP,
+        Priority.Level1RP,
+        Priority.Level4Fill,
+        Priority.Level3Fill,
+        Priority.Level2Fill,
+        Priority.Level1Fill
+    ));
+    private final List<Priority> uncompletedPriorities = new ArrayList<>(List.of(
+        Priority.Level4RP,
+        Priority.Level3RP,
+        Priority.Level2RP,
+        Priority.Level1RP,
+        Priority.Level4Fill,
+        Priority.Level3Fill,
+        Priority.Level2Fill,
+        Priority.Level1Fill
+    ));
 
     public static enum ObjectiveType {
         IntakeCoral(false),
@@ -168,7 +190,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<IntakeAlgaeObjective> intakeAlgaeObjective;
     private ScoreCoralObjective scoreCoralObjective;
     private ScoreAlgaeObjective scoreAlgaeObjective;
-    private Optional<Objective> target;
+    private Optional<Objective> target = Optional.empty();
     private Optional<ObjectiveType> typeOverride = Optional.empty();
 
     public ObjectiveTracker(ReefTrackerIO io) {
@@ -207,25 +229,22 @@ public class ObjectiveTracker extends VirtualSubsystem {
             branchesChanged = true;
             var branchState = changedBranch >= 0;
             var branchID = branchState ? changedBranch : changedBranch + 36;
-            branchStates[branchID] = branchState;
+            branchStates[(int) branchID] = branchState;
         }
-        inputs.branchQueue = new int[0];
 
         var level1Changed = false;
         for (var changedLevel1 : inputs.level1Queue) {
             level1Changed = true;
             level1Count += changedLevel1;
         }
-        inputs.level1Queue = new int[0];
 
         var algaeChanged = false;
         for (var changedBranch : inputs.algaeQueue) {
             algaeChanged = true;
             var algaeState = changedBranch >= 0;
             var algaeID = algaeState ? changedBranch : changedBranch + 6;
-            algaeStates[algaeID] = algaeState;
+            algaeStates[(int) algaeID] = algaeState;
         }
-        inputs.algaeQueue = new int[0];
 
         var strategyChanged = false;
         for (var changedPriority : inputs.priorityListQueue) {
@@ -234,7 +253,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var newIndex = changedPriority[1];
             Collections.swap(fullStrategy, oldIndex, newIndex);
         }
-        inputs.priorityListQueue = new int[0][0];
+
+        var coopChanged = false;
+        for (var changedCoop : inputs.coop) {
+            coopChanged = true;
+            coopState = changedCoop;
+        }
 
         if (branchesChanged) {
             updateBranches();
@@ -248,11 +272,39 @@ public class ObjectiveTracker extends VirtualSubsystem {
             updateUnblockedBranches();
         }
 
+        if (strategyChanged) {
+            uncompletedPriorities.clear();
+            uncompletedPriorities.addAll(fullStrategy);
+        }
+
+        if (branchesChanged || strategyChanged) {
+            uncompletedPriorities.removeIf((priority) -> priority.isCompleted(branchStates, level1Count));
+        }
+
+        for (var priority : fullStrategy) {
+            Logger.recordOutput(
+                switch (priority) {
+                    case Level4Fill -> "Objective Tracker/Priorities/Fill/Level 4";
+                    case Level3Fill -> "Objective Tracker/Priorities/Fill/Level 3";
+                    case Level2Fill -> "Objective Tracker/Priorities/Fill/Level 2";
+                    case Level1Fill -> "Objective Tracker/Priorities/Fill/Level 1";
+                    case Level4RP -> "Objective Tracker/Priorities/RP/Level 4";
+                    case Level3RP -> "Objective Tracker/Priorities/RP/Level 3";
+                    case Level2RP -> "Objective Tracker/Priorities/RP/Level 2";
+                    case Level1RP -> "Objective Tracker/Priorities/RP/Level 1";
+                },
+                priority.isCompleted(branchStates, level1Count)
+            );
+        }
+
         io.setCoralState(branchStates);
         io.setLevel1Count(level1Count);
         io.setAlgaeState(algaeStates);
-        io.setCoopState(inputs.coop);
+        io.setCoopState(coopState);
         io.setPriorityList(fullStrategy.stream().mapToInt(Enum::ordinal).toArray());
+
+        Logger.recordOutput("Objective Tracker/Priorities/Strategy/Full", fullStrategy.toArray(Priority[]::new));
+        Logger.recordOutput("Objective Tracker/Priorities/Strategy/Uncomplete", uncompletedPriorities.toArray(Priority[]::new));
     }
 
     private void updateBranches() {
@@ -312,11 +364,25 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }).findFirst().get();
         this.intakeCoralObjective = NonReefObjective.fromParts(closestStationPose, CoralStation.intakePosition, currentPose.getRotation(), ObjectiveType.IntakeCoral);
 
-        var closestAlgae = availableAlgae.stream().map((algae) -> algae.getOurs()).sorted((a,b) -> {
-            var aDistance = a.intakeTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-            var bDistance = b.intakeTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-            return (int) Math.signum(aDistance - bDistance);
-        }).findFirst();
+        var closestRacks = Arrays.stream(Reef.reefs.getOurs().racks)
+            .sorted((a,b) -> {
+                var aDistance = a.centerRobotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                var bDistance = b.centerRobotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                return (int) Math.signum(aDistance - bDistance);
+            })
+            .limit(3)
+            .toList()
+        ;
+
+        var closestAlgae = availableAlgae.stream().map((algae) -> algae.getOurs())
+            .filter((algae) -> closestRacks.contains(algae.rack))
+            .sorted((a,b) -> {
+                var aDistance = a.intakeTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                var bDistance = b.intakeTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                return (int) Math.signum(aDistance - bDistance);
+            })
+            .findFirst()
+        ;
         this.intakeAlgaeObjective = closestAlgae.map((algae) -> new IntakeAlgaeObjective(algae, currentPose.getRotation()));
 
         var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
@@ -348,19 +414,26 @@ public class ObjectiveTracker extends VirtualSubsystem {
             .findFirst()
         ;
         if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
-            this.scoreCoralObjective = new ScoreCoralObjective(Reef.reefs.getOurs().branches[0], currentPose.getRotation());
+            this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0));
         } else {
-            this.scoreCoralObjective = new ScoreCoralObjective(targetBranch.get(), currentPose.getRotation());
+            this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
         }
+
+        Leds.getInstance().level1Targeted.setFlag(this.scoreCoralObjective.branchLevel.isEmpty());
+        Leds.getInstance().level2Targeted.setFlag(this.scoreCoralObjective.branchLevel.equals(Optional.of(BranchLevel.Level2)));
+        Leds.getInstance().level3Targeted.setFlag(this.scoreCoralObjective.branchLevel.equals(Optional.of(BranchLevel.Level3)));
+        Leds.getInstance().level4Targeted.setFlag(this.scoreCoralObjective.branchLevel.equals(Optional.of(BranchLevel.Level4)));
+
+        Leds.getInstance().removeAlgae.setFlag(uncompletedPriorities.get(0).level.equals(Optional.of(BranchLevel.Level3)) && !this.scoreCoralObjective.branchLevel.equals(Optional.of(BranchLevel.Level3)));
 
         this.scoreAlgaeObjective = new ScoreAlgaeObjective(selectedAlgaeGoal, currentPose);
 
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralObjective.getTargetState().getMechTransforms());
-        // Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", intakeAlgaeObjective.getTargetDirection());
-        // Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", intakeAlgaeObjective.getTargetPose());
-        // Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", LoggerUtil.toArray(intakeAlgaeObjective.map(IntakeAlgaeObjective::getTargetDirection), Direction[]::new));
+        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", LoggerUtil.toArray(intakeAlgaeObjective.map(IntakeAlgaeObjective::getTargetPose), Pose2d[]::new));
+        Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeObjective.isPresent() ? intakeAlgaeObjective.get().getTargetState().getMechTransforms() : new Transform3d[0]);
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralObjective.getTargetState().getMechTransforms());
@@ -463,12 +536,33 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
     public static class ScoreCoralObjective implements Objective {
-        public final BranchObject branch;
+        public final Optional<BranchLevel> branchLevel;
+        private final Pose2d targetPose;
+        private final SuperstructureState targetState;
         private final Direction direction;
 
-        private ScoreCoralObjective(BranchObject branch, Rotation2d currentRotation) {
-            this.branch = branch;
-            this.direction = this.branch.scoreTotalState.getClosestDirection(currentRotation);
+        private ScoreCoralObjective(Pose2d targetPose, SuperstructureState targetState, Direction direction, Optional<BranchLevel> branchLevel) {
+            this.branchLevel = branchLevel;
+            this.targetPose = targetPose;
+            this.targetState = targetState;
+            this.direction = direction;
+        }
+        public static ScoreCoralObjective fromBranch(BranchObject branch, Rotation2d currentRotation) {
+            var direction = branch.scoreTotalState.getClosestDirection(currentRotation);
+            return new ScoreCoralObjective(
+                branch.scoreTotalState.getRobotPose(direction),
+                branch.scoreTotalState.getSuperstructureState(direction),
+                direction,
+                Optional.of(branch.level)
+            );
+        }
+        public static ScoreCoralObjective fromLevel1(RackObject rack) {
+            return new ScoreCoralObjective(
+                rack.centerRobotPose.getForward(),
+                Reef.level1SuperstructureStates.getForward(),
+                Direction.Forward,
+                Optional.empty()
+            );
         }
         @Override
         public Direction getTargetDirection() {
@@ -476,11 +570,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
         @Override
         public Pose2d getTargetPose() {
-            return branch.scoreTotalState.getRobotPose(direction);
+            return targetPose;
         }
         @Override
         public SuperstructureState getTargetState() {
-            return branch.scoreTotalState.getSuperstructureState(direction);
+            return targetState;
         }
         @Override
         public ObjectiveType getObjectiveType() {

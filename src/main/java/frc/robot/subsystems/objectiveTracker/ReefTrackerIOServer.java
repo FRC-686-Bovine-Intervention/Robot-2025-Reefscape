@@ -113,30 +113,11 @@ public class ReefTrackerIOServer implements ReefTrackerIO {
             inputs.algaeGoal = (int) algaeGoalSubscriber.get();
         }
 
-        var branchQueueValues = coralQueueSubscriber.readQueueValues();
-        if (branchQueueValues.length > 0) {
-            inputs.branchQueue = Arrays.copyOf(inputs.branchQueue, inputs.branchQueue.length + branchQueueValues.length);
-            for (int i = 0; i < branchQueueValues.length; i++) {
-                inputs.branchQueue[inputs.branchQueue.length - branchQueueValues.length + i] = (int) branchQueueValues[i];
-            }
-        }
-        var l1QueueValues = l1CountSubscriber.readQueueValues();
-        if (l1QueueValues.length > 0) {
-            inputs.level1Queue = Arrays.copyOf(inputs.level1Queue, inputs.level1Queue.length + l1QueueValues.length);
-            for (int i = 0; i < inputs.level1Queue.length; i++) {
-                inputs.level1Queue[inputs.level1Queue.length - l1QueueValues.length + i] = (int) l1QueueValues[i];
-            }
-        }
-        var algaeQueueValues = algaeQueueSubscriber.readQueueValues();
-        if (algaeQueueValues.length > 0) {
-            inputs.algaeQueue = Arrays.copyOf(inputs.algaeQueue, inputs.algaeQueue.length + algaeQueueValues.length);
-            for (int i = 0; i < algaeQueueValues.length; i++) {
-                inputs.algaeQueue[inputs.algaeQueue.length - algaeQueueValues.length + i] = (int) algaeQueueValues[i];
-            }
-        }
-        if (coopSubscriber.readQueue().length > 0) {
-            inputs.coop = coopSubscriber.get();
-        }
+        inputs.branchQueue = coralQueueSubscriber.readQueueValues();
+        inputs.level1Queue = l1CountSubscriber.readQueueValues();
+        inputs.algaeQueue = algaeQueueSubscriber.readQueueValues();
+        inputs.coop = coopSubscriber.readQueueValues();
+        inputs.priorityListQueue = new int[0][0];
         var priorityListQueueValues = priorityListSubscriber.readQueueValues();
         if (priorityListQueueValues.length > 0) {
             for (int i = 0; i < priorityListQueueValues.length; i++) {

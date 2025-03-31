@@ -18,6 +18,7 @@ import frc.robot.auto.AutoCommons.CoralStationPosition;
 import frc.robot.auto.AutoConstants;
 import frc.robot.auto.AutoRoutine;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.PipeObject;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
@@ -66,9 +67,9 @@ public class ScoreCoral extends AutoRoutine {
         return MathExtraUtil.isWithin(pipeID, 1, 6);
     }
 
-    private static final AutoQuestion<AllianceFlipped<PipeObject>> scorePreloadPipe = new AutoQuestion<AllianceFlipped<PipeObject>>("Score Preload Pipe") {
+    private static final AutoQuestion<PipeConcept> scorePreloadPipe = new AutoQuestion<PipeConcept>("Score Preload Pipe") {
         @Override
-        protected Settings<AllianceFlipped<PipeObject>> generateSettings() {
+        protected Settings<PipeConcept> generateSettings() {
             var startPosition = ScoreCoral.startPosition.getResponse();
             if (
                 startPosition == AutoConstants.startLeftLeftCage ||
@@ -110,15 +111,15 @@ public class ScoreCoral extends AutoRoutine {
 
     };
 
-    private static final AutoQuestion<AllianceFlipped<PipeObject>> scoreCoral1 = new AutoQuestion<AllianceFlipped<PipeObject>>("Score Second Pipe") {
+    private static final AutoQuestion<PipeConcept> scoreCoral1 = new AutoQuestion<PipeConcept>("Score Second Pipe") {
         @Override
-        protected Settings<AllianceFlipped<PipeObject>> generateSettings() {
+        protected Settings<PipeConcept> generateSettings() {
             if (isRightCoralStation(scorePreloadPipe.getResponse().getOurs())) {
                 var options = IntStream.range(1, 7)
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
                     .filter(entry -> !entry.getValue().equals(scorePreloadPipe.getResponse()))
                     .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                    .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
+                    .toArray((IntFunction<Map.Entry<String, PipeConcept>[]>) Map.Entry[]::new)
                 ;
                 var defaultOption = IntStream.of(2,1,3)
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
@@ -132,7 +133,7 @@ public class ScoreCoral extends AutoRoutine {
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
                     .filter(entry -> !entry.getValue().equals(scorePreloadPipe.getResponse()))
                     .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                    .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
+                    .toArray((IntFunction<Map.Entry<String, PipeConcept>[]>) Map.Entry[]::new)
                 ;
                 var defaultOption = IntStream.of(11,0,10)
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
@@ -145,9 +146,9 @@ public class ScoreCoral extends AutoRoutine {
         }
     };
 
-    private static final AutoQuestion<AllianceFlipped<PipeObject>> scoreCoral2 = new AutoQuestion<AllianceFlipped<PipeObject>>("Score Third Pipe") {
+    private static final AutoQuestion<PipeConcept> scoreCoral2 = new AutoQuestion<PipeConcept>("Score Third Pipe") {
         @Override
-        protected Settings<AllianceFlipped<PipeObject>> generateSettings() {
+        protected Settings<PipeConcept> generateSettings() {
             if (isRightCoralStation(scorePreloadPipe.getResponse().getOurs())) {
                 var options = IntStream.range(1, 7)
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
@@ -156,7 +157,7 @@ public class ScoreCoral extends AutoRoutine {
                         !entry.getValue().equals(scoreCoral1.getResponse())
                     )
                     .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                    .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
+                    .toArray((IntFunction<Map.Entry<String, PipeConcept>[]>) Map.Entry[]::new)
                 ;
                 var defaultOption = IntStream.of(2,1,3)
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
@@ -176,7 +177,7 @@ public class ScoreCoral extends AutoRoutine {
                         !entry.getValue().equals(scoreCoral1.getResponse())
                     )
                     .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                    .toArray((IntFunction<Map.Entry<String, AllianceFlipped<PipeObject>>[]>) Map.Entry[]::new)
+                    .toArray((IntFunction<Map.Entry<String, PipeConcept>[]>) Map.Entry[]::new)
                 ;
                 var defaultOption = IntStream.of(11,0,10)
                     .mapToObj(i -> pipeOptions[i % pipeOptions.length])
@@ -224,16 +225,16 @@ public class ScoreCoral extends AutoRoutine {
             startPosition.equals(AutoConstants.startRightRightCage) ||
             startPosition.equals(AutoConstants.startLeftLeftCage)
         ) {
-            startToScorePath = "Remote Start To " + scorePreloadPipe.getOurs().getLetter();
+            startToScorePath = "Remote Start To " + scorePreloadPipe.getLetter();
         } else {
-            startToScorePath = "Start To " + scorePreloadPipe.getOurs().getLetter();
+            startToScorePath = "Start To " + scorePreloadPipe.getLetter();
         }
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
         commands.add(AutoCommons.scoreOnReef(startToScorePreload, BranchLevel.Level4, Direction.Forward, drive, superstructure, intake));
 
 
         var preloadToStation = AutoPaths.loadChoreoTrajectory(
-            scorePreloadPipe.getOurs().getLetter() +
+            scorePreloadPipe.getLetter() +
             " To Station " +
             getStationPositionAsString(stationPosition) +
             (shouldUseForwardCoralStation ? " Forward" : "")
@@ -246,13 +247,13 @@ public class ScoreCoral extends AutoRoutine {
             + getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
             + " To "
-            + scoreCoral1.getOurs().getLetter()
+            + scoreCoral1.getLetter()
         );
         commands.add(AutoCommons.scoreOnReef(stationToScore1, BranchLevel.Level4, Direction.Forward, drive, superstructure, intake));
 
 
         var coral1ToStation = AutoPaths.loadChoreoTrajectory(
-            scoreCoral1.getOurs().getLetter() +
+            scoreCoral1.getLetter() +
             " To Station "+
             getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
@@ -265,7 +266,7 @@ public class ScoreCoral extends AutoRoutine {
             + getStationPositionAsString(stationPosition)
             + (shouldUseForwardCoralStation ? " Forward" : "")
             + " To "
-            + scoreCoral2.getOurs().getLetter()
+            + scoreCoral2.getLetter()
         );
         commands.add(AutoCommons.scoreOnReef(stationToScore2, BranchLevel.Level4, Direction.Forward, drive, superstructure, intake));
 

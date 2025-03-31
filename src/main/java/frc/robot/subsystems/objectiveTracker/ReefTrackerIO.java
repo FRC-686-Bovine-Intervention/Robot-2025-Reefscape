@@ -8,11 +8,11 @@ public interface ReefTrackerIO {
         public int coralGoal;                                           // 0 to 47 (coral nodes) // id of the branch
         public int algaeGoal;                                           // 0 (net), 1 (processor), 2 (opponent's processor)
 
-        public int[] branchQueue = new int[0];                          // Add coral = id of branch, Remove coral = id of branch-36
-        public int[] level1Queue = new int[0];                     // Additional coral count in trough
-        public int[] algaeQueue = new int[0];                           // Add algae = id of algae,  Remove algae = id of algae-6
+        public long[] branchQueue = new long[0];                          // Add coral = id of branch, Remove coral = id of branch-36
+        public long[] level1Queue = new long[0];                     // Additional coral count in trough
+        public long[] algaeQueue = new long[0];                           // Add algae = id of algae,  Remove algae = id of algae-6
         public int[][] priorityListQueue = new int[0][0];
-        public boolean coop = false;                                    // coop state
+        public boolean[] coop = new boolean[0];                                    // coop state
 
         public int mode = 0;                                            // 0 = smart, 1 = dumb
     }
