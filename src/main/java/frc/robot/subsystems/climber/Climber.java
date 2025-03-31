@@ -128,7 +128,7 @@ public class Climber extends SubsystemBase {
 
             @Override
             public void execute() {
-                io.setRatchetServoAngle(ratchetDisengageAngle.get());
+                io.setRatchetServoAngle(ratchetEngageAngle.get());
                 ratchetEngaged = true;
                 io.setAngle(climbAngle.get());
             }
@@ -139,7 +139,7 @@ public class Climber extends SubsystemBase {
         };
     }
 
-    public Command engageRatchet() {
+    public Command testEngageRatchet() {
         var subsystem = this;
         return new Command() {
             {
@@ -163,7 +163,7 @@ public class Climber extends SubsystemBase {
             }
         };
     }
-    public Command disengageRatchet() {
+    public Command testDisengageRatchet() {
         var subsystem = this;
         return new Command() {
             {
