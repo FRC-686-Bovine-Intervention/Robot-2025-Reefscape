@@ -332,9 +332,29 @@ window.addEventListener("load", () => {
   });
 
   swapy.onSwapEnd(() => {
+    const combinations = swaps.map(([a, b]) => (b > a ? 1 : -1) * (a + b));
+    const usedIndices = new Set();
+    const indicesToKeep = [];
+    for (let i = 0; i < combinations.length; i++) {
+      if (usedIndices.has(i)) continue;
+      let cancelsOut = false;
+      for (let j = i + 1; j < combinations.length; j++) {
+        if (usedIndices.has(j)) continue;
+        if (combinations[i] + combinations[j] === 0) {
+          cancelsOut = true;
+          usedIndices.add(i);
+          usedIndices.add(j);
+          break;
+        }
+      }
+      if (!cancelsOut) indicesToKeep.push(i);
+    }
+    const filteredSwaps = indicesToKeep.map((index) => swaps[index]);
+    if (filteredSwaps.length === 0) return;
+    
     ntClient.addSample(
       toRobotPrefix + priorityListTopicName,
-      swaps.map((swap) => packInt(swap, 3))
+      filteredSwaps.map((swap) => packInt(swap, 3))
     );
     swaps = [];
     priorityUpdatedIndicated.style.display = "none";
