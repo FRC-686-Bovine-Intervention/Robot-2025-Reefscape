@@ -6,6 +6,9 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.Logger;
+
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -21,6 +24,8 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
+import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -78,6 +83,28 @@ public class ClimberIOFalcon implements ClimberIO {
         pidConsts.hasChanged(hashCode());
 
         motor.getConfigurator().apply(motorConfig);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            RobotConstants.rioUpdateFrequency,
+            motor.getRotorPosition(),
+            motor.getRotorVelocity()
+        );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            RobotConstants.rioUpdateFrequency,
+            motor.getPosition(),
+            motor.getVelocity(),
+            motor.getClosedLoopReference(),
+            motor.getClosedLoopReferenceSlope(),
+            motor.getClosedLoopError(),
+            motor.getClosedLoopOutput()
+        );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            DriveConstants.odometryLoopFrequency.div(2),
+            motor.getMotorVoltage(),
+            motor.getStatorCurrent(),
+            motor.getDeviceTemp()
+        );
+        motor.optimizeBusUtilization();
     }
 
     @Override
@@ -98,6 +125,13 @@ public class ClimberIOFalcon implements ClimberIO {
             pidConsts.update(config);
             motor.getConfigurator().apply(config);
         }
+
+        Logger.recordOutput("Climber/Motor/posiion", motor.getPosition().getValueAsDouble());
+        Logger.recordOutput("Climber/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
+        Logger.recordOutput("Climber/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
+        Logger.recordOutput("Climber/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
+        Logger.recordOutput("Climber/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
+        Logger.recordOutput("Climber/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
     }
 
     @Override
