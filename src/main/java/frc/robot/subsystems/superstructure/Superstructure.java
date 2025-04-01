@@ -594,11 +594,10 @@ public class Superstructure extends SubsystemBase {
             return backward;
         }
         public SuperstructureState get(Direction direction) {
-            switch (direction) {
-                default:
-                case Forward:   return getForward();
-                case Backward:  return getBackward();
-            }
+            return switch (direction) {
+                case Forward -> getForward();
+                case Backward -> getBackward();
+            };
         }
 
         public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
