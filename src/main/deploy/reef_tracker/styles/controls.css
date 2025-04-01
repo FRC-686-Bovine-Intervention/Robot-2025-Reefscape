@@ -14,11 +14,6 @@
   margin-top: auto;
 }
 
-#priority_list > p {
-  font-weight: bold;
-  font-size: large;
-}
-
 .priority {
   --percentage-complete: 0;
   padding: 10px;
@@ -27,6 +22,10 @@
   cursor: move;
   position: relative;
   overflow: hidden;
+}
+
+.priority.unnecessary {
+  background-color: #eaa153;
 }
 
 .priority.complete {
@@ -43,7 +42,8 @@
 }
 
 .priority.selected .progress-bar,
-.priority.complete .progress-bar {
+.priority.complete .progress-bar,
+.priority.unnecessary .progress-bar {
   display: none;
 }
 

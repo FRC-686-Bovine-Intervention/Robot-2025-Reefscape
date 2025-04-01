@@ -189,6 +189,12 @@ function updateUI() {
         } else {
           element.classList.remove("complete");
         }
+
+        if (coopState && element.dataset.kind === "rp" && element.dataset.level == 1) {
+          element.classList.add("unnecessary");
+        } else {
+          element.classList.remove("unnecessary");
+        }
       });
   });
 
