@@ -20,4 +20,6 @@ public final class ClimberConstants {
         .planetary(1.0/5.0)
         .gear(40).gear(50).axle()
     ;
+
+    public static final boolean climberSensorInverted = false;
 }

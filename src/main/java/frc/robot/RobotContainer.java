@@ -470,7 +470,7 @@ public class RobotContainer {
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
-                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
+                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState)
             )
         );
         driveController.back().toggleOnTrue(
