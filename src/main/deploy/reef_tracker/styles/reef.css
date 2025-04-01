@@ -67,24 +67,34 @@
   cursor: pointer;
   z-index: 1000;
   pointer-events: all;
+  background: #37373d;
 }
 
 .pipe:first-child {
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
-  background: #37373d;
 }
 
 .pipe:last-child {
   clip-path: polygon(0 0, 0 100%, 100% 100%);
-  background: #2c2c31;
+  filter: brightness(.75);
 }
 
-.pipe:first-child.selected {
-  background-color: #ac26be;
+.pipe.selected {
+  background: #ac26be;
 }
 
-.pipe:last-child.selected {
-  background-color: #8a1e98;
+#reef.l2 .pipe.selected {
+  background: yellow;
+  color: black;
+}
+
+#reef.l3 .pipe.selected {
+  background: aquamarine;
+  color: black;
+}
+
+#reef.l4 .pipe.selected {
+  background: green;
 }
 
 .pipe-text {

@@ -26,6 +26,20 @@
   background-color: #eaa153;
 }
 
+#pipe.l2 .level.selected {
+  background: yellow;
+  color: black;
+}
+
+#pipe.l3 .level.selected {
+  background: aquamarine;
+  color: black;
+}
+
+#pipe.l4 .level.selected {
+  background: green;
+}
+
 .level:nth-child(1) {
   top: -11%;
   left: -70%;
