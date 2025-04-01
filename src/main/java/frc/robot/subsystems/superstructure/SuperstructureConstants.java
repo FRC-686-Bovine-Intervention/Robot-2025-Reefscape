@@ -41,4 +41,22 @@ public class SuperstructureConstants {
         ),
         Rotation2d.kZero
     );
+
+    public static final Transform2d wristAxisToCoralTip = new Transform2d(
+        new Translation2d(
+            Inches.of(17.25),
+            Inches.zero()
+        ),
+        Rotation2d.kZero
+    );
+    public static final Transform2d coralTipToWristAxis = wristAxisToCoralTip.inverse();
+
+    public static final Transform2d wristAxisToAlgaeCenter = new Transform2d(
+        new Translation2d(
+            Inches.of(10).plus(Algae.radius),
+            Inches.zero()
+        ),
+        Rotation2d.kZero
+    );
+    public static final Transform2d algaeCenterToWristAxis = wristAxisToAlgaeCenter.inverse();
 }
