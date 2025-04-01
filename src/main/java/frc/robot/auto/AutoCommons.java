@@ -1,10 +1,13 @@
 package frc.robot.auto;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
@@ -22,6 +25,7 @@ import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef;
+import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
@@ -64,8 +68,8 @@ public class AutoCommons {
         ;
     }
 
-    public static Command scoreOnReef(PathPlannerPath pathToReef, BranchLevel branchLevel, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        var targetState = branchLevel.scoringSuperstructureStates.get(direction);
+    public static Command scoreOnReef(PathPlannerPath pathToReef, BranchConcept branch, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var targetState = branch.level.scoringSuperstructureStates.get(direction);
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
         var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
@@ -78,12 +82,12 @@ public class AutoCommons {
                     intake.eject().asProxy().onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
-                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Inches.of(48))),
-                    superstructure.goToSetpointSequenced(targetState).asProxy()
+                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + branch.getName()).asProxy()
                 ),
                 Commands.sequence(
-                    followPathFlipped(pathToReef, drive).asProxy(),
-                    drive.simplePIDTo(() -> end).asProxy()
+                    followPathFlipped(pathToReef, drive).withName("Follow Path to " + branch.getName()).asProxy(),
+                    drive.simplePIDTo(() -> end).withName("PID to " + branch.getName()).asProxy()
                 )
             )
         ;
@@ -113,20 +117,53 @@ public class AutoCommons {
         ;
     }
 
-    public static Command pickupAlgaeFromReef(PathPlannerPath pathToReef, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        return Commands.none();
+    public static Command pickupAlgaeFromReef(PathPlannerPath pathToReef, StagedAlgaeConcept stagedAlgae, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
+        var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
+        var end = new Pose2d(endTranslation, endRotation);
+        return 
+            Commands.deadline(
+                intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                Commands.sequence(
+                    followPathFlipped(pathToReef, drive).asProxy(),
+                    drive.simplePIDTo(() -> end).asProxy()
+                ),
+                superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).asProxy()
+            )
+        ;
     }
 
-    public static final Map.Entry<String, PipeConcept>[] pipeOptions =
-        IntStream.range(0, 12)
-        .mapToObj(i -> Settings.option(Character.toString('A' + i), Reef.pipes[i]))
+    public static final Map.Entry<String, PipeConcept>[] pipeOptions = Arrays.stream(Reef.pipes)
+        .map((pipe) -> Settings.option(pipe.getLetter(), pipe))
         .toArray((IntFunction<Map.Entry<String, PipeConcept>[]>) Map.Entry[]::new)
+    ;
+    public static final Map.Entry<String, Optional<PipeConcept>>[] pipeOptionalOptions =
+        IntStream.range(0, 13)
+        .mapToObj((i) -> {
+            if (i < Reef.pipes.length) {
+                return Settings.option(Reef.pipes[i].getLetter(), Optional.of(Reef.pipes[i]));
+            } else {
+                return Settings.option("None", Optional.empty());
+            }
+        })
+        .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
     ;
     
     public static final Map.Entry<String, StagedAlgaeConcept>[] algaeOptions = 
         IntStream.range(0, 6)
-        .mapToObj(i -> Settings.option("Rack " + i, Reef.stagedAlgae[i]))
+        .mapToObj((i) -> Settings.option("Rack " + i, Reef.stagedAlgae[i]))
         .toArray((IntFunction<Map.Entry<String, StagedAlgaeConcept>[]>) Map.Entry[]::new)
+    ;
+    public static final Map.Entry<String, Optional<StagedAlgaeConcept>>[] algaeOptionalOptions =
+        IntStream.range(0, 7)
+        .mapToObj((i) -> {
+            if (i < Reef.stagedAlgae.length) {
+                return Settings.option("Rack " + i, Optional.of(Reef.stagedAlgae[i]));
+            } else {
+                return Settings.option("None", Optional.empty());
+            }
+        })
+        .toArray((IntFunction<Map.Entry<String, Optional<StagedAlgaeConcept>>[]>) Map.Entry[]::new)
     ;
 
     public static enum BargePosition {

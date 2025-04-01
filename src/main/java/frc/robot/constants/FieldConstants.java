@@ -409,6 +409,14 @@ public final class FieldConstants {
                 this.branchTip = new Pose3d(this.pipe.pipeCenterPose).transformBy(this.level.branchTipTransform);
                 this.scoreTotalState = RobotFlippedTotalState.combine(this.pipe.robotPose, this.level.scoringSuperstructureStates);
             }
+
+            public String getName() {
+                return pipe.getLetter() + switch (level) {
+                    case Level2 -> "2";
+                    case Level3 -> "3";
+                    case Level4 -> "4";
+                };
+            }
         }
         public static final class BranchConcept extends AllianceFlipped<BranchObject> {
             public final PipeConcept pipe;
@@ -420,6 +428,14 @@ public final class FieldConstants {
                 this.pipe = pipe;
                 this.level = level;
                 this.id = this.level.ordinal() * 12 + this.pipe.id;
+            }
+
+            public String getName() {
+                return pipe.getLetter() + switch (level) {
+                    case Level2 -> "2";
+                    case Level3 -> "3";
+                    case Level4 -> "4";
+                };
             }
         }
 

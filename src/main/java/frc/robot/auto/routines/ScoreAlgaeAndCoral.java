@@ -83,7 +83,7 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         var startPosition = AutoConstants.startDeadCenter;
 
         var startToScorePreload = AutoPaths.loadChoreoTrajectory("Start To " + scorePreloadPipe.getLetter());
-        commands.add(AutoCommons.scoreOnReef(startToScorePreload, BranchLevel.Level4, Direction.Forward, drive, superstructure, intake));
+        commands.add(AutoCommons.scoreOnReef(startToScorePreload, scorePreloadPipe.getBranch(BranchLevel.Level4), Direction.Forward, drive, superstructure, intake));
 
         var preloadToAlgae = AutoPaths.loadChoreoTrajectory(scorePreloadPipe.getLetter() + " To " + "3");
         commands.add(Commands.sequence(
