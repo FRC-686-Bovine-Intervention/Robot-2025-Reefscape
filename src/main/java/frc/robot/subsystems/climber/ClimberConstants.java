@@ -21,5 +21,5 @@ public final class ClimberConstants {
         .gear(40).gear(50).axle()
     ;
 
-    public static final boolean climberSensorInverted = false;
+    public static final boolean climberSensorInverted = true;
 }
