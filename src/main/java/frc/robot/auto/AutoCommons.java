@@ -19,6 +19,7 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
@@ -126,32 +127,58 @@ public class AutoCommons {
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToStation));
         var endRotation = AllianceFlipUtil.apply(pathToStation.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
-        return 
-            Commands.deadline(
-                intake.intakeCoral().asProxy().until(intake.hasCoral),
-                Commands.sequence(
-                    followPathFlipped(pathToStation, drive).withName("Follow Path to Coral Station").asProxy(),
-                    drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
-                ),
-                superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
-            )
-        ;
+        if (RobotBase.isReal()) {
+            return 
+                Commands.deadline(
+                    intake.intakeCoral().asProxy().until(intake.hasCoral),
+                    Commands.sequence(
+                        followPathFlipped(pathToStation, drive).withName("Follow Path to Coral Station").asProxy(),
+                        drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
+                    ),
+                    superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
+                )
+            ;
+        } else {
+            return 
+                Commands.deadline(
+                    intake.intakeCoral().asProxy().withTimeout(4).until(intake.hasCoral),
+                    Commands.sequence(
+                        followPathFlipped(pathToStation, drive).withName("Follow Path to Coral Station").asProxy(),
+                        drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
+                    ),
+                    superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
+                )
+            ;
+        }
     }
 
     public static Command pickupAlgaeFromReef(PathPlannerPath pathToReef, StagedAlgaeConcept stagedAlgae, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
         var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
-        return 
-            Commands.deadline(
-                intake.intakeAlgae().asProxy().until(intake.hasAlgae),
-                Commands.sequence(
-                    followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
-                    drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
-                ),
-                superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
-            )
-        ;
+        if (RobotBase.isReal()) {
+            return 
+                Commands.deadline(
+                    intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                    Commands.sequence(
+                        followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
+                        drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
+                    ),
+                    superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                )
+            ;
+        } else {
+            return 
+                Commands.deadline(
+                    intake.intakeAlgae().asProxy().withTimeout(2).until(intake.hasAlgae),
+                    Commands.sequence(
+                        followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
+                        drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
+                    ),
+                    superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                )
+            ;
+        }
     }
 
     public static final Map.Entry<String, PipeConcept>[] pipeOptions = Arrays.stream(Reef.pipes)
