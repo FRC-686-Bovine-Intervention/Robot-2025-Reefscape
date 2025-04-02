@@ -106,9 +106,11 @@ window.addEventListener("load", () => {
   ntClient.connect();
 });
 
-const levelDOM = Array.from(document.querySelectorAll(".level")).reverse();
-const levelCounterDOM = levelDOM.map((el) => el.querySelector(".level-text"));
-const pipeDOM = Array.from(document.querySelectorAll(".pipe"));
+const reefDOM = document.getElementById("reef");
+const pipeDOM = document.getElementById("pipe");
+const levelsDOM = Array.from(document.querySelectorAll(".level")).reverse();
+const levelCountersDOM = levelsDOM.map((el) => el.querySelector(".level-text"));
+const pipesDOM = Array.from(document.querySelectorAll(".pipe"));
 const algaeDOM = Array.from(document.querySelectorAll(".algae"));
 const l1AddDOM = document.getElementById("add");
 const l1SubtractDOM = document.getElementById("subtract");
@@ -142,6 +144,11 @@ function updateUI() {
     priorityListDOM.style.display = "";
   }
 
+  reefDOM.className = "";
+  if (mode === "SMART") reefDOM.classList.add("l" + (selectedLevel + 2));
+  pipeDOM.className = "";
+  if (mode === "SMART") pipeDOM.classList.add("l" + (selectedLevel + 2));
+
   modeToggleDOM.checked = mode === "SMART";
 
   priorityListState.forEach((idx, i) => {
@@ -150,7 +157,7 @@ function updateUI() {
     priorityUpdatedIndicated.style.display = "";
   });
 
-  levelDOM.forEach((element, index) => {
+  levelsDOM.forEach((element, index) => {
     if (
       (mode === "SMART" && index > 0 && selectedLevel === index - 1) ||
       (mode === "DUMB" && getCoral(coralGoal).level === index)
@@ -162,7 +169,7 @@ function updateUI() {
   });
 
   let rpLevelCount = 0;
-  levelCounterDOM.forEach((element, index) => {
+  levelCountersDOM.forEach((element, index) => {
     if (mode === "DUMB") {
       element.innerHTML = "L" + (index + 1);
       return;
@@ -189,10 +196,16 @@ function updateUI() {
         } else {
           element.classList.remove("complete");
         }
+
+        if (coopState && element.dataset.kind === "rp" && element.dataset.level == 1) {
+          element.classList.add("unnecessary");
+        } else {
+          element.classList.remove("unnecessary");
+        }
       });
   });
 
-  pipeDOM.forEach((element, index) => {
+  pipesDOM.forEach((element, index) => {
     if (
       (mode === "SMART" &&
         coralState[getCoralID({ level: selectedLevel, pipe: index })]) ||
@@ -264,7 +277,7 @@ window.addEventListener("load", () => {
     ntClient.addSample(toRobotPrefix + modeTopicName, mode === "SMART" ? 1 : 0);
   });
 
-  levelDOM.forEach((element, index) => {
+  levelsDOM.forEach((element, index) => {
     bind(element, () => {
       if (mode === "DUMB") {
         ntClient.addSample(
@@ -278,7 +291,7 @@ window.addEventListener("load", () => {
     });
   });
 
-  pipeDOM.forEach((element, index) => {
+  pipesDOM.forEach((element, index) => {
     bind(element, () => {
       if (mode === "DUMB") {
         ntClient.addSample(
@@ -332,9 +345,29 @@ window.addEventListener("load", () => {
   });
 
   swapy.onSwapEnd(() => {
+    const combinations = swaps.map(([a, b]) => (b > a ? 1 : -1) * (a + b));
+    const usedIndices = new Set();
+    const indicesToKeep = [];
+    for (let i = 0; i < combinations.length; i++) {
+      if (usedIndices.has(i)) continue;
+      let cancelsOut = false;
+      for (let j = i + 1; j < combinations.length; j++) {
+        if (usedIndices.has(j)) continue;
+        if (combinations[i] + combinations[j] === 0) {
+          cancelsOut = true;
+          usedIndices.add(i);
+          usedIndices.add(j);
+          break;
+        }
+      }
+      if (!cancelsOut) indicesToKeep.push(i);
+    }
+    const filteredSwaps = indicesToKeep.map((index) => swaps[index]);
+    if (filteredSwaps.length === 0) return;
+    
     ntClient.addSample(
       toRobotPrefix + priorityListTopicName,
-      swaps.map((swap) => packInt(swap, 3))
+      filteredSwaps.map((swap) => packInt(swap, 3))
     );
     swaps = [];
     priorityUpdatedIndicated.style.display = "none";
