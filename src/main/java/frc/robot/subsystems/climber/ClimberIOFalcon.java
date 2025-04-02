@@ -13,6 +13,7 @@ import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -35,6 +36,8 @@ public class ClimberIOFalcon implements ClimberIO {
     protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
     protected final Servo servo = HardwareDevices.climberServoPort.servo();
     protected final DigitalInput sensor = HardwareDevices.climberSensor.input();
+
+    private final VoltageOut voltageRequest = new VoltageOut(0);
 
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
@@ -115,6 +118,9 @@ public class ClimberIOFalcon implements ClimberIO {
 
         inputs.sensor = sensor.get() ^ ClimberConstants.climberSensorInverted;
 
+        voltageRequest.withLimitReverseMotion(inputs.sensor);
+        positionRequest.withLimitReverseMotion(inputs.sensor);
+
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
             motor.getConfigurator().refresh(config);
@@ -140,11 +146,11 @@ public class ClimberIOFalcon implements ClimberIO {
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
-        motor.setVoltage(voltage.in(Volts));
+        motor.setControl(voltageRequest.withOutput(voltage.in(Volts)));
     }
 
     @Override
-    public void setRatchetServoAngle(Measure<AngleUnit> angle){
+    public void setRatchetServoAngle(Measure<AngleUnit> angle) {
         servo.setAngle(angle.in(Degrees));
     }
 
