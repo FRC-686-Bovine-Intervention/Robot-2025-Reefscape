@@ -23,10 +23,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
+import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
-import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.subsystems.drive.Drive;
@@ -94,7 +94,28 @@ public class AutoCommons {
     }
 
     public static Command scoreInNet(PathPlannerPath pathToBarge, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        return Commands.none();
+        var targetState = Barge.superstructureState.get(direction);
+        var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToBarge));
+        var endRotation = AllianceFlipUtil.apply(pathToBarge.getGoalEndState().rotation());
+        var end = new Pose2d(endTranslation, endRotation);
+        return
+        Commands.deadline(
+            Commands.sequence(
+                Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
+                Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
+                Commands.waitSeconds(0.75),
+                intake.eject().asProxy().onlyWhile(intake.hasAlgae)
+            ),
+            Commands.sequence(
+                Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
+                superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
+            ),
+            Commands.sequence(
+                followPathFlipped(pathToBarge, drive).withName("Follow Path to Net").asProxy(),
+                drive.simplePIDTo(() -> end).withName("PID to Net").asProxy()
+            )
+        )
+        ;
     }
 
     public static Command scoreInProcessor(PathPlannerPath pathToProcessor, Drive drive, Superstructure superstructure, Intake intake) {
@@ -109,10 +130,10 @@ public class AutoCommons {
             Commands.deadline(
                 intake.intakeCoral().asProxy().until(intake.hasCoral),
                 Commands.sequence(
-                    followPathFlipped(pathToStation, drive).asProxy(),
-                    drive.simplePIDTo(() -> end).asProxy()
+                    followPathFlipped(pathToStation, drive).withName("Follow Path to Coral Station").asProxy(),
+                    drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                 ),
-                superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).asProxy()
+                superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
             )
         ;
     }
@@ -125,10 +146,10 @@ public class AutoCommons {
             Commands.deadline(
                 intake.intakeAlgae().asProxy().until(intake.hasAlgae),
                 Commands.sequence(
-                    followPathFlipped(pathToReef, drive).asProxy(),
-                    drive.simplePIDTo(() -> end).asProxy()
+                    followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
+                    drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                 ),
-                superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).asProxy()
+                superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
             )
         ;
     }

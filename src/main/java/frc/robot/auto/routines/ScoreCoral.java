@@ -23,7 +23,6 @@ import frc.robot.auto.AutoConstants;
 import frc.robot.auto.AutoRoutine;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.PipeConcept;
-import frc.robot.constants.FieldConstants.Reef.PipeObject;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -65,9 +64,6 @@ public class ScoreCoral extends AutoRoutine {
     };
     
     private static boolean isRightCoralStation(PipeConcept pipe) {
-        return isRightCoralStation(pipe.id);
-    }
-    private static boolean isRightCoralStation(PipeObject pipe) {
         return isRightCoralStation(pipe.id);
     }
     private static boolean isRightCoralStation(int pipeID) {
@@ -187,8 +183,11 @@ public class ScoreCoral extends AutoRoutine {
     private static final AutoQuestion<Optional<PipeConcept>> thirdCoralPipe = new AutoQuestion<Optional<PipeConcept>>("Score Third Pipe") {
         @Override
         protected Settings<Optional<PipeConcept>> generateSettings() {
-            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || !option.getValue().equals(Optional.of(firstCoralPipe.getResponse())) || !option.getValue().equals(secondCoralPipe.getResponse());
-            if (isRightCoralStation(firstCoralPipe.getResponse())) {
+            if (secondCoralPipe.getResponse().isEmpty()) {
+                return Settings.from(pipeOptionalOptions[12], pipeOptionalOptions[12]);
+            }
+            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || (!option.getValue().equals(Optional.of(firstCoralPipe.getResponse())) && !option.getValue().equals(secondCoralPipe.getResponse()));
+            if (isRightCoralStation(secondCoralPipe.getResponse().get())) {
                 var options = Stream.of(
                     pipeOptionalOptions[12],
                     pipeOptionalOptions[1],
@@ -241,8 +240,11 @@ public class ScoreCoral extends AutoRoutine {
     private static final AutoQuestion<Optional<PipeConcept>> fourthCoralPipe = new AutoQuestion<Optional<PipeConcept>>("Score Fourth Pipe") {
         @Override
         protected Settings<Optional<PipeConcept>> generateSettings() {
-            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || !option.getValue().equals(Optional.of(firstCoralPipe.getResponse())) || !option.getValue().equals(secondCoralPipe.getResponse()) || !option.getValue().equals(thirdCoralPipe.getResponse());
-            if (isRightCoralStation(firstCoralPipe.getResponse())) {
+            if (thirdCoralPipe.getResponse().isEmpty()) {
+                return Settings.from(pipeOptionalOptions[12], pipeOptionalOptions[12]);
+            }
+            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || (!option.getValue().equals(Optional.of(firstCoralPipe.getResponse())) && !option.getValue().equals(secondCoralPipe.getResponse()) && !option.getValue().equals(thirdCoralPipe.getResponse()));
+            if (isRightCoralStation(thirdCoralPipe.getResponse().get())) {
                 var options = Stream.of(
                     pipeOptionalOptions[12],
                     pipeOptionalOptions[1],
