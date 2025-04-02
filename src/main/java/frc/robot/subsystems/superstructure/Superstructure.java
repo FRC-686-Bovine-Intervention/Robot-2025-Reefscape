@@ -261,7 +261,7 @@ public class Superstructure extends SubsystemBase {
                     steps.add(
                         new SuperstructureStep(
                             SuperstructureState.fromParts(
-                                Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 75, 90)),
+                                Degrees.of(MathUtil.clamp(initialState.pivotAngle.in(Degrees), 75, 90)),
                                 initialState.elevatorLength,
                                 Degrees.of(90)
                             ),
@@ -273,7 +273,7 @@ public class Superstructure extends SubsystemBase {
                     steps.add(
                         new SuperstructureStep(
                             SuperstructureState.fromParts(
-                                Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 75, 90)),
+                                Degrees.of(MathUtil.clamp(initialState.pivotAngle.in(Degrees), 75, 90)),
                                 setpoint.elevatorLength,
                                 Degrees.of(90)
                             ),
