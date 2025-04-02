@@ -16,6 +16,7 @@ import frc.robot.constants.FieldConstants.Reef.Level;
 import frc.robot.constants.FieldConstants.Reef.Rack;
 import frc.robot.constants.FieldConstants.Reef.Side;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgae;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedTotalState;
@@ -157,7 +158,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             if (algaeIntake.isEmpty()) {
                 intakeTargetPose = Optional.empty();
                 intakeTargetDirection = Direction.Forward;
-                intakeTargetState = SuperstructureState.defense;
+                intakeTargetState = SuperstructureConstants.climbingState;
             } else {
                 var stagedAlgae = algaeIntake.get();
                 final var totalState = stagedAlgae.totalState.getOurs();
