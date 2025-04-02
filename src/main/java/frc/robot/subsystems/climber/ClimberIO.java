@@ -18,9 +18,11 @@ public interface ClimberIO {
 
     public default void updateInputs(ClimberIOInputs inputs) {}
 
-    public default void setVoltage(Measure<VoltageUnit> voltage) {}
+    public default void setVoltage(Measure<VoltageUnit> voltage, boolean brakeMode) {}
 
     public default void setRatchetServoAngle(Measure<AngleUnit> angle) {}
 
-    public default void setAngle(Measure<AngleUnit> angle) {}
+    public default void setNonClimbingAngle(Measure<AngleUnit> angle) {}
+
+    public default void setClimbingAngle(Measure<AngleUnit> angle) {}
 }

@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -39,22 +40,36 @@ public class ClimberIOFalcon implements ClimberIO {
 
     private final VoltageOut voltageRequest = new VoltageOut(0);
 
-    private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
+    private final MotionMagicVoltage nonClimbingPositionRequest = new MotionMagicVoltage(0).withSlot(0);
+    private final MotionMagicVoltage climbingPositionRequest = new MotionMagicVoltage(0).withSlot(1).withOverrideBrakeDurNeutral(true);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Climber/Profile",
         RotationsPerSecond.of(3),
         RotationsPerSecondPerSecond.of(6)
     );
-    private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
-        "Climber/FF",
+    private static final LoggedTunableFF nonClimbingFFConsts = new LoggedTunableFF(
+        "Climber/Nonclimbing/FF",
         0,
         0,
         0,
         0
     );
-    private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
-        "Climber/PID",
-        4,
+    private static final LoggedTunablePID nonClimbingPIDConsts = new LoggedTunablePID(
+        "Climber/Nonclimbing/PID",
+        8,
+        0,
+        0
+    );
+    private static final LoggedTunableFF climbingFFConsts = new LoggedTunableFF(
+        "Climber/Climbing/FF",
+        0,
+        0,
+        0,
+        0
+    );
+    private static final LoggedTunablePID climbingPIDConsts = new LoggedTunablePID(
+        "Climber/Climbing/PID",
+        8,
         0,
         0
     );
@@ -80,12 +95,16 @@ public class ClimberIOFalcon implements ClimberIO {
         ;
 
         profileConsts.update(motorConfig.MotionMagic);
-        ffConsts.update(motorConfig.Slot0);
-        pidConsts.update(motorConfig.Slot0);
+        nonClimbingFFConsts.update(motorConfig.Slot0);
+        nonClimbingPIDConsts.update(motorConfig.Slot0);
+        climbingFFConsts.update(motorConfig.Slot1);
+        climbingPIDConsts.update(motorConfig.Slot1);
 
         profileConsts.hasChanged(hashCode());
-        ffConsts.hasChanged(hashCode());
-        pidConsts.hasChanged(hashCode());
+        nonClimbingFFConsts.hasChanged(hashCode());
+        nonClimbingPIDConsts.hasChanged(hashCode());
+        climbingFFConsts.hasChanged(hashCode());
+        climbingPIDConsts.hasChanged(hashCode());
 
         motor.getConfigurator().apply(motorConfig);
 
@@ -119,7 +138,7 @@ public class ClimberIOFalcon implements ClimberIO {
         inputs.sensor = sensor.get() ^ ClimberConstants.climberSensorInverted;
 
         voltageRequest.withLimitReverseMotion(inputs.sensor);
-        positionRequest.withLimitReverseMotion(inputs.sensor);
+        nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
@@ -128,11 +147,19 @@ public class ClimberIOFalcon implements ClimberIO {
             motor.getConfigurator().apply(config);
         }
 
-        if (ffConsts.hasChanged(hashCode()) | pidConsts.hasChanged(hashCode())) {
+        if (nonClimbingFFConsts.hasChanged(hashCode()) | nonClimbingPIDConsts.hasChanged(hashCode())) {
             var config = new Slot0Configs();
             motor.getConfigurator().refresh(config);
-            ffConsts.update(config);
-            pidConsts.update(config);
+            nonClimbingFFConsts.update(config);
+            nonClimbingPIDConsts.update(config);
+            motor.getConfigurator().apply(config);
+        }
+
+        if (climbingFFConsts.hasChanged(hashCode()) | climbingPIDConsts.hasChanged(hashCode())) {
+            var config = new Slot1Configs();
+            motor.getConfigurator().refresh(config);
+            climbingFFConsts.update(config);
+            climbingPIDConsts.update(config);
             motor.getConfigurator().apply(config);
         }
 
@@ -145,8 +172,8 @@ public class ClimberIOFalcon implements ClimberIO {
     }
 
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage) {
-        motor.setControl(voltageRequest.withOutput(voltage.in(Volts)));
+    public void setVoltage(Measure<VoltageUnit> voltage, boolean brakeMode) {
+        motor.setControl(voltageRequest.withOutput(voltage.in(Volts)).withOverrideBrakeDurNeutral(brakeMode));
     }
 
     @Override
@@ -155,7 +182,12 @@ public class ClimberIOFalcon implements ClimberIO {
     }
 
     @Override
-    public void setAngle(Measure<AngleUnit> angle){
-        motor.setControl(positionRequest.withPosition(angle.in(Rotations)));
+    public void setNonClimbingAngle(Measure<AngleUnit> angle) {
+        motor.setControl(nonClimbingPositionRequest.withPosition(angle.in(Rotations)));
+    }
+
+    @Override
+    public void setClimbingAngle(Measure<AngleUnit> angle) {
+        motor.setControl(climbingPositionRequest.withPosition(angle.in(Rotations)));
     }
 }

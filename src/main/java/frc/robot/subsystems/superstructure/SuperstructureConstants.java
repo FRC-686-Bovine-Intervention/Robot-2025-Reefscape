@@ -11,7 +11,6 @@ import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
-import frc.robot.subsystems.superstructure.wrist.WristConstants;
 
 public class SuperstructureConstants {
     public static final Transform2d coralScoringForwardTransform = new Transform2d(
@@ -75,13 +74,13 @@ public class SuperstructureConstants {
         Degrees.of(110)
     );
     public static final SuperstructureState climbingState = SuperstructureState.fromParts(
-        Degrees.of(100),
+        Degrees.of(105),
         ElevatorConstants.minLengthPhysical,
-        Degrees.of(120)
+        Degrees.of(180)
     );
     public static final SuperstructureState prepareClimbingState = SuperstructureState.fromParts(
         Degrees.of(90),
         ElevatorConstants.minLengthPhysical,
-        WristConstants.minAngle
+        Degrees.of(-10)
     );
 }
