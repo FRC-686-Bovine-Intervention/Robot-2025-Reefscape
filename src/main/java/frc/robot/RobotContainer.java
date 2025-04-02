@@ -453,13 +453,13 @@ public class RobotContainer {
         final Command coralScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand[] branchCommands = Arrays.stream(BranchLevel.values()).map((level) -> level.scoringSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state))).toArray(RobotFlippedCommand[]::new);
-                private final Command level1 = Commands.none();
+                private final RobotFlippedCommand level1Command = Reef.level1SuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
                     if (scoreCoralObjective.branchLevel.isPresent()) {
                         return branchCommands[scoreCoralObjective.branchLevel.get().ordinal()].get(scoreCoralObjective.getTargetDirection());
                     } else {
-                        return level1;
+                        return level1Command.get(scoreCoralObjective.getTargetDirection());
                     }
                 }
             },
