@@ -5,13 +5,11 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -57,6 +55,7 @@ import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
@@ -309,8 +308,9 @@ public class RobotContainer {
 
         // superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
         // superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
-        superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.idle));
+        superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());
+        climber.setDefaultCommand(climber.idle());
         // SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
         // SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
@@ -394,7 +394,7 @@ public class RobotContainer {
             Set.of(superstructure, intake)
         )); //Intake
         driveController.a().whileTrue(intake.eject()); //Eject
-        driveController.y().toggleOnTrue(superstructure.defense()); //Defense
+        driveController.y().toggleOnTrue(superstructure.goToSetpointSequenced(SuperstructureConstants.defenseState)); //Defense
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
             private final Command coralCommand = new ContinuouslySwappingCommand( //Extend
                 new Supplier<Command>() {
@@ -470,18 +470,18 @@ public class RobotContainer {
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
-                superstructure.prepareClimb()
-            )
-        ); //Start Climb
-        driveController.back().toggleOnTrue(
-            Commands.parallel(
-                superstructure.climb(),
-                Commands.sequence(
-                    climber.climb().until(() -> superstructure.pivot.getAngle().lt(Degrees.of(21))),
-                    climber.hold()
-                )
+                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState)
             )
         );
+        driveController.back().toggleOnTrue(
+            Commands.parallel(
+                climber.climb(),
+                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
+            )
+        );
+        // driveController.start().toggleOnTrue(
+        //     climber.engageRatchet()
+        // );
         
         driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())).ignoringDisable(true));
 
