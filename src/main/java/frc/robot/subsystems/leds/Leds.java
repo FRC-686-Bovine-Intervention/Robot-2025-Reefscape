@@ -59,7 +59,7 @@ public class Leds extends VirtualSubsystem {
         var coralColor = Color.kGreen;
         var algaeColor = Color.kGreenYellow;
         var climbingColor = Color.kTeal;
-        var level4Color = Color.kLimeGreen;
+        var level4Color = Color.kGreen;
         var level3Color = Color.kGreenYellow;
         var level2Color = Color.kYellow;
         var level1Color = Color.kRed;
@@ -67,7 +67,7 @@ public class Leds extends VirtualSubsystem {
         autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) + (pos * 4)), InterpolationFunction.linear.gradient(Color.kBlue, Color.kYellow));
         autonomousFinishedAnimation = new AutonomousFinishedAnimation(sideStrips, hardwareStrip);
         estopped = new FillAnimation(hardwareStrip, Color.kRed);
-        allianceColorAnimation = new AllianceColorAnimation(fullSideStrips, Color.kFirstBlue, Color.kFirstRed);
+        allianceColorAnimation = new AllianceColorAnimation(fullSideStrips, Color.kFirstBlue, Color.kRed);
         driverStationConnection = new StatusLightAnimation(sideStrips.substrip(0, 2), Color.kOrange, Color.kGreen);
         flAprilConnection = new StatusLightAnimation(leftStrip.substrip(3, 4), Color.kOrange, Color.kGreen);
         blAprilConnection = new StatusLightAnimation(leftStrip.substrip(2, 3), Color.kOrange, Color.kGreen);
