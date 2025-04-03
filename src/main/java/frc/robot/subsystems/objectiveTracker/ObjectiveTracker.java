@@ -216,8 +216,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
         if (inputs.coralGoal != -1) {
             if (inputs.coralGoal >= 36) {
-                System.out.println((inputs.coralGoal - 36) / 2);
-                selectedCoralGoal = Map.entry(CoralGoal.LEVEL1, (inputs.coralGoal - 36) / 2);
+                selectedCoralGoal = Map.entry(CoralGoal.LEVEL1, inputs.coralGoal - 36);
             } else {
                 selectedCoralGoal = Map.entry(CoralGoal.BRANCH, inputs.coralGoal);
             }
@@ -231,7 +230,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         io.setMode(mode.ordinal());
         switch (selectedCoralGoal.getKey()) {
             case LEVEL1:
-                io.setCoralGoal(selectedCoralGoal.getValue() * 2 + 36);
+                io.setCoralGoal(selectedCoralGoal.getValue() + 36);
                 break;
             case BRANCH:
                 io.setCoralGoal(selectedCoralGoal.getValue());
