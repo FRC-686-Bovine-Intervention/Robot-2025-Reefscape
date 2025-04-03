@@ -179,34 +179,6 @@ public class Superstructure extends SubsystemBase {
         };
     }
 
-    public Command idle() {
-        return goToSetpointSequenced(SuperstructureState.idle);
-    }
-
-    public Command defense() {
-        return goToSetpointSequenced(SuperstructureState.defense);
-    }
-
-    public Command prepareClimb() {
-        return goToSetpointSequenced(SuperstructureState.climb);
-    }
-
-    public Command climb() {
-        var subsystem = this;
-        return new Command() {
-            {
-                addRequirements(subsystem);
-                setName("Climb");
-            }
-            @Override
-            public void execute() {
-                pivot.setCoastMode();
-                elevator.setLength(ElevatorConstants.minLengthPhysical);
-                wrist.setAngle(Degrees.of(0));
-            }
-        };
-    }
-
     public Command goToSetpoint(SuperstructureState setpoint) {
         var subsystem = this;
         return new Command() {
@@ -370,22 +342,6 @@ public class Superstructure extends SubsystemBase {
         public final Angle pivotAngle;
         public final Distance elevatorLength;
         public final Angle wristAngle;
-
-        public static final SuperstructureState idle = SuperstructureState.fromParts(
-            Degrees.of(70),
-            ElevatorConstants.minLengthPhysical,
-            Degrees.of(90)
-        );
-        public static final SuperstructureState defense = SuperstructureState.fromParts(
-            PivotConstants.minAngle,
-            ElevatorConstants.minLengthPhysical,
-            Degrees.of(110)
-        );
-        public static final SuperstructureState climb = fromParts(
-            Degrees.of(90),
-            ElevatorConstants.minLengthPhysical,
-            Degrees.of(90)
-        );
 
         private SuperstructureState(Angle pivotAngle, Distance elevatorLength, Angle wristAngle) {
             this.pivotAngle = pivotAngle;
@@ -594,11 +550,10 @@ public class Superstructure extends SubsystemBase {
             return backward;
         }
         public SuperstructureState get(Direction direction) {
-            switch (direction) {
-                default:
-                case Forward:   return getForward();
-                case Backward:  return getBackward();
-            }
+            return switch (direction) {
+                case Forward -> getForward();
+                case Backward -> getBackward();
+            };
         }
 
         public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {

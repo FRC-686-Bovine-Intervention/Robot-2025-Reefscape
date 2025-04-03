@@ -53,8 +53,10 @@ public class AutoManager extends VirtualSubsystem {
             .alongWith(Commands.runOnce(() -> {
                 GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.clear();
                 GameState.getInstance().AUTONOMOUS_ALLOTTED_TIMESTAMP.set(Timer.getTimestamp() + AutoConstants.allottedAutoTime.in(Seconds));
+                Leds.getInstance().autonomousRunningAnimation.setFlag(true);
             }))
             .finallyDo((interrupted) -> {
+                Leds.getInstance().autonomousRunningAnimation.setFlag(false);
                 GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.set();
                 var autoTime = GameState.getInstance().BEGIN_ENABLE.getTimeSince();
                 var overrun = autoTime > AutoConstants.allottedAutoTime.in(Seconds);

@@ -5,6 +5,9 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,7 +30,6 @@ import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
-import frc.util.flipping.AllianceFlippable;
 import frc.util.flipping.AllianceFlipped;
 
 public final class FieldConstants {
@@ -44,8 +46,6 @@ public final class FieldConstants {
         }
         apriltagLayout = a;
     }
-
-    public static final AllianceFlipped<Rotation2d> netForwardRotation = AllianceFlipped.fromBlue(Rotation2d.kZero);
 
     public static final class Coral {
         public static final Distance length = Inches.of(11.875);
@@ -140,147 +140,6 @@ public final class FieldConstants {
     }
 
     public static final class Reef {
-        public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
-        public static final AllianceFlipped<Translation2d> reefCenter = AllianceFlipped.fromBlue(
-            new Translation2d(
-                Meters.of(4.489325),
-                Meters.of(4.025877)
-            )
-        );
-
-        public static final AllianceFlipped<ReefObject> reefs = AllianceFlipped.fromBlue(new ReefObject(new Pose2d(reefCenter.getBlue(), Rotation2d.kZero)));
-
-        public static final class ReefObject implements AllianceFlippable<ReefObject> {
-            public final Pose2d reefCenter;
-
-            public final RackObject[] racks = new RackObject[6];
-            public final StagedAlgaeObject[] stagedAlgae = new StagedAlgaeObject[6];
-            public final PipeObject[] pipes = new PipeObject[12];
-            public final BranchObject[] branches = new BranchObject[36];
-
-            private ReefObject(Pose2d reefCenter) {
-                this.reefCenter = reefCenter;
-
-                var rackDelta = Rotation2d.fromDegrees(60);
-                for (int rackIndex = 0; rackIndex < 6; rackIndex++) {
-                    var rack = new RackObject(
-                        new Pose2d(
-                            reefCenter.getTranslation(),
-                            reefCenter.getRotation().plus(rackDelta.times(rackIndex))
-                        ),
-                        rackIndex
-                    );
-                    racks[rackIndex] = rack;
-
-                    for (var side : Side.values()) {
-                        var pipe = new PipeObject(rack, side);
-                        pipes[rackIndex * 2 + side.ordinal()] = pipe;
-
-                        for (var level : BranchLevel.values()) {
-                            var branch = new BranchObject(pipe, level);
-                            branches[level.ordinal() * 12 + rackIndex * 2 + side.ordinal()] = branch;
-                        }
-                    }
-
-                    stagedAlgae[rackIndex] = new StagedAlgaeObject(rack, StagedAlgaeLevel.values()[rackIndex % 2]);
-                }
-            }
-
-            @Override
-            public ReefObject flip(FieldFlipType flipType) {
-                return new ReefObject(AllianceFlipUtil.flip(this.reefCenter, flipType));
-            }
-        }
-
-        public static final class RackObject {
-            public static final Transform2d robotTransform = new Transform2d(
-                new Translation2d(
-                    minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                    Meters.zero()
-                ),
-                Rotation2d.kZero
-            );
-
-            public final int id;
-
-            public final Pose2d intersectionPose;
-            public final RobotFlippedRobotPose centerRobotPose;
-
-            private RackObject(Pose2d intersectionPose, int id) {
-                this.intersectionPose = intersectionPose;
-                this.centerRobotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.intersectionPose.transformBy(robotTransform));
-                this.id = id;
-            }
-        }
-        public static final class RackConcept extends AllianceFlipped<RackObject> {
-            public final int id;
-
-            private RackConcept(int id, AllianceFlipped<RackObject> rackObjects) {
-                super(rackObjects.getBlue(), rackObjects.getRed());
-                this.id = id;
-            }
-        }
-
-        public static enum Side {
-            Left(Meters.of(+0.164309)),
-            Right(Meters.of(-0.164309)),
-            ;
-            private final Transform2d pipeCenterTransform;
-            Side(Distance yOffset) {
-                this.pipeCenterTransform = new Transform2d(
-                    new Translation2d(
-                        Meters.of(0.526750).unaryMinus(),
-                        yOffset
-                    ),
-                    Rotation2d.kZero
-                );
-            }
-        }
-
-        public static final class PipeObject {
-            public final RackObject rack;
-            public final Side side;
-            public final int id;
-
-            public final Pose2d pipeCenterPose;
-            public final RobotFlippedRobotPose robotPose;
-
-            private PipeObject(RackObject rack, Side side) {
-                this.rack = rack;
-                this.side = side;
-                this.id = this.rack.id * 2 + this.side.ordinal();
-
-                this.pipeCenterPose = this.rack.intersectionPose.transformBy(this.side.pipeCenterTransform);
-                this.robotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.pipeCenterPose.transformBy(new Transform2d(
-                    new Translation2d(
-                        Meters.of(0.304987).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                        Meters.zero()
-                    ),
-                    Rotation2d.kZero
-                )));
-            }
-
-            public String getLetter() {
-                return Character.toString('A' + id);
-            }
-        }
-        public static final class PipeConcept extends AllianceFlipped<PipeObject> {
-            public final RackConcept rack;
-            public final Side side;
-            public final int id;
-
-            private PipeConcept(RackConcept rack, Side side, AllianceFlipped<PipeObject> pipeObjects) {
-                super(pipeObjects.getBlue(), pipeObjects.getRed());
-                this.rack = rack;
-                this.side = side;
-                this.id = this.rack.id * 2 + this.side.ordinal();
-            }
-
-            public String getLetter() {
-                return Character.toString('A' + id);
-            }
-        }
-
         public static final RobotFlippedSuperstructureState level1SuperstructureStates = RobotFlippedSuperstructureState.fromForwardOnly(
             SuperstructureState.fromCoralTipRobotSpace(
                 new Pose2d(
@@ -298,7 +157,7 @@ public final class FieldConstants {
                     SuperstructureState.fromCoralTipRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(1)),
+                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
                                 Meters.of(0.792953).plus(Inches.of(5))
                             ),
                             Rotation2d.fromDegrees(-15)
@@ -311,7 +170,7 @@ public final class FieldConstants {
                     SuperstructureState.fromCoralTipRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(1)),
+                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
                                 Meters.of(1.196053).plus(Inches.of(5))
                             ),
                             Rotation2d.fromDegrees(-15)
@@ -350,6 +209,188 @@ public final class FieldConstants {
                     )
                 );
                 this.scoringSuperstructureStates = scoringSuperstructureStates;
+            }
+        }
+
+        public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
+        public static final AllianceFlipped<Translation2d> reefCenter = AllianceFlipped.fromBlue(
+            new Translation2d(
+                Meters.of(4.489325),
+                Meters.of(4.025877)
+            )
+        );
+
+        public static final AllianceFlipped<ReefObject> reefs = reefCenter.map((center) -> new ReefObject(new Pose2d(center, Rotation2d.kZero)));
+
+        public static final class ReefObject {
+            public final RackObject[] racks;
+            public final StagedAlgaeObject[] stagedAlgae;
+            public final PipeObject[] pipes;
+            public final BranchObject[] branches;
+
+            private ReefObject(Pose2d reefCenter) {
+                var rackDelta = Rotation2d.fromDegrees(60);
+                this.racks = IntStream.range(0, 6)
+                    .mapToObj((id) ->
+                        new RackObject(
+                            new Pose2d(
+                                reefCenter.getTranslation(),
+                                reefCenter.getRotation().plus(rackDelta.times(id))
+                            ),
+                            id,
+                            StagedAlgaeLevel.values()[id % 2]
+                        )
+                    )
+                    .toArray(RackObject[]::new)
+                ;
+                this.stagedAlgae = Arrays.stream(this.racks)
+                    .map((rack) -> rack.stagedAlgae)
+                    .toArray(StagedAlgaeObject[]::new)
+                ;
+                this.pipes = Arrays.stream(this.racks)
+                    .flatMap((rack) -> Arrays.stream(rack.pipes))
+                    .toArray(PipeObject[]::new)
+                ;
+                this.branches = Arrays.stream(BranchLevel.values())
+                    .flatMap((level) -> Arrays.stream(this.pipes).map((pipe) -> pipe.getBranch(level)))
+                    .toArray(BranchObject[]::new)
+                ;
+            }
+        }
+
+        public static final class RackObject {
+            public static final Transform2d robotTransform = new Transform2d(
+                new Translation2d(
+                    minimumReefRadius.plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                    Meters.zero()
+                ),
+                Rotation2d.kZero
+            );
+
+            public final int id;
+
+            public final Pose2d intersectionPose;
+            public final RobotFlippedRobotPose centerRobotPose;
+            public final RobotFlippedTotalState level1ScoringTotalState;
+
+            public final PipeObject[] pipes;
+            public final StagedAlgaeObject stagedAlgae;
+
+            private RackObject(Pose2d intersectionPose, int id, StagedAlgaeLevel algaeLevel) {
+                this.id = id;
+                this.intersectionPose = intersectionPose;
+                this.centerRobotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.intersectionPose.transformBy(robotTransform));
+                this.level1ScoringTotalState = RobotFlippedTotalState.combine(this.centerRobotPose, level1SuperstructureStates);
+
+                this.pipes = Arrays.stream(Side.values())
+                    .map((side) -> new PipeObject(this, side))
+                    .toArray(PipeObject[]::new)
+                ;
+
+                this.stagedAlgae = new StagedAlgaeObject(this, algaeLevel);
+            }
+
+            public PipeObject getPipe(Side side) {
+                return this.pipes[side.ordinal()];
+            }
+        }
+        public static final class RackConcept extends AllianceFlipped<RackObject> {
+            public final int id;
+
+            public final PipeConcept[] pipes;
+            public final StagedAlgaeConcept stagedAlgae;
+
+            private RackConcept(int id, StagedAlgaeLevel algaeLevel, AllianceFlipped<RackObject> rackObjects) {
+                super(rackObjects.getBlue(), rackObjects.getRed());
+                this.id = id;
+
+                this.pipes = Arrays.stream(Side.values())
+                    .map((side) -> new PipeConcept(this, side, rackObjects.map((rack) -> rack.getPipe(side))))
+                    .toArray(PipeConcept[]::new)
+                ;
+                this.stagedAlgae = new StagedAlgaeConcept(this, algaeLevel, rackObjects.map((rack) -> rack.stagedAlgae));
+            }
+        }
+
+        public static enum Side {
+            Left(Meters.of(+0.164309)),
+            Right(Meters.of(-0.164309)),
+            ;
+            private final Transform2d pipeCenterTransform;
+            Side(Distance yOffset) {
+                this.pipeCenterTransform = new Transform2d(
+                    new Translation2d(
+                        Meters.of(0.526750).unaryMinus(),
+                        yOffset
+                    ),
+                    Rotation2d.kZero
+                );
+            }
+        }
+
+        public static final class PipeObject {
+            public final RackObject rack;
+            public final Side side;
+            public final int id;
+
+            public final Pose2d pipeCenterPose;
+            public final RobotFlippedRobotPose robotPose;
+
+            public final BranchObject[] branches;
+
+            private PipeObject(RackObject rack, Side side) {
+                this.rack = rack;
+                this.side = side;
+                this.id = this.rack.id * 2 + this.side.ordinal();
+
+                this.pipeCenterPose = this.rack.intersectionPose.transformBy(this.side.pipeCenterTransform);
+                this.robotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.pipeCenterPose.transformBy(new Transform2d(
+                    new Translation2d(
+                        Meters.of(0.304987).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                        Meters.zero()
+                    ),
+                    Rotation2d.kZero
+                )));
+
+                this.branches = Arrays.stream(BranchLevel.values())
+                    .map((level) -> new BranchObject(this, level))
+                    .toArray(BranchObject[]::new)
+                ;
+            }
+
+            public String getLetter() {
+                return Character.toString('A' + id);
+            }
+
+            public BranchObject getBranch(BranchLevel branchLevel) {
+                return this.branches[branchLevel.ordinal()];
+            }
+        }
+        public static final class PipeConcept extends AllianceFlipped<PipeObject> {
+            public final RackConcept rack;
+            public final Side side;
+            public final int id;
+
+            public final BranchConcept[] branches;
+
+            private PipeConcept(RackConcept rack, Side side, AllianceFlipped<PipeObject> pipeObjects) {
+                super(pipeObjects.getBlue(), pipeObjects.getRed());
+                this.rack = rack;
+                this.side = side;
+                this.id = this.rack.id * 2 + this.side.ordinal();
+
+                this.branches = Arrays.stream(BranchLevel.values())
+                    .map((level) -> new BranchConcept(this, level, pipeObjects.map((pipe) -> pipe.getBranch(level))))
+                    .toArray(BranchConcept[]::new)
+                ;
+            }
+
+            public String getLetter() {
+                return Character.toString('A' + id);
+            }
+
+            public BranchConcept getBranch(BranchLevel branchLevel) {
+                return branches[branchLevel.ordinal()];
             }
         }
         
@@ -453,28 +494,28 @@ public final class FieldConstants {
         public static final StagedAlgaeConcept[] stagedAlgae;
 
         static {
-            racks = new RackConcept[6];
-            pipes = new PipeConcept[12];
-            branches = new BranchConcept[36];
-            stagedAlgae = new StagedAlgaeConcept[6];
-            for (int rackIndex = 0; rackIndex < 6; rackIndex++) {
-                var rack = new RackConcept(rackIndex, new AllianceFlipped<RackObject>(reefs.getBlue().racks[rackIndex], reefs.getRed().racks[rackIndex]));
-                racks[rackIndex] = rack;
-
-                for (var side : Side.values()) {
-                    var pipeIndex = rackIndex * 2 + side.ordinal();
-                    var pipe = new PipeConcept(rack, side, new AllianceFlipped<PipeObject>(reefs.getBlue().pipes[pipeIndex], reefs.getRed().pipes[pipeIndex]));
-                    pipes[pipeIndex] = pipe;
-
-                    for (var level : BranchLevel.values()) {
-                        var branchIndex = level.ordinal() * 12 + pipe.id;
-                        var branch = new BranchConcept(pipe, level, new AllianceFlipped<BranchObject>(reefs.getBlue().branches[branchIndex], reefs.getRed().branches[branchIndex]));
-                        branches[branchIndex] = branch;
-                    }
-                }
-
-                stagedAlgae[rackIndex] = new StagedAlgaeConcept(rack, StagedAlgaeLevel.values()[rackIndex % 2], new AllianceFlipped<StagedAlgaeObject>(reefs.getBlue().stagedAlgae[rackIndex], reefs.getRed().stagedAlgae[rackIndex]));
-            }
+            racks = IntStream.range(0, 6)
+                .mapToObj((id) ->
+                    new RackConcept(
+                        id,
+                        StagedAlgaeLevel.values()[id % 2],
+                        reefs.map((reef) -> reef.racks[id])
+                    )
+                )
+                .toArray(RackConcept[]::new)
+            ;
+            stagedAlgae = Arrays.stream(racks)
+                .map((rack) -> rack.stagedAlgae)
+                .toArray(StagedAlgaeConcept[]::new)
+            ;
+            pipes = Arrays.stream(racks)
+                .flatMap((rack) -> Arrays.stream(rack.pipes))
+                .toArray(PipeConcept[]::new)
+            ;
+            branches = Arrays.stream(BranchLevel.values())
+                .flatMap((level) -> Arrays.stream(pipes).map((pipe) -> pipe.getBranch(level)))
+                .toArray(BranchConcept[]::new)
+            ;
         }
     }
 
@@ -495,38 +536,34 @@ public final class FieldConstants {
     }
 
     public static final class Barge {
-        private final static Pose2d bargeMidpoint = new Pose2d(
+        private static final AllianceFlipped<Translation2d> bargeLeftMidpoint = AllianceFlipped.fromBlue(new Translation2d(
+            fieldLength.div(2),
+            Meters.of(6.7143249)
+        ));
+        private static final AllianceFlipped<Translation2d> bargeCenterMidpoint = AllianceFlipped.fromBlue(new Translation2d(
+            fieldLength.div(2),
+            Meters.of(5.6237251)
+        ));
+        private static final AllianceFlipped<Translation2d> bargeRightMidpoint = AllianceFlipped.fromBlue(new Translation2d(
+            fieldLength.div(2),
+            Meters.of(4.5331253)
+        ));
+        private static final AllianceFlipped<Rotation2d> netForwardRotation = new AllianceFlipped<>(Rotation2d.kZero, Rotation2d.k180deg);
+        private static final AllianceFlipped<Rotation2d> netBackwardRotation = new AllianceFlipped<>(Rotation2d.k180deg, Rotation2d.kZero);
+        private static final Transform2d netScoringTransform = new Transform2d(
             new Translation2d(
-                Meters.of(8.774113),
-                Meters.of(6.130925).minus(Meters.of(1.0907522).div(2))
-            ),
-            Rotation2d.kZero
-        );
-        private final static Transform2d bargeRightScoringTransform = new Transform2d(
-            new Translation2d(
-                Inches.of(6).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                Meters.of(1.0907522).unaryMinus()
-            ),
-            Rotation2d.kZero
-        );
-        private final static Transform2d bargeCenterScoringTransform = new Transform2d(
-            new Translation2d(
-                Inches.of(6).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
+                Inches.of(34).unaryMinus(),
                 Meters.zero()
             ),
             Rotation2d.kZero
         );
-        private final static Transform2d bargeLeftScoringTransform = new Transform2d(
-            new Translation2d(
-                Inches.of(6).plus(RobotConstants.centerToFrontBumper).unaryMinus(),
-                Meters.of(1.0907522)
-            ),
-            Rotation2d.kZero
-        );
 
-        public static final AllianceFlipped<RobotFlippedRobotPose> rightBargePose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardPivotFlipped(bargeMidpoint.transformBy(bargeRightScoringTransform)));
-        public static final AllianceFlipped<RobotFlippedRobotPose> centerBargePose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardPivotFlipped(bargeMidpoint.transformBy(bargeCenterScoringTransform)));
-        public static final AllianceFlipped<RobotFlippedRobotPose> leftBargePose = AllianceFlipped.fromBlue(RobotFlippedRobotPose.fromForwardPivotFlipped(bargeMidpoint.transformBy(bargeLeftScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> frontLeftBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeLeftMidpoint.get(alliance), netForwardRotation.get(alliance)).transformBy(netScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> frontCenterBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeCenterMidpoint.get(alliance), netForwardRotation.get(alliance)).transformBy(netScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> frontRightBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeRightMidpoint.get(alliance), netForwardRotation.get(alliance)).transformBy(netScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> backLeftBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeLeftMidpoint.get(alliance), netBackwardRotation.get(alliance)).transformBy(netScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> backCenterBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeCenterMidpoint.get(alliance), netBackwardRotation.get(alliance)).transformBy(netScoringTransform)));
+        public static final AllianceFlipped<RobotFlippedRobotPose> backRightBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeRightMidpoint.get(alliance), netBackwardRotation.get(alliance)).transformBy(netScoringTransform)));
 
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardPivotFlipped(
             SuperstructureState.fromParts(
