@@ -216,17 +216,13 @@ public class Superstructure extends SubsystemBase {
                 var targetLow = setpoint.elevatorLength.lt(Inches.of(25));
                 var targetHigh = setpoint.elevatorLength.gt(Inches.of(45));
                 
-                var extending = setpoint.elevatorLength.gt(initialState.elevatorLength);
-                var elevatorMovingSignificant = !MeasureUtil.isNear(setpoint.elevatorLength, initialState.elevatorLength, Inches.of(36));
-                var wristDown = setpoint.wristAngle.lt(initialState.wristAngle.minus(Degrees.of(30)));
-
                 if (initialLow && initialWristUp) { // Remove Coral from station
                     steps.add(
                         new SuperstructureStep(
-                            SuperstructureState.fromParts(
+                            SuperstructureState.newConstrained(
                                 Degrees.of(60),
                                 ElevatorConstants.minLengthPhysical,
-                                initialState.wristAngle.plus(initialState.pivotAngle)
+                                initialState.wristAngle
                             ),
                             Degrees.of(7.5),
                             Inches.of(5),
@@ -239,9 +235,9 @@ public class Superstructure extends SubsystemBase {
                     steps.add(
                         new SuperstructureStep(
                             SuperstructureState.fromParts(
-                                Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 85, 95)),
+                                Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 30, 110)),
                                 initialState.elevatorLength,
-                                Degrees.of(90)
+                                Degrees.of(MathUtil.clamp(setpoint.wristAngle.in(Degrees), 80, 90))
                             ),
                             Degrees.of(10),
                             Inches.of(10),
@@ -251,9 +247,9 @@ public class Superstructure extends SubsystemBase {
                     steps.add(
                         new SuperstructureStep(
                             SuperstructureState.fromParts(
-                                Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 85, 95)),
+                                Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 30, 110)),
                                 setpoint.elevatorLength,
-                                Degrees.of(90)
+                                Degrees.of(MathUtil.clamp(setpoint.wristAngle.in(Degrees), 80, 90))
                             ),
                             Degrees.of(10),
                             Inches.of(5),
@@ -266,7 +262,7 @@ public class Superstructure extends SubsystemBase {
                     steps.add(
                         new SuperstructureStep(
                             SuperstructureState.fromParts(
-                                Degrees.of(90),
+                                Degrees.of(MathUtil.clamp(initialState.pivotAngle.in(Degrees), 75, 90)),
                                 initialState.elevatorLength,
                                 Degrees.of(90)
                             ),
@@ -278,7 +274,7 @@ public class Superstructure extends SubsystemBase {
                     steps.add(
                         new SuperstructureStep(
                             SuperstructureState.fromParts(
-                                Degrees.of(90),
+                                Degrees.of(MathUtil.clamp(initialState.pivotAngle.in(Degrees), 75, 90)),
                                 setpoint.elevatorLength,
                                 Degrees.of(90)
                             ),
