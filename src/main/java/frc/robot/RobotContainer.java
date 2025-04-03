@@ -169,8 +169,8 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOSim()),
                     new Wrist(new WristIOSim())
                 );
-                // intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
-                intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
+                intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                // intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
                 climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
