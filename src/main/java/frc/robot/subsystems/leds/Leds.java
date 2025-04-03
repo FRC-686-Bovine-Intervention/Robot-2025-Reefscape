@@ -8,9 +8,12 @@ import frc.robot.constants.RobotConstants;
 import frc.util.VirtualSubsystem;
 import frc.util.led.animation.AllianceColorAnimation;
 import frc.util.led.animation.AutonomousFinishedAnimation;
+import frc.util.led.animation.BarAnimation;
 import frc.util.led.animation.FillAnimation;
 import frc.util.led.animation.FlashingAnimation;
 import frc.util.led.animation.StatusLightAnimation;
+import frc.util.led.animation.WaveAnimation;
+import frc.util.led.functions.Gradient;
 import frc.util.led.functions.InterpolationFunction;
 import frc.util.led.functions.WaveFunction;
 import frc.util.led.strips.hardware.AddressableStrip;
@@ -26,36 +29,64 @@ public class Leds extends VirtualSubsystem {
 
     public Leds() {
         System.out.println("[Init Leds] Instantiating Leds");
-        hardwareStrip = new AddressableStrip(HardwareDevices.ledPort, 57);
+        hardwareStrip = new AddressableStrip(HardwareDevices.ledPort, 29 + 22 + 29);
 
-        var rightStrip = hardwareStrip.substrip(0, 19);
-        var backStrip = hardwareStrip.substrip(19, 38);
-        var leftStrip = hardwareStrip.substrip(38, 57).reverse();
+        var rawLeftStrip = hardwareStrip.substrip(0, 29);
+        var rawBackStrip = hardwareStrip.substrip(29, 29+22);
+        var rawRightStrip = hardwareStrip.substrip(29+22, 29+22+29);
+
+        var rawBackLeftStrip = rawBackStrip.substrip(0, 11);
+        var rawBackRightStrip = rawBackStrip.substrip(11, 22);
+
+        var leftStrip = rawLeftStrip;
+        var rightStrip = rawRightStrip.reverse();
+        var backLeftStrip = rawBackLeftStrip;
+        var backRightStrip = rawBackRightStrip.reverse();
+        var backMirrorStrip = backLeftStrip.parallel(backRightStrip);
 
         var sideStrips = leftStrip.parallel(rightStrip);
-        var sideStripTips = sideStrips.substrip(15).concat(backStrip.substrip(5, 13));
-        
-        var backRightStrip = backStrip.substrip(0, 10);
-        var backLeftStrip = backStrip.substrip(9).reverse();
-        
+
         var fullLeftStrip = leftStrip.concat(backLeftStrip);
         var fullRightStrip = rightStrip.concat(backRightStrip);
         
         var fullSideStrips = fullLeftStrip.parallel(fullRightStrip);
 
-        estopped = new FillAnimation(hardwareStrip, Color.kRed);
-        allianceColorAnimation = new AllianceColorAnimation(fullSideStrips);
-        driverStationConnection = new StatusLightAnimation(sideStrips.substrip(0, 2), Color.kOrange, Color.kGreen);
-        lAprilConnection = new StatusLightAnimation(sideStrips.substrip(2, 3), Color.kOrange, Color.kGreen);
-        rAprilConnection = new StatusLightAnimation(sideStrips.substrip(3, 4), Color.kOrange, Color.kGreen);
-        nVisionConnection = new StatusLightAnimation(sideStrips.substrip(4, 5), Color.kOrange, Color.kGreen);
-        noteSecured = new FillAnimation(sideStripTips, Color.kGreen);
-        visionAcquired = new FillAnimation(sideStripTips, Color.kOrange);
-        visionLocked = new FillAnimation(sideStripTips, Color.kPurple);
-        defenseSpin = new FlashingAnimation(hardwareStrip, WaveFunction.Sinusoidal, InterpolationFunction.linear.gradient(Color.kBlack, Color.kYellow));
-        humanPlayerFlash = new FlashingAnimation(hardwareStrip, WaveFunction.Sawtooth, InterpolationFunction.linear.gradient(Color.kBlack, Color.kWhite));
-        noteAcquired = new FlashingAnimation(hardwareStrip, WaveFunction.Sawtooth, InterpolationFunction.linear.gradient(Color.kBlack, Color.kGreen));
+        var bottomSideStrip = sideStrips.substrip(0, 14);
+        var topSideStrip = fullSideStrips.substrip(14, 40);
+
+        var gamepieceSecuredStrip = sideStrips.substrip(24, 29).concat(backMirrorStrip.substrip(8, 11));
+
+        var coralColor = Color.kGreen;
+        var algaeColor = Color.kGreenYellow;
+        var climbingColor = Color.kTeal;
+        var level4Color = Color.kGreen;
+        var level3Color = Color.kGreenYellow;
+        var level2Color = Color.kYellow;
+        var level1Color = Color.kRed;
+
+        autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) + (pos * 4)), InterpolationFunction.linear.gradient(Color.kBlue, Color.kYellow));
         autonomousFinishedAnimation = new AutonomousFinishedAnimation(sideStrips, hardwareStrip);
+        estopped = new FillAnimation(hardwareStrip, Color.kRed);
+        allianceColorAnimation = new AllianceColorAnimation(fullSideStrips, Color.kFirstBlue, Color.kRed);
+        driverStationConnection = new StatusLightAnimation(sideStrips.substrip(0, 2), Color.kOrange, Color.kGreen);
+        flAprilConnection = new StatusLightAnimation(leftStrip.substrip(3, 4), Color.kOrange, Color.kGreen);
+        blAprilConnection = new StatusLightAnimation(leftStrip.substrip(2, 3), Color.kOrange, Color.kGreen);
+        frAprilConnection = new StatusLightAnimation(rightStrip.substrip(3, 4), Color.kOrange, Color.kGreen);
+        brAprilConnection = new StatusLightAnimation(rightStrip.substrip(2, 3), Color.kOrange, Color.kGreen);
+        questNavConnection = new StatusLightAnimation(sideStrips.substrip(4, 5), Color.kOrange, Color.kGreen);
+        coralSecured = new FillAnimation(gamepieceSecuredStrip, coralColor);
+        coralAcquired = new FlashingAnimation(fullSideStrips, WaveFunction.Sawtooth.frequency(5), InterpolationFunction.step.gradient(Color.kBlack, coralColor));
+        algaeSecured = new FillAnimation(gamepieceSecuredStrip, algaeColor);
+        algaeAcquired = new FlashingAnimation(fullSideStrips, WaveFunction.Sawtooth.frequency(5), InterpolationFunction.step.gradient(Color.kBlack, algaeColor));
+        prepareClimbing = new FlashingAnimation(fullSideStrips, WaveFunction.Sawtooth.frequency(1), InterpolationFunction.linear.gradient(Color.kBlack, climbingColor));
+        climbing = new BarAnimation(sideStrips.parallel(backMirrorStrip), InterpolationFunction.linear.gradient(Color.kBlack, climbingColor));
+        climbingComplete = new FlashingAnimation(fullSideStrips, WaveFunction.Modulo.frequency(0.5), Gradient.rainbow);
+        level4Targeted = new FillAnimation(bottomSideStrip, level4Color);
+        level3Targeted = new FillAnimation(bottomSideStrip, level3Color);
+        level2Targeted = new FillAnimation(bottomSideStrip, level2Color);
+        level1Targeted = new FillAnimation(bottomSideStrip, level1Color);
+        removeAlgae = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kGreenYellow));
+        goToOppositeSideOfReef = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kYellow));
 
         loadingNotifier = new Notifier(() -> {
             synchronized(this) {
@@ -77,19 +108,29 @@ public class Leds extends VirtualSubsystem {
         loadingNotifier.startPeriodic(RobotConstants.rioUpdatePeriodSecs);
     }
 
+    public final WaveAnimation autonomousRunningAnimation;
+    public final AutonomousFinishedAnimation autonomousFinishedAnimation;
     public final FillAnimation estopped;
     public final AllianceColorAnimation allianceColorAnimation;
     public final StatusLightAnimation driverStationConnection;
-    public final StatusLightAnimation lAprilConnection;
-    public final StatusLightAnimation rAprilConnection;
-    public final StatusLightAnimation nVisionConnection;
-    public final FlashingAnimation noteAcquired;
-    public final FillAnimation noteSecured;
-    public final FillAnimation visionAcquired;
-    public final FillAnimation visionLocked;
-    public final FlashingAnimation defenseSpin;
-    public final FlashingAnimation humanPlayerFlash;
-    public final AutonomousFinishedAnimation autonomousFinishedAnimation;
+    public final StatusLightAnimation flAprilConnection;
+    public final StatusLightAnimation frAprilConnection;
+    public final StatusLightAnimation blAprilConnection;
+    public final StatusLightAnimation brAprilConnection;
+    public final StatusLightAnimation questNavConnection;
+    public final FlashingAnimation coralAcquired;
+    public final FillAnimation coralSecured;
+    public final FlashingAnimation algaeAcquired;
+    public final FillAnimation algaeSecured;
+    public final FlashingAnimation prepareClimbing;
+    public final BarAnimation climbing;
+    public final FlashingAnimation climbingComplete;
+    public final FillAnimation level4Targeted;
+    public final FillAnimation level3Targeted;
+    public final FillAnimation level2Targeted;
+    public final FillAnimation level1Targeted;
+    public final FlashingAnimation removeAlgae;
+    public final FlashingAnimation goToOppositeSideOfReef;
 
     private int skippedFrames = 0;
     private static final int frameSkipAmount = 15;
@@ -97,11 +138,12 @@ public class Leds extends VirtualSubsystem {
     @Override
     public void periodic() {
         driverStationConnection.setStatus(DriverStation.isDSAttached());
+        estopped.setFlag(DriverStation.isEStopped());
     }
 
     @Override
     public synchronized void postCommandPeriodic() {
-        if(skippedFrames < frameSkipAmount) {
+        if (skippedFrames < frameSkipAmount) {
             skippedFrames++;
             return;
         }
@@ -110,23 +152,32 @@ public class Leds extends VirtualSubsystem {
         // Default alliance color scrolling
         allianceColorAnimation.apply();
 
-        if(DriverStation.isDisabled()) {
+        if (DriverStation.isDisabled()) {
             driverStationConnection.apply();
-            lAprilConnection.apply();
-            rAprilConnection.apply();
-            nVisionConnection.apply();
+            flAprilConnection.apply();
+            frAprilConnection.apply();
+            blAprilConnection.apply();
+            brAprilConnection.apply();
+            questNavConnection.apply();
+        } else {
+            level1Targeted.applyIfFlagged();
+            level2Targeted.applyIfFlagged();
+            level3Targeted.applyIfFlagged();
+            level4Targeted.applyIfFlagged();
+            removeAlgae.applyIfFlagged();
+            goToOppositeSideOfReef.applyIfFlagged();
         }
 
-        visionAcquired.applyIfFlagged();
-        visionLocked.applyIfFlagged();
-        noteSecured.applyIfFlagged();
+        coralSecured.applyIfFlagged();
+        coralAcquired.applyIfFlagged();
+        algaeSecured.applyIfFlagged();
+        algaeAcquired.applyIfFlagged();
 
-        defenseSpin.applyIfFlagged();
+        prepareClimbing.applyIfFlagged();
+        climbing.applyIfFlagged();
+        climbingComplete.applyIfFlagged();
 
-        humanPlayerFlash.applyIfFlagged();
-
-        noteAcquired.applyIfFlagged();
-
+        autonomousRunningAnimation.applyIfFlagged();
         autonomousFinishedAnimation.applyIfFlagged();
 
         estopped.applyIfFlagged();

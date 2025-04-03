@@ -11,12 +11,17 @@ import frc.util.led.strips.LEDStrip;
 
 public class AllianceColorAnimation {
     private final LEDStrip strip;
-    private final Gradient unknownGradient = new Gradient(InterpolationFunction.linear, Color.kBlue, Color.kRed);
-    private final Gradient blueGradient = new Gradient(InterpolationFunction.linear, Color.kBlue, Color.kBlack);
-    private final Gradient redGradient = new Gradient(InterpolationFunction.linear, Color.kRed, Color.kBlack);
+    // private static final Color blueAllianceColor = Color.kFirstBlue;
+    // private static final Color redAllianceColor = Color.kFirstRed;
+    private final Gradient unknownGradient;
+    private final Gradient blueGradient;
+    private final Gradient redGradient;
 
-    public AllianceColorAnimation(LEDStrip strip) {
+    public AllianceColorAnimation(LEDStrip strip, Color blueAllianceColor, Color redAllianceColor) {
         this.strip = strip;
+        this.unknownGradient = InterpolationFunction.linear.gradient(blueAllianceColor, redAllianceColor);
+        this.blueGradient = InterpolationFunction.linear.gradient(blueAllianceColor, Color.kBlack);
+        this.redGradient = InterpolationFunction.linear.gradient(redAllianceColor, Color.kBlack);
     }
 
     public void apply() {

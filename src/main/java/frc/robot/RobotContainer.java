@@ -15,11 +15,13 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
@@ -30,9 +32,9 @@ import frc.robot.auto.routines.ScoreCoral;
 import frc.robot.constants.FieldConstants.Barge;
 import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Processor;
-import frc.robot.constants.FieldConstants.Reef.AlgaeLevel;
-import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Rack;
+import frc.robot.constants.FieldConstants.Reef;
+import frc.robot.constants.FieldConstants.Reef.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIO;
@@ -49,11 +51,14 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOFalcon;
 import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
-import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIO;
-import frc.robot.subsystems.objectiveTracker.ObjectiveSelectorIOServer;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
+import frc.robot.subsystems.objectiveTracker.ObjectiveTracker.ObjectiveType;
+import frc.robot.subsystems.objectiveTracker.ReefTrackerIO;
+import frc.robot.subsystems.objectiveTracker.ReefTrackerIOServer;
 import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedCommand;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
@@ -129,23 +134,27 @@ public class RobotContainer {
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera),
+                        Leds.getInstance().flAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontRightApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontRightApriltagCamera),
+                        Leds.getInstance().frAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backLeftApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backLeftApriltagCamera),
+                        Leds.getInstance().blAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backRightApriltagCamera,
-                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera)
+                        new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.backRightApriltagCamera),
+                        Leds.getInstance().brAprilConnection
                     )
                 );
-                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S());
-                objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S(), Leds.getInstance().questNavConnection);
+                objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
             break;
             case SIM:
                 drive = new Drive(
@@ -159,11 +168,33 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOSim()),
                     new Wrist(new WristIOSim())
                 );
-                intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                // intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
                 climber = new Climber(new ClimberIO() {});
-                apriltagVision = new ApriltagVision();
-                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim());
-                objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIOServer());
+                apriltagVision = new ApriltagVision(
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontLeftApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().flAprilConnection
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.frontRightApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().frAprilConnection
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backLeftApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().blAprilConnection
+                    ),
+                    new ApriltagCamera(
+                        ApriltagVisionConstants.backRightApriltagCamera,
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().brAprilConnection
+                    )
+                );
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim(), Leds.getInstance().questNavConnection);
+                objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
             break;
             default:
             case REPLAY:
@@ -184,23 +215,27 @@ public class RobotContainer {
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().flAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontRightApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().frAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backLeftApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().blAprilConnection
                     ),
                     new ApriltagCamera(
                         ApriltagVisionConstants.backRightApriltagCamera,
-                        new ApriltagCameraIO() {}
+                        new ApriltagCameraIO() {},
+                        Leds.getInstance().brAprilConnection
                     )
                 );
-                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {});
-                objectiveTracker = new ObjectiveTracker(new ObjectiveSelectorIO() {});
+                questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {}, Leds.getInstance().questNavConnection);
+                objectiveTracker = new ObjectiveTracker(new ReefTrackerIO() {});
             break;
         }
         manualOverrides = new ManualOverrides();
@@ -290,7 +325,7 @@ public class RobotContainer {
                         0
                     );
                 }
-                if (objectiveTracker.getTargetDirection().isBackward()) {
+                if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getTargetDirection().isForward()).isEmpty()) {
                     robotSpeeds = new ChassisSpeeds(
                         -robotSpeeds.vxMetersPerSecond,
                         robotSpeeds.vyMetersPerSecond,
@@ -306,8 +341,6 @@ public class RobotContainer {
                 .withName("Robot spin")
         );
 
-        // superstructure.setDefaultCommand(superstructure.throttle(driveController.leftStick.y(), driveController.rightStick.y(), driveController.leftTrigger.add(driveController.rightTrigger.invert())));
-        // superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.fromParts(Degrees.of(90), ElevatorConstants.minLength, Degrees.of(90))));
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());
         climber.setDefaultCommand(climber.idle());
@@ -352,143 +385,166 @@ public class RobotContainer {
         // ));
 
         // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
-        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
-        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
-        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
+        // driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
+        // driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
+        // driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
+        // driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
-        driveController.b().toggleOnTrue(new ContinuouslySwappingCommand(
+        driveController.a().whileTrue(intake.eject()); //Eject
+        final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command coralStationForwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getForward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
-                private final Command coralStationBackwardCommand = superstructure.goToSetpointSequenced(CoralStation.intakePosition.getBackward()).raceWith(intake.intakeCoral().until(intake.hasCoral));
-                private final Command groundAlgaeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-30))).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
-                private final Command[] stagedAlgaeCommands = new Command[AlgaeLevel.values().length * 2];
-                {
-                    for (var level : AlgaeLevel.values()) {
-                        stagedAlgaeCommands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.superstructurePosition.getForward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
-                        stagedAlgaeCommands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.superstructurePosition.getBackward()).alongWith(intake.intakeAlgae().until(intake.hasAlgae));
-                    }
-                }
+                private final RobotFlippedCommand coralStationCommands = CoralStation.intakePosition.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).raceWith(intake.intakeCoral().until(intake.hasCoral)));
                 public Command get() {
-                    if (objectiveTracker.intakeFromCoralStation()) {
-                        if (objectiveTracker.getIntakeTargetDirection().isForward()) {
-                            return coralStationForwardCommand;
-                        } else {
-                            return coralStationBackwardCommand;
-                        }
+                    return coralStationCommands.get(objectiveTracker.getIntakeCoralObjective().getTargetDirection());
+                }
+            },
+            Set.of(superstructure, intake)
+        ).withName("Intake Coral Station");
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
+            if (driveController.hid.getBButtonPressed()) {
+                if (coralIntakeCommand.isScheduled()) {
+                    coralIntakeCommand.cancel();
+                } else {
+                    coralIntakeCommand.schedule();
+                }
+            }
+        });
+        final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae()))).toArray(RobotFlippedCommand[]::new);;
+                public Command get() {
+                    var optStagedAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
+                    if (optStagedAlgaeObjective.isEmpty()) {
+                        return new InstantCommand();
                     } else {
-                        var algae = objectiveTracker.getSelectedStagedAlgae().get();
-                        if (algae.isEmpty()) {
-                            return groundAlgaeCommand;
-                        } else {
-                            var stagedAlgae = algae.get();
-                            if (objectiveTracker.getIntakeTargetDirection().isForward()) {
-                                return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2];
-                            } else {
-                                return stagedAlgaeCommands[stagedAlgae.algaeLevel.ordinal() * 2 + 1];
-                            }
-                        }
+                        var stagedAlgaeObjective = optStagedAlgaeObjective.get();
+                        return stagedAlgaeCommands[stagedAlgaeObjective.algae.level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
                     }
                 }
             },
             Set.of(superstructure, intake)
-        )); //Intake
-        driveController.a().whileTrue(intake.eject()); //Eject
-        driveController.y().toggleOnTrue(superstructure.goToSetpointSequenced(SuperstructureConstants.defenseState)); //Defense
-        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
-            private final Command coralCommand = new ContinuouslySwappingCommand( //Extend
-                new Supplier<Command>() {
-                    private final Command[] commands = new Command[Level.values().length * 2];
-                    {
-                        for (var level : Level.values()) {
-                            commands[level.ordinal() * 2] = superstructure.goToSetpointSequenced(level.superstructureStates.getForward());
-                            commands[level.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(level.superstructureStates.getBackward());
-                        }
-                    }
-                    public Command get() {
-                        var branch = objectiveTracker.getSelectedBranch();
-                        if (objectiveTracker.getReefTargetDirection().isForward()) {
-                            return commands[branch.level.ordinal() * 2];
-                        } else {
-                            return commands[branch.level.ordinal() * 2 + 1];
-                        }
-                    }
-                },
-                Set.of(superstructure)
-            );
-            private final Command algaeCommand = new ContinuouslySwappingCommand(
-                new Supplier<Command>() {
-                    private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
-                    private final Command netForwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getForward());
-                    private final Command netBackwardCommand = superstructure.goToSetpointSequenced(Barge.superstructureState.getBackward());
-                    public Command get() {
-                        switch (objectiveTracker.getAlgaeGoal()) {
-                            default:
-                            case NET:
-                                if (objectiveTracker.getAlgaeTargetDirection().isForward()) {
-                                    return netForwardCommand;
-                                } else {
-                                    return netBackwardCommand;
-                                }
-                            case PROCESSOR:
-                            case OPPONENT_PROCESSOR:
-                                return processorCommand;
-                        }
-                    }
-                },
-                Set.of(superstructure)
-            );
-
-            private boolean prevX = false;
-            // private BooleanSupplier xButton = driveController.x();
-            public void run() {
-                var xValue = driveController.hid.getXButton();
-
-                if (xValue && !prevX) {
-                    if (!coralCommand.isScheduled() && !algaeCommand.isScheduled()) {
-                        if (intake.hasCoral.getAsBoolean()) {
-                            coralCommand.schedule();
-                        }
-                        if (intake.hasAlgae.getAsBoolean()) {
-                            algaeCommand.schedule();
-                        }
-                    } else {
-                        if (coralCommand.isScheduled()) {
-                            coralCommand.cancel();
-                        }
-                        if (algaeCommand.isScheduled()) {
-                            algaeCommand.cancel();
-                        }
-                    }
+        ).deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae)).withName("Intake Staged Algae");
+        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-30))).alongWith(intake.intakeAlgae().until(intake.hasAlgae)).withName("Intake Ground Algae");
+        final Timer algaeIntakeButtonTimer = new Timer();
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
+            if (driveController.hid.getYButtonPressed()) {
+                if (stagedAlgaeIntakeCommand.isScheduled()) {
+                    stagedAlgaeIntakeCommand.cancel();
+                } else if (groundAlgaeIntakeCommand.isScheduled()) {
+                    groundAlgaeIntakeCommand.cancel();
+                } else {
+                    algaeIntakeButtonTimer.start();
                 }
-
-                prevX = xValue;
+            }
+            if (driveController.hid.getYButtonReleased()) {
+                if (!algaeIntakeButtonTimer.hasElapsed(1) && algaeIntakeButtonTimer.isRunning()) {
+                    stagedAlgaeIntakeCommand.schedule();
+                }
+                algaeIntakeButtonTimer.stop();
+                algaeIntakeButtonTimer.reset();
+            }
+            if (algaeIntakeButtonTimer.hasElapsed(1)) {
+                groundAlgaeIntakeCommand.schedule();
+                algaeIntakeButtonTimer.stop();
+                algaeIntakeButtonTimer.reset();
             }
         });
-        driveController.leftBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getTargetPose().get().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getTargetPose().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getTargetPose().get())); //Auto drive
+
+        final Command coralScoreCommand = new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final RobotFlippedCommand[] branchCommands = Arrays.stream(BranchLevel.values()).map((level) -> level.scoringSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state))).toArray(RobotFlippedCommand[]::new);
+                private final RobotFlippedCommand level1Command = Reef.level1SuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
+                public Command get() {
+                    var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
+                    if (scoreCoralObjective.branchLevel.isPresent()) {
+                        return branchCommands[scoreCoralObjective.branchLevel.get().ordinal()].get(scoreCoralObjective.getTargetDirection());
+                    } else {
+                        return level1Command.get(scoreCoralObjective.getTargetDirection());
+                    }
+                }
+            },
+            Set.of(superstructure)
+        ).deadlineFor(objectiveTracker.addTargetLockCommand()).withName("Extend to Reef");
+        final Command algaeScoreCommand = new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
+                private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
+                public Command get() {
+                    switch (objectiveTracker.getScoreAlgaeObjective().algaeGoal) {
+                        default:
+                        case NET:
+                            return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
+                        case PROCESSOR:
+                        case OPPONENT_PROCESSOR:
+                            return processorCommand;
+                    }
+                }
+            },
+            Set.of(superstructure)
+        ).withName("Extend to Algae Goal");
+
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
+            if (driveController.hid.getXButtonPressed()) {
+                if (!coralScoreCommand.isScheduled() && !algaeScoreCommand.isScheduled()) {
+                    if (intake.hasCoral.getAsBoolean()) {
+                        coralScoreCommand.schedule();
+                    }
+                    if (intake.hasAlgae.getAsBoolean()) {
+                        algaeScoreCommand.schedule();
+                    }
+                } else {
+                    if (coralScoreCommand.isScheduled()) {
+                        coralScoreCommand.cancel();
+                    }
+                    if (algaeScoreCommand.isScheduled()) {
+                        algaeScoreCommand.cancel();
+                    }
+                }
+            }
+        });
+        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
+        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getCurrentObjective().get().getTargetPose()).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
-                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState)
+                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState),
+                Leds.getInstance().prepareClimbing.setFlagCommand()
             )
         );
         driveController.back().toggleOnTrue(
             Commands.parallel(
                 climber.climb(),
-                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
+                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState),
+                Leds.getInstance().climbingComplete.setFlagCommand()
             )
         );
         // driveController.start().toggleOnTrue(
         //     climber.engageRatchet()
         // );
         
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())).ignoringDisable(true));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
 
-        SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+        // SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
     }
 
-    private void configureNotifications() {}
+    private void configureNotifications() {
+        intake.hasCoral
+            .onTrue(
+                Leds.getInstance().coralAcquired.setFlagCommand().withTimeout(1).alongWith(driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(1))
+            )
+            .whileTrue(
+                Leds.getInstance().coralSecured.setFlagCommand().ignoringDisable(true)
+            )
+        ;
+        intake.hasAlgae
+            .onTrue(
+                Leds.getInstance().algaeAcquired.setFlagCommand().withTimeout(1).alongWith(driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(1))
+            )
+            .whileTrue(
+                Leds.getInstance().algaeSecured.setFlagCommand().ignoringDisable(true)
+            )
+        ;
+    }
 
     private void configureAutos() {
         

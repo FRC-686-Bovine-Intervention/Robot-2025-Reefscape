@@ -10,13 +10,14 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 
 public class AllianceFlipped<T> {
     private final T blue;
     private final T red;
 
-    private AllianceFlipped(T blue, T red) {
+    public AllianceFlipped(T blue, T red) {
         this.blue = blue;
         this.red = red;
     }
@@ -26,6 +27,12 @@ public class AllianceFlipped<T> {
     }
     public T getRed() {
         return red;
+    }
+    public T get(Alliance alliance) {
+        return switch (alliance) {
+            case Blue -> getBlue();
+            case Red -> getRed();
+        };
     }
 
     public T getOurs() {
@@ -43,8 +50,12 @@ public class AllianceFlipped<T> {
         }
     }
 
-    public AllianceFlipped<T> map(Function<T, T> mappingFunction) {
-        return new AllianceFlipped<T>(mappingFunction.apply(this.blue), mappingFunction.apply(this.red));
+    public <U> AllianceFlipped<U> map(Function<T, U> mappingFunction) {
+        return new AllianceFlipped<U>(mappingFunction.apply(this.blue), mappingFunction.apply(this.red));
+    }
+
+    public static <T> AllianceFlipped<T> fromFunction(Function<Alliance, T> generator) {
+        return new AllianceFlipped<T>(generator.apply(Alliance.Blue), generator.apply(Alliance.Red));
     }
 
     public static <T extends AllianceFlippable<T>> AllianceFlipped<T> fromBlue(T blue) {

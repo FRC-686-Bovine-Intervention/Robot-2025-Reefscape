@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import java.util.ArrayList;
 import java.util.function.DoubleSupplier;
+import java.util.function.Function;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -549,11 +550,10 @@ public class Superstructure extends SubsystemBase {
             return backward;
         }
         public SuperstructureState get(Direction direction) {
-            switch (direction) {
-                default:
-                case Forward:   return getForward();
-                case Backward:  return getBackward();
-            }
+            return switch (direction) {
+                case Forward -> getForward();
+                case Backward -> getBackward();
+            };
         }
 
         public SuperstructureState getClosest(Rotation2d target, Rotation2d current) {
@@ -566,12 +566,12 @@ public class Superstructure extends SubsystemBase {
             }
         }
 
-        // public RobotFlippedSuperstructureState plus(SuperstructureState forwardOther, SuperstructureState backwardsOther) {
-        //     return new RobotFlippedSuperstructureState(
-        //         this.forward.plus(forwardOther),
-        //         this.backward.plus(backwardsOther)
-        //     );
-        // }
+        public RobotFlippedCommand mapToCommand(Function<SuperstructureState, Command> mappingFunction) {
+            return new RobotFlippedCommand(
+                mappingFunction.apply(getForward()),
+                mappingFunction.apply(getBackward())
+            );
+        }
     }
 
     public static class RobotFlippedRobotPose implements AllianceFlippable<RobotFlippedRobotPose> {
@@ -732,6 +732,30 @@ public class Superstructure extends SubsystemBase {
                 (this.backwardRobotPose == null) ? null : AllianceFlipUtil.flip(this.backwardRobotPose, flipType),
                 this.backwardSuperstructureState
             );
+        }
+    }
+
+    public static class RobotFlippedCommand {
+        private final Command forward;
+        private final Command backward;
+
+        public RobotFlippedCommand(Command forward, Command backward) {
+            this.forward = forward;
+            this.backward = backward;
+        }
+
+        public Command getForward() {
+            return forward;
+        }
+        public Command getBackward() {
+            return backward;
+        }
+        public Command get(Direction direction) {
+            switch (direction) {
+                default:
+                case Forward:   return getForward();
+                case Backward:  return getBackward();
+            }
         }
     }
 }

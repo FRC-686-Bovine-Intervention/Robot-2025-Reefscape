@@ -1,0 +1,179 @@
+package frc.robot.subsystems.objectiveTracker;
+
+import java.util.Arrays;
+
+import edu.wpi.first.net.WebServer;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.IntegerArraySubscriber;
+import edu.wpi.first.networktables.IntegerPublisher;
+import edu.wpi.first.networktables.IntegerSubscriber;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.PubSubOption;
+import edu.wpi.first.wpilibj.Filesystem;
+
+public class ReefTrackerIOServer implements ReefTrackerIO {
+    private static final String toRobotTable = "/ReefControls/ToRobot";
+    private static final String toDashboardTable = "/ReefControls/ToDashboard";
+
+    private static final String modeTopicName = "Mode";
+    private static final String coralGoalTopicName = "CoralGoal";
+    private static final String algaeGoalTopicName = "AlgaeGoal";
+    
+    private static final String coralTopicName = "Coral";
+    private static final String l1TopicName = "Level1";
+    private static final String algaeTopicName = "Algae";
+    private static final String coopTopicName = "Coop";
+    private static final String priorityListTopicName = "PriorityList";
+
+    private final IntegerSubscriber modeSubscriber;
+    private final IntegerSubscriber coralGoalSubscriber;
+    private final IntegerSubscriber algaeGoalSubscriber;
+
+    private final IntegerSubscriber coralQueueSubscriber;
+    private final IntegerSubscriber l1CountSubscriber; 
+    private final IntegerSubscriber algaeQueueSubscriber;
+    private final BooleanSubscriber coopSubscriber;
+    private final IntegerArraySubscriber priorityListSubscriber;
+    
+    private final IntegerPublisher modePublisher;
+    private final IntegerPublisher coralGoalPublisher;
+    private final IntegerPublisher algaeGoalPublisher;
+    
+    private final DoublePublisher coralStatePublisher;
+    private final IntegerPublisher l1CountPublisher;
+    private final IntegerPublisher algaeStatePublisher;
+    private final BooleanPublisher coopPublisher;
+    private final IntegerPublisher priorityListPublisher;
+
+    public ReefTrackerIOServer() {
+        System.out.println("[Init] Creating ReefTrackerIOServer");
+    
+        WebServer.start(5801, Filesystem.getDeployDirectory().getPath() + "/reef_tracker");
+
+        var inputTable = NetworkTableInstance.getDefault().getTable(toRobotTable);
+
+        modeSubscriber =
+            inputTable
+                .getIntegerTopic(modeTopicName)
+                .subscribe(0, PubSubOption.keepDuplicates(true));
+        coralGoalSubscriber = 
+            inputTable
+                .getIntegerTopic(coralGoalTopicName)
+                .subscribe(0, PubSubOption.keepDuplicates(true));
+        algaeGoalSubscriber = 
+            inputTable
+                .getIntegerTopic(algaeGoalTopicName)
+                .subscribe(0, PubSubOption.keepDuplicates(true));
+
+        coralQueueSubscriber =
+            inputTable
+                .getIntegerTopic(coralTopicName)
+                .subscribe(0, PubSubOption.keepDuplicates(true));
+        l1CountSubscriber =
+            inputTable
+                .getIntegerTopic(l1TopicName)
+                .subscribe(0, PubSubOption.keepDuplicates(true));
+        algaeQueueSubscriber =
+            inputTable
+                .getIntegerTopic(algaeTopicName)
+                .subscribe(0, PubSubOption.keepDuplicates(true));
+        coopSubscriber =
+            inputTable
+                .getBooleanTopic(coopTopicName)
+                .subscribe(false, PubSubOption.keepDuplicates(true));
+        priorityListSubscriber =
+            inputTable
+                .getIntegerArrayTopic(priorityListTopicName)
+                .subscribe(new long[] {}, PubSubOption.keepDuplicates(true));
+
+        var outputTable = NetworkTableInstance.getDefault().getTable(toDashboardTable);
+
+        modePublisher = outputTable.getIntegerTopic(modeTopicName).publish();
+        coralGoalPublisher = outputTable.getIntegerTopic(coralGoalTopicName).publish();
+        algaeGoalPublisher = outputTable.getIntegerTopic(algaeGoalTopicName).publish();
+
+        coralStatePublisher = outputTable.getDoubleTopic(coralTopicName).publish();
+        l1CountPublisher = outputTable.getIntegerTopic(l1TopicName).publish();
+        algaeStatePublisher = outputTable.getIntegerTopic(algaeTopicName).publish();
+        coopPublisher = outputTable.getBooleanTopic(coopTopicName).publish();
+        priorityListPublisher = outputTable.getIntegerTopic(priorityListTopicName).publish();
+    }
+
+    @Override
+    public void updateInputs(ReefTrackerIOInputs inputs) {
+        if (modeSubscriber.readQueue().length > 0) {
+            inputs.mode = (int) modeSubscriber.get();
+        }
+        if (coralGoalSubscriber.readQueue().length > 0) {
+            inputs.coralGoal = (int) coralGoalSubscriber.get();
+        }
+        if (algaeGoalSubscriber.readQueue().length > 0) {
+            inputs.algaeGoal = (int) algaeGoalSubscriber.get();
+        }
+
+        inputs.branchQueue = coralQueueSubscriber.readQueueValues();
+        inputs.level1Queue = l1CountSubscriber.readQueueValues();
+        inputs.algaeQueue = algaeQueueSubscriber.readQueueValues();
+        inputs.coop = coopSubscriber.readQueueValues();
+        inputs.priorityListQueue = new int[0][0];
+        var priorityListQueueValues = priorityListSubscriber.readQueueValues();
+        if (priorityListQueueValues.length > 0) {
+            for (int i = 0; i < priorityListQueueValues.length; i++) {
+                var swaps = priorityListQueueValues[i];
+                inputs.priorityListQueue = Arrays.copyOf(inputs.priorityListQueue, inputs.priorityListQueue.length + swaps.length);
+                for (int j = 0; j < swaps.length; j++) {
+                    var swap = (int) swaps[j];
+                    inputs.priorityListQueue[inputs.priorityListQueue.length - swaps.length + j] = new int[] {(swap >> 3) & 0b111, swap & 0b111};
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setMode(int value) {
+        modePublisher.set(value);
+    }
+    @Override
+    public void setCoralGoal(int value) {
+        coralGoalPublisher.set(value);
+    }
+    @Override
+    public void setAlgaeGoal(int value) {
+        algaeGoalPublisher.set(value);
+    }
+    
+    @Override
+    public void setCoralState(boolean[] value) {
+        long n = 0; // 64-bit
+        for (boolean b : value) {
+            n = (n << 1) | (b ? 1 : 0);
+        }
+        coralStatePublisher.set(n);
+    }
+    @Override
+    public void setLevel1Count(int value) {
+        l1CountPublisher.set(value);
+    }
+    @Override
+    public void setAlgaeState(boolean[] value) {
+        int n = 0; // 32-bit
+        for (boolean b : value) {
+            n = (n << 1) | (b ? 1 : 0);
+        }
+        algaeStatePublisher.set(n);
+    }
+    @Override
+    public void setCoopState(boolean value) {
+        coopPublisher.set(value);
+    }
+    @Override
+    public void setPriorityList(int[] value) {
+        int n = 0; // 32-bit
+        for (int b : value) {
+            n = (n << 3) | b;
+        }
+        priorityListPublisher.set(n);
+    }
+}

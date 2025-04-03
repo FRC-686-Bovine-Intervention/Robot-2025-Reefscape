@@ -1,29 +1,28 @@
 package frc.robot.subsystems.vision.apriltag;
 
-import java.util.Optional;
-
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraFrame;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraIOInputs;
-import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraTarget;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
+import frc.util.led.animation.StatusLightAnimation;
 
 public class ApriltagCamera {
     private final ApriltagCameraConstants camMeta;
     private final ApriltagCameraIO io;
     private final ApriltagCameraIOInputs inputs = new ApriltagCameraIOInputs();
 
+    private final StatusLightAnimation connectionAnimation;
     private final Alert notConnectedAlert;
 
-    public ApriltagCamera(ApriltagCameraConstants camMeta, ApriltagCameraIO io) {
+    public ApriltagCamera(ApriltagCameraConstants camMeta, ApriltagCameraIO io, StatusLightAnimation connectionAnimation) {
         this.camMeta = camMeta;
         this.io = io;
+        this.connectionAnimation = connectionAnimation;
 
-        notConnectedAlert = new Alert("Apriltag camera \"" + camMeta.hardwareName + "\" is not connected", AlertType.kError);
+        this.notConnectedAlert = new Alert("Apriltag camera \"" + camMeta.hardwareName + "\" is not connected", AlertType.kError);
     }
 
     public ApriltagCameraResult periodic() {
@@ -31,6 +30,7 @@ public class ApriltagCamera {
         Logger.processInputs("Inputs/ApriltagVision/" + camMeta.hardwareName, inputs);
 
         notConnectedAlert.set(!inputs.isConnected);
+        connectionAnimation.setStatus(inputs.isConnected);
         return ApriltagCameraResult.from(camMeta, inputs);
     }
 
