@@ -391,7 +391,20 @@ public class RobotContainer {
         // driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
         // driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
-        driveController.a().whileTrue(intake.eject()); //Eject
+        driveController.a().whileTrue(new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final Command eject = intake.eject();
+                private final Command ejectL1 = intake.ejectLevel1();
+                public Command get() {
+                    if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
+                        return ejectL1;
+                    } else {
+                        return eject;
+                    }
+                }
+            },
+            Set.of(intake)
+        )); //Eject
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand coralStationCommands = CoralStation.intakePosition.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).raceWith(intake.intakeCoral().until(intake.hasCoral)));
@@ -413,10 +426,11 @@ public class RobotContainer {
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae()))).toArray(RobotFlippedCommand[]::new);;
+                private final Command idle = superstructure.goToSetpointSequenced(SuperstructureConstants.idleState).alongWith(intake.idle());
                 public Command get() {
                     var optStagedAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
                     if (optStagedAlgaeObjective.isEmpty()) {
-                        return new InstantCommand();
+                        return idle;
                     } else {
                         var stagedAlgaeObjective = optStagedAlgaeObjective.get();
                         return stagedAlgaeCommands[stagedAlgaeObjective.algae.level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
@@ -438,13 +452,13 @@ public class RobotContainer {
                 }
             }
             if (driveController.hid.getYButtonReleased()) {
-                if (!algaeIntakeButtonTimer.hasElapsed(1) && algaeIntakeButtonTimer.isRunning()) {
+                if (!algaeIntakeButtonTimer.hasElapsed(0.25) && algaeIntakeButtonTimer.isRunning()) {
                     stagedAlgaeIntakeCommand.schedule();
                 }
                 algaeIntakeButtonTimer.stop();
                 algaeIntakeButtonTimer.reset();
             }
-            if (algaeIntakeButtonTimer.hasElapsed(1)) {
+            if (algaeIntakeButtonTimer.hasElapsed(0.25)) {
                 groundAlgaeIntakeCommand.schedule();
                 algaeIntakeButtonTimer.stop();
                 algaeIntakeButtonTimer.reset();

@@ -14,7 +14,6 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
@@ -26,6 +25,7 @@ public class Intake extends SubsystemBase {
 
     public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(6));
     public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(6).unaryMinus());
+    public static final LoggedTunableMeasure<VoltageUnit> ejectLevel1Voltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject Level 1", Volts.of(2).unaryMinus());
     public static final LoggedTunableMeasure<VoltageUnit> coralHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Coral", Volts.of(0.3));
     public static final LoggedTunableMeasure<VoltageUnit> algaeHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Algae", Volts.of(1));
 
@@ -134,6 +134,12 @@ public class Intake extends SubsystemBase {
         return genCommand(
             "Eject",
             ejectVoltage
+        );
+    }
+    public Command ejectLevel1() {
+        return genCommand(
+            "Eject Level 1",
+            ejectLevel1Voltage
         );
     }
 
