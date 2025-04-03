@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -43,6 +45,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
         NET,
         PROCESSOR,
         OPPONENT_PROCESSOR,
+        ;
+    }
+
+    public static enum CoralGoal {
+        BRANCH,
+        LEVEL1
         ;
     }
 
@@ -137,7 +145,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
 
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
-    private BranchConcept selectedCoralGoal = Reef.branches[0];
+    private Entry<CoralGoal, Integer> selectedCoralGoal = Map.entry(CoralGoal.BRANCH, 0);
 
     private Mode mode = Mode.Dumb;
 
@@ -207,7 +215,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
             inputs.mode = -1;
         }
         if (inputs.coralGoal != -1) {
-            selectedCoralGoal = Reef.branches[inputs.coralGoal];
+            if (inputs.coralGoal >= 36) {
+                System.out.println((inputs.coralGoal - 36) / 2);
+                selectedCoralGoal = Map.entry(CoralGoal.LEVEL1, (inputs.coralGoal - 36) / 2);
+            } else {
+                selectedCoralGoal = Map.entry(CoralGoal.BRANCH, inputs.coralGoal);
+            }
             inputs.coralGoal = -1;
         }
         if (inputs.algaeGoal != -1) {
@@ -216,7 +229,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         io.setMode(mode.ordinal());
-        io.setCoralGoal(selectedCoralGoal.id);
+        switch (selectedCoralGoal.getKey()) {
+            case LEVEL1:
+                io.setCoralGoal(selectedCoralGoal.getValue() * 2 + 36);
+                break;
+            case BRANCH:
+                io.setCoralGoal(selectedCoralGoal.getValue());
+                break;
+        }
         io.setAlgaeGoal(selectedAlgaeGoal.ordinal());
 
         var branchesChanged = false;
@@ -437,7 +457,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 }
             }
         } else {
-            this.scoreCoralObjective = ScoreCoralObjective.fromBranch(selectedCoralGoal.getOurs(), currentPose.getRotation());
+            switch (selectedCoralGoal.getKey()) {
+                case BRANCH:
+                    this.scoreCoralObjective = ScoreCoralObjective.fromBranch(Reef.branches[selectedCoralGoal.getValue()].getOurs(), currentPose.getRotation());
+                    break;
+                case LEVEL1:
+                    this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(Reef.racks[selectedCoralGoal.getValue()].getOurs(), currentPose.getRotation());
+                    break;
+            }
         }
 
         Leds.getInstance().level1Targeted.setFlag(this.scoreCoralObjective.branchLevel.isEmpty());

@@ -84,17 +84,15 @@
 }
 
 #reef.l2 .pipe.selected {
-  background: yellow;
-  color: black;
+  background: #eaa153;
 }
 
 #reef.l3 .pipe.selected {
-  background: aquamarine;
-  color: black;
+  background: #3ba799;
 }
 
 #reef.l4 .pipe.selected {
-  background: green;
+  background: #35892f;
 }
 
 .pipe-text {

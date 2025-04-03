@@ -27,17 +27,15 @@
 }
 
 #pipe.l2 .level.selected {
-  background: yellow;
-  color: black;
+  background: #eaa153;
 }
 
 #pipe.l3 .level.selected {
-  background: aquamarine;
-  color: black;
+  background: #3ba799;
 }
 
 #pipe.l4 .level.selected {
-  background: green;
+  background: #35892f;
 }
 
 .level:nth-child(1) {

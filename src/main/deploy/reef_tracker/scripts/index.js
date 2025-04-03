@@ -1,4 +1,5 @@
 import { NT4_Client } from "../lib/NT4.js";
+import { wrapNumber } from "./utils.js";
 
 const toRobotPrefix = "/ReefControls/ToRobot/";
 const toDashboardPrefix = "/ReefControls/ToDashboard/";
@@ -160,7 +161,8 @@ function updateUI() {
   levelsDOM.forEach((element, index) => {
     if (
       (mode === "SMART" && index > 0 && selectedLevel === index - 1) ||
-      (mode === "DUMB" && getCoral(coralGoal).level === index)
+      (mode === "DUMB" &&
+        getCoral(coralGoal).level === wrapNumber(index - 1, 0, 3))
     ) {
       element.classList.add("selected");
     } else {
@@ -197,7 +199,11 @@ function updateUI() {
           element.classList.remove("complete");
         }
 
-        if (coopState && element.dataset.kind === "rp" && element.dataset.level == 1) {
+        if (
+          coopState &&
+          element.dataset.kind === "rp" &&
+          element.dataset.level == 1
+        ) {
           element.classList.add("unnecessary");
         } else {
           element.classList.remove("unnecessary");
@@ -209,7 +215,11 @@ function updateUI() {
     if (
       (mode === "SMART" &&
         coralState[getCoralID({ level: selectedLevel, pipe: index })]) ||
-      (mode === "DUMB" && getCoral(coralGoal).pipe === index)
+      (mode === "DUMB" &&
+        (getCoral(coralGoal).pipe === index ||
+          (getCoral(coralGoal).level === 3 &&
+            Math.floor(getCoral(coralGoal).pipe / 2) ===
+              Math.floor(index / 2))))
     ) {
       element.classList.add("selected");
     } else {
@@ -282,7 +292,10 @@ window.addEventListener("load", () => {
       if (mode === "DUMB") {
         ntClient.addSample(
           toRobotPrefix + coralGoalTopicName,
-          getCoralID({ ...getCoral(coralGoal), level: index })
+          getCoralID({
+            ...getCoral(coralGoal),
+            level: wrapNumber(index - 1, 0, 3),
+          })
         );
       } else if (index > 0) {
         selectedLevel = index - 1;
@@ -364,7 +377,7 @@ window.addEventListener("load", () => {
     }
     const filteredSwaps = indicesToKeep.map((index) => swaps[index]);
     if (filteredSwaps.length === 0) return;
-    
+
     ntClient.addSample(
       toRobotPrefix + priorityListTopicName,
       filteredSwaps.map((swap) => packInt(swap, 3))
@@ -412,5 +425,5 @@ function packInt(values, size) {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
