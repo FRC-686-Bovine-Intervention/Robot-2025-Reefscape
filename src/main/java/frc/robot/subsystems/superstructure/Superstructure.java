@@ -213,7 +213,7 @@ public class Superstructure extends SubsystemBase {
                 var initialHigh = initialState.elevatorLength.gt(Inches.of(45));
                 var initialWristUp = initialState.wristAngle.gt(Degrees.of(45));
 
-                var targetLow = setpoint.elevatorLength.lt(Inches.of(25));
+                var targetLow = setpoint.elevatorLength.lt(Inches.of(35));
                 var targetHigh = setpoint.elevatorLength.gt(Inches.of(45));
                 
                 if (initialLow && initialWristUp) { // Remove Coral from station
