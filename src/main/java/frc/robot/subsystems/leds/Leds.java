@@ -57,23 +57,23 @@ public class Leds extends VirtualSubsystem {
         var gamepieceSecuredStrip = sideStrips.substrip(24, 29).concat(backMirrorStrip.substrip(8, 11));
 
         var coralColor = Color.kGreen;
-        var algaeColor = Color.kGreenYellow;
+        var algaeColor = new Color(0,0.5,0.1);
         var climbingColor = Color.kTeal;
         var level4Color = Color.kGreen;
-        var level3Color = Color.kGreenYellow;
+        var level3Color = algaeColor;
         var level2Color = Color.kYellow;
         var level1Color = Color.kRed;
 
-        autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) + (pos * 4)), InterpolationFunction.linear.gradient(Color.kBlue, Color.kYellow));
+        autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) - (pos * 4)), InterpolationFunction.step.gradient(new Color(0,0,0.2), new Color(0.2,0.2,0)));
         autonomousFinishedAnimation = new AutonomousFinishedAnimation(sideStrips, hardwareStrip);
         estopped = new FillAnimation(hardwareStrip, Color.kRed);
         allianceColorAnimation = new AllianceColorAnimation(fullSideStrips, Color.kFirstBlue, Color.kRed);
         driverStationConnection = new StatusLightAnimation(sideStrips.substrip(0, 2), Color.kOrange, Color.kGreen);
-        flAprilConnection = new StatusLightAnimation(leftStrip.substrip(3, 4), Color.kOrange, Color.kGreen);
-        blAprilConnection = new StatusLightAnimation(leftStrip.substrip(2, 3), Color.kOrange, Color.kGreen);
-        frAprilConnection = new StatusLightAnimation(rightStrip.substrip(3, 4), Color.kOrange, Color.kGreen);
-        brAprilConnection = new StatusLightAnimation(rightStrip.substrip(2, 3), Color.kOrange, Color.kGreen);
-        questNavConnection = new StatusLightAnimation(sideStrips.substrip(4, 5), Color.kOrange, Color.kGreen);
+        flAprilConnection = new StatusLightAnimation(sideStrips.substrip(2, 3), Color.kOrange, Color.kGreen);
+        frAprilConnection = new StatusLightAnimation(sideStrips.substrip(3, 4), Color.kOrange, Color.kGreen);
+        blAprilConnection = new StatusLightAnimation(sideStrips.substrip(4, 5), Color.kOrange, Color.kGreen);
+        brAprilConnection = new StatusLightAnimation(sideStrips.substrip(5, 6), Color.kOrange, Color.kGreen);
+        questNavConnection = new StatusLightAnimation(sideStrips.substrip(6, 7), Color.kOrange, Color.kGreen);
         coralSecured = new FillAnimation(gamepieceSecuredStrip, coralColor);
         coralAcquired = new FlashingAnimation(fullSideStrips, WaveFunction.Sawtooth.frequency(5), InterpolationFunction.step.gradient(Color.kBlack, coralColor));
         algaeSecured = new FillAnimation(gamepieceSecuredStrip, algaeColor);
@@ -85,7 +85,7 @@ public class Leds extends VirtualSubsystem {
         level3Targeted = new FillAnimation(bottomSideStrip, level3Color);
         level2Targeted = new FillAnimation(bottomSideStrip, level2Color);
         level1Targeted = new FillAnimation(bottomSideStrip, level1Color);
-        removeAlgae = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kGreenYellow));
+        removeAlgae = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, algaeColor));
         goToOppositeSideOfReef = new FlashingAnimation(topSideStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kYellow));
 
         loadingNotifier = new Notifier(() -> {
