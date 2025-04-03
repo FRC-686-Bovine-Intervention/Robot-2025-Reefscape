@@ -551,16 +551,20 @@ public class Drive extends VirtualSubsystem {
                 }
                 @Override
                 public void execute() {
-                    var distTo = drive.getPose().getTranslation().getDistance(target.get());
-                    var vec = target.get().minus(drive.getPose().getTranslation());
+                    var targetPose = target.get();
+                    var distTo = drive.getPose().getTranslation().getDistance(targetPose);
+                    var vec = targetPose.minus(drive.getPose().getTranslation());
                     var norm = vec.div(vec.getNorm());
                     var pterm = distTo * driveKP.getAsDouble();
                     var out = norm.times(pterm);
-                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(
-                        out.getX(),
-                        out.getY(),
-                        0
-                    ), drive.getRotation()));
+                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(
+                        new ChassisSpeeds(
+                            out.getX(),
+                            out.getY(),
+                            0
+                        ),
+                        drive.getRotation()
+                    ));
                 }
                 @Override
                 public void end(boolean interrupted) {
