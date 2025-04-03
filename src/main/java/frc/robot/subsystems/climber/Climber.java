@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.leds.Leds;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.MeasureUtil;
 
@@ -43,6 +44,7 @@ public class Climber extends SubsystemBase {
         Logger.processInputs("Inputs/Climber", inputs);
         Logger.recordOutput("Climber/Position", getAngle());
         Logger.recordOutput("Climber/Ratchet Engaged", ratchetEngaged);
+        Leds.getInstance().climbing.setPos(getAngle().div(climbAngle.get()).baseUnitMagnitude());
     }
 
     public Angle getAngle(){
@@ -92,7 +94,8 @@ public class Climber extends SubsystemBase {
                 setName("Prepare Climb");
             }
             @Override
-            public void initialize() {               
+            public void initialize() {
+                Leds.getInstance().prepareClimbing.setFlag(true);
             }
 
             @Override
@@ -111,7 +114,7 @@ public class Climber extends SubsystemBase {
             }
             @Override
             public void end(boolean interrupted) {
-                
+                Leds.getInstance().prepareClimbing.setFlag(false);
             }
         };
     }

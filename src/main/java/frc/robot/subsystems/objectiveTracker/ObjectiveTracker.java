@@ -32,6 +32,7 @@ import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.util.VirtualSubsystem;
 import frc.util.loggerUtil.LoggerUtil;
 
@@ -172,6 +173,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         IntakeAlgae(true),
         ScoreCoral(true),
         ScoreAlgae(false),
+        Climb(false),
         ;
         public final boolean isReefObjective;
         ObjectiveType(boolean isReefObjective) {
@@ -183,6 +185,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<IntakeAlgaeObjective> intakeAlgaeObjective;
     private ScoreCoralObjective scoreCoralObjective;
     private ScoreAlgaeObjective scoreAlgaeObjective;
+    private ClimbObjective climbObjective;
     private Optional<Objective> target = Optional.empty();
     private Optional<ObjectiveType> typeOverride = Optional.empty();
     private int targetLocks = 0;
@@ -447,6 +450,19 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
         this.scoreAlgaeObjective = new ScoreAlgaeObjective(selectedAlgaeGoal, currentPose);
 
+        var cagePoses = new RobotFlippedRobotPose[] {
+            Barge.leftCagePose.getOurs(),
+            Barge.centerCagePose.getOurs(),
+            Barge.rightCagePose.getOurs()
+        };
+        var closestCagePose = Arrays.stream(cagePoses).sorted((a,b) -> {
+            var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            var bDistance = b.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            return (int) Math.signum(aDistance - bDistance);
+        }).findFirst().get();
+
+        this.climbObjective = new ClimbObjective(closestCagePose, currentPose.getRotation());
+
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralObjective.getTargetState().getMechTransforms());
@@ -459,6 +475,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Score/Algae/Target Direction", scoreAlgaeObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Score/Algae/Target Pose", scoreAlgaeObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Score/Algae/Target Mechs", scoreAlgaeObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Climb/Target Direction", climbObjective.getTargetDirection());
+        Logger.recordOutput("Objective Tracker/Climb/Target Pose", climbObjective.getTargetPose());
+        Logger.recordOutput("Objective Tracker/Climb/Target Mechs", climbObjective.getTargetState().getMechTransforms());
 
         if (typeOverride.isEmpty()) {
             if (hasCoral && hasAlgae) {
@@ -477,21 +496,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 target = Optional.of(intakeCoralObjective);
             }
         } else {
-            switch (typeOverride.get()) {
-                default:
-                case IntakeCoral:
-                    target = Optional.of(intakeCoralObjective);
-                break;
-                case IntakeAlgae:
-                    target = intakeAlgaeObjective.map((objective) -> objective);
-                break;
-                case ScoreCoral:
-                    target = Optional.of(scoreCoralObjective);
-                break;
-                case ScoreAlgae:
-                    target = Optional.of(scoreAlgaeObjective);
-                break;
-            }
+            target = switch (typeOverride.get()) {
+                case IntakeCoral -> target = Optional.of(intakeCoralObjective);
+                case IntakeAlgae -> target = intakeAlgaeObjective.map((objective) -> objective);
+                case ScoreCoral -> target = Optional.of(scoreCoralObjective);
+                case ScoreAlgae -> target = Optional.of(scoreAlgaeObjective);
+                case Climb -> target = Optional.of(climbObjective);
+            };
         }
     }
 
@@ -506,6 +517,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
     public ScoreAlgaeObjective getScoreAlgaeObjective() {
         return scoreAlgaeObjective;
+    }
+    public ClimbObjective getClimbObjective() {
+        return climbObjective;
     }
     public Optional<Objective> getCurrentObjective() {
         return target;
@@ -641,7 +655,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
         public ObjectiveType getObjectiveType() {
             return ObjectiveType.IntakeCoral;
         }
-
     }
     public static class ScoreAlgaeObjective implements Objective {
         public final AlgaeGoal algaeGoal;
@@ -704,6 +717,35 @@ public class ObjectiveTracker extends VirtualSubsystem {
         @Override
         public ObjectiveType getObjectiveType() {
             return ObjectiveType.ScoreAlgae;
+        }
+    }
+
+    public static class ClimbObjective implements Objective {
+        public final Pose2d targetPose;
+        public final SuperstructureState targetState;
+        public final Direction targetDirection;
+
+        private ClimbObjective(RobotFlippedRobotPose cagePose, Rotation2d currentRotation) {
+            this.targetDirection = cagePose.getClosestDirection(currentRotation);
+            this.targetPose = cagePose.get(targetDirection);
+            this.targetState = SuperstructureConstants.prepareClimbingState;
+        }
+
+        @Override
+        public Direction getTargetDirection() {
+            return Direction.Forward;
+        }
+        @Override
+        public Pose2d getTargetPose() {
+            return targetPose;
+        }
+        @Override
+        public SuperstructureState getTargetState() {
+            return targetState;
+        }
+        @Override
+        public ObjectiveType getObjectiveType() {
+            return ObjectiveType.Climb;
         }
     }
 }

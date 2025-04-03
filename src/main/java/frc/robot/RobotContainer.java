@@ -504,20 +504,23 @@ public class RobotContainer {
             }
         });
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getCurrentObjective().get().getTargetPose(), objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective))); //Auto drive
-        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getCurrentObjective().get().getTargetPose()).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
+        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getCurrentObjective().get().getTargetPose(), objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective)).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
-                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState),
-                Leds.getInstance().prepareClimbing.setFlagCommand()
+                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState)
+            )
+            .deadlineFor(
+                objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
         );
         driveController.back().toggleOnTrue(
             Commands.parallel(
                 climber.climb(),
-                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState),
-                Leds.getInstance().climbingComplete.setFlagCommand()
+                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
+            )
+            .deadlineFor(
+                objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
         );
         // driveController.start().toggleOnTrue(

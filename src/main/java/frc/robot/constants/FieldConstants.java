@@ -1,6 +1,7 @@
 package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
@@ -570,6 +571,63 @@ public final class FieldConstants {
                 Degrees.of(90),
                 ElevatorConstants.maxLengthSoftware,
                 Degrees.of(60)
+            )
+        );
+
+        private static final Distance autoCageDistance = Feet.of(4);
+
+        public static final AllianceFlipped<RobotFlippedRobotPose> leftCagePose = AllianceFlipped.fromBlue(
+            new RobotFlippedRobotPose(
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).minus(autoCageDistance),
+                        Meters.of(7.2596248)
+                    ),
+                    Rotation2d.kZero
+                ),
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).plus(autoCageDistance),
+                        Meters.of(7.2596248)
+                    ),
+                    Rotation2d.k180deg
+                )
+            )
+        );
+        public static final AllianceFlipped<RobotFlippedRobotPose> centerCagePose = AllianceFlipped.fromBlue(
+            new RobotFlippedRobotPose(
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).minus(autoCageDistance),
+                        Meters.of(6.169025)
+                    ),
+                    Rotation2d.kZero
+                ),
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).plus(autoCageDistance),
+                        Meters.of(6.169025)
+                    ),
+                    Rotation2d.k180deg
+                )
+            )
+        );
+        public static final AllianceFlipped<RobotFlippedRobotPose> rightCagePose = AllianceFlipped.fromBlue(
+            new RobotFlippedRobotPose(
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).minus(autoCageDistance),
+                        Meters.of(5.0784252)
+                    ),
+                    Rotation2d.kZero
+                ),
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).plus(autoCageDistance),
+                        Meters.of(5.0784252)
+                    ),
+                    Rotation2d.k180deg
+                )
             )
         );
 
