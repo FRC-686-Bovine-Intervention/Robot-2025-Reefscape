@@ -449,7 +449,7 @@ public final class FieldConstants {
                     new Pose2d(
                         new Translation2d(
                             Meters.of(0.679337),
-                            Meters.of(1.313180)
+                            Meters.of(1.313180).plus(Inches.of(3))
                         ),
                         Rotation2d.fromDegrees(-15)
                     )
@@ -460,7 +460,7 @@ public final class FieldConstants {
                     new Pose2d(
                         new Translation2d(
                             Meters.of(0.679337),
-                            Meters.of(0.909320)
+                            Meters.of(0.909320).plus(Inches.of(3))
                         ),
                         Rotation2d.fromDegrees(-15)
                     )
