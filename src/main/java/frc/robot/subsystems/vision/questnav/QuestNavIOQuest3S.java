@@ -64,7 +64,7 @@ public class QuestNavIOQuest3S implements QuestNavIO {
           heartbeatResponsePub.set(requestId);
           lastProcessedHeartbeatId = requestId;
         }
-      }
+    }
 
     // Clean up questnav subroutine messages after processing on the headset.
     public void cleanUpQuestNavMessages() {

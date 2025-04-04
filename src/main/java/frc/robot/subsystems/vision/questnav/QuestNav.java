@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -14,7 +15,6 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.InternalButton;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
@@ -61,14 +61,14 @@ public class QuestNav extends VirtualSubsystem {
             setPose(Pose2d.kZero);
         } else if (DriverStation.isDisabled()) {
             setPose(RobotState.getInstance().getPose());
-        } else if (inputs.isConnected) {
-            // RobotState
-            //     .getInstance()
-            //     .addVisionMeasurement(
-            //         getRobotPose(),
-            //         VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
-            //         inputs.timestamp
-            //     );
+        } else if (inputs.isConnected && !isDisabled.get()) {
+            RobotState
+                .getInstance()
+                .addVisionMeasurement(
+                    getRobotPose(),
+                    VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
+                    inputs.timestamp
+                );
         }
 
         rollingAvg.addPose(getRobotPose());
