@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.FloatArraySubscriber;
 import edu.wpi.first.networktables.IntegerPublisher;
@@ -25,6 +26,10 @@ public class QuestNavIOQuest3S implements QuestNavIO {
     private final FloatArraySubscriber questEulerAngles = nt4Table.getFloatArrayTopic("eulerAngles").subscribe(new float[]{0.0f, 0.0f, 0.0f});
     private final DoubleSubscriber questBatteryPercent = nt4Table.getDoubleTopic("batteryPercent").subscribe(0.0f);
 
+    private final DoubleSubscriber heartbeatRequestSub = nt4Table.getDoubleTopic("heartbeat/quest_to_robot").subscribe(0.0);
+    private final DoublePublisher heartbeatResponsePub = nt4Table.getDoubleTopic("heartbeat/robot_to_quest").publish();
+    private double lastProcessedHeartbeatId = 0;
+
     public QuestNavIOQuest3S() {
         zeroPosition();
     }
@@ -37,6 +42,12 @@ public class QuestNavIOQuest3S implements QuestNavIO {
         inputs.pose = getPose();
     }
 
+    @Override
+    public void cleanUp() {
+        this.processHeartbeat();
+        this.cleanUpQuestNavMessages();
+    }
+
     // Zero the absolute 3D position of the robot (similar to long-pressing the quest logo).
     @Override
     public void zeroPosition() {
@@ -45,9 +56,18 @@ public class QuestNavIOQuest3S implements QuestNavIO {
         }
     }
 
+    // Process heartbeat requests from Quest and respond with the same ID
+    public void processHeartbeat() {
+        double requestId = heartbeatRequestSub.get();
+        // Only respond to new requests to avoid flooding
+        if (requestId > 0 && requestId != lastProcessedHeartbeatId) {
+          heartbeatResponsePub.set(requestId);
+          lastProcessedHeartbeatId = requestId;
+        }
+    }
+
     // Clean up questnav subroutine messages after processing on the headset.
-    @Override
-    public void cleanUp() {
+    public void cleanUpQuestNavMessages() {
         if (questMiso.get() == 99) {
             questMosi.set(0);
         }

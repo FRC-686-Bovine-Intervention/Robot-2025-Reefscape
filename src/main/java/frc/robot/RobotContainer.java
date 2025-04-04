@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
@@ -91,6 +93,7 @@ import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
+import frc.util.misc.MathExtraUtil;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
@@ -542,8 +545,16 @@ public class RobotContainer {
         // );
         
         driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
+        driveController.leftStickButton().onTrue(Commands.runOnce(() -> this.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())));
+        new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
+            .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
         // SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+    }
+
+    private void setPose(Pose2d pose) {
+        questNav.setPose(pose);
+        drive.setPose(pose);
     }
 
     private void configureNotifications() {

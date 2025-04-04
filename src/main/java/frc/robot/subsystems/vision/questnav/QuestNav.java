@@ -3,6 +3,7 @@ package frc.robot.subsystems.vision.questnav;
 import static edu.wpi.first.units.Units.Degrees;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -11,7 +12,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
@@ -37,6 +37,8 @@ public class QuestNav extends VirtualSubsystem {
 
     private final RollingAveragePose2d rollingAvg;
 
+    public final LoggedNetworkBoolean isDisabled = new LoggedNetworkBoolean("QuestNav/Quest Disabled");
+
     public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io, StatusLightAnimation connectionAnimation) {
         this.camMeta = camMeta;
         this.io = io;
@@ -58,16 +60,18 @@ public class QuestNav extends VirtualSubsystem {
         lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
         connectionAnimation.setStatus(inputs.isConnected);
 
-        if (DriverStation.isDisabled()) {
-            resetPose(RobotState.getInstance().getPose());
-        } else if (inputs.isConnected) {
-            // RobotState
-            //     .getInstance()
-            //     .addVisionMeasurement(
-            //         getRobotPose(),
-            //         VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
-            //         inputs.timestamp
-            //     );
+        if (calibrationInProgress) {
+            setPose(Pose2d.kZero);
+        } else if (DriverStation.isDisabled()) {
+            setPose(RobotState.getInstance().getPose());
+        } else if (inputs.isConnected && !isDisabled.get()) {
+            RobotState
+                .getInstance()
+                .addVisionMeasurement(
+                    getRobotPose(),
+                    VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
+                    inputs.timestamp
+                );
         }
 
         rollingAvg.addPose(getRobotPose());
@@ -78,7 +82,7 @@ public class QuestNav extends VirtualSubsystem {
         Logger.recordOutput("QuestNav/AverageRobotPose", getAverageRobotPose());
     }
 
-    public void resetPose(Pose2d pose) {
+    public void setPose(Pose2d pose) {
         rollingAvg.reset();
         this.questResetPose = getRawPose();
         this.robotResetPose = pose;
@@ -107,8 +111,9 @@ public class QuestNav extends VirtualSubsystem {
         return rollingAvg.getAveragePose();
     }
 
-    private Translation2d _calculatedOffsetToRobotCenter = new Translation2d();
-    private int _calculatedOffsetToRobotCenterCount = 0;
+    private Translation2d calculatedOffsetToRobotCenter = new Translation2d();
+    private int calculatedOffsetToRobotCenterCount = 0;
+    private boolean calibrationInProgress = false;
 
     private Translation2d calculateOffsetToRobotCenter() {
         Pose2d currentPose = getRobotPose();
@@ -125,24 +130,34 @@ public class QuestNav extends VirtualSubsystem {
     }
 
     public Command determineOffsetToRobotCenter(Drive drive) {
-        return Commands.repeatingSequence(
-                Commands.run(
+        return 
+            Commands.sequence(
+                Commands.runOnce(() -> {
+                    calibrationInProgress = true;
+                    calculatedOffsetToRobotCenterCount = 0;
+                    calculatedOffsetToRobotCenter = new Translation2d();
+                }),
+                Commands.repeatingSequence(
+                    Commands.run(
                         () -> {
                             drive.rotationalSubsystem.driveVelocity(new ChassisSpeeds(0, 0, 0.314));
-                        }, drive.rotationalSubsystem).withTimeout(0.5),
+                        },
+                        drive.rotationalSubsystem).withTimeout(0.5),
+                    Commands.runOnce(() -> {
+                        Translation2d offset = calculateOffsetToRobotCenter();
+
+                        calculatedOffsetToRobotCenter = calculatedOffsetToRobotCenter
+                                .times((double) calculatedOffsetToRobotCenterCount
+                                        / (calculatedOffsetToRobotCenterCount + 1))
+                                .plus(offset.div(calculatedOffsetToRobotCenterCount + 1));
+                        calculatedOffsetToRobotCenterCount++;
+
+                        Logger.recordOutput("QuestNav/Calculated Offset to Robot Center", calculatedOffsetToRobotCenter);
+                    }).onlyIf(() -> getRobotPose().getRotation().getMeasure().in(Degrees) > 30)
+                ),
                 Commands.runOnce(() -> {
-                    // Update current offset
-                    Translation2d offset = calculateOffsetToRobotCenter();
-
-                    _calculatedOffsetToRobotCenter = _calculatedOffsetToRobotCenter
-                            .times((double) _calculatedOffsetToRobotCenterCount
-                                    / (_calculatedOffsetToRobotCenterCount + 1))
-                            .plus(offset.div(_calculatedOffsetToRobotCenterCount + 1));
-                    _calculatedOffsetToRobotCenterCount++;
-
-                    SmartDashboard.putNumberArray("Quest Calculated Offset to Robot Center", new double[] {
-                            _calculatedOffsetToRobotCenter.getX(), _calculatedOffsetToRobotCenter.getY() });
-
-                }).onlyIf(() -> getRobotPose().getRotation().getMeasure().in(Degrees) > 30));
+                    calibrationInProgress = false;
+                })
+            );
     }
 }

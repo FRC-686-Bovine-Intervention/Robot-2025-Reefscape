@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.AngleUnit;
@@ -29,6 +30,8 @@ public class ApriltagVision extends VirtualSubsystem {
     private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
     private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 8);
 
+    private AprilTagResultPose robotPose = new AprilTagResultPose(Pose2d.kZero, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
+    
     public ApriltagVision(ApriltagCamera... cameras) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");
         this.cameras = cameras;
@@ -170,11 +173,23 @@ public class ApriltagVision extends VirtualSubsystem {
                     VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev),
                     frame.timestamp
                 );
+
+                robotPose = new AprilTagResultPose(robotPose2d, xyStdDev, thetaStdDev);
             }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
         }
     }
+
+    public AprilTagResultPose getPose() {
+        return robotPose;
+    }
+
+    public static record AprilTagResultPose(
+        Pose2d robotPose,
+        double xyStdDev,
+        double thetaStdDev
+    ) {}
 
     // public static record ApriltagResultTests(
     //     boolean inField,
