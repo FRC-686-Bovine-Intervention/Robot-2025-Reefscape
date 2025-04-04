@@ -182,7 +182,10 @@ function updateUI() {
           sideDOM.classList.remove("selected");
         }
 
-        if (mode === "SMART" && getCoralID({ rack, level, side }) === coralScoreTarget) {
+        if (
+          mode === "SMART" &&
+          getCoralID({ rack, level, side }) === coralScoreTarget
+        ) {
           sideDOM.classList.add("locked");
         } else {
           sideDOM.classList.remove("locked");
@@ -228,17 +231,20 @@ function updateUI() {
         } else {
           element.classList.remove("complete");
         }
-
-        if (
-          coopState &&
-          element.dataset.kind === "rp" &&
-          element.dataset.level == 1
-        ) {
-          element.classList.add("unnecessary");
-        } else {
-          element.classList.remove("unnecessary");
-        }
       });
+  }
+
+  priorityDOM.forEach((element) => {
+    element.classList.remove("unnecessary");
+  });
+  if (coopState) {
+    for (let i = prioritySlotDOM.length - 1; i >= 0; i++) {
+      const element = prioritySlotDOM[i].querySelector(".priority");
+      if (element.dataset.kind === "rp") {
+        element.classList.add("unnecessary");
+        break;
+      }
+    }
   }
 
   level1sDOM.forEach((element) => {
