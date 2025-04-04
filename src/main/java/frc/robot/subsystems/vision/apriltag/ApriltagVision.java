@@ -28,7 +28,7 @@ public class ApriltagVision extends VirtualSubsystem {
     private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
     private static final LoggedTunableMeasure<AngleUnit> gyroTolerance = new LoggedTunableMeasure<>("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees.of(10));
     private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
-    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 8);
+    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", Double.POSITIVE_INFINITY);
 
     private AprilTagResultPose robotPose = new AprilTagResultPose(Pose2d.kZero, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
     
