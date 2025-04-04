@@ -22,7 +22,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoCommons.AutoPaths;
@@ -93,7 +92,6 @@ import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
-import frc.util.misc.MathExtraUtil;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
@@ -544,8 +542,7 @@ public class RobotContainer {
         //     climber.engageRatchet()
         // );
         
-        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
-        driveController.leftStickButton().onTrue(Commands.runOnce(() -> this.setPose(Rack.Rack0.algaeIntakeRobotPose.getOurs().getForward())));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
             .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
