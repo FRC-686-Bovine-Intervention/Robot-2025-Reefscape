@@ -209,13 +209,28 @@ public class Superstructure extends SubsystemBase {
                 this.currentStepIndex = 0;
                 steps.clear();
                 var initialState = getCurrentState();
+                var initialVeryLow = initialState.elevatorLength.lt(Inches.of(13));
                 var initialLow = initialState.elevatorLength.lt(Inches.of(25));
                 var initialHigh = initialState.elevatorLength.gt(Inches.of(45));
                 var initialWristUp = initialState.wristAngle.gt(Degrees.of(45));
+                var initialWristDown = initialState.wristAngle.lt(Degrees.of(60).unaryMinus());
                 var initialClimbing = initialState.wristAngle.gt(Degrees.of(70)) && initialState.pivotAngle.gt(Degrees.of(90));
                 
+                var targetVeryLow = setpoint.elevatorLength.lt(Inches.of(13));
                 var targetLow = setpoint.elevatorLength.lt(Inches.of(35));
                 var targetHigh = setpoint.elevatorLength.gt(Inches.of(45));
+                var targetWristDown = setpoint.wristAngle.lt(Degrees.of(60).unaryMinus());
+
+                Logger.recordOutput("Superstructure/Sequencing/initialVeryLow", initialVeryLow);
+                Logger.recordOutput("Superstructure/Sequencing/initialLow", initialLow);
+                Logger.recordOutput("Superstructure/Sequencing/initialHigh", initialHigh);
+                Logger.recordOutput("Superstructure/Sequencing/initialWristUp", initialWristUp);
+                Logger.recordOutput("Superstructure/Sequencing/initialWristDown", initialWristDown);
+                Logger.recordOutput("Superstructure/Sequencing/initialClimbing", initialClimbing);
+                Logger.recordOutput("Superstructure/Sequencing/targetVeryLow", targetVeryLow);
+                Logger.recordOutput("Superstructure/Sequencing/targetLow", targetLow);
+                Logger.recordOutput("Superstructure/Sequencing/targetHigh", targetHigh);
+                Logger.recordOutput("Superstructure/Sequencing/targetWristDown", targetWristDown);
 
                 if (initialClimbing) {
 
@@ -240,7 +255,7 @@ public class Superstructure extends SubsystemBase {
                             SuperstructureState.fromParts(
                                 Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 30, 110)),
                                 initialState.elevatorLength,
-                                Degrees.of(MathUtil.clamp(setpoint.wristAngle.in(Degrees), 80, 90))
+                                Degrees.of(MathUtil.clamp(setpoint.wristAngle.plus(setpoint.pivotAngle).in(Degrees), 80, 90))
                             ),
                             Degrees.of(10),
                             Inches.of(10),
@@ -252,7 +267,21 @@ public class Superstructure extends SubsystemBase {
                             SuperstructureState.fromParts(
                                 Degrees.of(MathUtil.clamp(setpoint.pivotAngle.in(Degrees), 30, 110)),
                                 setpoint.elevatorLength,
-                                Degrees.of(MathUtil.clamp(setpoint.wristAngle.in(Degrees), 80, 90))
+                                Degrees.of(MathUtil.clamp(setpoint.wristAngle.plus(setpoint.pivotAngle).in(Degrees), 80, 90))
+                            ),
+                            Degrees.of(10),
+                            Inches.of(5),
+                            Degrees.of(10)
+                        )
+                    );
+                }
+                if (targetVeryLow && initialVeryLow && !initialWristDown && targetWristDown) {
+                    steps.add(
+                        new SuperstructureStep(
+                            SuperstructureState.newConstrained(
+                                setpoint.pivotAngle,
+                                initialState.elevatorLength,
+                                setpoint.wristAngle
                             ),
                             Degrees.of(10),
                             Inches.of(5),
