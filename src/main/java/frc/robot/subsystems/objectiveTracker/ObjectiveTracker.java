@@ -293,6 +293,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
             updateIncompletePriorities();
         }
 
+        // TODO: ON ALLIANCE CHANGE UPDATE ALL
+
         for (var priority : fullStrategy) {
             Logger.recordOutput(
                 switch (priority) {
