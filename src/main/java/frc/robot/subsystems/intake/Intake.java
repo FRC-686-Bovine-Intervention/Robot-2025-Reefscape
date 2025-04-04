@@ -27,7 +27,7 @@ public class Intake extends SubsystemBase {
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
     public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(6));
-    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(6).unaryMinus());
+    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(4).unaryMinus());
     public static final LoggedTunableMeasure<VoltageUnit> ejectLevel1Voltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject Level 1", Volts.of(2).unaryMinus());
     public static final LoggedTunableMeasure<VoltageUnit> coralHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Coral", Volts.of(0.3));
     public static final LoggedTunableMeasure<VoltageUnit> algaeHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Algae", Volts.of(1));
