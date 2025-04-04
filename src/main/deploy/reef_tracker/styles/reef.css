@@ -1,7 +1,8 @@
 /* REEF */
 #reef {
-  --reef-height: 490px;
-  --algae-radius: 100px;
+  --reef-height: 250px;
+  --algae-radius: 60px;
+  --side-radius: 55px;
 
   --triangle-base-length: calc(var(--reef-height) / (2 * sqrt(3)));
 
@@ -44,12 +45,62 @@
   display: flex;
 }
 
+.level {
+  display: flex;
+}
+
+.level1 {
+  width: 90%;
+  height: var(--side-radius);
+  background-color: #37373d;
+  margin: auto;
+  margin-top: 12px;
+  border-radius: 50px;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.side {
+  width: var(--side-radius);
+  height: var(--side-radius);
+  border-radius: 100%;
+  margin: auto;
+  margin-top: 12px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: all;
+  background-color: #37373d;
+}
+
+#level1.locked,
+.side.locked,
+.algae.locked {
+  border: 5px solid #fdfdfd;
+}
+
+.level:nth-child(3) .side.selected {
+  background-color: #eaa153;
+}
+
+.level:nth-child(4) .side.selected {
+  background-color: #3ba799;
+}
+
+.level:nth-child(5) .side.selected {
+  background-color: #35892f;
+}
+
+.level1.selected,
+.side.selected {
+  background: #fdfdfd;
+}
+
 .algae {
   width: var(--algae-radius);
   height: var(--algae-radius);
   border-radius: 100%;
   margin: auto;
-  margin-top: 12px;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -65,7 +116,6 @@
   width: var(--triangle-base-length);
   height: calc(var(--triangle-base-length) * sqrt(3));
   cursor: pointer;
-  z-index: 1000;
   pointer-events: all;
   background: #37373d;
 }
@@ -76,7 +126,7 @@
 
 .pipe:last-child {
   clip-path: polygon(0 0, 0 100%, 100% 100%);
-  filter: brightness(.75);
+  filter: brightness(0.75);
 }
 
 .pipe.selected {
@@ -84,21 +134,19 @@
 }
 
 #reef.l2 .pipe.selected {
-  background: yellow;
-  color: black;
+  background: #eaa153;
 }
 
 #reef.l3 .pipe.selected {
-  background: aquamarine;
-  color: black;
+  background: #3ba799;
 }
 
 #reef.l4 .pipe.selected {
-  background: green;
+  background: #35892f;
 }
 
 .pipe-text {
-  --padding: 50px;
+  --padding: 35px;
   --top: calc(var(--reef-height) / 2 - var(--padding));
   --horiz: calc(
     var(--triangle-base-length) - (var(--top) / sqrt(3)) +

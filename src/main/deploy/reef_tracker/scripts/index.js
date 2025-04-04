@@ -2,6 +2,7 @@ import { NT4_Client } from "../lib/NT4.js";
 
 const toRobotPrefix = "/ReefControls/ToRobot/";
 const toDashboardPrefix = "/ReefControls/ToDashboard/";
+const advantageKitPrefix = "/AdvantageKit/RealOutputs/Objective Tracker/";
 
 const modeTopicName = "Mode";
 const coralGoalTopicName = "CoralGoal";
@@ -13,6 +14,9 @@ const algaeTopicName = "Algae";
 const coopTopicName = "Coop";
 const priorityListTopicName = "PriorityList";
 
+const algaeIntakeTargetTopicName = "Intake/Algae";
+const coralScoreTargetTopicName = "Score/Coral";
+
 let mode = "SMART";
 let coralGoal = 0;
 let algaeGoal = 0;
@@ -22,7 +26,8 @@ let algaeState = [];
 let coopState = 0;
 let priorityListState = [];
 
-let selectedLevel = 0;
+let algaeIntakeTarget = -1;
+let coralScoreTarget = -1;
 
 const ntClient = new NT4_Client(
   window.location.hostname,
@@ -46,6 +51,10 @@ const ntClient = new NT4_Client(
       coopState = value;
     } else if (topic.name === toDashboardPrefix + priorityListTopicName) {
       priorityListState = unpackInt(value, 24, 3);
+    } else if (topic.name === advantageKitPrefix + algaeIntakeTargetTopicName) {
+      algaeIntakeTarget = value;
+    } else if (topic.name === advantageKitPrefix + coralScoreTargetTopicName) {
+      coralScoreTarget = value;
     } else {
       return;
     }
@@ -89,6 +98,8 @@ window.addEventListener("load", () => {
       toDashboardPrefix + algaeTopicName,
       toDashboardPrefix + coopTopicName,
       toDashboardPrefix + priorityListTopicName,
+      advantageKitPrefix + algaeIntakeTargetTopicName,
+      advantageKitPrefix + coralScoreTargetTopicName,
     ],
     false,
     false,
@@ -106,13 +117,10 @@ window.addEventListener("load", () => {
   ntClient.connect();
 });
 
-const reefDOM = document.getElementById("reef");
-const pipeDOM = document.getElementById("pipe");
-const levelsDOM = Array.from(document.querySelectorAll(".level")).reverse();
-const levelCountersDOM = levelsDOM.map((el) => el.querySelector(".level-text"));
-const pipesDOM = Array.from(document.querySelectorAll(".pipe"));
 const algaeDOM = Array.from(document.querySelectorAll(".algae"));
+const l1DOM = document.getElementById("level1");
 const l1AddDOM = document.getElementById("add");
+const l1Counter = document.getElementById("counter");
 const l1SubtractDOM = document.getElementById("subtract");
 const coopDOM = document.getElementById("coop");
 const algaeGoalDOM = [
@@ -130,24 +138,58 @@ const priorityItems = new Map(
 const priorityUpdatedIndicated = document.querySelector(
   "#priority_list .updated"
 );
+const racksDOM = Array.from(document.querySelectorAll(".rack"))
+  .map((element) => Array.from(element.querySelectorAll(".level")))
+  .map((levels) =>
+    levels.map((element) => Array.from(element.querySelectorAll(".side")))
+  );
+const level1sDOM = Array.from(document.querySelectorAll(".level1"));
 
 function updateUI() {
   if (mode === "DUMB") {
-    l1AddDOM.style.display = "none";
-    l1SubtractDOM.style.display = "none";
+    l1DOM.style.display = "none";
     coopDOM.style.display = "none";
     priorityListDOM.style.display = "none";
   } else {
-    l1AddDOM.style.display = "";
-    l1SubtractDOM.style.display = "";
+    l1DOM.style.display = "";
     coopDOM.style.display = "";
     priorityListDOM.style.display = "";
   }
 
-  reefDOM.className = "";
-  if (mode === "SMART") reefDOM.classList.add("l" + (selectedLevel + 2));
-  pipeDOM.className = "";
-  if (mode === "SMART") pipeDOM.classList.add("l" + (selectedLevel + 2));
+  if (mode === "SMART" && coralScoreTarget === -1) {
+    l1DOM.classList.add("locked");
+  } else {
+    l1DOM.classList.remove("locked");
+  }
+
+  level1sDOM.forEach((rackDOM, rack) => {
+    if (coralGoal - 36 === rack) {
+      rackDOM.classList.add("selected");
+    } else {
+      rackDOM.classList.remove("selected");
+    }
+  });
+
+  racksDOM.forEach((rackDOM, rack) => {
+    rackDOM.forEach((levelDOM, level) => {
+      levelDOM.forEach((sideDOM, side) => {
+        if (
+          (mode === "SMART" && coralState[getCoralID({ rack, level, side })]) ||
+          (mode === "DUMB" && getCoralID({ rack, level, side }) === coralGoal)
+        ) {
+          sideDOM.classList.add("selected");
+        } else {
+          sideDOM.classList.remove("selected");
+        }
+
+        if (mode === "SMART" && getCoralID({ rack, level, side }) === coralScoreTarget) {
+          sideDOM.classList.add("locked");
+        } else {
+          sideDOM.classList.remove("locked");
+        }
+      });
+    });
+  });
 
   modeToggleDOM.checked = mode === "SMART";
 
@@ -157,35 +199,25 @@ function updateUI() {
     priorityUpdatedIndicated.style.display = "";
   });
 
-  levelsDOM.forEach((element, index) => {
-    if (
-      (mode === "SMART" && index > 0 && selectedLevel === index - 1) ||
-      (mode === "DUMB" && getCoral(coralGoal).level === index)
-    ) {
-      element.classList.add("selected");
-    } else {
-      element.classList.remove("selected");
-    }
-  });
+  l1Counter.textContent = l1State;
 
   let rpLevelCount = 0;
-  levelCountersDOM.forEach((element, index) => {
-    if (mode === "DUMB") {
-      element.innerHTML = "L" + (index + 1);
-      return;
-    }
+  for (let level = 0; level < 4; level++) {
     let count = 0;
-    if (index === 0) {
+    if (level === 0) {
       count = l1State;
     } else {
       for (let i = 0; i < 12; i++) {
-        count += coralState[getCoralID({ level: index - 1, pipe: i })] ? 1 : 0;
+        count += coralState[getCoralIDFromPipe({ level: level - 1, pipe: i })]
+          ? 1
+          : 0;
       }
     }
+
     if (count >= 5) rpLevelCount++;
-    element.innerText = count;
+
     priorityDOM
-      .filter((element) => element.dataset.level - 1 == index)
+      .filter((element) => element.dataset.level - 1 == level)
       .forEach((element) => {
         const neededCount = element.dataset.count;
         const percentage = Math.min(count / neededCount, 1);
@@ -197,23 +229,24 @@ function updateUI() {
           element.classList.remove("complete");
         }
 
-        if (coopState && element.dataset.kind === "rp" && element.dataset.level == 1) {
+        if (
+          coopState &&
+          element.dataset.kind === "rp" &&
+          element.dataset.level == 1
+        ) {
           element.classList.add("unnecessary");
         } else {
           element.classList.remove("unnecessary");
         }
       });
-  });
+  }
 
-  pipesDOM.forEach((element, index) => {
-    if (
-      (mode === "SMART" &&
-        coralState[getCoralID({ level: selectedLevel, pipe: index })]) ||
-      (mode === "DUMB" && getCoral(coralGoal).pipe === index)
-    ) {
-      element.classList.add("selected");
+  level1sDOM.forEach((element) => {
+    if (mode === "SMART") {
+      element.style.display = "none";
+      return;
     } else {
-      element.classList.remove("selected");
+      element.style.display = "";
     }
   });
 
@@ -221,14 +254,20 @@ function updateUI() {
     if (mode === "DUMB") {
       element.style.display = "none";
       return;
-    } else {
-      element.style.display = "";
     }
+
+    element.style.display = "";
 
     if (!algaeState[index]) {
       element.classList.add("selected");
     } else {
       element.classList.remove("selected");
+    }
+
+    if (algaeIntakeTarget === index) {
+      element.classList.add("locked");
+    } else {
+      element.classList.remove("locked");
     }
   });
 
@@ -277,35 +316,26 @@ window.addEventListener("load", () => {
     ntClient.addSample(toRobotPrefix + modeTopicName, mode === "SMART" ? 1 : 0);
   });
 
-  levelsDOM.forEach((element, index) => {
-    bind(element, () => {
-      if (mode === "DUMB") {
-        ntClient.addSample(
-          toRobotPrefix + coralGoalTopicName,
-          getCoralID({ ...getCoral(coralGoal), level: index })
-        );
-      } else if (index > 0) {
-        selectedLevel = index - 1;
-        updateUI();
-      }
+  level1sDOM.forEach((level1DOM, rack) => {
+    bind(level1DOM, () => {
+      ntClient.addSample(toRobotPrefix + coralGoalTopicName, 36 + rack);
     });
   });
 
-  pipesDOM.forEach((element, index) => {
-    bind(element, () => {
-      if (mode === "DUMB") {
-        ntClient.addSample(
-          toRobotPrefix + coralGoalTopicName,
-          getCoralID({
-            ...getCoral(coralGoal),
-            pipe: index,
-          })
-        );
-        return;
-      }
-      const id = getCoralID({ level: selectedLevel, pipe: index });
-      const offset = coralState[id] ? 36 : 0;
-      ntClient.addSample(toRobotPrefix + coralTopicName, id - offset);
+  racksDOM.forEach((racks, rack) => {
+    racks.forEach((levels, level) => {
+      levels.forEach((sideDOM, side) => {
+        bind(sideDOM, () => {
+          if (mode === "DUMB") {
+            const id = getCoralID({ rack, level, side });
+            ntClient.addSample(toRobotPrefix + coralGoalTopicName, id);
+            return;
+          }
+          const id = getCoralID({ rack, level, side });
+          const offset = coralState[id] ? 36 : 0;
+          ntClient.addSample(toRobotPrefix + coralTopicName, id - offset);
+        });
+      });
     });
   });
 
@@ -364,7 +394,7 @@ window.addEventListener("load", () => {
     }
     const filteredSwaps = indicesToKeep.map((index) => swaps[index]);
     if (filteredSwaps.length === 0) return;
-    
+
     ntClient.addSample(
       toRobotPrefix + priorityListTopicName,
       filteredSwaps.map((swap) => packInt(swap, 3))
@@ -374,12 +404,21 @@ window.addEventListener("load", () => {
   });
 });
 
-function getCoralID({ pipe, level }) {
+function getCoralIDFromPipe({ pipe, level }) {
   return level * 12 + pipe;
 }
 
+function getCoralID({ rack, level, side }) {
+  return level * 12 + rack * 2 + side;
+}
+
 function getCoral(id) {
-  return { pipe: id % 12, level: Math.floor(id / 12) };
+  return {
+    rack: Math.floor((id % 12) / 2),
+    level: Math.floor(id / 12),
+    side: (id % 12) % 2,
+    pipe: id % 12,
+  };
 }
 
 function convertIntToBooleanArr(n, len) {
@@ -412,5 +451,5 @@ function packInt(values, size) {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
