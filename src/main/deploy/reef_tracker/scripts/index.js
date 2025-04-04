@@ -238,7 +238,7 @@ function updateUI() {
     element.classList.remove("unnecessary");
   });
   if (coopState) {
-    for (let i = prioritySlotDOM.length - 1; i >= 0; i++) {
+    for (let i = prioritySlotDOM.length - 1; i >= 0; i--) {
       const element = prioritySlotDOM[i].querySelector(".priority");
       if (element.dataset.kind === "rp") {
         element.classList.add("unnecessary");
