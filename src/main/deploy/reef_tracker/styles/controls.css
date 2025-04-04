@@ -111,6 +111,7 @@
   border-radius: 10px;
   overflow: hidden;
   background-color: #37373d;
+  padding: 20px;
 }
 
 #add,
@@ -118,6 +119,5 @@
   width: 100%;
   display: grid;
   place-items: center;
-  padding: 20px;
   cursor: pointer;
 }

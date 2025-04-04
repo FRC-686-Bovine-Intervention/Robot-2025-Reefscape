@@ -476,9 +476,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Intake/Algae", intakeAlgaeObjective.isPresent() ? intakeAlgaeObjective.get().algae.rack.id : -1);
         Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", LoggerUtil.toArray(intakeAlgaeObjective.map(IntakeAlgaeObjective::getTargetDirection), Direction[]::new));
         Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", LoggerUtil.toArray(intakeAlgaeObjective.map(IntakeAlgaeObjective::getTargetPose), Pose2d[]::new));
         Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeObjective.isPresent() ? intakeAlgaeObjective.get().getTargetState().getMechTransforms() : new Transform3d[0]);
+        Logger.recordOutput("Objective Tracker/Score/Coral", scoreCoralObjective.branch.isPresent() ? scoreCoralObjective.branch.get().id : -1);
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralObjective.getTargetState().getMechTransforms());
@@ -594,13 +596,15 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
     public static class ScoreCoralObjective implements Objective {
+        public final Optional<BranchObject> branch;
         public final Optional<BranchLevel> branchLevel;
         private final Pose2d targetPose;
         private final SuperstructureState targetState;
         private final Direction direction;
 
-        private ScoreCoralObjective(Pose2d targetPose, SuperstructureState targetState, Direction direction, Optional<BranchLevel> branchLevel) {
-            this.branchLevel = branchLevel;
+        private ScoreCoralObjective(Pose2d targetPose, SuperstructureState targetState, Direction direction, Optional<BranchObject> branch) {
+            this.branch = branch;
+            this.branchLevel = branch.isPresent() ? Optional.of(branch.get().level) : Optional.empty();
             this.targetPose = targetPose;
             this.targetState = targetState;
             this.direction = direction;
@@ -611,7 +615,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 branch.scoreTotalState.getRobotPose(direction),
                 branch.scoreTotalState.getSuperstructureState(direction),
                 direction,
-                Optional.of(branch.level)
+                Optional.of(branch)
             );
         }
         public static ScoreCoralObjective fromLevel1(RackObject rack, Rotation2d currentRotation) {

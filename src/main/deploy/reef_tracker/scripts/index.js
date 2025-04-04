@@ -1,8 +1,8 @@
 import { NT4_Client } from "../lib/NT4.js";
-import { wrapNumber } from "./utils.js";
 
 const toRobotPrefix = "/ReefControls/ToRobot/";
 const toDashboardPrefix = "/ReefControls/ToDashboard/";
+const advantageKitPrefix = "/AdvantageKit/RealOutputs/Objective Tracker/";
 
 const modeTopicName = "Mode";
 const coralGoalTopicName = "CoralGoal";
@@ -14,6 +14,9 @@ const algaeTopicName = "Algae";
 const coopTopicName = "Coop";
 const priorityListTopicName = "PriorityList";
 
+const algaeIntakeTargetTopicName = "Intake/Algae";
+const coralScoreTargetTopicName = "Score/Coral";
+
 let mode = "SMART";
 let coralGoal = 0;
 let algaeGoal = 0;
@@ -22,6 +25,9 @@ let coralState = [];
 let algaeState = [];
 let coopState = 0;
 let priorityListState = [];
+
+let algaeIntakeTarget = -1;
+let coralScoreTarget = -1;
 
 const ntClient = new NT4_Client(
   window.location.hostname,
@@ -45,6 +51,10 @@ const ntClient = new NT4_Client(
       coopState = value;
     } else if (topic.name === toDashboardPrefix + priorityListTopicName) {
       priorityListState = unpackInt(value, 24, 3);
+    } else if (topic.name === advantageKitPrefix + algaeIntakeTargetTopicName) {
+      algaeIntakeTarget = value;
+    } else if (topic.name === advantageKitPrefix + coralScoreTargetTopicName) {
+      coralScoreTarget = value;
     } else {
       return;
     }
@@ -88,6 +98,8 @@ window.addEventListener("load", () => {
       toDashboardPrefix + algaeTopicName,
       toDashboardPrefix + coopTopicName,
       toDashboardPrefix + priorityListTopicName,
+      advantageKitPrefix + algaeIntakeTargetTopicName,
+      advantageKitPrefix + coralScoreTargetTopicName,
     ],
     false,
     false,
@@ -144,6 +156,12 @@ function updateUI() {
     priorityListDOM.style.display = "";
   }
 
+  if (mode === "SMART" && coralScoreTarget === -1) {
+    l1DOM.classList.add("locked");
+  } else {
+    l1DOM.classList.remove("locked");
+  }
+
   level1sDOM.forEach((rackDOM, rack) => {
     if (coralGoal - 36 === rack) {
       rackDOM.classList.add("selected");
@@ -151,7 +169,6 @@ function updateUI() {
       rackDOM.classList.remove("selected");
     }
   });
-
 
   racksDOM.forEach((rackDOM, rack) => {
     rackDOM.forEach((levelDOM, level) => {
@@ -163,6 +180,12 @@ function updateUI() {
           sideDOM.classList.add("selected");
         } else {
           sideDOM.classList.remove("selected");
+        }
+
+        if (mode === "SMART" && getCoralID({ rack, level, side }) === coralScoreTarget) {
+          sideDOM.classList.add("locked");
+        } else {
+          sideDOM.classList.remove("locked");
         }
       });
     });
@@ -231,14 +254,20 @@ function updateUI() {
     if (mode === "DUMB") {
       element.style.display = "none";
       return;
-    } else {
-      element.style.display = "";
     }
+
+    element.style.display = "";
 
     if (!algaeState[index]) {
       element.classList.add("selected");
     } else {
       element.classList.remove("selected");
+    }
+
+    if (algaeIntakeTarget === index) {
+      element.classList.add("locked");
+    } else {
+      element.classList.remove("locked");
     }
   });
 
