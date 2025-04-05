@@ -126,8 +126,8 @@
    "MaxVelocity":{
     "dimension":"LinVel",
     "var":{
-     "exp":"2.5 m / s",
-     "val":2.5
+     "exp":"2 m / s",
+     "val":2.0
     }
    },
    "RackDelta":{
