@@ -136,8 +136,8 @@ public class BucketVision extends VirtualSubsystem {
             ;
         }
         
-        Leds.getInstance().visionAcquired.setFlag(hasTarget());
-        Leds.getInstance().visionLocked.setFlag(targetLocked());
+        // Leds.getInstance().visionAcquired.setFlag(hasTarget());
+        // Leds.getInstance().visionLocked.setFlag(targetLocked());
         
         Logger.recordOutput("Vision/Bucket/Bucket Memories", bucketMemories.stream().map(TrackedBucket::toASPose).toArray(Pose3d[]::new));
         Logger.recordOutput("Vision/Bucket/Bucket Confidence", bucketMemories.stream().mapToDouble((note) -> note.confidence).toArray());

@@ -26,7 +26,7 @@ public class WristIOSim extends WristIOKraken {
         var motorSimState = motor.getSimState();
         var cancoderSimState = cancoder.getSimState();
 
-        wristSim.setInputVoltage(-motorSimState.getMotorVoltage());
+        wristSim.setInputVoltage(motorSimState.getMotorVoltage());
         wristSim.update(RobotConstants.rioUpdatePeriodSecs);
 
         var position = Radians.of(wristSim.getAngleRads());

@@ -26,11 +26,11 @@ public class IntakeIOFalcon implements IntakeIO {
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
             .withNeutralMode(NeutralModeValue.Coast)
-            .withInverted(InvertedValue.CounterClockwise_Positive)
+            .withInverted(InvertedValue.Clockwise_Positive)
         ;
         motorConfig.CurrentLimits
-            .withStatorCurrentLimit(Amps.of(20))
-            .withStatorCurrentLimitEnable(false)
+            .withStatorCurrentLimit(Amps.of(80))
+            .withStatorCurrentLimitEnable(true)
         ;
 
         motor.getConfigurator().apply(motorConfig);

@@ -35,14 +35,14 @@ public class WristIOKraken implements WristIO {
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Wrist/Profile",
-        DegreesPerSecond.of(360),
-        DegreesPerSecondPerSecond.of(720)
+        DegreesPerSecond.of(720),
+        DegreesPerSecondPerSecond.of(1080)
     );
     private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Wrist/FF",
         0,
         0,
-        10,
+        5,
         0
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
@@ -64,7 +64,7 @@ public class WristIOKraken implements WristIO {
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
-            .withInverted(InvertedValue.Clockwise_Positive)
+            .withInverted(InvertedValue.CounterClockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
@@ -82,6 +82,10 @@ public class WristIOKraken implements WristIO {
         profileConsts.update(motorConfig.MotionMagic);
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);
+
+        profileConsts.hasChanged(hashCode());
+        ffConsts.hasChanged(hashCode());
+        pidConsts.hasChanged(hashCode());
 
         motor.getConfigurator().apply(motorConfig);
 

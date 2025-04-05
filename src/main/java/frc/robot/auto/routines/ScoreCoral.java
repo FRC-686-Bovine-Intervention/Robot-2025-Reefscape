@@ -1,23 +1,28 @@
 package frc.robot.auto.routines;
 
+import static frc.robot.auto.AutoCommons.getStartingPositionAsString;
+import static frc.robot.auto.AutoCommons.pipeOptionalOptions;
+import static frc.robot.auto.AutoCommons.pipeOptions;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.IntFunction;
-import java.util.stream.IntStream;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
-import static frc.robot.auto.AutoCommons.pipeOptions;
 import frc.robot.auto.AutoCommons;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoCommons.CoralStationPosition;
 import frc.robot.auto.AutoConstants;
 import frc.robot.auto.AutoRoutine;
-import frc.robot.constants.FieldConstants.Reef.Level;
-import frc.robot.constants.FieldConstants.Reef.Pipe;
+import frc.robot.constants.FieldConstants.Reef.BranchLevel;
+import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
@@ -54,50 +59,65 @@ public class ScoreCoral extends AutoRoutine {
         
         @Override
         protected Settings<CoralStationPosition> generateSettings() {
-            return Settings.from(stationClose, stationClose, stationMid, stationFar);
+            return Settings.from(stationFar, stationClose, stationMid, stationFar);
         }
     };
     
-    private static boolean isRightCoralStation(Pipe pipe){
-        return MathExtraUtil.isWithin(pipe.getIndex(), 1, 6);
+    private static boolean isRightCoralStation(PipeConcept pipe) {
+        return isRightCoralStation(pipe.id);
+    }
+    private static boolean isRightCoralStation(int pipeID) {
+        return MathExtraUtil.isWithin(pipeID, 1, 6);
     }
 
-    private static final AutoQuestion<Pipe> scorePreloadPipe = new AutoQuestion<Pipe>("Score Preload Pipe") {
+    private static final AutoQuestion<PipeConcept> firstCoralPipe = new AutoQuestion<PipeConcept>("Score First Pipe") {
         @Override
-        protected Settings<Pipe> generateSettings() {
+        protected Settings<PipeConcept> generateSettings() {
             var startPosition = ScoreCoral.startPosition.getResponse();
             if (
                 startPosition == AutoConstants.startLeftLeftCage ||
                 startPosition == AutoConstants.startLeftMiddleCage
             ) {
-                return Settings.from(pipeOptions[10],
+                return Settings.from(pipeOptions[9],
                     pipeOptions[0],
+                    pipeOptions[8],
+                    pipeOptions[9],
                     pipeOptions[10],
                     pipeOptions[11]
                 );
             } else if (startPosition == AutoConstants.startLeftRightCage) {
-                return Settings.from(pipeOptions[8],
+                return Settings.from(pipeOptions[9],
+                    pipeOptions[6],
+                    pipeOptions[7],
                     pipeOptions[8],
                     pipeOptions[9]
                 );
             } else if (startPosition == AutoConstants.startDeadCenter) {
                 return Settings.from(pipeOptions[6],
+                    pipeOptions[4],
+                    pipeOptions[5],
                     pipeOptions[6],
-                    pipeOptions[7]
+                    pipeOptions[7],
+                    pipeOptions[8],
+                    pipeOptions[9]
                 );
             } else if (startPosition == AutoConstants.startRightLeftCage) {
                 return Settings.from(pipeOptions[4],
                     pipeOptions[4],
-                    pipeOptions[5]
+                    pipeOptions[5],
+                    pipeOptions[6],
+                    pipeOptions[7]
                 );
             } else if (
                 startPosition == AutoConstants.startRightMiddleCage ||
                 startPosition == AutoConstants.startRightRightCage
             ) {
-                return Settings.from(pipeOptions[3],
+                return Settings.from(pipeOptions[4],
                     pipeOptions[1],
                     pipeOptions[2],
-                    pipeOptions[3]
+                    pipeOptions[3],
+                    pipeOptions[4],
+                    pipeOptions[5]
                 );
             } else {
                 return null;
@@ -106,38 +126,171 @@ public class ScoreCoral extends AutoRoutine {
 
     };
 
-    private static final AutoQuestion<Pipe> scoreCoral1 = new AutoQuestion<Pipe>("Score Second Pipe") {
+    private static final AutoQuestion<Optional<PipeConcept>> secondCoralPipe = new AutoQuestion<Optional<PipeConcept>>("Score Second Pipe") {
         @Override
-        protected Settings<Pipe> generateSettings() {
-            var options = (
-                isRightCoralStation(scorePreloadPipe.getResponse())
-                ? IntStream.range(1, 7)
-                : IntStream.range(7, 13)
-            )
-                .mapToObj(i -> pipeOptions[i % pipeOptions.length])
-                .filter(entry -> !entry.getValue().equals(scorePreloadPipe.getResponse()))
-                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
-            return Settings.from(options[0], options);
+        protected Settings<Optional<PipeConcept>> generateSettings() {
+            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || !option.getValue().equals(Optional.of(firstCoralPipe.getResponse()));
+            if (isRightCoralStation(firstCoralPipe.getResponse())) {
+                var options = Stream.of(
+                    pipeOptionalOptions[12],
+                    pipeOptionalOptions[1],
+                    pipeOptionalOptions[2],
+                    pipeOptionalOptions[3],
+                    pipeOptionalOptions[4],
+                    pipeOptionalOptions[5],
+                    pipeOptionalOptions[6]
+                )
+                    .filter(notInPreviousResponses)
+                    .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
+                ;
+                var defaultOption = Stream.of(
+                    pipeOptionalOptions[2],
+                    pipeOptionalOptions[3],
+                    pipeOptionalOptions[1]
+                )
+                    .filter(notInPreviousResponses)
+                    .findFirst()
+                    .get()
+                ;
+                return Settings.from(defaultOption, options);
+            } else {
+                var options = Stream.of(
+                    pipeOptionalOptions[12],
+                    pipeOptionalOptions[0],
+                    pipeOptionalOptions[11],
+                    pipeOptionalOptions[10],
+                    pipeOptionalOptions[9],
+                    pipeOptionalOptions[8],
+                    pipeOptionalOptions[7]
+                )
+                    .filter(notInPreviousResponses)
+                    .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
+                ;
+                var defaultOption = Stream.of(
+                    pipeOptionalOptions[11],
+                    pipeOptionalOptions[10],
+                    pipeOptionalOptions[0]
+                )
+                    .filter(notInPreviousResponses)
+                    .findFirst()
+                    .get()
+                ;
+                return Settings.from(defaultOption, options);
+            }
         }
     };
 
-    private static final AutoQuestion<Pipe> scoreCoral2 = new AutoQuestion<Pipe>("Score Third Pipe") {
+    private static final AutoQuestion<Optional<PipeConcept>> thirdCoralPipe = new AutoQuestion<Optional<PipeConcept>>("Score Third Pipe") {
         @Override
-        protected Settings<Pipe> generateSettings() {
-            var options = (
-                isRightCoralStation(scorePreloadPipe.getResponse())
-                ? IntStream.range(1, 7)
-                : IntStream.range(7, 13)
-            )
-                .mapToObj(i -> pipeOptions[i % pipeOptions.length])
-                .filter(entry -> 
-                    !entry.getValue().equals(scorePreloadPipe.getResponse()) &&
-                    !entry.getValue().equals(scoreCoral1.getResponse())
+        protected Settings<Optional<PipeConcept>> generateSettings() {
+            if (secondCoralPipe.getResponse().isEmpty()) {
+                return Settings.from(pipeOptionalOptions[12], pipeOptionalOptions[12]);
+            }
+            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || (!option.getValue().equals(Optional.of(firstCoralPipe.getResponse())) && !option.getValue().equals(secondCoralPipe.getResponse()));
+            if (isRightCoralStation(secondCoralPipe.getResponse().get())) {
+                var options = Stream.of(
+                    pipeOptionalOptions[12],
+                    pipeOptionalOptions[1],
+                    pipeOptionalOptions[2],
+                    pipeOptionalOptions[3],
+                    pipeOptionalOptions[4],
+                    pipeOptionalOptions[5],
+                    pipeOptionalOptions[6]
                 )
-                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
-                .toArray((IntFunction<Map.Entry<String, Pipe>[]>) Map.Entry[]::new);
-            return Settings.from(options[0], options);
+                    .filter(notInPreviousResponses)
+                    .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
+                ;
+                var defaultOption = Stream.of(
+                    pipeOptionalOptions[2],
+                    pipeOptionalOptions[3],
+                    pipeOptionalOptions[1]
+                )
+                    .filter(notInPreviousResponses)
+                    .findFirst()
+                    .get()
+                ;
+                return Settings.from(defaultOption, options);
+            } else {
+                var options = Stream.of(
+                    pipeOptionalOptions[12],
+                    pipeOptionalOptions[0],
+                    pipeOptionalOptions[11],
+                    pipeOptionalOptions[10],
+                    pipeOptionalOptions[9],
+                    pipeOptionalOptions[8],
+                    pipeOptionalOptions[7]
+                )
+                    .filter(notInPreviousResponses)
+                    .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
+                ;
+                var defaultOption = Stream.of(
+                    pipeOptionalOptions[11],
+                    pipeOptionalOptions[10],
+                    pipeOptionalOptions[0]
+                )
+                    .filter(notInPreviousResponses)
+                    .findFirst()
+                    .get()
+                ;
+                return Settings.from(defaultOption, options);
+            }
+        }
+    };
+
+    private static final AutoQuestion<Optional<PipeConcept>> fourthCoralPipe = new AutoQuestion<Optional<PipeConcept>>("Score Fourth Pipe") {
+        @Override
+        protected Settings<Optional<PipeConcept>> generateSettings() {
+            if (thirdCoralPipe.getResponse().isEmpty()) {
+                return Settings.from(pipeOptionalOptions[12], pipeOptionalOptions[12]);
+            }
+            Predicate<Map.Entry<String, Optional<PipeConcept>>> notInPreviousResponses = (option) -> option.getValue().isEmpty() || (!option.getValue().equals(Optional.of(firstCoralPipe.getResponse())) && !option.getValue().equals(secondCoralPipe.getResponse()) && !option.getValue().equals(thirdCoralPipe.getResponse()));
+            if (isRightCoralStation(thirdCoralPipe.getResponse().get())) {
+                var options = Stream.of(
+                    pipeOptionalOptions[12],
+                    pipeOptionalOptions[1],
+                    pipeOptionalOptions[2],
+                    pipeOptionalOptions[3],
+                    pipeOptionalOptions[4],
+                    pipeOptionalOptions[5],
+                    pipeOptionalOptions[6]
+                )
+                    .filter(notInPreviousResponses)
+                    .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
+                ;
+                var defaultOption = Stream.of(
+                    pipeOptionalOptions[2],
+                    pipeOptionalOptions[3],
+                    pipeOptionalOptions[1]
+                )
+                    .filter(notInPreviousResponses)
+                    .findFirst()
+                    .get()
+                ;
+                return Settings.from(defaultOption, options);
+            } else {
+                var options = Stream.of(
+                    pipeOptionalOptions[12],
+                    pipeOptionalOptions[0],
+                    pipeOptionalOptions[11],
+                    pipeOptionalOptions[10],
+                    pipeOptionalOptions[9],
+                    pipeOptionalOptions[8],
+                    pipeOptionalOptions[7]
+                )
+                    .filter(notInPreviousResponses)
+                    .toArray((IntFunction<Map.Entry<String, Optional<PipeConcept>>[]>) Map.Entry[]::new)
+                ;
+                var defaultOption = Stream.of(
+                    pipeOptionalOptions[11],
+                    pipeOptionalOptions[10],
+                    pipeOptionalOptions[0]
+                )
+                    .filter(notInPreviousResponses)
+                    .findFirst()
+                    .get()
+                ;
+                return Settings.from(defaultOption, options);
+            }
         }
     };
 
@@ -146,12 +299,13 @@ public class ScoreCoral extends AutoRoutine {
     private final Intake intake;
 
     public ScoreCoral(RobotContainer robot) {
-        super("ScoreCoral", List.of(
+        super("Score Coral", List.of(
             startPosition,
             stationPosition,
-            scorePreloadPipe,
-            scoreCoral1,
-            scoreCoral2
+            firstCoralPipe,
+            secondCoralPipe,
+            thirdCoralPipe,
+            fourthCoralPipe
         ));
         this.drive = robot.drive;
         this.superstructure = robot.superstructure;
@@ -160,74 +314,90 @@ public class ScoreCoral extends AutoRoutine {
     
     @Override
     public Command generateCommand() {
-        var scorePreloadPipe = ScoreCoral.scorePreloadPipe.getResponse();
         var startPosition = ScoreCoral.startPosition.getResponse();
-        var scoreCoral1 = ScoreCoral.scoreCoral1.getResponse();
-        var scoreCoral2 = ScoreCoral.scoreCoral2.getResponse();
         var stationPosition = ScoreCoral.stationPosition.getResponse();
+        var firstCoralPipe = ScoreCoral.firstCoralPipe.getResponse();
+        var secondCoralPipe = ScoreCoral.secondCoralPipe.getResponse();
+        var thirdCoralPipe = ScoreCoral.thirdCoralPipe.getResponse();
+        var fourthCoralPipe = ScoreCoral.fourthCoralPipe.getResponse();
         var commands = new ArrayList<Command>();
         boolean shouldUseForwardCoralStation = false;
 
         String startToScorePath;
-        if (
-            startPosition.equals(AutoConstants.startRightRightCage) ||
-            startPosition.equals(AutoConstants.startLeftLeftCage)
-        ) {
-            startToScorePath = "Remote Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
-        } else {
-            startToScorePath = "Start To " + getBranchLetterFromIndex(scorePreloadPipe.getIndex());
-        }
+        startToScorePath = getStartingPositionAsString(startPosition) + " To " + firstCoralPipe.getLetter();
         var startToScorePreload = AutoPaths.loadChoreoTrajectory(startToScorePath);
-        commands.add(AutoCommons.scoreOnReef(startToScorePreload, Level.Level4, Direction.Forward, drive, superstructure, intake));
+        commands.add(AutoCommons.scoreOnReef(startToScorePreload, firstCoralPipe.getBranch(BranchLevel.Level4), Direction.Forward, drive, superstructure, intake));
 
 
-        var preloadToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(scorePreloadPipe.getIndex()) +
-            " To Station " +
-            getStationPositionAsString(stationPosition) +
-            (shouldUseForwardCoralStation ? " Forward" : "")
-        );
-        commands.add(AutoCommons.pickupCoralFromStation(preloadToStation, Direction.Backward, drive, superstructure, intake));
+        if (secondCoralPipe.isPresent()) {
+            var firstPipeToStation = AutoPaths.loadChoreoTrajectory(
+                firstCoralPipe.getLetter() +
+                " To Station " +
+                getStationPositionAsString(stationPosition) +
+                (shouldUseForwardCoralStation ? " Forward" : "")
+            );
+            commands.add(AutoCommons.pickupCoralFromStation(firstPipeToStation, Direction.Backward, drive, superstructure, intake));
+    
+            var pipe2 = secondCoralPipe.get();
 
+            var stationToSecondPipe = AutoPaths.loadChoreoTrajectory(
+                "Station "
+                + getStationPositionAsString(stationPosition)
+                + (shouldUseForwardCoralStation ? " Forward" : "")
+                + " To "
+                + pipe2.getLetter()
+            );
+            commands.add(AutoCommons.scoreOnReef(stationToSecondPipe, pipe2.getBranch(BranchLevel.Level4), Direction.Forward, drive, superstructure, intake));
 
-        var stationToScore1 = AutoPaths.loadChoreoTrajectory(
-            "Station "
-            + getStationPositionAsString(stationPosition)
-            + (shouldUseForwardCoralStation ? " Forward" : "")
-            + " To "
-            + getBranchLetterFromIndex(scoreCoral1.getIndex())
-        );
-        commands.add(AutoCommons.scoreOnReef(stationToScore1, Level.Level4, Direction.Forward, drive, superstructure, intake));
-
-
-        var coral1ToStation = AutoPaths.loadChoreoTrajectory(
-            getBranchLetterFromIndex(scoreCoral1.getIndex())+
-            " To Station "+
-            getStationPositionAsString(stationPosition)
-            + (shouldUseForwardCoralStation ? " Forward" : "")
-        );
-        commands.add(AutoCommons.pickupCoralFromStation(coral1ToStation, Direction.Backward, drive, superstructure, intake));
+            if (thirdCoralPipe.isPresent()) {
+                var secondPipeToStation = AutoPaths.loadChoreoTrajectory(
+                    pipe2.getLetter() +
+                    " To Station "+
+                    getStationPositionAsString(stationPosition)
+                    + (shouldUseForwardCoralStation ? " Forward" : "")
+                );
+                commands.add(AutoCommons.pickupCoralFromStation(secondPipeToStation, Direction.Backward, drive, superstructure, intake));
+                
+                var pipe3 = thirdCoralPipe.get();
         
+                var stationToThirdPipe = AutoPaths.loadChoreoTrajectory(
+                    "Station "
+                    + getStationPositionAsString(stationPosition)
+                    + (shouldUseForwardCoralStation ? " Forward" : "")
+                    + " To "
+                    + pipe3.getLetter()
+                );
+                commands.add(AutoCommons.scoreOnReef(stationToThirdPipe, pipe3.getBranch(BranchLevel.Level4), Direction.Forward, drive, superstructure, intake));
 
-        var stationToScore2 = AutoPaths.loadChoreoTrajectory(
-            "Station "
-            + getStationPositionAsString(stationPosition)
-            + (shouldUseForwardCoralStation ? " Forward" : "")
-            + " To "
-            + getBranchLetterFromIndex(scoreCoral2.getIndex())
-        );
-        commands.add(AutoCommons.scoreOnReef(stationToScore2, Level.Level4, Direction.Forward, drive, superstructure, intake));
+                if (fourthCoralPipe.isPresent()) {
+                    var thirdPipeToStation = AutoPaths.loadChoreoTrajectory(
+                        pipe3.getLetter() +
+                        " To Station "+
+                        getStationPositionAsString(stationPosition)
+                        + (shouldUseForwardCoralStation ? " Forward" : "")
+                    );
+                    commands.add(AutoCommons.pickupCoralFromStation(thirdPipeToStation, Direction.Backward, drive, superstructure, intake));
+                    
+                    var pipe4 = fourthCoralPipe.get();
+            
+                    var stationToFourthPipe = AutoPaths.loadChoreoTrajectory(
+                        "Station "
+                        + getStationPositionAsString(stationPosition)
+                        + (shouldUseForwardCoralStation ? " Forward" : "")
+                        + " To "
+                        + pipe4.getLetter()
+                    );
+                    commands.add(AutoCommons.scoreOnReef(stationToFourthPipe, pipe4.getBranch(BranchLevel.Level4), Direction.Forward, drive, superstructure, intake));
+                }
+            }
+        }
 
         return Commands.parallel(
             AutoCommons.setOdometryFlipped(startPosition, drive),
-            Commands.runOnce(() -> intake.setHasGamepiece(true)),
             Commands.sequence(commands.toArray(Command[]::new))
         );
     }
 
-    private static char getBranchLetterFromIndex(int index){
-        return (char) (index + 'A');
-    }
     private String getStationPositionAsString(CoralStationPosition _stationPosition){
         return switch (_stationPosition) {
             case CLOSE -> "Close";

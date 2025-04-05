@@ -21,6 +21,8 @@ import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraCons
 import frc.util.VirtualSubsystem;
 import frc.util.geometry.GeomUtil.TransformUtil;
 import frc.util.geometry.RollingAveragePose2d;
+import frc.util.led.animation.StatusLightAnimation;
+import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class QuestNav extends VirtualSubsystem {
     private final QuestNavIO io;
@@ -30,6 +32,7 @@ public class QuestNav extends VirtualSubsystem {
 
     private final Alert notConnectedAlert;
     private final Alert lowBatteryAlert;
+    private final StatusLightAnimation connectionAnimation;
 
     private Pose2d questResetPose = new Pose2d();
     private Pose2d robotResetPose = new Pose2d();
@@ -37,10 +40,12 @@ public class QuestNav extends VirtualSubsystem {
     private final RollingAveragePose2d rollingAvg;
 
     public final LoggedNetworkBoolean isDisabled = new LoggedNetworkBoolean("QuestNav/Quest Disabled");
+    public static final LoggedTunableNumber xySTDevs = new LoggedTunableNumber("QuestNav/XY STDevs", 0.1);
 
-    public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io) {
+    public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io, StatusLightAnimation connectionAnimation) {
         this.camMeta = camMeta;
         this.io = io;
+        this.connectionAnimation = connectionAnimation;
         
         this.rollingAvg = new RollingAveragePose2d(2);
 
@@ -56,19 +61,20 @@ public class QuestNav extends VirtualSubsystem {
 
         notConnectedAlert.set(!inputs.isConnected);
         lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
+        connectionAnimation.setStatus(inputs.isConnected);
 
         if (calibrationInProgress) {
             setPose(Pose2d.kZero);
         } else if (DriverStation.isDisabled()) {
             setPose(RobotState.getInstance().getPose());
         } else if (inputs.isConnected && !isDisabled.get()) {
-            RobotState
-                .getInstance()
+            RobotState.getInstance()
                 .addVisionMeasurement(
                     getRobotPose(),
-                    VecBuilder.fill(0.00001, 0.00001, Double.POSITIVE_INFINITY),
+                    VecBuilder.fill(xySTDevs.get(), xySTDevs.get(), Double.POSITIVE_INFINITY),
                     inputs.timestamp
-                );
+                )
+            ;
         }
 
         rollingAvg.addPose(getRobotPose());

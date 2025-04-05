@@ -1,0 +1,197 @@
+/* REEF */
+#reef {
+  --reef-height: 250px;
+  --algae-radius: 60px;
+  --side-radius: 55px;
+
+  --triangle-base-length: calc(var(--reef-height) / (2 * sqrt(3)));
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--reef-height);
+  width: calc(var(--triangle-base-length) * 4);
+}
+
+.rack {
+  position: absolute;
+  transform-origin: top;
+  top: calc(var(--triangle-base-length) * sqrt(3));
+  pointer-events: none;
+}
+
+.rack:nth-child(2) {
+  transform: rotate(-60deg);
+}
+
+.rack:nth-child(3) {
+  transform: rotate(-120deg);
+}
+
+.rack:nth-child(4) {
+  transform: rotate(-180deg);
+}
+
+.rack:nth-child(5) {
+  transform: rotate(-240deg);
+}
+
+.rack:nth-child(6) {
+  transform: rotate(-300deg);
+}
+
+.pipes {
+  display: flex;
+}
+
+.level {
+  display: flex;
+}
+
+.level1 {
+  width: 90%;
+  height: var(--side-radius);
+  background-color: #37373d;
+  margin: auto;
+  margin-top: 12px;
+  border-radius: 50px;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.side {
+  width: var(--side-radius);
+  height: var(--side-radius);
+  border-radius: 100%;
+  margin: auto;
+  margin-top: 12px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: all;
+  background-color: #37373d;
+}
+
+#level1.locked,
+.side.locked,
+.algae.locked {
+  border: 5px solid #fdfdfd;
+}
+
+.level:nth-child(3) .side.selected {
+  background-color: #eaa153;
+}
+
+.level:nth-child(4) .side.selected {
+  background-color: #3ba799;
+}
+
+.level:nth-child(5) .side.selected {
+  background-color: #35892f;
+}
+
+.level1.selected,
+.side.selected {
+  background: #fdfdfd;
+}
+
+.algae {
+  width: var(--algae-radius);
+  height: var(--algae-radius);
+  border-radius: 100%;
+  margin: auto;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: all;
+  background-color: #3ba799;
+}
+
+.algae.selected {
+  background-color: #37373d;
+}
+
+.pipe {
+  width: var(--triangle-base-length);
+  height: calc(var(--triangle-base-length) * sqrt(3));
+  cursor: pointer;
+  pointer-events: all;
+  background: #37373d;
+}
+
+.pipe:first-child {
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.pipe:last-child {
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  filter: brightness(0.75);
+}
+
+.pipe.selected {
+  background: #ac26be;
+}
+
+#reef.l2 .pipe.selected {
+  background: #eaa153;
+}
+
+#reef.l3 .pipe.selected {
+  background: #3ba799;
+}
+
+#reef.l4 .pipe.selected {
+  background: #35892f;
+}
+
+.pipe-text {
+  --padding: 35px;
+  --top: calc(var(--reef-height) / 2 - var(--padding));
+  --horiz: calc(
+    var(--triangle-base-length) - (var(--top) / sqrt(3)) +
+      (var(--top) / sqrt(3) / 2)
+  );
+  position: absolute;
+  top: var(--top);
+  pointer-events: none;
+}
+
+.pipe:first-child .pipe-text {
+  left: var(--horiz);
+}
+
+.pipe:last-child .pipe-text {
+  right: var(--horiz);
+}
+
+.pipe-text,
+.algae-text {
+  position: absolute;
+  transform: rotate(0deg);
+}
+
+.rack:nth-child(2) .pipe-text,
+.rack:nth-child(2) .algae-text {
+  transform: rotate(60deg);
+}
+
+.rack:nth-child(3) .pipe-text,
+.rack:nth-child(3) .algae-text {
+  transform: rotate(120deg);
+}
+
+.rack:nth-child(4) .pipe-text,
+.rack:nth-child(4) .algae-text {
+  transform: rotate(180deg);
+}
+
+.rack:nth-child(5) .pipe-text,
+.rack:nth-child(5) .algae-text {
+  transform: rotate(240deg);
+}
+
+.rack:nth-child(6) .pipe-text,
+.rack:nth-child(6) .algae-text {
+  transform: rotate(300deg);
+}

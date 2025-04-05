@@ -1,6 +1,8 @@
 package frc.robot.subsystems.vision.apriltag;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -12,18 +14,21 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera.ApriltagCameraResult;
 import frc.util.VirtualSubsystem;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class ApriltagVision extends VirtualSubsystem {
     private final ApriltagCamera[] cameras;
 
     private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
+    private static final LoggedTunableMeasure<AngleUnit> gyroTolerance = new LoggedTunableMeasure<>("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees.of(10));
     private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
-    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", 0.4);
+    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", Double.POSITIVE_INFINITY);
 
     private AprilTagResultPose robotPose = new AprilTagResultPose(Pose2d.kZero, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
     
@@ -119,13 +124,17 @@ public class ApriltagVision extends VirtualSubsystem {
                 // Filtering
                 var inField = ApriltagVisionConstants.acceptableFieldBox.withinBounds(robotPose2d.getTranslation());
                 var closeToFloor = robotPose3d.getTranslation().getMeasureZ().isNear(Meters.zero(), ApriltagVisionConstants.zMargin);
+                var closeToGyro = robotPose2d.getRotation().minus(RobotState.getInstance().getPose().getRotation()).getCos() > Math.cos(gyroTolerance.get().in(Radians));
+                var gyroFilter = closeToGyro || usableTags.length >= 2;
     
                 Logger.recordOutput(loggingKey + "/Filtering/In Field", inField);
                 Logger.recordOutput(loggingKey + "/Filtering/Close to Floor", closeToFloor);
+                Logger.recordOutput(loggingKey + "/Filtering/Close to Gyro", gyroFilter);
     
                 if (
                     !inField
                     || !closeToFloor
+                    || !gyroFilter
                 ) {
                     continue;
                 }

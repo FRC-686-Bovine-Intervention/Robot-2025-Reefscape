@@ -7,7 +7,6 @@
 
 package frc.util.loggerUtil.tunables;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -90,6 +89,12 @@ public class LoggedTunableMeasure<U extends Unit> implements Supplier<Measure<U>
 
     /** Runs action if any of the tunableNumbers have changed */
     public static boolean hasChanged(int id, LoggedTunableMeasure<?>... tunableMeasures) {
-        return Arrays.stream(tunableMeasures).anyMatch((tunableMeasure) -> tunableMeasure.hasChanged(id));
+        var out = false;
+        for (var tunable : tunableMeasures) {
+            if (tunable.hasChanged(id)) {
+                out = true;
+            }
+        }
+        return out;
     }
 }

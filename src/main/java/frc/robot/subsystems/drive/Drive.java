@@ -544,23 +544,27 @@ public class Drive extends VirtualSubsystem {
         public Command simplePIDTo(Supplier<Translation2d> target) {
             var subsystem = this;
             return new Command() {
-                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 2);
+                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 3);
                 {
                     addRequirements(subsystem);
                     setName("Simple PID To");
                 }
                 @Override
                 public void execute() {
-                    var distTo = drive.getPose().getTranslation().getDistance(target.get());
-                    var vec = target.get().minus(drive.getPose().getTranslation());
+                    var targetPose = target.get();
+                    var distTo = drive.getPose().getTranslation().getDistance(targetPose);
+                    var vec = targetPose.minus(drive.getPose().getTranslation());
                     var norm = vec.div(vec.getNorm());
                     var pterm = distTo * driveKP.getAsDouble();
                     var out = norm.times(pterm);
-                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(
-                        out.getX(),
-                        out.getY(),
-                        0
-                    ), drive.getRotation()));
+                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(
+                        new ChassisSpeeds(
+                            out.getX(),
+                            out.getY(),
+                            0
+                        ),
+                        drive.getRotation()
+                    ));
                 }
                 @Override
                 public void end(boolean interrupted) {
@@ -613,7 +617,7 @@ public class Drive extends VirtualSubsystem {
                 ;
                 @Override
                 public void execute() {
-                    Leds.getInstance().defenseSpin.setFlag(true);
+                    // Leds.getInstance().defenseSpin.setFlag(true);
                     var joyVec = Perspective.getCurrent().toField(joystick.toVector());
                     var desiredLinear = VecBuilder.fill(drive.setpointSpeeds.vxMetersPerSecond, drive.setpointSpeeds.vyMetersPerSecond);
                     var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.setpointSpeeds, drive.getRotation());
@@ -653,7 +657,7 @@ public class Drive extends VirtualSubsystem {
                 public void end(boolean interrupted) {
                     stop();
                     drive.setCenterOfRotation(new Translation2d());
-                    Leds.getInstance().defenseSpin.setFlag(false);
+                    // Leds.getInstance().defenseSpin.setFlag(false);
                 }
             };
         }

@@ -39,8 +39,8 @@ public class ElevatorIOKraken implements ElevatorIO {
 
     private final LoggedTunableLinearProfile profileConsts = new LoggedTunableLinearProfile(
         "Elevator/Profile",
-        InchesPerSecond.of(16),
-        InchesPerSecond.per(Second).of(32)
+        InchesPerSecond.of(20),
+        InchesPerSecond.per(Second).of(60)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Elevator/FF",
@@ -51,7 +51,7 @@ public class ElevatorIOKraken implements ElevatorIO {
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
         "Elevator/PID",
-        20,
+        50,
         0,
         0
     );
@@ -89,6 +89,10 @@ public class ElevatorIOKraken implements ElevatorIO {
         ffConsts.update(motorConfig.Slot0);
         pidConsts.update(motorConfig.Slot0);
 
+        profileConsts.hasChanged(hashCode());
+        ffConsts.hasChanged(hashCode());
+        pidConsts.hasChanged(hashCode());
+
         motor.getConfigurator().apply(motorConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -98,6 +102,15 @@ public class ElevatorIOKraken implements ElevatorIO {
             cancoder.getPosition(),
             cancoder.getVelocity()
         );
+        // BaseStatusSignal.setUpdateFrequencyForAll(
+        //     RobotConstants.rioUpdateFrequency,
+        //     motor.getPosition(),
+        //     motor.getVelocity(),
+        //     motor.getClosedLoopReference(),
+        //     motor.getClosedLoopReferenceSlope(),
+        //     motor.getClosedLoopError(),
+        //     motor.getClosedLoopOutput()
+        // );
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency.div(2),
             motor.getMotorVoltage(),

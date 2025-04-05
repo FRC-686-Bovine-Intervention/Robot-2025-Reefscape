@@ -24,5 +24,7 @@ public interface PivotIO {
 
     public default void setFeedForward(Measure<VoltageUnit> feedForward) {}
 
+    public default void setCoastMode() {}
+
     public default void stop() {}
 }

@@ -1,0 +1,123 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+#priority_list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  margin-top: auto;
+}
+
+.priority {
+  --percentage-complete: 0;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #37373d;
+  cursor: move;
+  position: relative;
+  overflow: hidden;
+}
+
+.priority.unnecessary {
+  background-color: #eaa153;
+}
+
+.priority.complete {
+  background-color: #4bb543;
+}
+
+.priority .progress-bar {
+  height: 5px;
+  width: calc(var(--percentage-complete) * 100%);
+  position: absolute;
+  background-color: #4bb543;
+  bottom: 0;
+  left: 0;
+}
+
+.priority.selected .progress-bar,
+.priority.complete .progress-bar,
+.priority.unnecessary .progress-bar {
+  display: none;
+}
+
+#coop {
+  border-radius: 10px;
+  background-color: #37373d;
+  text-align: center;
+  margin-top: auto;
+  cursor: pointer;
+  fill: white;
+  padding: 15px;
+}
+
+#coop > svg {
+  width: 75px;
+}
+
+#coop.selected {
+  background-color: #2196f3;
+}
+
+#algae_goal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  cursor: pointer;
+}
+
+.primary {
+  display: flex;
+  gap: 10px;
+}
+
+#algae_goal .button {
+  width: 100%;
+  padding: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  stroke-width: 2px;
+  background-color: #37373d;
+}
+
+#algae_goal .primary .button > svg {
+  width: 30px;
+}
+
+#algae_goal .button.selected {
+  background-color: #e13f3f;
+}
+
+.secondary .button > svg {
+  width: 20px;
+}
+
+#level1 {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #37373d;
+  padding: 20px;
+}
+
+#add,
+#subtract {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
