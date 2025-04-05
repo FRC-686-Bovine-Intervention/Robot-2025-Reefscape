@@ -184,8 +184,8 @@ public final class FieldConstants {
                     SuperstructureState.fromCoralTipRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(0.75)),
-                                Meters.of(1.828663).plus(Inches.of(3.5))
+                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
+                                Meters.of(1.828663).plus(Inches.of(4))
                             ),
                             Rotation2d.fromDegrees(-30)
                         )
