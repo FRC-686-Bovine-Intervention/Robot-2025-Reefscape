@@ -17,7 +17,7 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"CoralStationRightClose.x", "val":0.6031202045847124}, "y":{"exp":"CoralStationRightClose.y", "val":1.3445657852419728}, "heading":{"exp":"CoralStationRightClose.heading", "val":0.9426766239723384}, "intervals":27, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"CoralStationRightClose.x", "val":0.42401229187551015}, "y":{"exp":"CoralStationRightClose.y", "val":1.0979417888325544}, "heading":{"exp":"CoralStationRightClose.heading", "val":0.9426766239723384}, "intervals":29, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.9110171794891357 m", "val":1.9110171794891355}, "y":{"exp":"1.617130160331726 m", "val":1.617130160331726}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":31, "split":false, "fixTranslation":false, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"ReefB.x", "val":3.2257131}, "y":{"exp":"ReefB.y", "val":3.861568997400001}, "heading":{"exp":"ReefB.heading", "val":0.0}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
