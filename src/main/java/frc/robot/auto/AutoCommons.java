@@ -159,7 +159,10 @@ public class AutoCommons {
         if (RobotBase.isReal()) {
             return 
                 Commands.deadline(
-                    intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                    Commands.sequence(
+                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        Commands.waitSeconds(0.5)
+                    ),
                     Commands.sequence(
                         followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
