@@ -219,6 +219,8 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
         var thirdAlgae = ScoreAlgaeAndCoral.thirdAlgae.getResponse();
         var commands = new ArrayList<Command>();
 
+        commands.add(Commands.waitSeconds(1));
+
         var startToFirstPipe = AutoPaths.loadChoreoTrajectory(getStartingPositionAsString(startPosition) + " To " + firstCoralPipe.getLetter());
         commands.add(AutoCommons.scoreOnReef(startToFirstPipe, firstCoralPipe.getBranch(BranchLevel.Level4), Direction.Forward, drive, superstructure, intake));
 
