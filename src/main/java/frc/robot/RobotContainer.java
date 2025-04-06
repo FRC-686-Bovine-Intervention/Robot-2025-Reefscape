@@ -426,8 +426,8 @@ public class RobotContainer {
         });
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae().asProxy()))).toArray(RobotFlippedCommand[]::new);;
-                private final Command idle = superstructure.goToSetpointSequenced(SuperstructureConstants.idleState).alongWith(intake.idle().asProxy());
+                private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae()))).toArray(RobotFlippedCommand[]::new);;
+                private final Command idle = superstructure.goToSetpointSequenced(SuperstructureConstants.idleState).alongWith(intake.idle());
                 public Command get() {
                     var optStagedAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
                     if (optStagedAlgaeObjective.isEmpty()) {
@@ -438,9 +438,9 @@ public class RobotContainer {
                     }
                 }
             },
-            Set.of(superstructure)
+            Set.of(superstructure, intake)
         ).deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae)).withName("Intake Staged Algae");
-        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-35))).alongWith(intake.intakeAlgae().asProxy().until(intake.hasAlgae)).withName("Intake Ground Algae");
+        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-35))).alongWith(intake.intakeAlgae()).withName("Intake Ground Algae");
         final Timer algaeIntakeButtonTimer = new Timer();
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getYButtonPressed()) {
