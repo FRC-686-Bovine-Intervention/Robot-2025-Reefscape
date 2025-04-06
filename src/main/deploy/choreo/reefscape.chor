@@ -7,8 +7,8 @@
    "AlgaeGrabbingOffset":{
     "dimension":"Length",
     "var":{
-     "exp":"0.5 m",
-     "val":0.5
+     "exp":"1 ft",
+     "val":0.3048
     }
    },
    "BargeScoringOffset":{
@@ -114,6 +114,13 @@
     "var":{
      "exp":"26 in",
      "val":0.6604
+    }
+   },
+   "MaxAlgaeRemoveVelocity":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"1 ft / s",
+     "val":0.3048
     }
    },
    "MaxAlgaeVelocity":{
@@ -464,11 +471,11 @@
    "Reef2Remove":{
     "x":{
      "exp":"Reef2.x - AlgaeGrabbingOffset * cos(Reef2.heading)",
-     "val":5.376449821667624
+     "val":5.278849821667624
     },
     "y":{
      "exp":"Reef2.y - AlgaeGrabbingOffset * sin(Reef2.heading)",
-     "val":2.489331736216194
+     "val":2.6583798950349165
     },
     "heading":{
      "exp":"Reef2.heading",
@@ -492,7 +499,7 @@
    "Reef3Remove":{
     "x":{
      "exp":"Reef3.x - AlgaeGrabbingOffset * cos(Reef3.heading)",
-     "val":6.26357464333525
+     "val":6.06837464333525
     },
     "y":{
      "exp":"Reef3.y - AlgaeGrabbingOffset * sin(Reef3.heading)",
@@ -520,11 +527,11 @@
    "Reef4Remove":{
     "x":{
      "exp":"Reef4.x - AlgaeGrabbingOffset * cos(Reef4.heading)",
-     "val":5.3764498216676255
+     "val":5.278849821667626
     },
     "y":{
      "exp":"Reef4.y - AlgaeGrabbingOffset * sin(Reef4.heading)",
-     "val":5.562422263783805
+     "val":5.393374104965083
     },
     "heading":{
      "exp":"Reef4.heading",
