@@ -14,7 +14,7 @@
  "params":{
   "waypoints":[
     {"x":{"exp":"BargeLeft.x", "val":7.1244615194}, "y":{"exp":"BargeLeft.y", "val":6.7143249}, "heading":{"exp":"BargeLeft.heading", "val":3.141592653589793}, "intervals":47, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"CoralStationLeftFar.x", "val":1.574080820369824}, "y":{"exp":"CoralStationLeftFar.y", "val":7.412383477392682}, "heading":{"exp":"CoralStationLeftFar.heading", "val":-0.9426766239723384}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"CoralStationLeftFar.x", "val":1.394972907660622}, "y":{"exp":"CoralStationLeftFar.y", "val":7.659007473802101}, "heading":{"exp":"CoralStationLeftFar.heading", "val":-0.9426766239723384}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},

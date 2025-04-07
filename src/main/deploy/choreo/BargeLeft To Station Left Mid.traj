@@ -13,8 +13,8 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"BargeLeft.x", "val":7.1244615194}, "y":{"exp":"BargeLeft.y", "val":6.7143249}, "heading":{"exp":"BargeLeft.heading", "val":3.141592653589793}, "intervals":48, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"CoralStationLeftMid.x", "val":1.0886005124772682}, "y":{"exp":"CoralStationLeftMid.y", "val":7.059808846075355}, "heading":{"exp":"CoralStationLeftMid.heading", "val":-0.9426766239723384}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"BargeLeft.x", "val":7.1244615194}, "y":{"exp":"BargeLeft.y", "val":6.7143249}, "heading":{"exp":"BargeLeft.heading", "val":3.141592653589793}, "intervals":49, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"CoralStationLeftMid.x", "val":0.909492599768066}, "y":{"exp":"CoralStationLeftMid.y", "val":7.306432842484773}, "heading":{"exp":"CoralStationLeftMid.heading", "val":-0.9426766239723384}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},

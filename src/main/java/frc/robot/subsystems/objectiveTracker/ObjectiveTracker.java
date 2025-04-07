@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -44,6 +46,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
         NET,
         PROCESSOR,
         OPPONENT_PROCESSOR,
+        ;
+    }
+
+    public static enum CoralGoal {
+        BRANCH,
+        LEVEL1
         ;
     }
 
@@ -138,7 +146,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
 
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
-    private BranchConcept selectedCoralGoal = Reef.branches[0];
+    private Entry<CoralGoal, Integer> selectedCoralGoal = Map.entry(CoralGoal.BRANCH, 0);
 
     private Mode mode = Mode.Dumb;
 
@@ -210,7 +218,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
             inputs.mode = -1;
         }
         if (inputs.coralGoal != -1) {
-            selectedCoralGoal = Reef.branches[inputs.coralGoal];
+            if (inputs.coralGoal >= 36) {
+                selectedCoralGoal = Map.entry(CoralGoal.LEVEL1, inputs.coralGoal - 36);
+            } else {
+                selectedCoralGoal = Map.entry(CoralGoal.BRANCH, inputs.coralGoal);
+            }
             inputs.coralGoal = -1;
         }
         if (inputs.algaeGoal != -1) {
@@ -219,7 +231,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         io.setMode(mode.ordinal());
-        io.setCoralGoal(selectedCoralGoal.id);
+        switch (selectedCoralGoal.getKey()) {
+            case LEVEL1:
+                io.setCoralGoal(selectedCoralGoal.getValue() + 36);
+                break;
+            case BRANCH:
+                io.setCoralGoal(selectedCoralGoal.getValue());
+                break;
+        }
         io.setAlgaeGoal(selectedAlgaeGoal.ordinal());
 
         var branchesChanged = false;
@@ -273,6 +292,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
         if (branchesChanged || strategyChanged || level1Changed || coopChanged) {
             updateIncompletePriorities();
         }
+
+        // TODO: ON ALLIANCE CHANGE UPDATE ALL
 
         for (var priority : fullStrategy) {
             Logger.recordOutput(
@@ -440,7 +461,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 }
             }
         } else {
-            this.scoreCoralObjective = ScoreCoralObjective.fromBranch(selectedCoralGoal.getOurs(), currentPose.getRotation());
+            switch (selectedCoralGoal.getKey()) {
+                case BRANCH:
+                    this.scoreCoralObjective = ScoreCoralObjective.fromBranch(Reef.branches[selectedCoralGoal.getValue()].getOurs(), currentPose.getRotation());
+                    break;
+                case LEVEL1:
+                    this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(Reef.racks[selectedCoralGoal.getValue()].getOurs(), currentPose.getRotation());
+                    break;
+            }
         }
 
         Leds.getInstance().level1Targeted.setFlag(this.scoreCoralObjective.branchLevel.isEmpty());
@@ -466,9 +494,11 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Mechs", intakeCoralObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Intake/Algae", intakeAlgaeObjective.isPresent() ? intakeAlgaeObjective.get().algae.rack.id : -1);
         Logger.recordOutput("Objective Tracker/Intake/Algae/Target Direction", LoggerUtil.toArray(intakeAlgaeObjective.map(IntakeAlgaeObjective::getTargetDirection), Direction[]::new));
         Logger.recordOutput("Objective Tracker/Intake/Algae/Target Pose", LoggerUtil.toArray(intakeAlgaeObjective.map(IntakeAlgaeObjective::getTargetPose), Pose2d[]::new));
         Logger.recordOutput("Objective Tracker/Intake/Algae/Target Mechs", intakeAlgaeObjective.isPresent() ? intakeAlgaeObjective.get().getTargetState().getMechTransforms() : new Transform3d[0]);
+        Logger.recordOutput("Objective Tracker/Score/Coral", scoreCoralObjective.branch.isPresent() ? scoreCoralObjective.branch.get().id : -1);
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralObjective.getTargetPose());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralObjective.getTargetState().getMechTransforms());
@@ -582,13 +612,15 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
     }
     public static class ScoreCoralObjective implements Objective {
+        public final Optional<BranchObject> branch;
         public final Optional<BranchLevel> branchLevel;
         private final Pose2d targetPose;
         private final SuperstructureState targetState;
         private final Direction direction;
 
-        private ScoreCoralObjective(Pose2d targetPose, SuperstructureState targetState, Direction direction, Optional<BranchLevel> branchLevel) {
-            this.branchLevel = branchLevel;
+        private ScoreCoralObjective(Pose2d targetPose, SuperstructureState targetState, Direction direction, Optional<BranchObject> branch) {
+            this.branch = branch;
+            this.branchLevel = branch.isPresent() ? Optional.of(branch.get().level) : Optional.empty();
             this.targetPose = targetPose;
             this.targetState = targetState;
             this.direction = direction;
@@ -599,7 +631,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 branch.scoreTotalState.getRobotPose(direction),
                 branch.scoreTotalState.getSuperstructureState(direction),
                 direction,
-                Optional.of(branch.level)
+                Optional.of(branch)
             );
         }
         public static ScoreCoralObjective fromLevel1(RackObject rack, Rotation2d currentRotation) {

@@ -79,7 +79,7 @@ public class AutoCommons {
                 Commands.sequence(
                     Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
                     Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                    Commands.waitSeconds(0.75),
+                    Commands.waitSeconds(0.25),
                     intake.eject().asProxy().onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
@@ -104,7 +104,7 @@ public class AutoCommons {
             Commands.sequence(
                 Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
                 Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                Commands.waitSeconds(0.75),
+                Commands.waitSeconds(0.5),
                 intake.eject().asProxy().onlyWhile(intake.hasAlgae)
             ),
             Commands.sequence(
@@ -159,7 +159,10 @@ public class AutoCommons {
         if (RobotBase.isReal()) {
             return 
                 Commands.deadline(
-                    intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                    Commands.sequence(
+                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        Commands.waitSeconds(0.5)
+                    ),
                     Commands.sequence(
                         followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()

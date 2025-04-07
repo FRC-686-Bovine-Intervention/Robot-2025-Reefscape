@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -21,8 +22,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
@@ -439,7 +440,7 @@ public class RobotContainer {
             },
             Set.of(superstructure, intake)
         ).deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae)).withName("Intake Staged Algae");
-        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-30))).alongWith(intake.intakeAlgae().until(intake.hasAlgae)).withName("Intake Ground Algae");
+        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-35))).alongWith(intake.intakeAlgae()).withName("Intake Ground Algae");
         final Timer algaeIntakeButtonTimer = new Timer();
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getYButtonPressed()) {
@@ -541,9 +542,16 @@ public class RobotContainer {
         //     climber.engageRatchet()
         // );
         
-        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
+        new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
+            .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
         // SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+    }
+
+    private void setPose(Pose2d pose) {
+        questNav.setPose(pose);
+        drive.setPose(pose);
     }
 
     private void configureNotifications() {

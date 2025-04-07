@@ -16,14 +16,14 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"StartLeftMiddleCage.x", "val":7.1244615194}, "y":{"exp":"StartLeftMiddleCage.y", "val":6.169025}, "heading":{"exp":"StartLeftMiddleCage.heading", "val":3.141592653589793}, "intervals":51, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"StartLeftMiddleCage.x", "val":7.1244615194}, "y":{"exp":"StartLeftMiddleCage.y", "val":6.169025}, "heading":{"exp":"StartLeftMiddleCage.heading", "val":3.141592653589793}, "intervals":55, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"4.475029468536377 m", "val":4.475029468536377}, "y":{"exp":"5.559912204742432 m", "val":5.559912204742432}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"ReefK.x", "val":3.99981395429668}, "y":{"exp":"ReefK.y", "val":5.202351007224323}, "heading":{"exp":"ReefK.heading", "val":5.235987755982988}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"17.548 m", "val":17.548}, "h":{"exp":"8.052 m", "val":8.052}}}, "enabled":false},
-    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.5}}}, "enabled":true},
+    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.0}}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"MaxAngularVelocity", "props":{"max":{"exp":"MaxAngularVelocity", "val":3.141592653589793}}}, "enabled":true}],
   "targetDt":{
    "exp":"0.05 s",

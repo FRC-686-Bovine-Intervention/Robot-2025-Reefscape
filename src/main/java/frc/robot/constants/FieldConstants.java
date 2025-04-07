@@ -184,8 +184,8 @@ public final class FieldConstants {
                     SuperstructureState.fromCoralTipRobotSpace(
                         new Pose2d(
                             new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(1)),
-                                Meters.of(1.828663).plus(Inches.of(3))
+                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
+                                Meters.of(1.828663).plus(Inches.of(4))
                             ),
                             Rotation2d.fromDegrees(-30)
                         )
@@ -214,14 +214,17 @@ public final class FieldConstants {
         }
 
         public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
-        public static final AllianceFlipped<Translation2d> reefCenter = AllianceFlipped.fromBlue(
-            new Translation2d(
-                Meters.of(4.489325),
-                Meters.of(4.025877)
+        public static final AllianceFlipped<Pose2d> reefCenter = AllianceFlipped.fromBlue(
+            new Pose2d(
+                new Translation2d(
+                    Meters.of(4.489325),
+                    Meters.of(4.025877)
+                ),
+                Rotation2d.kZero
             )
         );
 
-        public static final AllianceFlipped<ReefObject> reefs = reefCenter.map((center) -> new ReefObject(new Pose2d(center, Rotation2d.kZero)));
+        public static final AllianceFlipped<ReefObject> reefs = reefCenter.map((center) -> new ReefObject(center));
 
         public static final class ReefObject {
             public final RackObject[] racks;
@@ -446,7 +449,7 @@ public final class FieldConstants {
                     new Pose2d(
                         new Translation2d(
                             Meters.of(0.679337),
-                            Meters.of(1.313180)
+                            Meters.of(1.313180).plus(Inches.of(3))
                         ),
                         Rotation2d.fromDegrees(-15)
                     )
@@ -457,7 +460,7 @@ public final class FieldConstants {
                     new Pose2d(
                         new Translation2d(
                             Meters.of(0.679337),
-                            Meters.of(0.909320)
+                            Meters.of(0.909320).plus(Inches.of(3))
                         ),
                         Rotation2d.fromDegrees(-15)
                     )

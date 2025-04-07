@@ -15,13 +15,13 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"CoralStationRightFar.x", "val":1.574080820369824}, "y":{"exp":"CoralStationRightFar.y", "val":0.6394165226073184}, "heading":{"exp":"CoralStationRightFar.heading", "val":0.9426766239723384}, "intervals":34, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"CoralStationRightFar.x", "val":1.394972907660622}, "y":{"exp":"CoralStationRightFar.y", "val":0.39279252619790006}, "heading":{"exp":"CoralStationRightFar.heading", "val":0.9426766239723384}, "intervals":43, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"ReefC.x", "val":3.71522414570332}, "y":{"exp":"ReefC.y", "val":3.013710995375679}, "heading":{"exp":"ReefC.heading", "val":1.0471975511965976}, "intervals":27, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"17.548 m", "val":17.548}, "h":{"exp":"8.052 m", "val":8.052}}}, "enabled":false},
-    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.5}}}, "enabled":true},
+    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.0}}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"MaxAngularVelocity", "props":{"max":{"exp":"MaxAngularVelocity", "val":3.141592653589793}}}, "enabled":true}],
   "targetDt":{
    "exp":"0.05 s",

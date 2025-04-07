@@ -6,12 +6,11 @@
     <title>ReefTracker</title>
     <link rel="stylesheet" href="./styles/main.css" />
     <link rel="stylesheet" href="./styles/reef.css" />
-    <link rel="stylesheet" href="./styles/pipe.css" />
     <link rel="stylesheet" href="./styles/slider.css" />
     <link rel="stylesheet" href="./styles/controls.css" />
   </head>
   <body>
-    <div id="controls">
+    <div id="left" class="controls">
       <div class="toggle">
         <p>Dumb</p>
         <label class="switch">
@@ -190,12 +189,38 @@
             <div class="pipe"><span class="pipe-text">A</span></div>
             <div class="pipe"><span class="pipe-text">B</span></div>
           </div>
+          <div class="level1"></div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
           <div class="algae"><span class="algae-text">H</span></div>
         </div>
         <div class="rack">
           <div class="pipes">
             <div class="pipe"><span class="pipe-text">C</span></div>
             <div class="pipe"><span class="pipe-text">D</span></div>
+          </div>
+          <div class="level1"></div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
           </div>
           <div class="algae"><span class="algae-text">L</span></div>
         </div>
@@ -204,12 +229,38 @@
             <div class="pipe"><span class="pipe-text">E</span></div>
             <div class="pipe"><span class="pipe-text">F</span></div>
           </div>
+          <div class="level1"></div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
           <div class="algae"><span class="algae-text">H</span></div>
         </div>
         <div class="rack">
           <div class="pipes">
             <div class="pipe"><span class="pipe-text">G</span></div>
             <div class="pipe"><span class="pipe-text">H</span></div>
+          </div>
+          <div class="level1"></div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
           </div>
           <div class="algae"><span class="algae-text">L</span></div>
         </div>
@@ -218,6 +269,19 @@
             <div class="pipe"><span class="pipe-text">I</span></div>
             <div class="pipe"><span class="pipe-text">J</span></div>
           </div>
+          <div class="level1"></div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
           <div class="algae"><span class="algae-text">H</span></div>
         </div>
         <div class="rack">
@@ -225,34 +289,28 @@
             <div class="pipe"><span class="pipe-text">K</span></div>
             <div class="pipe"><span class="pipe-text">L</span></div>
           </div>
+          <div class="level1"></div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
+          <div class="level">
+            <div class="side"></div>
+            <div class="side"></div>
+          </div>
           <div class="algae"><span class="algae-text">L</span></div>
         </div>
       </div>
-      <div id="pipe">
-        <svg viewBox="0 0 86 388" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M78 329.5L7.08672 279.616C6.20269 278.994 4.98452 279.187 4.33601 280.052L2.24433 282.841C1.56453 283.747 1.77268 285.037 2.70314 285.683L78 338V329.5Z"
-          />
-          <path
-            d="M2 0.5C0.89543 0.5 0 1.39543 0 2.5V59.963C0 60.6133 0.316074 61.2229 0.847456 61.5976L77.1525 115.402C77.6839 115.777 78 116.387 78 117.037V218.5V227V329.5V338V379H85.5V113.042C85.5 112.389 85.181 111.777 84.6455 111.403L8.35448 58.097C7.81901 57.7229 7.5 57.1108 7.5 56.4576V2.5C7.5 1.39543 6.60457 0.5 5.5 0.5H2Z"
-          />
-          <path
-            d="M85.5 379H78H4.5C3.39543 379 2.5 379.895 2.5 381V385.5C2.5 386.605 3.39543 387.5 4.5 387.5H83.5C84.6046 387.5 85.5 386.605 85.5 385.5V379Z"
-          />
-          <path
-            d="M78 218.5L6.67566 168.671C5.75619 168.028 4.48832 168.268 3.86614 169.201L2.08827 171.868C1.48388 172.774 1.71638 173.998 2.61118 174.619L78 227V218.5Z"
-          />
-        </svg>
-        <div>
-          <div class="level"><span class="level-text">0</span></div>
-          <div class="level"><span class="level-text">0</span></div>
-          <div class="level"><span class="level-text">0</span></div>
-          <div class="level">
-            <span id="subtract" class="button">-</span>
-            <span class="level-text">0</span>
-            <span id="add" class="button">+</span>
-          </div>
-        </div>
+    </div>
+    <div id="right" class="controls">
+      <div id="level1">
+        <div id="subtract">-</div>
+        <div id="counter">0</div>
+        <div id="add">+</div>
       </div>
     </div>
     <script src="./lib/swapy.min.js"></script>

@@ -22,14 +22,14 @@
  "params":{
   "waypoints":[
     {"x":{"exp":"Reef4.x", "val":5.1264498216676255}, "y":{"exp":"Reef4.y", "val":5.1294095618915865}, "heading":{"exp":"Reef4.heading", "val":4.1887902047863905}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"Reef4Remove.x", "val":5.3764498216676255}, "y":{"exp":"Reef4Remove.y", "val":5.562422263783805}, "heading":{"exp":"Reef4Remove.heading", "val":4.1887902047863905}, "intervals":32, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"Reef4Remove.x", "val":5.278849821667626}, "y":{"exp":"Reef4Remove.y", "val":5.393374104965083}, "heading":{"exp":"Reef4Remove.heading", "val":4.1887902047863905}, "intervals":35, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"BargeRight.x", "val":7.1244615194}, "y":{"exp":"BargeRight.y", "val":4.5521626}, "heading":{"exp":"BargeRight.heading", "val":3.141592653589793}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"BargeScoreRight.x", "val":7.6244615194}, "y":{"exp":"BargeScoreRight.y", "val":4.5521626}, "heading":{"exp":"BargeScoreRight.heading", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"KeepInRectangle", "props":{"x":{"exp":"0 m", "val":0.0}, "y":{"exp":"0 m", "val":0.0}, "w":{"exp":"17.548 m", "val":17.548}, "h":{"exp":"8.052 m", "val":8.052}}}, "enabled":false},
-    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.5}}}, "enabled":true},
+    {"from":"first", "to":"last", "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxVelocity", "val":2.0}}}, "enabled":true},
     {"from":"first", "to":"last", "data":{"type":"MaxAngularVelocity", "props":{"max":{"exp":"MaxAngularVelocity", "val":3.141592653589793}}}, "enabled":true},
     {"from":1, "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":0, "to":1, "data":{"type":"MaxVelocity", "props":{"max":{"exp":"MaxAlgaeVelocity", "val":0.5}}}, "enabled":true},
