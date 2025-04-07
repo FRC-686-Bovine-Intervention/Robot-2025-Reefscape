@@ -7,6 +7,7 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -380,6 +381,11 @@ public class Drive extends VirtualSubsystem {
     /** Returns the current roll velocity (X rotation) in radians per second. */
     public AngularVelocity getRollVelocity() {
         return gyroInputs.rollVelocity;
+    }
+
+    /*Returns if the robot is flipped over*/
+    public BooleanSupplier isFlippedOver(){
+        return () -> Math.abs(getPitch().in(Degrees)) > 90;
     }
 
     /** Returns the current odometry pose. */

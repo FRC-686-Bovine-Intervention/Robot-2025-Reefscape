@@ -83,4 +83,9 @@ public class SuperstructureConstants {
         ElevatorConstants.minLengthPhysical,
         Degrees.of(-10)
     );
+    public static final SuperstructureState selfRightingState = SuperstructureState.fromParts(
+        Degrees.of(105),
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(180)
+    );
 }

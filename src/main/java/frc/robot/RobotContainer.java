@@ -541,6 +541,8 @@ public class RobotContainer {
         // driveController.start().toggleOnTrue(
         //     climber.engageRatchet()
         // );
+
+        driveController.povUp().and(drive.isFlippedOver()).toggleOnTrue(superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState));
         
         driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
