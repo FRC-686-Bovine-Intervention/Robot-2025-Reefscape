@@ -80,8 +80,8 @@ public class ApriltagVision extends VirtualSubsystem {
                 var useVisionRotation = false;
     
                 if (frame.targets.length >= 2) {
-                    robotPose3d = frame.estimatedRobotPose;
-                    cameraPose3d = robotPose3d.transformBy(result.camMeta.mount.getRobotRelative());
+                    cameraPose3d = frame.estimatedCameraPose;
+                    robotPose3d = cameraPose3d.transformBy(result.camMeta.mount.getRobotRelative().inverse());
                     useVisionRotation = true;
                 } else if (frame.targets.length == 1) {
                     var target = frame.targets[0];
