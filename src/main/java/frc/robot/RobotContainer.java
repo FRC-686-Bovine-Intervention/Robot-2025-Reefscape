@@ -260,8 +260,9 @@ public class RobotContainer {
                     )
                 )
             )
+            .addChild(climber.mech)
         ;
-        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech);
+        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech, climber.mech);
 
         System.out.println("[Init RobotContainer] Configuring Commands");
         configureCommands();

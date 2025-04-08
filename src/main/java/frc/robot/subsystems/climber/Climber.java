@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.leds.Leds;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.MeasureUtil;
+import frc.util.robotStructure.angle.AngularMech;
 
 public class Climber extends SubsystemBase {
     private final ClimberIO io;
@@ -31,6 +33,8 @@ public class Climber extends SubsystemBase {
     private static final LoggedTunableMeasure<TimeUnit> climbTime = new LoggedTunableMeasure<>("Climber/Climb Time", Seconds.of(1));
     private static final LoggedTunableMeasure<TimeUnit> ratchetTime = new LoggedTunableMeasure<>("Climber/Ratchet Time", Seconds.of(0.25));
 
+    public final AngularMech mech = new AngularMech(ClimberConstants.climberBase, VecBuilder.fill(0,1,0));
+
     private boolean ratchetEngaged = true;
 
     public Climber(ClimberIO io) {
@@ -41,13 +45,19 @@ public class Climber extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+
+        var angle = getAngle();
         Logger.processInputs("Inputs/Climber", inputs);
-        Logger.recordOutput("Climber/Position", getAngle());
+        Logger.recordOutput("Climber/Position", angle);
         Logger.recordOutput("Climber/Ratchet Engaged", ratchetEngaged);
+
+        var percentToDeploy = angle.div(deployAngle.get()).baseUnitMagnitude();
+        mech.set(ClimberConstants.climberMaxAngle.times(percentToDeploy));
+
         Leds.getInstance().climbing.setPos(getAngle().div(climbAngle.get()).baseUnitMagnitude());
     }
 
-    public Angle getAngle(){
+    public Angle getAngle() {
         return ClimberConstants.sensorToMechanismRatio.apply(inputs.motor.encoder.position).unaryMinus();
     }
 
