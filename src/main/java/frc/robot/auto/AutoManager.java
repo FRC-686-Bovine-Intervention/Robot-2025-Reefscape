@@ -2,6 +2,8 @@ package frc.robot.auto;
 
 import static edu.wpi.first.units.Units.Seconds;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,6 +21,8 @@ public class AutoManager extends VirtualSubsystem {
 
     public AutoManager(AutoSelector selector) {
         this.selector = selector;
+
+        FollowPathCommand.warmupCommand().initialize();
     }
 
     @Override

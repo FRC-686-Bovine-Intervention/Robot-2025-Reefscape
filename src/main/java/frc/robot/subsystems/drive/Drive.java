@@ -60,7 +60,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
-import frc.robot.subsystems.leds.Leds;
 import frc.util.LazyOptional;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
@@ -268,7 +267,7 @@ public class Drive extends VirtualSubsystem {
             this.translationSubsystem, this.rotationalSubsystem
         );
     }
-    public Command followPath(PathPlannerPath path) {
+    public Command followExactPath(PathPlannerPath path) {
         return new FollowPathCommand(
             path,
             this::getPose,
