@@ -107,7 +107,7 @@ public class AutoManager extends VirtualSubsystem {
             }
             @Override
             public boolean isFinished() {
-                return autoCommand.isFinished();
+                return autoCommandRunning && autoCommand.isFinished();
             }
         };
     }

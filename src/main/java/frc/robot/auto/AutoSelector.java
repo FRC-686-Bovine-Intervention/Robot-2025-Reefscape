@@ -43,7 +43,7 @@ public class AutoSelector extends VirtualSubsystem {
         this.questionPublishers = new ArrayList<>();
         this.responseChoosers = new ArrayList<>();
         this.configPublisher = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(key).getStringTopic("Configuration").publish();
-        this.initialDelaySubscriber = new LoggedNetworkNumber(key + "/Initial Delay", 0);
+        this.initialDelaySubscriber = new LoggedNetworkNumber("SmartDashboard/" + key + "/Initial Delay", 0);
         addDefaultRoutine(idleRoutine);
     }
 
