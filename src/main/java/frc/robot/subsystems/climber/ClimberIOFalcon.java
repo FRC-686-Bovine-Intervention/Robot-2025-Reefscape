@@ -6,8 +6,6 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -40,8 +38,15 @@ public class ClimberIOFalcon implements ClimberIO {
 
     private final VoltageOut voltageRequest = new VoltageOut(0);
 
-    private final MotionMagicVoltage nonClimbingPositionRequest = new MotionMagicVoltage(0).withSlot(0);
-    private final MotionMagicVoltage climbingPositionRequest = new MotionMagicVoltage(0).withSlot(1).withOverrideBrakeDurNeutral(true);
+    private final MotionMagicVoltage nonClimbingPositionRequest = new MotionMagicVoltage(0)
+        .withSlot(0)
+    ;
+    private final MotionMagicVoltage climbingPositionRequest = new MotionMagicVoltage(0)
+        .withSlot(1)
+        .withOverrideBrakeDurNeutral(true)
+        .withLimitForwardMotion(true)
+    ;
+
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Climber/Profile",
         RotationsPerSecond.of(6),
@@ -87,7 +92,7 @@ public class ClimberIOFalcon implements ClimberIO {
             .withReverseLimitSource(ReverseLimitSourceValue.LimitSwitchPin)
             .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen)
             .withReverseLimitAutosetPositionEnable(true)
-            .withReverseLimitAutosetPositionValue(Degrees.of(0))
+            .withReverseLimitAutosetPositionValue(ClimberConstants.climberMinimumAngle)
         ;
 
         motorConfig.Feedback
@@ -113,15 +118,15 @@ public class ClimberIOFalcon implements ClimberIO {
             motor.getRotorPosition(),
             motor.getRotorVelocity()
         );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getPosition(),
-            motor.getVelocity(),
-            motor.getClosedLoopReference(),
-            motor.getClosedLoopReferenceSlope(),
-            motor.getClosedLoopError(),
-            motor.getClosedLoopOutput()
-        );
+        // BaseStatusSignal.setUpdateFrequencyForAll(
+        //     RobotConstants.rioUpdateFrequency,
+        //     motor.getPosition(),
+        //     motor.getVelocity(),
+        //     motor.getClosedLoopReference(),
+        //     motor.getClosedLoopReferenceSlope(),
+        //     motor.getClosedLoopError(),
+        //     motor.getClosedLoopOutput()
+        // );
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency.div(2),
             motor.getMotorVoltage(),
@@ -139,6 +144,7 @@ public class ClimberIOFalcon implements ClimberIO {
 
         voltageRequest.withLimitReverseMotion(inputs.sensor);
         nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
+        climbingPositionRequest.withLimitReverseMotion(inputs.sensor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
@@ -163,12 +169,12 @@ public class ClimberIOFalcon implements ClimberIO {
             motor.getConfigurator().apply(config);
         }
 
-        Logger.recordOutput("Climber/Motor/posiion", motor.getPosition().getValueAsDouble());
-        Logger.recordOutput("Climber/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
-        Logger.recordOutput("Climber/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
-        Logger.recordOutput("Climber/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
-        Logger.recordOutput("Climber/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
-        Logger.recordOutput("Climber/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
+        // Logger.recordOutput("Climber/Motor/posiion", motor.getPosition().getValueAsDouble());
+        // Logger.recordOutput("Climber/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
+        // Logger.recordOutput("Climber/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
+        // Logger.recordOutput("Climber/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
+        // Logger.recordOutput("Climber/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
+        // Logger.recordOutput("Climber/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
     }
 
     @Override
