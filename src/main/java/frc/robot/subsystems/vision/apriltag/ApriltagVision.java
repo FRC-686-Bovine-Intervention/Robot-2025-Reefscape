@@ -13,6 +13,7 @@ import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
@@ -85,25 +86,37 @@ public class ApriltagVision extends VirtualSubsystem {
                     useVisionRotation = true;
                 } else if (frame.targets.length == 1) {
                     var target = frame.targets[0];
-                    var bestCameraPose = FieldConstants.apriltagLayout.getTagPose(target.tagID).get().transformBy(target.bestCameraToTag.inverse());
-                    var bestRobotPose = bestCameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
-                    var altCameraPose = FieldConstants.apriltagLayout.getTagPose(target.tagID).get().transformBy(target.altCameraToTag.inverse());
-                    var altRobotPose = altCameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
-                    if (frame.targets[0].poseAmbiguity < ambiguityThreshold.get()) {
-                        var currentRotation = RobotState.getInstance().getPose().getRotation();
-                        var bestRotation = bestRobotPose.getRotation().toRotation2d();
-                        var altRotation = altRobotPose.getRotation().toRotation2d();
-                        if (Math.abs(currentRotation.minus(bestRotation).getRadians()) < Math.abs(currentRotation.minus(altRotation).getRadians())) {
-                            cameraPose3d = bestCameraPose;
-                            robotPose3d = bestRobotPose;
-                        } else {
-                            cameraPose3d = altCameraPose;
-                            robotPose3d = altRobotPose;
-                        }
-                    } else {
-                        cameraPose3d = null;
-                        robotPose3d = null;
-                    }
+                    var tagPose = FieldConstants.apriltagLayout.getTagPose(target.tagID).get();
+                    var translationToTarget = target.bestCameraToTag.getTranslation();
+                    var cameraRotation = result.camMeta.mount.getFieldRelative().getRotation();
+                    var tagRotationRelativeToCamera = tagPose.getRotation().minus(cameraRotation);
+                    var cameraToTag = new Transform3d(translationToTarget, tagRotationRelativeToCamera);
+                    var cameraPose = tagPose.transformBy(cameraToTag.inverse());
+                    var robotPose = cameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
+
+                    cameraPose3d = cameraPose;
+                    robotPose3d = robotPose;
+                    useVisionRotation = false;
+                    // var bestCameraPose = tagPose.transformBy(target.bestCameraToTag.inverse());
+                    // var bestRobotPose = bestCameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
+                    // var altCameraPose = tagPose.transformBy(target.altCameraToTag.inverse());
+                    // var altRobotPose = altCameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
+                    // if (frame.targets[0].poseAmbiguity < ambiguityThreshold.get()) {
+                    //     var currentRotation = RobotState.getInstance().getPose().getRotation();
+                    //     var bestRotation = bestRobotPose.getRotation().toRotation2d();
+                    //     var altRotation = altRobotPose.getRotation().toRotation2d();
+                    //     if (Math.abs(currentRotation.minus(bestRotation).getRadians()) < Math.abs(currentRotation.minus(altRotation).getRadians())) {
+                    //         cameraPose3d = bestCameraPose;
+                    //         robotPose3d = bestRobotPose;
+                    //     } else {
+                    //         cameraPose3d = altCameraPose;
+                    //         robotPose3d = altRobotPose;
+                    //     }
+                    // } else {
+                    //     cameraPose3d = null;
+                    //     robotPose3d = null;
+                    // }
+
                 } else {
                     cameraPose3d = null;
                     robotPose3d = null;
