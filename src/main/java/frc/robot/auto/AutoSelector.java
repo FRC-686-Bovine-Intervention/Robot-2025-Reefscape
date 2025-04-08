@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
@@ -23,6 +24,7 @@ public class AutoSelector extends VirtualSubsystem {
     private final List<StringPublisher> questionPublishers;
     private final List<SwitchableChooser> responseChoosers;
     private final StringPublisher configPublisher;
+    private final LoggedNetworkNumber initialDelaySubscriber;
     private final String key;
     
     private static final AutoRoutine idleRoutine = new AutoRoutine("Do Nothing", List.of()) {
@@ -37,10 +39,11 @@ public class AutoSelector extends VirtualSubsystem {
 
     public AutoSelector(String key) {
         this.key = key;
-        routineChooser = new LoggedDashboardChooser<>(key + "/Routine");
-        questionPublishers = new ArrayList<>();
-        responseChoosers = new ArrayList<>();
-        configPublisher = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(key).getStringTopic("Configuration").publish();
+        this.routineChooser = new LoggedDashboardChooser<>(key + "/Routine");
+        this.questionPublishers = new ArrayList<>();
+        this.responseChoosers = new ArrayList<>();
+        this.configPublisher = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(key).getStringTopic("Configuration").publish();
+        this.initialDelaySubscriber = new LoggedNetworkNumber(key + "/Initial Delay", 0);
         addDefaultRoutine(idleRoutine);
     }
 
@@ -82,7 +85,7 @@ public class AutoSelector extends VirtualSubsystem {
 
     private void doThingy(AutoRoutine routine, boolean configurationChanged) {
         var alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-        var config = new AutoConfiguration(alliance, routine.name);
+        var config = new AutoConfiguration(alliance, routine.name, initialDelaySubscriber.get());
 
         var questions = routine.questions;
         for (int i = 0; i < responseChoosers.size(); i++) {
@@ -120,7 +123,7 @@ public class AutoSelector extends VirtualSubsystem {
         }
         if (configurationChanged) {
             System.out.println("[AutoSelector] Generating new command\n" + config);
-            lastCommand = AutoManager.generateAutoCommand(routine);
+            lastCommand = AutoManager.generateAutoCommand(routine, config.initialDelaySeconds());
         }
         lastConfiguration = config;
         configPublisher.set(lastConfiguration.toString());
@@ -133,10 +136,11 @@ public class AutoSelector extends VirtualSubsystem {
     public static record AutoConfiguration (
         Alliance alliance,
         String routine,
+        double initialDelaySeconds,
         Map<String, String> questions
     ) {
-        public AutoConfiguration(Alliance alliance, String routine) {
-            this(alliance, routine, new LinkedHashMap<>());
+        public AutoConfiguration(Alliance alliance, String routine, double initialDelaySeconds) {
+            this(alliance, routine, initialDelaySeconds, new LinkedHashMap<>());
         }
         public void addQuestion(String question, String response) {
             questions.put(question, response);
@@ -146,6 +150,7 @@ public class AutoSelector extends VirtualSubsystem {
             var builder = new StringBuilder()
                 .append("\t").append("Alliance: ").append(alliance).append("\n")
                 .append("\t").append("Routine: ").append(routine)
+                .append("\t").append("Delay: ").append(initialDelaySeconds)
             ;
             for (var entry : questions.entrySet()) {
                 builder.append("\n\t").append(entry.getKey()).append(": ").append(entry.getValue());
