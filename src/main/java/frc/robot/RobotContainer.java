@@ -544,13 +544,16 @@ public class RobotContainer {
         // );
 
         var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
+        var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
-            private boolean prev = true;
+            private boolean prevright = true;
+            private boolean prevprepare = true;
             public void run() {
-                var val = driveController.hid.getPOV() == 0;
+                var right = driveController.hid.getPOV() == 0;
+                var prepare = driveController.hid.getPOV() == 90;
                 var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
                 Leds.getInstance().tipped.setFlag(tipped);
-                if (val && !prev) {
+                if (right && !prevright) {
                     if (selfRightCommand.isScheduled()) {
                         selfRightCommand.cancel();
                     } else {
@@ -559,7 +562,17 @@ public class RobotContainer {
                         // }
                     }
                 }
-                prev = val;
+                if (prepare && !prevprepare) {
+                    if (prepareSelfRightCommand.isScheduled()) {
+                        prepareSelfRightCommand.cancel();
+                    } else {
+                        // if (tipped) {
+                            prepareSelfRightCommand.schedule();
+                        // }
+                    }
+                }
+                prevright = right;
+                prevprepare = prepare;
             }
         });
         
