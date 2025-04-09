@@ -383,11 +383,6 @@ public class Drive extends VirtualSubsystem {
         return gyroInputs.rollVelocity;
     }
 
-    /*Returns if the robot is flipped over*/
-    public BooleanSupplier isFlippedOver(){
-        return () -> Math.abs(getPitch().in(Degrees)) > 90;
-    }
-
     /** Returns the current odometry pose. */
     public Pose2d getPose() {
         return RobotState.getInstance().getPose();

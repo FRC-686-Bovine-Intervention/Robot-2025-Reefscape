@@ -67,6 +67,7 @@ public class Leds extends VirtualSubsystem {
         autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) - (pos * 4)), InterpolationFunction.step.gradient(new Color(0,0,0.2), new Color(0.2,0.2,0)));
         autonomousFinishedAnimation = new AutonomousFinishedAnimation(sideStrips, hardwareStrip);
         estopped = new FillAnimation(hardwareStrip, Color.kRed);
+        tipped = new FillAnimation(hardwareStrip, Color.kWhite);
         allianceColorAnimation = new AllianceColorAnimation(fullSideStrips, Color.kFirstBlue, Color.kRed);
         driverStationConnection = new StatusLightAnimation(sideStrips.substrip(0, 2), Color.kOrange, Color.kGreen);
         flAprilConnection = new StatusLightAnimation(sideStrips.substrip(2, 3), Color.kOrange, Color.kGreen);
@@ -111,6 +112,7 @@ public class Leds extends VirtualSubsystem {
     public final WaveAnimation autonomousRunningAnimation;
     public final AutonomousFinishedAnimation autonomousFinishedAnimation;
     public final FillAnimation estopped;
+    public final FillAnimation tipped;
     public final AllianceColorAnimation allianceColorAnimation;
     public final StatusLightAnimation driverStationConnection;
     public final StatusLightAnimation flAprilConnection;
@@ -180,6 +182,7 @@ public class Leds extends VirtualSubsystem {
         autonomousRunningAnimation.applyIfFlagged();
         autonomousFinishedAnimation.applyIfFlagged();
 
+        tipped.applyIfFlagged();
         estopped.applyIfFlagged();
 
         //TODO: End game notification

@@ -92,6 +92,7 @@ import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
+import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
@@ -542,7 +543,25 @@ public class RobotContainer {
         //     climber.engageRatchet()
         // );
 
-        driveController.povUp().and(drive.isFlippedOver()).toggleOnTrue(superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState));
+        var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private boolean prev = true;
+            public void run() {
+                var val = driveController.hid.getPOV() == 0;
+                var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
+                Leds.getInstance().tipped.setFlag(tipped);
+                if (val && !prev) {
+                    if (selfRightCommand.isScheduled()) {
+                        selfRightCommand.cancel();
+                    } else {
+                        // if (tipped) {
+                            selfRightCommand.schedule();
+                        // }
+                    }
+                }
+                prev = val;
+            }
+        });
         
         driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
