@@ -44,8 +44,8 @@ public class ClimberIOFalcon implements ClimberIO {
     private final MotionMagicVoltage climbingPositionRequest = new MotionMagicVoltage(0).withSlot(1).withOverrideBrakeDurNeutral(true);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Climber/Profile",
-        RotationsPerSecond.of(3),
-        RotationsPerSecondPerSecond.of(6)
+        RotationsPerSecond.of(6),
+        RotationsPerSecondPerSecond.of(12)
     );
     private static final LoggedTunableFF nonClimbingFFConsts = new LoggedTunableFF(
         "Climber/Nonclimbing/FF",
@@ -69,7 +69,7 @@ public class ClimberIOFalcon implements ClimberIO {
     );
     private static final LoggedTunablePID climbingPIDConsts = new LoggedTunablePID(
         "Climber/Climbing/PID",
-        8,
+        16,
         0,
         0
     );

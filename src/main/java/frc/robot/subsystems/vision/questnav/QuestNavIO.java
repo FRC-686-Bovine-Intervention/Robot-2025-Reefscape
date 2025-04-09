@@ -9,6 +9,9 @@ public interface QuestNavIO {
     public class QuestNavIOInputs {
         public boolean isConnected;
         public double timestamp;
+        public boolean isTracking;
+        public long frameCount;
+        public long trackingLostCount;
         public double batteryPercent;
         public Pose3d pose = new Pose3d();
     }

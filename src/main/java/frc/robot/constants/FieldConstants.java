@@ -1,6 +1,7 @@
 package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
@@ -158,7 +159,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
-                                Meters.of(0.792953).plus(Inches.of(5))
+                                Meters.of(0.792953).plus(Inches.of(4))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
@@ -171,7 +172,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
-                                Meters.of(1.196053).plus(Inches.of(5))
+                                Meters.of(1.196053).plus(Inches.of(4))
                             ),
                             Rotation2d.fromDegrees(-15)
                         )
@@ -184,7 +185,7 @@ public final class FieldConstants {
                         new Pose2d(
                             new Translation2d(
                                 RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
-                                Meters.of(1.828663).plus(Inches.of(3))
+                                Meters.of(1.828663).plus(Inches.of(4))
                             ),
                             Rotation2d.fromDegrees(-30)
                         )
@@ -213,14 +214,17 @@ public final class FieldConstants {
         }
 
         public static final Distance minimumReefRadius = Inches.of(65.497).div(2);
-        public static final AllianceFlipped<Translation2d> reefCenter = AllianceFlipped.fromBlue(
-            new Translation2d(
-                Meters.of(4.489325),
-                Meters.of(4.025877)
+        public static final AllianceFlipped<Pose2d> reefCenter = AllianceFlipped.fromBlue(
+            new Pose2d(
+                new Translation2d(
+                    Meters.of(4.489325),
+                    Meters.of(4.025877)
+                ),
+                Rotation2d.kZero
             )
         );
 
-        public static final AllianceFlipped<ReefObject> reefs = reefCenter.map((center) -> new ReefObject(new Pose2d(center, Rotation2d.kZero)));
+        public static final AllianceFlipped<ReefObject> reefs = reefCenter.map((center) -> new ReefObject(center));
 
         public static final class ReefObject {
             public final RackObject[] racks;
@@ -409,6 +413,14 @@ public final class FieldConstants {
                 this.branchTip = new Pose3d(this.pipe.pipeCenterPose).transformBy(this.level.branchTipTransform);
                 this.scoreTotalState = RobotFlippedTotalState.combine(this.pipe.robotPose, this.level.scoringSuperstructureStates);
             }
+
+            public String getName() {
+                return pipe.getLetter() + switch (level) {
+                    case Level2 -> "2";
+                    case Level3 -> "3";
+                    case Level4 -> "4";
+                };
+            }
         }
         public static final class BranchConcept extends AllianceFlipped<BranchObject> {
             public final PipeConcept pipe;
@@ -421,6 +433,14 @@ public final class FieldConstants {
                 this.level = level;
                 this.id = this.level.ordinal() * 12 + this.pipe.id;
             }
+
+            public String getName() {
+                return pipe.getLetter() + switch (level) {
+                    case Level2 -> "2";
+                    case Level3 -> "3";
+                    case Level4 -> "4";
+                };
+            }
         }
 
         public static enum StagedAlgaeLevel {
@@ -429,7 +449,7 @@ public final class FieldConstants {
                     new Pose2d(
                         new Translation2d(
                             Meters.of(0.679337),
-                            Meters.of(1.313180)
+                            Meters.of(1.313180).plus(Inches.of(3))
                         ),
                         Rotation2d.fromDegrees(-15)
                     )
@@ -440,7 +460,7 @@ public final class FieldConstants {
                     new Pose2d(
                         new Translation2d(
                             Meters.of(0.679337),
-                            Meters.of(0.909320)
+                            Meters.of(0.909320).plus(Inches.of(3))
                         ),
                         Rotation2d.fromDegrees(-15)
                     )
@@ -570,6 +590,63 @@ public final class FieldConstants {
                 Degrees.of(90),
                 ElevatorConstants.maxLengthSoftware,
                 Degrees.of(60)
+            )
+        );
+
+        private static final Distance autoCageDistance = Feet.of(4);
+
+        public static final AllianceFlipped<RobotFlippedRobotPose> leftCagePose = AllianceFlipped.fromBlue(
+            new RobotFlippedRobotPose(
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).minus(autoCageDistance),
+                        Meters.of(7.2596248)
+                    ),
+                    Rotation2d.kZero
+                ),
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).plus(autoCageDistance),
+                        Meters.of(7.2596248)
+                    ),
+                    Rotation2d.k180deg
+                )
+            )
+        );
+        public static final AllianceFlipped<RobotFlippedRobotPose> centerCagePose = AllianceFlipped.fromBlue(
+            new RobotFlippedRobotPose(
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).minus(autoCageDistance),
+                        Meters.of(6.169025)
+                    ),
+                    Rotation2d.kZero
+                ),
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).plus(autoCageDistance),
+                        Meters.of(6.169025)
+                    ),
+                    Rotation2d.k180deg
+                )
+            )
+        );
+        public static final AllianceFlipped<RobotFlippedRobotPose> rightCagePose = AllianceFlipped.fromBlue(
+            new RobotFlippedRobotPose(
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).minus(autoCageDistance),
+                        Meters.of(5.0784252)
+                    ),
+                    Rotation2d.kZero
+                ),
+                new Pose2d(
+                    new Translation2d(
+                        fieldLength.div(2).plus(autoCageDistance),
+                        Meters.of(5.0784252)
+                    ),
+                    Rotation2d.k180deg
+                )
             )
         );
 

@@ -53,16 +53,16 @@ public final class DriveConstants {
         public final CANDevice driveMotorID;
         public final CANDevice turnMotorID;
         public final InvertedValue driveInverted;
-        public final Angle encoderOffset;
+        public final Rotation2d moduleForwardDirection;
         public final Angle encoderZeroOffset;
         public final Translation2d moduleTranslation;
         public final Vector<N2> positiveRotVec;
-        ModuleConstants(String name, CANDevice driveMotorID, CANDevice turnMotorID, InvertedValue driveInverted, Angle encoderOffset, Angle encoderZeroOffset, Translation2d moduleTranslation) {
+        ModuleConstants(String name, CANDevice driveMotorID, CANDevice turnMotorID, InvertedValue driveInverted, Rotation2d moduleForwardDirection, Angle encoderZeroOffset, Translation2d moduleTranslation) {
             this.name = name;
             this.driveMotorID = driveMotorID;
             this.turnMotorID = turnMotorID;
             this.driveInverted = driveInverted;
-            this.encoderOffset = encoderOffset;
+            this.moduleForwardDirection = moduleForwardDirection;
             this.encoderZeroOffset = encoderZeroOffset;
             this.moduleTranslation = moduleTranslation;
             this.positiveRotVec = GeomUtil.vectorFromRotation(this.moduleTranslation.getAngle().plus(Rotation2d.fromDegrees(90)));
@@ -74,7 +74,7 @@ public final class DriveConstants {
             "Front Left",
             HardwareDevices.frontLeftDriveMotorID, HardwareDevices.frontLeftTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
-            Rotations.of(0.25),
+            Rotation2d.kCCW_90deg,
             Rotations.of(0.7326064),
             new Translation2d(
                 trackWidthX.div(+2),
@@ -85,7 +85,7 @@ public final class DriveConstants {
             "Front Right",
             HardwareDevices.frontRightDriveMotorID, HardwareDevices.frontRightTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
-            Rotations.of(0),
+            Rotation2d.kZero,
             Rotations.of(0.7325602),
             new Translation2d(
                 trackWidthX.div(+2),
@@ -96,7 +96,7 @@ public final class DriveConstants {
             "Back Left",
             HardwareDevices.backLeftDriveMotorID, HardwareDevices.backLeftTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
-            Rotations.of(0.5),
+            Rotation2d.k180deg,
             Rotations.of(0.6867877),
             new Translation2d(
                 trackWidthX.div(-2),
@@ -107,7 +107,7 @@ public final class DriveConstants {
             "Back Right",
             HardwareDevices.backRightDriveMotorID, HardwareDevices.backRightTurnMotorID,
             InvertedValue.CounterClockwise_Positive,
-            Rotations.of(0.75),
+            Rotation2d.kCW_90deg,
             Rotations.of(0.8682748),
             new Translation2d(
                 trackWidthX.div(-2),
@@ -182,7 +182,7 @@ public final class DriveConstants {
             DriveConstants.maxDriveSpeed,
             1.0,
             DCMotor.getFalcon500(1),
-            Amps.of(55),
+            Amps.of(80),
             1
         ),
         DriveConstants.moduleTranslations

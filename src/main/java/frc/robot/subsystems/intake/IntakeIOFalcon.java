@@ -29,8 +29,8 @@ public class IntakeIOFalcon implements IntakeIO {
             .withInverted(InvertedValue.Clockwise_Positive)
         ;
         motorConfig.CurrentLimits
-            .withStatorCurrentLimit(Amps.of(20))
-            .withStatorCurrentLimitEnable(false)
+            .withStatorCurrentLimit(Amps.of(80))
+            .withStatorCurrentLimitEnable(true)
         ;
 
         motor.getConfigurator().apply(motorConfig);
