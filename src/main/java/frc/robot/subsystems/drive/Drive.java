@@ -25,9 +25,12 @@ import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.MathUtil;
@@ -55,12 +58,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.InternalButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
-import frc.robot.subsystems.leds.Leds;
 import frc.util.LazyOptional;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
@@ -77,6 +80,9 @@ public class Drive extends VirtualSubsystem {
     private Rotation2d gyroAngle = new Rotation2d();
 
     public final Root structureRoot = new Root();
+
+    private final SwerveSetpointGenerator setpointGenerator;
+    private SwerveSetpoint previousSetpoint;
 
     public final Module[] modules = new Module[DriveConstants.moduleConstants.length];
 
@@ -114,6 +120,8 @@ public class Drive extends VirtualSubsystem {
             module.periodic();
             modules[i] = module;
         }
+        this.setpointGenerator = new SwerveSetpointGenerator(DriveConstants.robotConfig, DriveConstants.maxTurnRate);
+        this.previousSetpoint = new SwerveSetpoint(emptySpeeds, emptyStates, DriveFeedforwards.zeros(DriveConstants.moduleConstants.length));
 
         Pose2d initialPose = new Pose2d();
         RobotState.getInstance().initializePoseEstimator(DriveConstants.kinematics, getGyroRotation(), getModulePositions(), initialPose);
@@ -245,7 +253,8 @@ public class Drive extends VirtualSubsystem {
     }
 
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
-        setpointSpeeds = robotSpeeds;
+        previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, robotSpeeds, DriveConstants.normalDriveContraints, RobotConstants.rioUpdatePeriodSecs);
+        setpointSpeeds = previousSetpoint.robotRelativeSpeeds();
         Logger.recordOutput("Drive/Chassis Speeds/Setpoint", setpointSpeeds);
         ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(setpointSpeeds, rotationCorrection.get());
         setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, centerOfRotation);

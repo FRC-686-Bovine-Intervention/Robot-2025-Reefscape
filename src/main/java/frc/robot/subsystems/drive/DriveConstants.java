@@ -9,8 +9,10 @@ import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 
 import java.util.Arrays;
@@ -18,6 +20,7 @@ import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,9 +29,11 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
@@ -125,6 +130,7 @@ public final class DriveConstants {
     public static final Distance driveBaseRadius = Meters.of(Arrays.stream(moduleTranslations).mapToDouble((t) -> t.getNorm()).max().orElse(0.5));
     private static final double correctionVal = 314.0 / 320.55;
     public static final Distance wheelRadius = Inches.of(1.5 * correctionVal);
+    public static final double wheelCOF = 1.0; // DETERMINE Coefficient Of Friction betweel wheels and carpet
 
     public static final GearRatio driveWheelGearRatio = new GearRatio()
         .gear(14).gear(22).axle()
@@ -140,8 +146,10 @@ public final class DriveConstants {
     public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
 
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
+    public static final LinearAcceleration maxDriveAcceleration = MetersPerSecondPerSecond.of(6);
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
     public static final AngularVelocity maxTurnRate = RadiansPerSecond.of(maxDriveSpeed.in(MetersPerSecond) / driveBaseRadius.in(Meters));
+    public static final AngularAcceleration maxTurnAcceleration = RadiansPerSecondPerSecond.of(6);
     public static final DoubleSupplier maxDriveSpeedEnvCoef = Environment.switchVar(
         () -> 1,
         new LoggedTunableNumber("Demo Constraints/Max Translational Percentage", 0.25)
@@ -187,4 +195,7 @@ public final class DriveConstants {
         ),
         DriveConstants.moduleTranslations
     );
+
+    public static final PathConstraints normalDriveContraints = new PathConstraints(DriveConstants.maxDriveSpeed, DriveConstants.maxDriveAcceleration, DriveConstants.maxTurnRate, DriveConstants.maxTurnAcceleration);
+    public static final PathConstraints climbDriveConstraints = new PathConstraints(0.0, 0.0, 0.0, 0.0);
 }
