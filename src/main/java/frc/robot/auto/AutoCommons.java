@@ -13,7 +13,6 @@ import java.util.stream.IntStream;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
@@ -31,7 +30,6 @@ import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
@@ -52,22 +50,22 @@ public class AutoCommons {
         return Commands.runOnce(() -> RobotState.getInstance().setPose(drive.getGyroRotation(), drive.getModulePositions(), pose.getOurs()));
     }
 
-    public static Command followPathFlipped(PathPlannerPath path, Drive drive) {
-        return new FollowPathCommand(path, drive::getPose, drive::getRobotMeasuredSpeeds, drive::drivePPVelocity, Drive.autoConfig(), DriveConstants.robotConfig, AllianceFlipUtil::shouldFlip, drive.translationSubsystem, drive.rotationalSubsystem)
-            .deadlineFor(Commands.startEnd(
-                () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
-                () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
-            ))
-        ;
-    }
-    public static Command followPathFlipped(PathPlannerPath path, Drive.Translational drive) {
-        return new FollowPathCommand(path, drive.drive::getPose, drive.drive::getRobotMeasuredSpeeds, drive.drive::drivePPVelocity, Drive.autoConfig(), DriveConstants.robotConfig, AllianceFlipUtil::shouldFlip, drive)
-            .deadlineFor(Commands.startEnd(
-                () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
-                () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
-            ))
-        ;
-    }
+    // public static Command followPathFlipped(PathPlannerPath path, Drive drive) {
+    //     return new FollowPathCommand(path, drive::getPose, drive::getRobotMeasuredSpeeds, drive::drivePPVelocity, Drive.autoConfig(), DriveConstants.robotConfig, AllianceFlipUtil::shouldFlip, drive.translationSubsystem, drive.rotationalSubsystem)
+    //         .deadlineFor(Commands.startEnd(
+    //             () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
+    //             () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
+    //         ))
+    //     ;
+    // }
+    // public static Command followPathFlipped(PathPlannerPath path, Drive.Translational drive) {
+    //     return new FollowPathCommand(path, drive.drive::getPose, drive.drive::getRobotMeasuredSpeeds, drive.drive::drivePPVelocity, Drive.autoConfig(), DriveConstants.robotConfig, AllianceFlipUtil::shouldFlip, drive)
+    //         .deadlineFor(Commands.startEnd(
+    //             () -> Logger.recordOutput("Autonomous/Goal Pose", AllianceFlipUtil.apply(new Pose2d(getLastPoint(path), path.getGoalEndState().rotation()))),
+    //             () -> Logger.recordOutput("Autonomous/Goal Pose", (Pose2d)null)
+    //         ))
+    //     ;
+    // }
 
     public static Command scoreOnReef(PathPlannerPath pathToReef, BranchConcept branch, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
         var targetState = branch.level.scoringSuperstructureStates.get(direction);
@@ -79,7 +77,7 @@ public class AutoCommons {
                 Commands.sequence(
                     Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
                     Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                    Commands.waitSeconds(0.75),
+                    Commands.waitSeconds(0.25),
                     intake.eject().asProxy().onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
@@ -87,7 +85,7 @@ public class AutoCommons {
                     superstructure.goToSetpointSequenced(targetState).withName("Extend to " + branch.getName()).asProxy()
                 ),
                 Commands.sequence(
-                    followPathFlipped(pathToReef, drive).withName("Follow Path to " + branch.getName()).asProxy(),
+                    drive.followBluePath(pathToReef).withName("Follow Path to " + branch.getName()).asProxy(),
                     drive.simplePIDTo(() -> end).withName("PID to " + branch.getName()).asProxy()
                 )
             )
@@ -104,7 +102,7 @@ public class AutoCommons {
             Commands.sequence(
                 Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
                 Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                Commands.waitSeconds(0.75),
+                Commands.waitSeconds(0.5),
                 intake.eject().asProxy().onlyWhile(intake.hasAlgae)
             ),
             Commands.sequence(
@@ -112,7 +110,7 @@ public class AutoCommons {
                 superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
             ),
             Commands.sequence(
-                followPathFlipped(pathToBarge, drive).withName("Follow Path to Net").asProxy(),
+                drive.followBluePath(pathToBarge).withName("Follow Path to Net").asProxy(),
                 drive.simplePIDTo(() -> end).withName("PID to Net").asProxy()
             )
         )
@@ -132,7 +130,7 @@ public class AutoCommons {
                 Commands.deadline(
                     intake.intakeCoral().asProxy().until(intake.hasCoral),
                     Commands.sequence(
-                        followPathFlipped(pathToStation, drive).withName("Follow Path to Coral Station").asProxy(),
+                        drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                     ),
                     superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
@@ -143,7 +141,7 @@ public class AutoCommons {
                 Commands.deadline(
                     intake.intakeCoral().asProxy().withTimeout(4).until(intake.hasCoral),
                     Commands.sequence(
-                        followPathFlipped(pathToStation, drive).withName("Follow Path to Coral Station").asProxy(),
+                        drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                     ),
                     superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
@@ -159,9 +157,12 @@ public class AutoCommons {
         if (RobotBase.isReal()) {
             return 
                 Commands.deadline(
-                    intake.intakeAlgae().asProxy().until(intake.hasAlgae),
                     Commands.sequence(
-                        followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
+                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        Commands.waitSeconds(0.5)
+                    ),
+                    Commands.sequence(
+                        drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
                     superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
@@ -172,7 +173,7 @@ public class AutoCommons {
                 Commands.deadline(
                     intake.intakeAlgae().asProxy().withTimeout(2).until(intake.hasAlgae),
                     Commands.sequence(
-                        followPathFlipped(pathToReef, drive).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
+                        drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
                     superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()

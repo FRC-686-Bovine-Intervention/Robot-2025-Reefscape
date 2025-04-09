@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -21,8 +22,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoCommons.AutoPaths;
 import frc.robot.auto.AutoManager;
 import frc.robot.auto.AutoSelector;
@@ -46,6 +47,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.commands.AutoScore;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
@@ -54,12 +56,13 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
+import frc.robot.subsystems.objectiveTracker.ObjectiveTracker.ObjectiveType;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIO;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIOServer;
-import frc.robot.subsystems.objectiveTracker.ObjectiveTracker.ObjectiveType;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedCommand;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
@@ -257,8 +260,9 @@ public class RobotContainer {
                     )
                 )
             )
+            .addChild(climber.mech)
         ;
-        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech);
+        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech, climber.mech);
 
         System.out.println("[Init RobotContainer] Configuring Commands");
         configureCommands();
@@ -336,12 +340,13 @@ public class RobotContainer {
             .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.2).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
 
-        superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureState.idle));
+        superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());
+        climber.setDefaultCommand(climber.idle());
         // SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
         // SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
         // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
@@ -388,7 +393,20 @@ public class RobotContainer {
         // driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
         // driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
         
-        driveController.a().whileTrue(intake.eject()); //Eject
+        driveController.a().whileTrue(new ContinuouslySwappingCommand(
+            new Supplier<Command>() {
+                private final Command eject = intake.eject();
+                private final Command ejectL1 = intake.ejectLevel1();
+                public Command get() {
+                    if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
+                        return ejectL1;
+                    } else {
+                        return eject;
+                    }
+                }
+            },
+            Set.of(intake)
+        )); //Eject
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand coralStationCommands = CoralStation.intakePosition.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).raceWith(intake.intakeCoral().until(intake.hasCoral)));
@@ -410,10 +428,11 @@ public class RobotContainer {
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae()))).toArray(RobotFlippedCommand[]::new);;
+                private final Command idle = superstructure.goToSetpointSequenced(SuperstructureConstants.idleState).alongWith(intake.idle());
                 public Command get() {
                     var optStagedAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
                     if (optStagedAlgaeObjective.isEmpty()) {
-                        return new InstantCommand();
+                        return idle;
                     } else {
                         var stagedAlgaeObjective = optStagedAlgaeObjective.get();
                         return stagedAlgaeCommands[stagedAlgaeObjective.algae.level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
@@ -422,7 +441,7 @@ public class RobotContainer {
             },
             Set.of(superstructure, intake)
         ).deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae)).withName("Intake Staged Algae");
-        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-30))).alongWith(intake.intakeAlgae().until(intake.hasAlgae)).withName("Intake Ground Algae");
+        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-35))).alongWith(intake.intakeAlgae()).withName("Intake Ground Algae");
         final Timer algaeIntakeButtonTimer = new Timer();
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getYButtonPressed()) {
@@ -435,13 +454,13 @@ public class RobotContainer {
                 }
             }
             if (driveController.hid.getYButtonReleased()) {
-                if (!algaeIntakeButtonTimer.hasElapsed(1) && algaeIntakeButtonTimer.isRunning()) {
+                if (!algaeIntakeButtonTimer.hasElapsed(0.25) && algaeIntakeButtonTimer.isRunning()) {
                     stagedAlgaeIntakeCommand.schedule();
                 }
                 algaeIntakeButtonTimer.stop();
                 algaeIntakeButtonTimer.reset();
             }
-            if (algaeIntakeButtonTimer.hasElapsed(1)) {
+            if (algaeIntakeButtonTimer.hasElapsed(0.25)) {
                 groundAlgaeIntakeCommand.schedule();
                 algaeIntakeButtonTimer.stop();
                 algaeIntakeButtonTimer.reset();
@@ -451,13 +470,13 @@ public class RobotContainer {
         final Command coralScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand[] branchCommands = Arrays.stream(BranchLevel.values()).map((level) -> level.scoringSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state))).toArray(RobotFlippedCommand[]::new);
-                private final Command level1 = Commands.none();
+                private final RobotFlippedCommand level1Command = Reef.level1SuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
                     if (scoreCoralObjective.branchLevel.isPresent()) {
                         return branchCommands[scoreCoralObjective.branchLevel.get().ordinal()].get(scoreCoralObjective.getTargetDirection());
                     } else {
-                        return level1;
+                        return level1Command.get(scoreCoralObjective.getTargetDirection());
                     }
                 }
             },
@@ -501,28 +520,39 @@ public class RobotContainer {
             }
         });
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> objectiveTracker.getCurrentObjective().get().getTargetPose()).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
+        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getCurrentObjective().get().getTargetPose(), objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective)).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
         driveController.start().toggleOnTrue(
-            // Commands.parallel(
-            //     climber.prepareClimb(),
-            //     superstructure.prepareClimb()
-            // )
-            Leds.getInstance().prepareClimbing.setFlagCommand()
-        ); //Start Climb
-        driveController.back().toggleOnTrue(
-            // Commands.parallel(
-            //     superstructure.climb(),
-            //     Commands.sequence(
-            //         climber.climb().until(() -> superstructure.pivot.getAngle().lt(Degrees.of(21))),
-            //         climber.hold()
-            //     )
-            // )
-            Leds.getInstance().climbingComplete.setFlagCommand()
+            Commands.parallel(
+                climber.prepareClimb(),
+                superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState)
+            )
+            .deadlineFor(
+                objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
+            )
         );
+        driveController.back().toggleOnTrue(
+            Commands.parallel(
+                climber.climb(),
+                superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
+            )
+            .deadlineFor(
+                objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
+            )
+        );
+        // driveController.start().toggleOnTrue(
+        //     climber.engageRatchet()
+        // );
         
-        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> drive.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
+        new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
+            .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
         // SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+    }
+
+    private void setPose(Pose2d pose) {
+        questNav.setPose(pose);
+        drive.setPose(pose);
     }
 
     private void configureNotifications() {

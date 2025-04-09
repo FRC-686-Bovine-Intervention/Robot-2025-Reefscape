@@ -17,7 +17,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -73,7 +72,7 @@ public class Module {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Drive/Module " + config.name, inputs);
 
-        angle = Rotation2d.fromRadians(MathUtil.angleModulus(inputs.turnMotor.encoder.position.plus(config.encoderOffset).in(Radians)));
+        angle = config.moduleForwardDirection.plus(new Rotation2d(inputs.turnMotor.encoder.position));
         moduleState.angle = angle;
         modulePosition.angle = angle;
 
@@ -95,10 +94,10 @@ public class Module {
     public void runSetpoint(SwerveModuleState setpoint) {
         setpoint.optimize(getAngle());
         
-        var turnSetpoint = setpoint.angle.getMeasure();
-        io.setTurnAngle(turnSetpoint.minus(config.encoderOffset));
+        var turnSetpoint = setpoint.angle;
+        io.setTurnAngle(turnSetpoint.minus(config.moduleForwardDirection).getMeasure());
 
-        setpoint.speedMetersPerSecond *= Math.cos(turnSetpoint.minus(getAngle().getMeasure()).in(Radians));
+        setpoint.speedMetersPerSecond *= turnSetpoint.minus(getAngle()).getCos();
 
         double velocityRadPerSec = setpoint.speedMetersPerSecond / wheelRadius.in(Meters) * DriveConstants.driveWheelGearReduction;
         io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec));
@@ -109,7 +108,7 @@ public class Module {
      * Must be called periodically.
      */
     public void runVoltage(Measure<VoltageUnit> volts, Rotation2d moduleAngle) {
-        io.setTurnAngle(moduleAngle.getMeasure().minus(config.encoderOffset));
+        io.setTurnAngle(moduleAngle.minus(config.moduleForwardDirection).getMeasure());
         io.setDriveVoltage(volts);
     }
 

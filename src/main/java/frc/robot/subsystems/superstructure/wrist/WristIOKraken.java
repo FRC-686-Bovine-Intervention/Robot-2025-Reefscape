@@ -35,8 +35,8 @@ public class WristIOKraken implements WristIO {
     private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
     private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
         "Wrist/Profile",
-        DegreesPerSecond.of(360),
-        DegreesPerSecondPerSecond.of(720)
+        DegreesPerSecond.of(720),
+        DegreesPerSecondPerSecond.of(1080)
     );
     private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Wrist/FF",

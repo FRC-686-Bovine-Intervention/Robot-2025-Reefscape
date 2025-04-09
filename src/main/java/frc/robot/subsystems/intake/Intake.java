@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
@@ -10,11 +11,12 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
@@ -25,9 +27,12 @@ public class Intake extends SubsystemBase {
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
     public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(6));
-    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(6).unaryMinus());
+    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(4).unaryMinus());
+    public static final LoggedTunableMeasure<VoltageUnit> ejectLevel1Voltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject Level 1", Volts.of(2).unaryMinus());
     public static final LoggedTunableMeasure<VoltageUnit> coralHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Coral", Volts.of(0.3));
     public static final LoggedTunableMeasure<VoltageUnit> algaeHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Algae", Volts.of(1));
+    public static final LoggedTunableMeasure<CurrentUnit> gamepieceDetectCurrent = new LoggedTunableMeasure<>("Intake/Gamepiece Detect Current", Amps.of(50));
+    public static final LoggedTunableMeasure<TimeUnit> gamepieceDetectTime = new LoggedTunableMeasure<>("Intake/Gamepiece Detect Time", Seconds.of(2));
 
     public final GamepiecePose coralPose = new GamepiecePose(IntakeConstants.coralPose);
     public final GamepiecePose algaePose = new GamepiecePose(IntakeConstants.algaePose);
@@ -49,9 +54,12 @@ public class Intake extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Intake", inputs);
 
+        if (gamepieceDetectTime.hasChanged(hashCode())) {
+            debouncer.setDebounceTime(gamepieceDetectTime.get().in(Seconds));
+        }
         var second = debouncer.calculate(inputs.coralSensor);
         if (inputs.coralSensor) {
-            if (inputs.motor.current.gt(Amps.of(30)) || second) {
+            if (inputs.motor.current.gt(gamepieceDetectCurrent.get()) || second) {
                 hasGamepiece = true;
             }
         } else {
@@ -134,6 +142,12 @@ public class Intake extends SubsystemBase {
         return genCommand(
             "Eject",
             ejectVoltage
+        );
+    }
+    public Command ejectLevel1() {
+        return genCommand(
+            "Eject Level 1",
+            ejectLevel1Voltage
         );
     }
 

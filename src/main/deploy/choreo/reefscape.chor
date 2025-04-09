@@ -7,8 +7,8 @@
    "AlgaeGrabbingOffset":{
     "dimension":"Length",
     "var":{
-     "exp":"0.5 m",
-     "val":0.5
+     "exp":"1 ft",
+     "val":0.3048
     }
    },
    "BargeScoringOffset":{
@@ -74,6 +74,13 @@
      "val":0.9426766239723384
     }
    },
+   "CoralStationInset":{
+    "dimension":"Length",
+    "var":{
+     "exp":"1 ft",
+     "val":0.3048
+    }
+   },
    "CoralStationLeftReverseAngle":{
     "dimension":"Angle",
     "var":{
@@ -109,6 +116,13 @@
      "val":0.6604
     }
    },
+   "MaxAlgaeRemoveVelocity":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"1 ft / s",
+     "val":0.3048
+    }
+   },
    "MaxAlgaeVelocity":{
     "dimension":"LinVel",
     "var":{
@@ -126,8 +140,8 @@
    "MaxVelocity":{
     "dimension":"LinVel",
     "var":{
-     "exp":"2.5 m / s",
-     "val":2.5
+     "exp":"2 m / s",
+     "val":2.0
     }
    },
    "RackDelta":{
@@ -274,6 +288,62 @@
    },
    "CoralStationLeft":{
     "x":{
+     "exp":"CoralStationLeftOG.x - CoralStationInset * cos(CoralStationLeftOG.heading)",
+     "val":0.42401229187551015
+    },
+    "y":{
+     "exp":"CoralStationLeftOG.y - CoralStationInset * sin(CoralStationLeftOG.heading)",
+     "val":6.9538582111674465
+    },
+    "heading":{
+     "exp":"CoralStationLeftOG.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationLeftClose":{
+    "x":{
+     "exp":"CoralStationLeft.x",
+     "val":0.42401229187551015
+    },
+    "y":{
+     "exp":"CoralStationLeft.y",
+     "val":6.9538582111674465
+    },
+    "heading":{
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationLeftFar":{
+    "x":{
+     "exp":"CoralStationLeft.x + 2 * CoralStationOffset * sin(CoralStationAngle)",
+     "val":1.394972907660622
+    },
+    "y":{
+     "exp":"CoralStationLeft.y + 2 * CoralStationOffset * cos(CoralStationAngle)",
+     "val":7.659007473802101
+    },
+    "heading":{
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationLeftMid":{
+    "x":{
+     "exp":"CoralStationLeft.x + CoralStationOffset * sin(CoralStationAngle)",
+     "val":0.909492599768066
+    },
+    "y":{
+     "exp":"CoralStationLeft.y + CoralStationOffset * cos(CoralStationAngle)",
+     "val":7.306432842484773
+    },
+    "heading":{
+     "exp":"CoralStationLeft.heading",
+     "val":-0.9426766239723384
+    }
+   },
+   "CoralStationLeftOG":{
+    "x":{
      "exp":"CenterToBumper * cos(CoralStationAngle) + CenterToBumper * sin(CoralStationAngle)",
      "val":0.6031202045847124
     },
@@ -286,49 +356,63 @@
      "val":-0.9426766239723384
     }
    },
-   "CoralStationLeftClose":{
-    "x":{
-     "exp":"CoralStationLeft.x",
-     "val":0.6031202045847124
-    },
-    "y":{
-     "exp":"CoralStationLeft.y",
-     "val":6.707234214758028
-    },
-    "heading":{
-     "exp":"CoralStationLeft.heading",
-     "val":-0.9426766239723384
-    }
-   },
-   "CoralStationLeftFar":{
-    "x":{
-     "exp":"CoralStationLeft.x + 2 * CoralStationOffset * sin(CoralStationAngle)",
-     "val":1.574080820369824
-    },
-    "y":{
-     "exp":"CoralStationLeft.y + 2 * CoralStationOffset * cos(CoralStationAngle)",
-     "val":7.412383477392682
-    },
-    "heading":{
-     "exp":"CoralStationLeft.heading",
-     "val":-0.9426766239723384
-    }
-   },
-   "CoralStationLeftMid":{
-    "x":{
-     "exp":"CoralStationLeft.x + CoralStationOffset * sin(CoralStationAngle)",
-     "val":1.0886005124772682
-    },
-    "y":{
-     "exp":"CoralStationLeft.y + CoralStationOffset * cos(CoralStationAngle)",
-     "val":7.059808846075355
-    },
-    "heading":{
-     "exp":"CoralStationLeft.heading",
-     "val":-0.9426766239723384
-    }
-   },
    "CoralStationRight":{
+    "x":{
+     "exp":"CoralStationRightOG.x - CoralStationInset * cos(CoralStationRightOG.heading)",
+     "val":0.42401229187551015
+    },
+    "y":{
+     "exp":"CoralStationRightOG.y - CoralStationInset * sin(CoralStationRightOG.heading)",
+     "val":1.0979417888325544
+    },
+    "heading":{
+     "exp":"CoralStationRightOG.heading",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightClose":{
+    "x":{
+     "exp":"CoralStationRight.x",
+     "val":0.42401229187551015
+    },
+    "y":{
+     "exp":"CoralStationRight.y",
+     "val":1.0979417888325544
+    },
+    "heading":{
+     "exp":"CoralStationRight.heading",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightFar":{
+    "x":{
+     "exp":"CoralStationRight.x + 2 * CoralStationOffset * sin(CoralStationAngle)",
+     "val":1.394972907660622
+    },
+    "y":{
+     "exp":"CoralStationRight.y - 2 * CoralStationOffset * cos(CoralStationAngle)",
+     "val":0.39279252619790006
+    },
+    "heading":{
+     "exp":"CoralStationRight.heading",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightMid":{
+    "x":{
+     "exp":"CoralStationRight.x + CoralStationOffset * sin(CoralStationAngle)",
+     "val":0.909492599768066
+    },
+    "y":{
+     "exp":"CoralStationRight.y - CoralStationOffset * cos(CoralStationAngle)",
+     "val":0.7453671575152272
+    },
+    "heading":{
+     "exp":"CoralStationRight.heading",
+     "val":0.9426766239723384
+    }
+   },
+   "CoralStationRightOG":{
     "x":{
      "exp":"CenterToBumper * cos(CoralStationAngle) + CenterToBumper * sin(CoralStationAngle)",
      "val":0.6031202045847124
@@ -339,48 +423,6 @@
     },
     "heading":{
      "exp":"CoralStationAngle",
-     "val":0.9426766239723384
-    }
-   },
-   "CoralStationRightClose":{
-    "x":{
-     "exp":"CoralStationRight.x",
-     "val":0.6031202045847124
-    },
-    "y":{
-     "exp":"CoralStationRight.y",
-     "val":1.3445657852419728
-    },
-    "heading":{
-     "exp":"CoralStationRight.heading",
-     "val":0.9426766239723384
-    }
-   },
-   "CoralStationRightFar":{
-    "x":{
-     "exp":"CoralStationRight.x + 2 * CoralStationOffset * sin(CoralStationAngle)",
-     "val":1.574080820369824
-    },
-    "y":{
-     "exp":"CoralStationRight.y - 2 * CoralStationOffset * cos(CoralStationAngle)",
-     "val":0.6394165226073184
-    },
-    "heading":{
-     "exp":"CoralStationRight.heading",
-     "val":0.9426766239723384
-    }
-   },
-   "CoralStationRightMid":{
-    "x":{
-     "exp":"CoralStationRight.x + CoralStationOffset * sin(CoralStationAngle)",
-     "val":1.0886005124772682
-    },
-    "y":{
-     "exp":"CoralStationRight.y - CoralStationOffset * cos(CoralStationAngle)",
-     "val":0.9919911539246457
-    },
-    "heading":{
-     "exp":"CoralStationRight.heading",
      "val":0.9426766239723384
     }
    },
@@ -429,11 +471,11 @@
    "Reef2Remove":{
     "x":{
      "exp":"Reef2.x - AlgaeGrabbingOffset * cos(Reef2.heading)",
-     "val":5.376449821667624
+     "val":5.278849821667624
     },
     "y":{
      "exp":"Reef2.y - AlgaeGrabbingOffset * sin(Reef2.heading)",
-     "val":2.489331736216194
+     "val":2.6583798950349165
     },
     "heading":{
      "exp":"Reef2.heading",
@@ -457,7 +499,7 @@
    "Reef3Remove":{
     "x":{
      "exp":"Reef3.x - AlgaeGrabbingOffset * cos(Reef3.heading)",
-     "val":6.26357464333525
+     "val":6.06837464333525
     },
     "y":{
      "exp":"Reef3.y - AlgaeGrabbingOffset * sin(Reef3.heading)",
@@ -485,11 +527,11 @@
    "Reef4Remove":{
     "x":{
      "exp":"Reef4.x - AlgaeGrabbingOffset * cos(Reef4.heading)",
-     "val":5.3764498216676255
+     "val":5.278849821667626
     },
     "y":{
      "exp":"Reef4.y - AlgaeGrabbingOffset * sin(Reef4.heading)",
-     "val":5.562422263783805
+     "val":5.393374104965083
     },
     "heading":{
      "exp":"Reef4.heading",
