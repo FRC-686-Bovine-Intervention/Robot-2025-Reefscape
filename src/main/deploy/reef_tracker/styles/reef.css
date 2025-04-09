@@ -73,25 +73,33 @@
   background-color: #37373d;
 }
 
+.side.blocked {
+  border: 5px solid red;
+}
+
+.pipes.selected .pipe {
+  background-color: white;
+  color: #37373d;
+}
+
 #level1.locked,
 .side.locked,
 .algae.locked {
   border: 5px solid #fdfdfd;
 }
 
-.level:nth-child(3) .side.selected {
+.level:nth-child(2) .side.selected {
   background-color: #eaa153;
 }
 
-.level:nth-child(4) .side.selected {
+.level:nth-child(3) .side.selected {
   background-color: #3ba799;
 }
 
-.level:nth-child(5) .side.selected {
+.level:nth-child(4) .side.selected {
   background-color: #35892f;
 }
 
-.level1.selected,
 .side.selected {
   background: #fdfdfd;
 }
