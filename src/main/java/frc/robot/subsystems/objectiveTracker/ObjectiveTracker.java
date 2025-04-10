@@ -25,6 +25,7 @@ import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.BranchObject;
+import frc.robot.constants.FieldConstants.Reef.PipeObject;
 import frc.robot.constants.FieldConstants.Reef.RackObject;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
@@ -196,6 +197,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<Objective> target = Optional.empty();
     private Optional<ObjectiveType> typeOverride = Optional.empty();
     private int targetLocks = 0;
+    private Optional<Optional<BranchLevel>> levelLock = Optional.empty();
+    private Optional<PipeObject> pipeLock = Optional.empty();
 
     public ObjectiveTracker(ReefTrackerIO io) {
         System.out.println("[Init ObjectiveTracker] Instantiating ObjectiveTracker with " + io.getClass().getSimpleName());
@@ -413,50 +416,50 @@ public class ObjectiveTracker extends VirtualSubsystem {
         this.intakeAlgaeObjective = closestAlgae.map((algae) -> new IntakeAlgaeObjective(algae, currentPose.getRotation()));
 
         if (mode == Mode.Smart) {
-            if (targetLocks <= 0) {
-                var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
-                    .sorted((a,b) -> {
-                        var aDistance = a.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                        var bDistance = b.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
+                .sorted((a,b) -> {
+                    var aDistance = a.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    var bDistance = b.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    return (int) Math.signum(aDistance - bDistance);
+                })
+                .limit(6)
+                .toList()
+            ;
+            var targetBranch = availableUnblockedBranches.stream()
+                .map((branch) -> branch.getOurs())
+                .filter((branch) -> closestPipes.contains(branch.pipe))
+                .filter((branch) -> levelLock.isEmpty() || (levelLock.get().isPresent() && branch.level == levelLock.get().get()))
+                .filter((branch) -> pipeLock.isEmpty() || (branch.pipe == pipeLock.get()))
+                .sorted((a,b) -> {
+                    if (a.level == b.level) {
+                        var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                        var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
                         return (int) Math.signum(aDistance - bDistance);
-                    })
-                    .limit(6)
-                    .toList()
-                ;
-                var targetBranch = availableUnblockedBranches.stream()
-                    .map((branch) -> branch.getOurs())
-                    .filter((branch) -> closestPipes.contains(branch.pipe))
-                    .sorted((a,b) -> {
-                        if (a.level == b.level) {
-                            var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                            var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                            return (int) Math.signum(aDistance - bDistance);
-                        } else {
-                            for (var priority : uncompletedPriorities) {
-                                if (priority.level.isEmpty()) continue;
-                                if (a.level == priority.level.get()) return -1;
-                                if (b.level == priority.level.get()) return 1;
-                            }
-                            return 0;
-                        }
-                    })
-                    .findFirst()
-                ;
-                if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
-                    this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0), currentPose.getRotation());
-                } else {
-                    this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
-                }
-
-                Leds.getInstance().goToOppositeSideOfReef.setFlag(false);
-                Leds.getInstance().removeAlgae.setFlag(false);
-                if (!this.scoreCoralObjective.branchLevel.equals(uncompletedPriorities.get(0).level)) {
-                    var topPriorityLevel = uncompletedPriorities.get(0).level.get();
-                    if (closestPipes.stream().allMatch((pipe) -> branchStates[topPriorityLevel.ordinal() * 12 + pipe.id] == true)) {
-                        Leds.getInstance().goToOppositeSideOfReef.setFlag(true);
                     } else {
-                        Leds.getInstance().removeAlgae.setFlag(true);
+                        for (var priority : uncompletedPriorities) {
+                            if (priority.level.isEmpty()) continue;
+                            if (a.level == priority.level.get()) return -1;
+                            if (b.level == priority.level.get()) return 1;
+                        }
+                        return 0;
                     }
+                })
+                .findFirst()
+            ;
+            if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
+                this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0), currentPose.getRotation());
+            } else {
+                this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
+            }
+
+            Leds.getInstance().goToOppositeSideOfReef.setFlag(false);
+            Leds.getInstance().removeAlgae.setFlag(false);
+            if (!this.scoreCoralObjective.branchLevel.equals(uncompletedPriorities.get(0).level)) {
+                var topPriorityLevel = uncompletedPriorities.get(0).level.get();
+                if (closestPipes.stream().allMatch((pipe) -> branchStates[topPriorityLevel.ordinal() * 12 + pipe.id] == true)) {
+                    Leds.getInstance().goToOppositeSideOfReef.setFlag(true);
+                } else {
+                    Leds.getInstance().removeAlgae.setFlag(true);
                 }
             }
         } else {
@@ -557,14 +560,27 @@ public class ObjectiveTracker extends VirtualSubsystem {
         return Commands.startEnd(() -> this.setTypeOverride(Optional.of(typeOverride)), () -> this.setTypeOverride(Optional.empty()));
     }
 
-    public void addTargetLock() {
-        this.targetLocks += 1;
+    // public void addTargetLock() {
+    //     this.targetLocks += 1;
+    // }
+    // public void removeTargetLock() {
+    //     this.targetLocks -= 1;
+    // }
+    // public Command addTargetLockCommand() {
+    //     return Commands.startEnd(this::addTargetLock, this::removeTargetLock);
+    // }
+
+    public void addLevelLock(Optional<BranchLevel> level) {
+        this.levelLock = Optional.of(level);
     }
-    public void removeTargetLock() {
-        this.targetLocks -= 1;
+    public void removeLevelLock() {
+        this.levelLock = Optional.empty();
     }
-    public Command addTargetLockCommand() {
-        return Commands.startEnd(this::addTargetLock, this::removeTargetLock);
+    public void addPipeLock(PipeObject pipe) {
+        this.pipeLock = Optional.of(pipe);
+    }
+    public void removePipeLock() {
+        this.pipeLock = Optional.empty();
     }
 
     // public void toggleSelectedBranch() {

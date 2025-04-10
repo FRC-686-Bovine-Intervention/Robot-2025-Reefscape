@@ -481,7 +481,12 @@ public class RobotContainer {
                 }
             },
             Set.of(superstructure)
-        ).deadlineFor(objectiveTracker.addTargetLockCommand()).withName("Extend to Reef");
+        ).deadlineFor(
+            Commands.startEnd(
+                () -> objectiveTracker.addLevelLock(objectiveTracker.getScoreCoralObjective().branchLevel),
+                () -> objectiveTracker.removeLevelLock()
+            )
+        ).withName("Extend to Reef");
         final Command algaeScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
@@ -520,7 +525,32 @@ public class RobotContainer {
             }
         });
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getCurrentObjective().get().getTargetPose(), objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective)).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
+        driveController.rightBumper()
+            .and(() -> objectiveTracker.getCurrentObjective().isPresent())
+            .whileTrue(
+                drive.simplePIDTo(
+                    () -> AutoScore.getTargetPose(
+                        drive.getPose(),
+                        objectiveTracker.getCurrentObjective().get().getTargetPose(),
+                        objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
+                    )
+                )
+                .deadlineFor(
+                    Commands.startEnd(
+                        () -> {
+                            if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getObjectiveType() == ObjectiveType.ScoreCoral).isPresent()) {
+                                if (objectiveTracker.getScoreCoralObjective().branch.isPresent()) {
+                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().branch.get().pipe);
+                                }
+                            }
+                        },
+                        () -> {
+                            objectiveTracker.removePipeLock();
+                        }
+                    )
+                )
+            )
+        ; //Auto drive
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
