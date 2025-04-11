@@ -25,7 +25,7 @@ public interface ApriltagCameraIO {
                 var frame = frames[frameI];
                 var frameTable = framesTable.getSubtable(Integer.toString(frameI));
                 frameTable.put("Timestamp", frame.timestamp);
-                frameTable.put("EstimatedRobotPose", frame.estimatedRobotPose);
+                frameTable.put("EstimatedRobotPose", frame.estimatedCameraPose);
                 var targetsTable = frameTable.getSubtable("Targets");
                 targetsTable.put("length", frame.targets.length);
                 for (int targetI = 0; targetI < frame.targets.length ; targetI++) {
@@ -71,12 +71,12 @@ public interface ApriltagCameraIO {
 
     public static class ApriltagCameraFrame {
         public final double timestamp;
-        public final Pose3d estimatedRobotPose;
+        public final Pose3d estimatedCameraPose;
         public final ApriltagCameraTarget[] targets;
 
-        public ApriltagCameraFrame(double timestamp, Pose3d estimatedRobotPose, ApriltagCameraTarget[] targets) {
+        public ApriltagCameraFrame(double timestamp, Pose3d estimatedCameraPose, ApriltagCameraTarget[] targets) {
             this.timestamp = timestamp;
-            this.estimatedRobotPose = estimatedRobotPose;
+            this.estimatedCameraPose = estimatedCameraPose;
             this.targets = targets;
         }
     }
