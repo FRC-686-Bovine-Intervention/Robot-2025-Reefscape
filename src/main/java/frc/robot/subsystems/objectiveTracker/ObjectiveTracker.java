@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -425,31 +426,58 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 .limit(6)
                 .toList()
             ;
-            var targetBranch = availableUnblockedBranches.stream()
-                .map((branch) -> branch.getOurs())
-                .filter((branch) -> closestPipes.contains(branch.pipe))
-                .filter((branch) -> levelLock.isEmpty() || (levelLock.get().isPresent() && branch.level == levelLock.get().get()))
-                .filter((branch) -> pipeLock.isEmpty() || (branch.pipe == pipeLock.get()))
+            // var targetBranch = availableUnblockedBranches.stream()
+            //     .map((branch) -> branch.getOurs())
+            //     .filter((branch) -> closestPipes.contains(branch.pipe))
+            //     .filter((branch) -> levelLock.isEmpty() || (levelLock.get().isPresent() && branch.level == levelLock.get().get()))
+            //     .filter((branch) -> pipeLock.isEmpty() || (branch.pipe == pipeLock.get()))
+            //     .sorted((a,b) -> {
+            //         if (a.level == b.level) {
+            //             var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            //             var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            //             return (int) Math.signum(aDistance - bDistance);
+            //         } else {
+            //             for (var priority : uncompletedPriorities) {
+            //                 if (priority.level.isEmpty()) continue;
+            //                 if (a.level == priority.level.get()) return -1;
+            //                 if (b.level == priority.level.get()) return 1;
+            //             }
+            //             return 0;
+            //         }
+            //     })
+            //     .findFirst()
+            // ;
+
+            var target = 
+                Stream.concat(
+                    availableUnblockedBranches.stream().map((branch) -> branch.getOurs()).map(BranchOrLevel1Object::fromBranch),
+                    Arrays.stream(Reef.reefs.getOurs().racks).map(BranchOrLevel1Object::fromLevel1)
+                )
+                .filter((branchOrLevel1) -> branchOrLevel1.isLevel1() || closestPipes.contains(branchOrLevel1.getBranch().pipe))
+                .filter((branchOrLevel1) -> levelLock.isEmpty() || branchOrLevel1.getBranchLevel().equals(levelLock.get()))
+                .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.isBranch() && branchOrLevel1.getBranch().pipe == pipeLock.get()))
                 .sorted((a,b) -> {
-                    if (a.level == b.level) {
-                        var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                        var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    if (a.getBranchLevel().equals(b.getBranchLevel())) {
+                        var aDistance = a.getPose().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                        var bDistance = b.getPose().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
                         return (int) Math.signum(aDistance - bDistance);
                     } else {
                         for (var priority : uncompletedPriorities) {
-                            if (priority.level.isEmpty()) continue;
-                            if (a.level == priority.level.get()) return -1;
-                            if (b.level == priority.level.get()) return 1;
+                            if (a.getBranchLevel().equals(priority.level)) return -1;
+                            if (b.getBranchLevel().equals(priority.level)) return 1;
                         }
                         return 0;
                     }
                 })
                 .findFirst()
             ;
-            if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
-                this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0), currentPose.getRotation());
-            } else {
-                this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
+            // if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
+            //     this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0), currentPose.getRotation());
+            // } else {
+            //     this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
+            // }
+            if (target.isPresent()) {
+                this.scoreCoralObjective = ScoreCoralObjective.from(target.get(), currentPose.getRotation());
             }
 
             Leds.getInstance().goToOppositeSideOfReef.setFlag(false);
@@ -583,6 +611,53 @@ public class ObjectiveTracker extends VirtualSubsystem {
         this.pipeLock = Optional.empty();
     }
 
+    public static class BranchOrLevel1Object {
+        private final BranchObject branch;
+        private final RackObject level1Rack;
+
+        private BranchOrLevel1Object(BranchObject branch, RackObject level1Rack) {
+            this.branch = branch;
+            this.level1Rack = level1Rack;
+        }
+
+        public static BranchOrLevel1Object fromBranch(BranchObject branch) {
+            return new BranchOrLevel1Object(branch, null);
+        }
+        public static BranchOrLevel1Object fromLevel1(RackObject rack) {
+            return new BranchOrLevel1Object(null, rack);
+        }
+
+        public BranchObject getBranch() {
+            return branch;
+        }
+        public RackObject getLevel1Rack() {
+            return level1Rack;
+        }
+
+        public boolean isBranch() {
+            return branch != null;
+        }
+        public boolean isLevel1() {
+            return level1Rack != null;
+        }
+
+        public Optional<BranchLevel> getBranchLevel() {
+            if (isBranch()) {
+                return Optional.of(getBranch().level);
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        public RobotFlippedRobotPose getPose() {
+            if (isBranch()) {
+                return getBranch().pipe.robotPose;
+            } else {
+                return getLevel1Rack().centerRobotPose;
+            }
+        }
+    }
+
     // public void toggleSelectedBranch() {
     //     if (!placedCoral.remove(selectedBranch)) {
     //         placedCoral.add(selectedBranch);
@@ -653,6 +728,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 direction,
                 Optional.empty()
             );
+        }
+        public static ScoreCoralObjective from(BranchOrLevel1Object branchOrLevel1, Rotation2d currentRotation) {
+            if (branchOrLevel1.isBranch()) {
+                return fromBranch(branchOrLevel1.getBranch(), currentRotation);
+            } else {
+                return fromLevel1(branchOrLevel1.getLevel1Rack(), currentRotation);
+            }
         }
         @Override
         public Direction getTargetDirection() {
