@@ -544,35 +544,38 @@ public class RobotContainer {
         // );
 
         var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
-        var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
+        // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
-            private boolean prevright = true;
-            private boolean prevprepare = true;
+            private boolean prevSelfRight = true;
+            // private boolean prevprepare = true;
             public void run() {
-                var right = driveController.hid.getPOV() == 0;
-                var prepare = driveController.hid.getPOV() == 90;
+                var selfRightButton = driveController.hid.getPOV() == 0;
+                // var prepare = driveController.hid.getPOV() == 90;
                 var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
                 Leds.getInstance().tipped.setFlag(tipped);
-                if (right && !prevright) {
+                if (selfRightButton && !prevSelfRight) {
                     if (selfRightCommand.isScheduled()) {
                         selfRightCommand.cancel();
                     } else {
-                        // if (tipped) {
+                        if (tipped) {
                             selfRightCommand.schedule();
-                        // }
+                        }
                     }
                 }
-                if (prepare && !prevprepare) {
-                    if (prepareSelfRightCommand.isScheduled()) {
-                        prepareSelfRightCommand.cancel();
-                    } else {
-                        // if (tipped) {
-                            prepareSelfRightCommand.schedule();
-                        // }
-                    }
+                if (selfRightCommand.isScheduled() && !tipped) {
+                    selfRightCommand.cancel();
                 }
-                prevright = right;
-                prevprepare = prepare;
+                // if (prepare && !prevprepare) {
+                //     if (prepareSelfRightCommand.isScheduled()) {
+                //         prepareSelfRightCommand.cancel();
+                //     } else {
+                //         // if (tipped) {
+                //             prepareSelfRightCommand.schedule();
+                //         // }
+                //     }
+                // }
+                prevSelfRight = selfRightButton;
+                // prevprepare = prepare;
             }
         });
         

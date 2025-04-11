@@ -64,10 +64,10 @@ public class Leds extends VirtualSubsystem {
         var level2Color = Color.kYellow;
         var level1Color = Color.kRed;
 
-        autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) - (pos * 4)), InterpolationFunction.step.gradient(new Color(0,0,0.2), new Color(0.2,0.2,0)));
+        autonomousRunningAnimation = new WaveAnimation(fullSideStrips, (time, pos) -> WaveFunction.Sawtooth.applyAsDouble((time * 4) - (pos * 4)), InterpolationFunction.step.gradient(new Color(0,0,0.2), new Color(0.1,0.1,0)));
         autonomousFinishedAnimation = new AutonomousFinishedAnimation(sideStrips, hardwareStrip);
         estopped = new FillAnimation(hardwareStrip, Color.kRed);
-        tipped = new FillAnimation(hardwareStrip, Color.kWhite);
+        tipped = new FlashingAnimation(hardwareStrip, WaveFunction.Sawtooth.frequency(2), InterpolationFunction.step.gradient(Color.kBlack, Color.kWhite));
         allianceColorAnimation = new AllianceColorAnimation(fullSideStrips, Color.kFirstBlue, Color.kRed);
         driverStationConnection = new StatusLightAnimation(sideStrips.substrip(0, 2), Color.kOrange, Color.kGreen);
         flAprilConnection = new StatusLightAnimation(sideStrips.substrip(2, 3), Color.kOrange, Color.kGreen);
@@ -112,7 +112,7 @@ public class Leds extends VirtualSubsystem {
     public final WaveAnimation autonomousRunningAnimation;
     public final AutonomousFinishedAnimation autonomousFinishedAnimation;
     public final FillAnimation estopped;
-    public final FillAnimation tipped;
+    public final FlashingAnimation tipped;
     public final AllianceColorAnimation allianceColorAnimation;
     public final StatusLightAnimation driverStationConnection;
     public final StatusLightAnimation flAprilConnection;
