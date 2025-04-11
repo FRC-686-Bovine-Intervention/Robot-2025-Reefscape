@@ -528,6 +528,7 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
+            // climber.testDisengageRatchet()
         );
         driveController.back().toggleOnTrue(
             Commands.parallel(
@@ -537,6 +538,7 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
+            // climber.testEngageRatchet()
         );
         // driveController.start().toggleOnTrue(
         //     climber.engageRatchet()
