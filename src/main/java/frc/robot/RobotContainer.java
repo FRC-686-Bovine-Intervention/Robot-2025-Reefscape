@@ -546,7 +546,7 @@ public class RobotContainer {
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
             .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
-        // SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+        SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
     }
 
     private void setPose(Pose2d pose) {

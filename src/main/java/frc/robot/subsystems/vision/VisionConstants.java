@@ -122,6 +122,6 @@ public final class VisionConstants {
             // -0.2431546438240109, -0.22893749281190218,0
             // 0.24807059617995136, 0.22519556696985554, 0
         ),
-        new Rotation3d(Degrees.zero(), Degrees.zero(), Degrees.of(90)).rotateBy(new Rotation3d(Degrees.zero(), Degrees.of(-19), Degrees.zero()))
+        new Rotation3d(Degrees.zero(), Degrees.zero(), Degrees.of(90))
     ));
 }
