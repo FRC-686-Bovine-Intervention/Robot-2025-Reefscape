@@ -348,6 +348,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Reef/Algae", filledAlgae.toArray(Pose3d[]::new));
     }
     private void updateUnblockedBranches() {
+        boolean[] blockedBranches = new boolean[36];
         availableUnblockedBranches.clear();
         for (var availableBranch : availableBranches) {
             var blocked = false;
@@ -362,7 +363,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
             if (!blocked) {
                 availableUnblockedBranches.add(availableBranch);
             }
+            blockedBranches[availableBranch.id] = blocked;
         }
+        Logger.recordOutput("Objective Tracker/Reef/Blocked Branches", blockedBranches);
     }
     public void updateIncompletePriorities() {
         uncompletedPriorities.clear();
