@@ -104,7 +104,7 @@ window.addEventListener("load", () => {
       toDashboardPrefix + priorityListTopicName,
       advantageKitPrefix + algaeIntakeTargetTopicName,
       advantageKitPrefix + coralScoreTargetTopicName,
-      advantageKitPrefix + blockedBranchesTopicName
+      advantageKitPrefix + blockedBranchesTopicName,
     ],
     false,
     false,
@@ -149,16 +149,19 @@ const racksDOM = Array.from(document.querySelectorAll(".rack"))
     levels.map((element) => Array.from(element.querySelectorAll(".side")))
   );
 const troughDOM = Array.from(document.querySelectorAll(".pipes"));
+const reefRPDOM = document.getElementById("coral_rp");
 
 function updateUI() {
   if (mode === "DUMB") {
     l1DOM.style.display = "none";
     coopDOM.style.display = "none";
     priorityListDOM.style.display = "none";
+    reefRPDOM.style.display = "none";
   } else {
     l1DOM.style.display = "";
     coopDOM.style.display = "";
     priorityListDOM.style.display = "";
+    reefRPDOM.style.display = "";
   }
 
   if (mode === "SMART" && coralScoreTarget === -1) {
@@ -194,10 +197,7 @@ function updateUI() {
           sideDOM.classList.remove("selected");
         }
 
-        if (
-          mode === "SMART" &&
-          index === coralScoreTarget
-        ) {
+        if (mode === "SMART" && index === coralScoreTarget) {
           sideDOM.classList.add("locked");
         } else {
           sideDOM.classList.remove("locked");
@@ -216,39 +216,58 @@ function updateUI() {
 
   l1Counter.textContent = l1State;
 
-  let rpLevelCount = 0;
-  for (let level = 0; level < 4; level++) {
-    let count = 0;
-    if (level === 0) {
-      count = l1State;
-    } else {
-      for (let i = 0; i < 12; i++) {
-        count += coralState[getCoralIDFromPipe({ level: level - 1, pipe: i })]
-          ? 1
-          : 0;
+  if (mode === "SMART") {
+    let rpLevelCount = 0;
+    for (let level = 0; level < 4; level++) {
+      let count = 0;
+      if (level === 0) {
+        count = l1State;
+      } else {
+        for (let i = 0; i < 12; i++) {
+          count += coralState[getCoralIDFromPipe({ level: level - 1, pipe: i })]
+            ? 1
+            : 0;
+        }
+      }
+
+      if (
+        count >=
+        parseInt(
+          priorityDOM.find(
+            (element) =>
+              element.dataset.kind === "rp" &&
+              element.dataset.level == level + 1
+          ).dataset.count
+        )
+      )
+        rpLevelCount++;
+
+      priorityDOM
+        .filter((element) => element.dataset.level - 1 == level)
+        .forEach((element) => {
+          const neededCount = element.dataset.count;
+          const percentage = Math.min(count / neededCount, 1);
+          if (neededCount)
+            element.style.setProperty("--percentage-complete", percentage);
+          if (percentage === 1) {
+            element.classList.add("complete");
+          } else {
+            element.classList.remove("complete");
+          }
+        });
+
+      if (rpLevelCount >= (coopState ? 3 : 4)) {
+        reefRPDOM.style.display = "";
+      } else {
+        reefRPDOM.style.display = "none";
       }
     }
-
-    if (count >= 5) rpLevelCount++;
-
-    priorityDOM
-      .filter((element) => element.dataset.level - 1 == level)
-      .forEach((element) => {
-        const neededCount = element.dataset.count;
-        const percentage = Math.min(count / neededCount, 1);
-        if (neededCount)
-          element.style.setProperty("--percentage-complete", percentage);
-        if (percentage === 1) {
-          element.classList.add("complete");
-        } else {
-          element.classList.remove("complete");
-        }
-      });
   }
 
   priorityDOM.forEach((element) => {
     element.classList.remove("unnecessary");
   });
+
   if (coopState) {
     for (let i = prioritySlotDOM.length - 1; i >= 0; i--) {
       const element = prioritySlotDOM[i].querySelector(".priority");

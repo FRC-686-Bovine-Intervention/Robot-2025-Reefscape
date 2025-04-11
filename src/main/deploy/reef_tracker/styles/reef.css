@@ -14,6 +14,15 @@
   width: calc(var(--triangle-base-length) * 4);
 }
 
+#coral_rp {
+  z-index: 1;
+  width: 70%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4bb543;
+}
+
 .rack {
   position: absolute;
   transform-origin: top;
