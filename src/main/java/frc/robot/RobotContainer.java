@@ -92,6 +92,7 @@ import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
+import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
@@ -260,8 +261,9 @@ public class RobotContainer {
                     )
                 )
             )
+            .addChild(climber.mech)
         ;
-        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech);
+        Mechanism3d.registerMechs(superstructure.pivot.mech, superstructure.elevator.stage2Mech, superstructure.elevator.stage3Mech, superstructure.elevator.stage4Mech, superstructure.wrist.mech, climber.mech);
 
         System.out.println("[Init RobotContainer] Configuring Commands");
         configureCommands();
@@ -480,7 +482,12 @@ public class RobotContainer {
                 }
             },
             Set.of(superstructure)
-        ).deadlineFor(objectiveTracker.addTargetLockCommand()).withName("Extend to Reef");
+        ).deadlineFor(
+            Commands.startEnd(
+                () -> objectiveTracker.addLevelLock(objectiveTracker.getScoreCoralObjective().branchLevel),
+                () -> objectiveTracker.removeLevelLock()
+            )
+        ).withName("Extend to Reef");
         final Command algaeScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
                 private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
@@ -519,7 +526,32 @@ public class RobotContainer {
             }
         });
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
-        driveController.rightBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.simplePIDTo(() -> AutoScore.getTargetPose(drive.getPose(), objectiveTracker.getCurrentObjective().get().getTargetPose(), objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective)).deadlineFor(objectiveTracker.addTargetLockCommand())); //Auto drive
+        driveController.rightBumper()
+            .and(() -> objectiveTracker.getCurrentObjective().isPresent())
+            .whileTrue(
+                drive.simplePIDTo(
+                    () -> AutoScore.getTargetPose(
+                        drive.getPose(),
+                        objectiveTracker.getCurrentObjective().get().getTargetPose(),
+                        objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
+                    )
+                )
+                .deadlineFor(
+                    Commands.startEnd(
+                        () -> {
+                            if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getObjectiveType() == ObjectiveType.ScoreCoral).isPresent()) {
+                                if (objectiveTracker.getScoreCoralObjective().branch.isPresent()) {
+                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().branch.get().pipe);
+                                }
+                            }
+                        },
+                        () -> {
+                            objectiveTracker.removePipeLock();
+                        }
+                    )
+                )
+            )
+        ; //Auto drive
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
@@ -528,6 +560,7 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
+            // climber.testDisengageRatchet()
         );
         driveController.back().toggleOnTrue(
             Commands.parallel(
@@ -537,10 +570,47 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
+            // climber.testEngageRatchet()
         );
         // driveController.start().toggleOnTrue(
         //     climber.engageRatchet()
         // );
+
+        var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
+        // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private boolean prevSelfRight = true;
+            // private boolean prevprepare = true;
+            public void run() {
+                var selfRightButton = driveController.hid.getPOV() == 0;
+                // var prepare = driveController.hid.getPOV() == 90;
+                var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
+                Leds.getInstance().tipped.setFlag(tipped);
+                if (selfRightButton && !prevSelfRight) {
+                    if (selfRightCommand.isScheduled()) {
+                        selfRightCommand.cancel();
+                    } else {
+                        if (tipped) {
+                            selfRightCommand.schedule();
+                        }
+                    }
+                }
+                if (selfRightCommand.isScheduled() && !tipped) {
+                    selfRightCommand.cancel();
+                }
+                // if (prepare && !prevprepare) {
+                //     if (prepareSelfRightCommand.isScheduled()) {
+                //         prepareSelfRightCommand.cancel();
+                //     } else {
+                //         // if (tipped) {
+                //             prepareSelfRightCommand.schedule();
+                //         // }
+                //     }
+                // }
+                prevSelfRight = selfRightButton;
+                // prevprepare = prepare;
+            }
+        });
         
         driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)

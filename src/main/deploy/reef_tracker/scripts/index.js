@@ -16,6 +16,7 @@ const priorityListTopicName = "PriorityList";
 
 const algaeIntakeTargetTopicName = "Intake/Algae";
 const coralScoreTargetTopicName = "Score/Coral";
+const blockedBranchesTopicName = "Reef/Blocked Branches";
 
 let mode = "SMART";
 let coralGoal = 0;
@@ -28,6 +29,7 @@ let priorityListState = [];
 
 let algaeIntakeTarget = -1;
 let coralScoreTarget = -1;
+let blockedBranches = -1;
 
 const ntClient = new NT4_Client(
   window.location.hostname,
@@ -55,6 +57,8 @@ const ntClient = new NT4_Client(
       algaeIntakeTarget = value;
     } else if (topic.name === advantageKitPrefix + coralScoreTargetTopicName) {
       coralScoreTarget = value;
+    } else if (topic.name === advantageKitPrefix + blockedBranchesTopicName) {
+      blockedBranches = value;
     } else {
       return;
     }
@@ -100,6 +104,7 @@ window.addEventListener("load", () => {
       toDashboardPrefix + priorityListTopicName,
       advantageKitPrefix + algaeIntakeTargetTopicName,
       advantageKitPrefix + coralScoreTargetTopicName,
+      advantageKitPrefix + blockedBranchesTopicName
     ],
     false,
     false,
@@ -143,7 +148,7 @@ const racksDOM = Array.from(document.querySelectorAll(".rack"))
   .map((levels) =>
     levels.map((element) => Array.from(element.querySelectorAll(".side")))
   );
-const level1sDOM = Array.from(document.querySelectorAll(".level1"));
+const troughDOM = Array.from(document.querySelectorAll(".pipes"));
 
 function updateUI() {
   if (mode === "DUMB") {
@@ -162,8 +167,8 @@ function updateUI() {
     l1DOM.classList.remove("locked");
   }
 
-  level1sDOM.forEach((rackDOM, rack) => {
-    if (coralGoal - 36 === rack) {
+  troughDOM.forEach((rackDOM, rack) => {
+    if (coralGoal - 36 === rack && mode === "DUMB") {
       rackDOM.classList.add("selected");
     } else {
       rackDOM.classList.remove("selected");
@@ -173,9 +178,16 @@ function updateUI() {
   racksDOM.forEach((rackDOM, rack) => {
     rackDOM.forEach((levelDOM, level) => {
       levelDOM.forEach((sideDOM, side) => {
+        const index = getCoralID({ rack, level, side });
+        if (blockedBranches[index]) {
+          sideDOM.classList.add("blocked");
+        } else {
+          sideDOM.classList.remove("blocked");
+        }
+
         if (
-          (mode === "SMART" && coralState[getCoralID({ rack, level, side })]) ||
-          (mode === "DUMB" && getCoralID({ rack, level, side }) === coralGoal)
+          (mode === "SMART" && coralState[index]) ||
+          (mode === "DUMB" && index === coralGoal)
         ) {
           sideDOM.classList.add("selected");
         } else {
@@ -184,7 +196,7 @@ function updateUI() {
 
         if (
           mode === "SMART" &&
-          getCoralID({ rack, level, side }) === coralScoreTarget
+          index === coralScoreTarget
         ) {
           sideDOM.classList.add("locked");
         } else {
@@ -247,21 +259,7 @@ function updateUI() {
     }
   }
 
-  level1sDOM.forEach((element) => {
-    if (mode === "SMART") {
-      element.style.display = "none";
-      return;
-    } else {
-      element.style.display = "";
-    }
-  });
-
   algaeDOM.forEach((element, index) => {
-    if (mode === "DUMB") {
-      element.style.display = "none";
-      return;
-    }
-
     element.style.display = "";
 
     if (!algaeState[index]) {
@@ -322,8 +320,9 @@ window.addEventListener("load", () => {
     ntClient.addSample(toRobotPrefix + modeTopicName, mode === "SMART" ? 1 : 0);
   });
 
-  level1sDOM.forEach((level1DOM, rack) => {
+  troughDOM.forEach((level1DOM, rack) => {
     bind(level1DOM, () => {
+      if (mode === "SMART") return;
       ntClient.addSample(toRobotPrefix + coralGoalTopicName, 36 + rack);
     });
   });
@@ -347,7 +346,7 @@ window.addEventListener("load", () => {
 
   algaeDOM.forEach((element, index) => {
     bind(element, () => {
-      if (mode === "DUMB") return;
+      // if (mode === "DUMB") return;
       const id = index;
       const offset = algaeState[id] ? 6 : 0;
       ntClient.addSample(toRobotPrefix + algaeTopicName, id - offset);

@@ -8,7 +8,6 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.vision.VisionConstants.CameraConstants;
 import frc.util.rust.Option;
@@ -39,8 +38,6 @@ public class ApriltagCameraIOPhotonVision implements ApriltagCameraIO {
 
     private ApriltagCameraFrame frameFromResult(PhotonPipelineResult result) {
         var timestamp = result.getTimestampSeconds();
-        photonPoseEstimator.setRobotToCameraTransform(camMeta.mount.getRobotRelative());
-        photonPoseEstimator.setReferencePose(RobotState.getInstance().getPose());
         var estimatedPose = photonPoseEstimator.update(result);
         var targets = Iterator.of(result.getTargets()).map(this::targetFromPhotonTarget).collect_array(ApriltagCameraTarget[]::new);
         return new ApriltagCameraFrame(

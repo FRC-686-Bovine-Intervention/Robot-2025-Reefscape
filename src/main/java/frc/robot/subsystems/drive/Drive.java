@@ -7,6 +7,7 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -277,7 +278,7 @@ public class Drive extends VirtualSubsystem {
             this.translationSubsystem, this.rotationalSubsystem
         );
     }
-    public Command followPath(PathPlannerPath path) {
+    public Command followExactPath(PathPlannerPath path) {
         return new FollowPathCommand(
             path,
             this::getPose,

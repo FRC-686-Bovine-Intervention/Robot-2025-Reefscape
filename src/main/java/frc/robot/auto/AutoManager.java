@@ -2,23 +2,24 @@ package frc.robot.auto;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.wpilibj.DriverStation;
+import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.GameState;
 import frc.robot.subsystems.leds.Leds;
-import frc.util.SuppliedEdgeDetector;
 import frc.util.VirtualSubsystem;
 
 public class AutoManager extends VirtualSubsystem {
     private final AutoSelector selector;
 
     private Command autonomousCommand;
-    private final SuppliedEdgeDetector autoEnabled = new SuppliedEdgeDetector(DriverStation::isAutonomousEnabled);
+    // private final SuppliedEdgeDetector autoEnabled = new SuppliedEdgeDetector(DriverStation::isAutonomousEnabled);
 
     public AutoManager(AutoSelector selector) {
         this.selector = selector;
+
+        FollowPathCommand.warmupCommand().initialize();
     }
 
     @Override
@@ -48,14 +49,43 @@ public class AutoManager extends VirtualSubsystem {
         }
     }
 
-    public static Command generateAutoCommand(AutoRoutine auto) {
-        return auto.generateCommand()
-            .alongWith(Commands.runOnce(() -> {
+    public static Command generateAutoCommand(AutoRoutine auto, double initialDelaySeconds) {
+        final var autoCommand = auto.generateCommand();
+        return new Command() {
+            private final Timer autoTimer = new Timer();
+            {
+                setName("AUTO " + auto.name);
+                addRequirements(autoCommand.getRequirements());
+            }
+            private boolean autoCommandRunning = false;
+
+            private void initializeOrExecute() {
+                if (autoCommandRunning) {
+                    autoCommand.execute();
+                } else if (autoTimer.hasElapsed(initialDelaySeconds)) {
+                    autoCommand.initialize();
+                    autoCommandRunning = true;
+                }
+            }
+
+            @Override
+            public void initialize() {
+                autoCommandRunning = false;
+                autoTimer.start();
+                initializeOrExecute();
                 GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.clear();
                 GameState.getInstance().AUTONOMOUS_ALLOTTED_TIMESTAMP.set(Timer.getTimestamp() + AutoConstants.allottedAutoTime.in(Seconds));
                 Leds.getInstance().autonomousRunningAnimation.setFlag(true);
-            }))
-            .finallyDo((interrupted) -> {
+            }
+            @Override
+            public void execute() {
+                initializeOrExecute();
+            }
+            @Override
+            public void end(boolean interrupted) {
+                autoCommand.end(interrupted);
+                autoTimer.stop();
+                autoTimer.reset();
                 Leds.getInstance().autonomousRunningAnimation.setFlag(false);
                 GameState.getInstance().AUTONOMOUS_COMMAND_FINISH.set();
                 var autoTime = GameState.getInstance().BEGIN_ENABLE.getTimeSince();
@@ -78,8 +108,11 @@ public class AutoManager extends VirtualSubsystem {
                     .withName("Autonomous LED Notif")
                     .schedule()
                 ;
-            })
-            .withName("AUTO " + auto.name)
-        ;
+            }
+            @Override
+            public boolean isFinished() {
+                return autoCommandRunning && autoCommand.isFinished();
+            }
+        };
     }
 }
