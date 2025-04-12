@@ -30,23 +30,23 @@
   pointer-events: none;
 }
 
-.rack:nth-child(2) {
+.rack:nth-child(3) {
   transform: rotate(-60deg);
 }
 
-.rack:nth-child(3) {
+.rack:nth-child(4) {
   transform: rotate(-120deg);
 }
 
-.rack:nth-child(4) {
+.rack:nth-child(5) {
   transform: rotate(-180deg);
 }
 
-.rack:nth-child(5) {
+.rack:nth-child(6) {
   transform: rotate(-240deg);
 }
 
-.rack:nth-child(6) {
+.rack:nth-child(7) {
   transform: rotate(-300deg);
 }
 
@@ -188,27 +188,27 @@
   transform: rotate(0deg);
 }
 
-.rack:nth-child(2) .pipe-text,
-.rack:nth-child(2) .algae-text {
-  transform: rotate(60deg);
-}
-
 .rack:nth-child(3) .pipe-text,
 .rack:nth-child(3) .algae-text {
-  transform: rotate(120deg);
+  transform: rotate(60deg);
 }
 
 .rack:nth-child(4) .pipe-text,
 .rack:nth-child(4) .algae-text {
-  transform: rotate(180deg);
+  transform: rotate(120deg);
 }
 
 .rack:nth-child(5) .pipe-text,
 .rack:nth-child(5) .algae-text {
-  transform: rotate(240deg);
+  transform: rotate(180deg);
 }
 
 .rack:nth-child(6) .pipe-text,
 .rack:nth-child(6) .algae-text {
+  transform: rotate(240deg);
+}
+
+.rack:nth-child(7) .pipe-text,
+.rack:nth-child(7) .algae-text {
   transform: rotate(300deg);
 }
