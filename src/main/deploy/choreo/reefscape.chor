@@ -123,6 +123,13 @@
      "val":0.6604
     }
    },
+   "MaxAlgaeAcceleration":{
+    "dimension":"LinAcc",
+    "var":{
+     "exp":"2 m / s / s",
+     "val":2.0
+    }
+   },
    "MaxAlgaeRemoveVelocity":{
     "dimension":"LinVel",
     "var":{

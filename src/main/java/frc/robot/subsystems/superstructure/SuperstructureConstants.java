@@ -96,7 +96,7 @@ public class SuperstructureConstants {
 
     public static final SuperstructureState netPrepareState = SuperstructureState.fromParts(
         Degrees.of(90),
-        Inches.of(25),
+        Inches.of(12),
         Degrees.of(90)
     );
 }

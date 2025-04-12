@@ -16,6 +16,7 @@ import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -106,7 +107,7 @@ public class AutoCommons {
                     Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
                     Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
                     Commands.waitSeconds(0.5),
-                    intake.eject().asProxy().onlyWhile(intake.hasAlgae)
+                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
                 ),
                 Commands.sequence(
                     Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
@@ -130,7 +131,7 @@ public class AutoCommons {
                         GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
                         && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
                     ),
-                    intake.eject().asProxy().onlyWhile(intake.hasAlgae)
+                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
                 ),
                 Commands.sequence(
                     Commands.sequence(
