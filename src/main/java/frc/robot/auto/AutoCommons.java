@@ -128,32 +128,24 @@ public class AutoCommons {
                 Commands.sequence(
                     Commands.waitUntil(() -> 
                         GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
-                        && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(45))
+                        && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
                     ),
                     intake.eject().asProxy().onlyWhile(intake.hasAlgae)
                 ),
                 Commands.sequence(
-                    Commands.deadline(
-                        Commands.waitUntil(() -> GeomUtil.isNear(extendPose, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                        drive.followBluePath(pathToExtend),
-                        superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState)
+                    Commands.sequence(
+                        drive.followBluePath(pathToExtend).asProxy(),
+                        drive.simplePIDTo(() -> extendPose).asProxy()
+                    ).until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(45))),
+                    Commands.sequence(
+                        drive.followBluePath(pathToNet).asProxy(),
+                        drive.simplePIDTo(() -> netPose).asProxy()
                     )
+                ),
+                Commands.sequence(
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Inches.of(5), Degrees.of(10))),
+                    superstructure.goToSetpointSequenced(targetState)
                 )
-                // Commands.deadline(
-                //     drive.followBluePath(pathToExtend).asProxy(),
-                //     superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).asProxy()
-                // ),
-                // Commands.deadline(
-                //     Commands.sequence(
-                //         Commands.waitUntil(() -> GeomUtil.isNear(extendPose, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                //         superstructure.goToSetpointSequenced(targetState)
-                //     ),
-                //     Commands.sequence(
-                //         Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(45))),
-                //         drive.followBluePath(pathToNet)
-                //     ),
-                //     superstructure.goToSetpointSequenced(targetState)
-                // )
             )
         ;
     }
@@ -379,6 +371,21 @@ public class AutoCommons {
                 // if(!preloading) new Alert("[AutoPaths] Loading \"" + name + "\" which wasn't preloaded. Please add path to AutoPaths.preload()", AlertType.kWarning).set(true);
                 try {
                     var path = PathPlannerPath.fromChoreoTrajectory(name);
+                    // loadedPaths.put(name, path);
+                    return path;
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        @SuppressWarnings("resource")
+        public static PathPlannerPath loadChoreoTrajectory(String name, int splitIndex) {
+            if(loadedPaths.containsKey(name)) {
+                return loadedPaths.get(name);
+            } else {
+                // if(!preloading) new Alert("[AutoPaths] Loading \"" + name + "\" which wasn't preloaded. Please add path to AutoPaths.preload()", AlertType.kWarning).set(true);
+                try {
+                    var path = PathPlannerPath.fromChoreoTrajectory(name, splitIndex);
                     // loadedPaths.put(name, path);
                     return path;
                 } catch (Exception e) {
