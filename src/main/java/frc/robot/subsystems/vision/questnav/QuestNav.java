@@ -81,6 +81,7 @@ public class QuestNav extends VirtualSubsystem {
         Logger.recordOutput("QuestNav/QuestPose", getQuestPose());
         Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
         Logger.recordOutput("QuestNav/AverageRobotPose", getAverageRobotPose());
+        Logger.recordOutput("QuestNav/Calibration In Progress", calibrationInProgress);
     }
 
     public void setPose(Pose2d pose) {
@@ -131,10 +132,6 @@ public class QuestNav extends VirtualSubsystem {
     }
 
     public Command determineOffsetToRobotCenter(Drive drive) {
-        calibrationInProgress = true;
-        calculatedOffsetToRobotCenterCount = 0;
-        calculatedOffsetToRobotCenter = new Translation2d();
-        setPose(Pose2d.kZero);
         return
             Commands.repeatingSequence(
                 Commands.run(
@@ -153,7 +150,12 @@ public class QuestNav extends VirtualSubsystem {
 
                     Logger.recordOutput("QuestNav/Calculated Offset to Robot Center", calculatedOffsetToRobotCenter);
                 }).onlyIf(() -> getRobotPose().getRotation().getMeasure().in(Degrees) > 30)
-            ).finallyDo(() -> {
+            ).beforeStarting(() -> {
+                calibrationInProgress = true;
+                calculatedOffsetToRobotCenterCount = 0;
+                calculatedOffsetToRobotCenter = new Translation2d();
+                setPose(Pose2d.kZero);
+            }).finallyDo(() -> {
                 calibrationInProgress = false;
             });
     }
