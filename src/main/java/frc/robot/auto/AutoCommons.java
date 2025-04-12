@@ -143,8 +143,8 @@ public class AutoCommons {
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Inches.of(5), Degrees.of(10))),
-                    superstructure.goToSetpointSequenced(targetState)
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Inches.of(5), Degrees.of(10))).asProxy(),
+                    superstructure.goToSetpointSequenced(targetState).asProxy()
                 )
             )
         ;
