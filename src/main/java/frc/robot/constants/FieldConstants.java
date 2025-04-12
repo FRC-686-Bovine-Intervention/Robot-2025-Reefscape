@@ -588,7 +588,7 @@ public final class FieldConstants {
         public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardPivotFlipped(
             SuperstructureState.fromParts(
                 Degrees.of(90),
-                ElevatorConstants.maxLengthSoftware.div(2), 
+                ElevatorConstants.maxLengthSoftware,
                 Degrees.of(60)
             )
         );
