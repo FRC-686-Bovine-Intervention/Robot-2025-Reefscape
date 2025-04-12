@@ -14,8 +14,15 @@
    "BargeScoringOffset":{
     "dimension":"Length",
     "var":{
-     "exp":"0.5 m",
-     "val":0.5
+     "exp":"1 ft",
+     "val":0.3048
+    }
+   },
+   "BargeStartX":{
+    "dimension":"Length",
+    "var":{
+     "exp":"24.5 ft",
+     "val":7.4676
     }
    },
    "BlueCageInnerY":{
@@ -116,6 +123,13 @@
      "val":0.6604
     }
    },
+   "MaxAlgaeAcceleration":{
+    "dimension":"LinAcc",
+    "var":{
+     "exp":"2 m / s / s",
+     "val":2.0
+    }
+   },
    "MaxAlgaeRemoveVelocity":{
     "dimension":"LinVel",
     "var":{
@@ -190,8 +204,8 @@
   "poses":{
    "BargeCenter":{
     "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
+     "exp":"BargeStartX",
+     "val":7.4676
     },
     "y":{
      "exp":"(BlueCageMiddleY + BlueCageInnerY) / 2",
@@ -204,8 +218,8 @@
    },
    "BargeLeft":{
     "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
+     "exp":"BargeStartX",
+     "val":7.4676
     },
     "y":{
      "exp":"(BlueCageOuterY + BlueCageMiddleY) / 2",
@@ -232,8 +246,8 @@
    },
    "BargeRight":{
     "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
+     "exp":"BargeStartX",
+     "val":7.4676
     },
     "y":{
      "exp":"(BlueCageInnerY + FieldWidth / 2) / 2",
@@ -247,7 +261,7 @@
    "BargeScoreCenter":{
     "x":{
      "exp":"BargeCenter.x + BargeScoringOffset",
-     "val":7.6244615194
+     "val":7.7724
     },
     "y":{
      "exp":"BargeCenter.y",
@@ -261,7 +275,7 @@
    "BargeScoreLeft":{
     "x":{
      "exp":"BargeLeft.x + BargeScoringOffset",
-     "val":7.6244615194
+     "val":7.7724
     },
     "y":{
      "exp":"BargeLeft.y",
@@ -275,7 +289,7 @@
    "BargeScoreRight":{
     "x":{
      "exp":"BargeRight.x + BargeScoringOffset",
-     "val":7.6244615194
+     "val":7.7724
     },
     "y":{
      "exp":"BargeRight.y",
