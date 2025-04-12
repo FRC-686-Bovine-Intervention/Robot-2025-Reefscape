@@ -93,4 +93,10 @@ public class SuperstructureConstants {
         ElevatorConstants.minLengthPhysical,
         Degrees.of(180)
     );
+
+    public static final SuperstructureState netPrepareState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        Inches.of(25),
+        Degrees.of(90)
+    );
 }

@@ -15,7 +15,7 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"BargeCenter.x", "val":7.1244615194}, "y":{"exp":"BargeCenter.y", "val":5.6237251}, "heading":{"exp":"BargeCenter.heading", "val":3.141592653589793}, "intervals":47, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"BargeCenter.x", "val":7.4676}, "y":{"exp":"BargeCenter.y", "val":5.6237251}, "heading":{"exp":"BargeCenter.heading", "val":3.141592653589793}, "intervals":50, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"4.423463821411133 m", "val":4.423463821411133}, "y":{"exp":"5.770561218261719 m", "val":5.770561218261719}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"Reef5.x", "val":3.852200178332376}, "y":{"exp":"Reef5.y", "val":5.129409561891588}, "heading":{"exp":"Reef5.heading", "val":5.235987755982988}, "intervals":21, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[

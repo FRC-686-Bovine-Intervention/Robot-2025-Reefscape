@@ -22,11 +22,11 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"Reef3.x", "val":5.76357464333525}, "y":{"exp":"Reef3.y", "val":4.025877}, "heading":{"exp":"Reef3.heading", "val":3.141592653589793}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"Reef3.x", "val":5.76357464333525}, "y":{"exp":"Reef3.y", "val":4.025877}, "heading":{"exp":"Reef3.heading", "val":3.141592653589793}, "intervals":14, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"Reef3Remove.x", "val":6.06837464333525}, "y":{"exp":"Reef3Remove.y", "val":4.025877}, "heading":{"exp":"Reef3Remove.heading", "val":3.141592653589793}, "intervals":48, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"6.720507621765137 m", "val":6.720507621765137}, "y":{"exp":"4.848054885864258 m", "val":4.848054885864258}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":48, "split":false, "fixTranslation":false, "fixHeading":false, "overrideIntervals":false},
-    {"x":{"exp":"BargeCenter.x", "val":7.1244615194}, "y":{"exp":"BargeCenter.y", "val":5.6237251}, "heading":{"exp":"BargeCenter.heading", "val":3.141592653589793}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"BargeScoreCenter.x", "val":7.6244615194}, "y":{"exp":"BargeScoreCenter.y", "val":5.6237251}, "heading":{"exp":"BargeScoreCenter.heading", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"BargeCenter.x", "val":7.4676}, "y":{"exp":"BargeCenter.y", "val":5.6237251}, "heading":{"exp":"BargeCenter.heading", "val":3.141592653589793}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"BargeScoreCenter.x", "val":7.9676}, "y":{"exp":"BargeScoreCenter.y", "val":5.6237251}, "heading":{"exp":"BargeScoreCenter.heading", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},

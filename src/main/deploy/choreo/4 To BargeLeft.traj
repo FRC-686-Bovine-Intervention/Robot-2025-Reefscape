@@ -22,11 +22,11 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"Reef4.x", "val":5.1264498216676255}, "y":{"exp":"Reef4.y", "val":5.1294095618915865}, "heading":{"exp":"Reef4.heading", "val":4.1887902047863905}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"Reef4.x", "val":5.1264498216676255}, "y":{"exp":"Reef4.y", "val":5.1294095618915865}, "heading":{"exp":"Reef4.heading", "val":4.1887902047863905}, "intervals":14, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"Reef4Remove.x", "val":5.278849821667626}, "y":{"exp":"Reef4Remove.y", "val":5.393374104965083}, "heading":{"exp":"Reef4Remove.heading", "val":4.1887902047863905}, "intervals":36, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"6.207920551300049 m", "val":6.207920551300049}, "y":{"exp":"6.226986408233643 m", "val":6.226986408233643}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":48, "split":false, "fixTranslation":false, "fixHeading":false, "overrideIntervals":false},
-    {"x":{"exp":"BargeLeft.x", "val":7.1244615194}, "y":{"exp":"BargeLeft.y", "val":6.7143249}, "heading":{"exp":"BargeLeft.heading", "val":3.141592653589793}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"BargeScoreLeft.x", "val":7.6244615194}, "y":{"exp":"BargeScoreLeft.y", "val":6.7143249}, "heading":{"exp":"BargeScoreLeft.heading", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"6.207920551300049 m", "val":6.207920551300049}, "y":{"exp":"6.226986408233643 m", "val":6.226986408233643}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":49, "split":false, "fixTranslation":false, "fixHeading":false, "overrideIntervals":false},
+    {"x":{"exp":"BargeLeft.x", "val":7.4676}, "y":{"exp":"BargeLeft.y", "val":6.7143249}, "heading":{"exp":"BargeLeft.heading", "val":3.141592653589793}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"BargeScoreLeft.x", "val":7.9676}, "y":{"exp":"BargeScoreLeft.y", "val":6.7143249}, "heading":{"exp":"BargeScoreLeft.heading", "val":3.141592653589793}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},

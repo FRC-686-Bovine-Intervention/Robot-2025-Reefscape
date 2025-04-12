@@ -20,7 +20,7 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"BargeScoreLeft.x", "val":7.6244615194}, "y":{"exp":"BargeScoreLeft.y", "val":6.7143249}, "heading":{"exp":"BargeScoreLeft.heading", "val":3.141592653589793}, "intervals":142, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"BargeScoreLeft.x", "val":7.9676}, "y":{"exp":"BargeScoreLeft.y", "val":6.7143249}, "heading":{"exp":"BargeScoreLeft.heading", "val":3.141592653589793}, "intervals":144, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.939421653747559 m", "val":5.939421653747559}, "y":{"exp":"2.6087112426757812 m", "val":2.6087112426757812}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":34, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
     {"x":{"exp":"Reef2Remove.x", "val":5.278849821667624}, "y":{"exp":"Reef2Remove.y", "val":2.6583798950349165}, "heading":{"exp":"Reef2Remove.heading", "val":2.0943951023931953}, "intervals":14, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"Reef2.x", "val":5.126449821667624}, "y":{"exp":"Reef2.y", "val":2.9223444381084134}, "heading":{"exp":"Reef2.heading", "val":2.0943951023931953}, "intervals":26, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
