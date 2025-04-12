@@ -131,20 +131,20 @@ public class AutoCommons {
                         GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
                         && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
                     ),
-                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
+                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.25, DebounceType.kFalling))
                 ),
                 Commands.sequence(
                     Commands.sequence(
                         drive.followBluePath(pathToExtend).asProxy(),
                         drive.simplePIDTo(() -> extendPose).asProxy()
-                    ).until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(45))),
+                    ).until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(60))),
                     Commands.sequence(
                         drive.followBluePath(pathToNet).asProxy(),
                         drive.simplePIDTo(() -> netPose).asProxy()
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Inches.of(5), Degrees.of(10))).asProxy(),
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(10))).asProxy(),
                     superstructure.goToSetpointSequenced(targetState).asProxy()
                 )
             )
@@ -227,7 +227,7 @@ public class AutoCommons {
                 Commands.deadline(
                     Commands.sequence(
                         intake.intakeAlgae().asProxy().until(intake.hasAlgae),
-                        Commands.waitSeconds(0.5)
+                        Commands.waitSeconds(0.125)
                     ),
                     Commands.sequence(
                         drive.simplePIDTo(() -> backupPose).withName("Backup").asProxy().until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(5), Inches.of(5), Degrees.of(5))),
