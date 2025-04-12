@@ -5,13 +5,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,6 +26,7 @@ import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.BranchObject;
+import frc.robot.constants.FieldConstants.Reef.PipeObject;
 import frc.robot.constants.FieldConstants.Reef.RackObject;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
@@ -146,7 +147,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
 
     private AlgaeGoal selectedAlgaeGoal = AlgaeGoal.NET;
-    private Entry<CoralGoal, Integer> selectedCoralGoal = Map.entry(CoralGoal.BRANCH, 0);
+    private Pair<CoralGoal, Integer> selectedCoralGoal = new Pair<>(CoralGoal.BRANCH, 0);
 
     private Mode mode = Mode.Dumb;
 
@@ -197,6 +198,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<Objective> target = Optional.empty();
     private Optional<ObjectiveType> typeOverride = Optional.empty();
     private int targetLocks = 0;
+    private Optional<Optional<BranchLevel>> levelLock = Optional.empty();
+    private Optional<PipeObject> pipeLock = Optional.empty();
 
     public ObjectiveTracker(ReefTrackerIO io) {
         System.out.println("[Init ObjectiveTracker] Instantiating ObjectiveTracker with " + io.getClass().getSimpleName());
@@ -219,9 +222,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
         if (inputs.coralGoal != -1) {
             if (inputs.coralGoal >= 36) {
-                selectedCoralGoal = Map.entry(CoralGoal.LEVEL1, inputs.coralGoal - 36);
+                selectedCoralGoal = new Pair<>(CoralGoal.LEVEL1, inputs.coralGoal - 36);
             } else {
-                selectedCoralGoal = Map.entry(CoralGoal.BRANCH, inputs.coralGoal);
+                selectedCoralGoal = new Pair<>(CoralGoal.BRANCH, inputs.coralGoal);
             }
             inputs.coralGoal = -1;
         }
@@ -231,12 +234,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         io.setMode(mode.ordinal());
-        switch (selectedCoralGoal.getKey()) {
+        switch (selectedCoralGoal.getFirst()) {
             case LEVEL1:
-                io.setCoralGoal(selectedCoralGoal.getValue() + 36);
+                io.setCoralGoal(selectedCoralGoal.getSecond() + 36);
                 break;
             case BRANCH:
-                io.setCoralGoal(selectedCoralGoal.getValue());
+                io.setCoralGoal(selectedCoralGoal.getSecond());
                 break;
         }
         io.setAlgaeGoal(selectedAlgaeGoal.ordinal());
@@ -345,6 +348,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Reef/Algae", filledAlgae.toArray(Pose3d[]::new));
     }
     private void updateUnblockedBranches() {
+        boolean[] blockedBranches = new boolean[36];
         availableUnblockedBranches.clear();
         for (var availableBranch : availableBranches) {
             var blocked = false;
@@ -359,7 +363,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
             if (!blocked) {
                 availableUnblockedBranches.add(availableBranch);
             }
+            blockedBranches[availableBranch.id] = blocked;
         }
+        Logger.recordOutput("Objective Tracker/Reef/Blocked Branches", blockedBranches);
     }
     public void updateIncompletePriorities() {
         uncompletedPriorities.clear();
@@ -414,61 +420,84 @@ public class ObjectiveTracker extends VirtualSubsystem {
         this.intakeAlgaeObjective = closestAlgae.map((algae) -> new IntakeAlgaeObjective(algae, currentPose.getRotation()));
 
         if (mode == Mode.Smart) {
-            if (targetLocks <= 0) {
-                var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
-                    .sorted((a,b) -> {
-                        var aDistance = a.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                        var bDistance = b.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                        return (int) Math.signum(aDistance - bDistance);
-                    })
-                    .limit(6)
-                    .toList()
-                ;
-                var targetBranch = availableUnblockedBranches.stream()
-                    .map((branch) -> branch.getOurs())
-                    .filter((branch) -> closestPipes.contains(branch.pipe))
-                    .sorted((a,b) -> {
-                        if (a.level == b.level) {
-                            var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                            var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
-                            return (int) Math.signum(aDistance - bDistance);
-                        } else {
-                            for (var priority : uncompletedPriorities) {
-                                if (priority.level.isEmpty()) continue;
-                                if (a.level == priority.level.get()) return -1;
-                                if (b.level == priority.level.get()) return 1;
-                            }
-                            return 0;
-                        }
-                    })
-                    .findFirst()
-                ;
-                if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
-                    this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0), currentPose.getRotation());
-                } else {
-                    this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
-                }
+            var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
+                .sorted((a,b) -> {
+                    var aDistance = a.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    var bDistance = b.robotPose.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                    return (int) Math.signum(aDistance - bDistance);
+                })
+                .limit(6)
+                .toList()
+            ;
+            // var targetBranch = availableUnblockedBranches.stream()
+            //     .map((branch) -> branch.getOurs())
+            //     .filter((branch) -> closestPipes.contains(branch.pipe))
+            //     .filter((branch) -> levelLock.isEmpty() || (levelLock.get().isPresent() && branch.level == levelLock.get().get()))
+            //     .filter((branch) -> pipeLock.isEmpty() || (branch.pipe == pipeLock.get()))
+            //     .sorted((a,b) -> {
+            //         if (a.level == b.level) {
+            //             var aDistance = a.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            //             var bDistance = b.scoreTotalState.getClosestRobotPose(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+            //             return (int) Math.signum(aDistance - bDistance);
+            //         } else {
+            //             for (var priority : uncompletedPriorities) {
+            //                 if (priority.level.isEmpty()) continue;
+            //                 if (a.level == priority.level.get()) return -1;
+            //                 if (b.level == priority.level.get()) return 1;
+            //             }
+            //             return 0;
+            //         }
+            //     })
+            //     .findFirst()
+            // ;
 
-                Leds.getInstance().goToOppositeSideOfReef.setFlag(false);
-                Leds.getInstance().removeAlgae.setFlag(false);
-                if (!this.scoreCoralObjective.branchLevel.equals(uncompletedPriorities.get(0).level)) {
-                    var topPriorityLevel = uncompletedPriorities.get(0).level.get();
-                    if (closestPipes.stream().allMatch((pipe) -> branchStates[topPriorityLevel.ordinal() * 12 + pipe.id] == true)) {
-                        Leds.getInstance().goToOppositeSideOfReef.setFlag(true);
+            var target = 
+                Stream.concat(
+                    availableUnblockedBranches.stream().map((branch) -> branch.getOurs()).map(BranchOrLevel1Object::fromBranch),
+                    Arrays.stream(Reef.reefs.getOurs().racks).map(BranchOrLevel1Object::fromLevel1)
+                )
+                .filter((branchOrLevel1) -> branchOrLevel1.isLevel1() || closestPipes.contains(branchOrLevel1.getBranch().pipe))
+                .filter((branchOrLevel1) -> levelLock.isEmpty() || branchOrLevel1.getBranchLevel().equals(levelLock.get()))
+                .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.isBranch() && branchOrLevel1.getBranch().pipe == pipeLock.get()))
+                .sorted((a,b) -> {
+                    if (a.getBranchLevel().equals(b.getBranchLevel())) {
+                        var aDistance = a.getPose().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                        var bDistance = b.getPose().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
+                        return (int) Math.signum(aDistance - bDistance);
                     } else {
-                        Leds.getInstance().removeAlgae.setFlag(true);
+                        for (var priority : uncompletedPriorities) {
+                            if (a.getBranchLevel().equals(priority.level)) return -1;
+                            if (b.getBranchLevel().equals(priority.level)) return 1;
+                        }
+                        return 0;
                     }
+                })
+                .findFirst()
+            ;
+            // if (uncompletedPriorities.get(0).level.isEmpty() || targetBranch.isEmpty()) {
+            //     this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(closestRacks.get(0), currentPose.getRotation());
+            // } else {
+            //     this.scoreCoralObjective = ScoreCoralObjective.fromBranch(targetBranch.get(), currentPose.getRotation());
+            // }
+            if (target.isPresent()) {
+                this.scoreCoralObjective = ScoreCoralObjective.from(target.get(), currentPose.getRotation());
+            }
+
+            Leds.getInstance().goToOppositeSideOfReef.setFlag(false);
+            Leds.getInstance().removeAlgae.setFlag(false);
+            if (!this.scoreCoralObjective.branchLevel.equals(uncompletedPriorities.get(0).level)) {
+                var topPriorityLevel = uncompletedPriorities.get(0).level.get();
+                if (closestPipes.stream().allMatch((pipe) -> branchStates[topPriorityLevel.ordinal() * 12 + pipe.id] == true)) {
+                    Leds.getInstance().goToOppositeSideOfReef.setFlag(true);
+                } else {
+                    Leds.getInstance().removeAlgae.setFlag(true);
                 }
             }
         } else {
-            switch (selectedCoralGoal.getKey()) {
-                case BRANCH:
-                    this.scoreCoralObjective = ScoreCoralObjective.fromBranch(Reef.branches[selectedCoralGoal.getValue()].getOurs(), currentPose.getRotation());
-                    break;
-                case LEVEL1:
-                    this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(Reef.racks[selectedCoralGoal.getValue()].getOurs(), currentPose.getRotation());
-                    break;
-            }
+            this.scoreCoralObjective = switch (selectedCoralGoal.getFirst()) {
+                case BRANCH -> this.scoreCoralObjective = ScoreCoralObjective.fromBranch(Reef.branches[selectedCoralGoal.getSecond()].getOurs(), currentPose.getRotation());
+                case LEVEL1 -> this.scoreCoralObjective = ScoreCoralObjective.fromLevel1(Reef.racks[selectedCoralGoal.getSecond()].getOurs(), currentPose.getRotation());
+            };
         }
 
         Leds.getInstance().level1Targeted.setFlag(this.scoreCoralObjective.branchLevel.isEmpty());
@@ -562,14 +591,74 @@ public class ObjectiveTracker extends VirtualSubsystem {
         return Commands.startEnd(() -> this.setTypeOverride(Optional.of(typeOverride)), () -> this.setTypeOverride(Optional.empty()));
     }
 
-    public void addTargetLock() {
-        this.targetLocks += 1;
+    // public void addTargetLock() {
+    //     this.targetLocks += 1;
+    // }
+    // public void removeTargetLock() {
+    //     this.targetLocks -= 1;
+    // }
+    // public Command addTargetLockCommand() {
+    //     return Commands.startEnd(this::addTargetLock, this::removeTargetLock);
+    // }
+
+    public void addLevelLock(Optional<BranchLevel> level) {
+        this.levelLock = Optional.of(level);
     }
-    public void removeTargetLock() {
-        this.targetLocks -= 1;
+    public void removeLevelLock() {
+        this.levelLock = Optional.empty();
     }
-    public Command addTargetLockCommand() {
-        return Commands.startEnd(this::addTargetLock, this::removeTargetLock);
+    public void addPipeLock(PipeObject pipe) {
+        this.pipeLock = Optional.of(pipe);
+    }
+    public void removePipeLock() {
+        this.pipeLock = Optional.empty();
+    }
+
+    public static class BranchOrLevel1Object {
+        private final BranchObject branch;
+        private final RackObject level1Rack;
+
+        private BranchOrLevel1Object(BranchObject branch, RackObject level1Rack) {
+            this.branch = branch;
+            this.level1Rack = level1Rack;
+        }
+
+        public static BranchOrLevel1Object fromBranch(BranchObject branch) {
+            return new BranchOrLevel1Object(branch, null);
+        }
+        public static BranchOrLevel1Object fromLevel1(RackObject rack) {
+            return new BranchOrLevel1Object(null, rack);
+        }
+
+        public BranchObject getBranch() {
+            return branch;
+        }
+        public RackObject getLevel1Rack() {
+            return level1Rack;
+        }
+
+        public boolean isBranch() {
+            return branch != null;
+        }
+        public boolean isLevel1() {
+            return level1Rack != null;
+        }
+
+        public Optional<BranchLevel> getBranchLevel() {
+            if (isBranch()) {
+                return Optional.of(getBranch().level);
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        public RobotFlippedRobotPose getPose() {
+            if (isBranch()) {
+                return getBranch().pipe.robotPose;
+            } else {
+                return getLevel1Rack().centerRobotPose;
+            }
+        }
     }
 
     // public void toggleSelectedBranch() {
@@ -642,6 +731,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 direction,
                 Optional.empty()
             );
+        }
+        public static ScoreCoralObjective from(BranchOrLevel1Object branchOrLevel1, Rotation2d currentRotation) {
+            if (branchOrLevel1.isBranch()) {
+                return fromBranch(branchOrLevel1.getBranch(), currentRotation);
+            } else {
+                return fromLevel1(branchOrLevel1.getLevel1Rack(), currentRotation);
+            }
         }
         @Override
         public Direction getTargetDirection() {
