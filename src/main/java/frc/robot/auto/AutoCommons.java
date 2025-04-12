@@ -135,17 +135,17 @@ public class AutoCommons {
                 ),
                 Commands.sequence(
                     Commands.sequence(
-                        drive.followBluePath(pathToExtend).asProxy(),
-                        drive.simplePIDTo(() -> extendPose).asProxy()
+                        drive.followBluePath(pathToExtend).withName("Follow Path to Extend").asProxy(),
+                        drive.simplePIDTo(() -> extendPose).withName("PID to Extend").asProxy()
                     ).until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(60))),
                     Commands.sequence(
-                        drive.followBluePath(pathToNet).asProxy(),
-                        drive.simplePIDTo(() -> netPose).asProxy()
+                        drive.followBluePath(pathToNet).withName("Follow Path to Net").asProxy(),
+                        drive.simplePIDTo(() -> netPose).withName("PID to Net").asProxy()
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(10))).asProxy(),
-                    superstructure.goToSetpointSequenced(targetState).asProxy()
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
                 )
             )
         ;
