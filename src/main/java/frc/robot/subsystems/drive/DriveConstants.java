@@ -14,6 +14,7 @@ import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
@@ -145,19 +146,22 @@ public final class DriveConstants {
     public static final double driveWheelGearReduction = 5.08;
     public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
 
-    public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
+    public static final LinearVelocity maxDriveVelocity = MetersPerSecond.of(6);
     public static final LinearAcceleration maxDriveAcceleration = MetersPerSecondPerSecond.of(6);
-    /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
-    public static final AngularVelocity maxTurnRate = RadiansPerSecond.of(maxDriveSpeed.in(MetersPerSecond) / driveBaseRadius.in(Meters));
-    public static final AngularAcceleration maxTurnAcceleration = RadiansPerSecondPerSecond.of(6);
-    public static final DoubleSupplier maxDriveSpeedEnvCoef = Environment.switchVar(
+    public static final DoubleSupplier maxDriveVelocityEnvCoef = Environment.switchVar(
         () -> 1,
         new LoggedTunableNumber("Demo Constraints/Max Translational Percentage", 0.25)
     );
-    public static final DoubleSupplier maxTurnRateEnvCoef = Environment.switchVar(
+    /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
+    public static final AngularVelocity maxSpinVelocity = RadiansPerSecond.of(maxDriveVelocity.in(MetersPerSecond) / driveBaseRadius.in(Meters));
+    public static final AngularAcceleration maxSpinAcceleration = RadiansPerSecondPerSecond.of(6);
+    public static final DoubleSupplier maxSpinVelocityEnvCoef = Environment.switchVar(
         () -> 1,
         new LoggedTunableNumber("Demo Constraints/Max Rotational Percentage", 0.25)
     );
+
+    public static final AngularVelocity maxAzimuthVelocity = RotationsPerSecond.of(3);
+
     /**full speed in 0.25 sec*/
     public static final double joystickSlewRateLimit = 1.0 / 0.25;
     public static final double driveJoystickDeadbandPercent = 0.2;
@@ -187,7 +191,7 @@ public final class DriveConstants {
         RobotConstants.robotMOI,
         new com.pathplanner.lib.config.ModuleConfig(
             DriveConstants.wheelRadius,
-            DriveConstants.maxDriveSpeed,
+            DriveConstants.maxDriveVelocity,
             1.0,
             DCMotor.getFalcon500(1),
             Amps.of(80),
@@ -196,6 +200,7 @@ public final class DriveConstants {
         DriveConstants.moduleTranslations
     );
 
-    public static final PathConstraints normalDriveContraints = new PathConstraints(DriveConstants.maxDriveSpeed, DriveConstants.maxDriveAcceleration, DriveConstants.maxTurnRate, DriveConstants.maxTurnAcceleration);
-    public static final PathConstraints climbDriveConstraints = new PathConstraints(0.0, 0.0, 0.0, 0.0);
+    public static final PathConstraints normalDriveContraints = PathConstraints.unlimitedConstraints(12.5);
+    // public static final PathConstraints extendedConstriants = new PathConstraints(maxDriveVelocity, maxDriveAcceleration.div(112), maxSpinVelocity, maxSpinAcceleration.div(112));
+    public static final PathConstraints extendedConstriants = new PathConstraints(MetersPerSecond.of(1), MetersPerSecondPerSecond.of(1), RadiansPerSecond.of(1), RadiansPerSecondPerSecond.of(1));
 }

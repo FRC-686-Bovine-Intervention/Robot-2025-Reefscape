@@ -7,7 +7,6 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -26,8 +25,8 @@ import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
@@ -59,7 +58,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.InternalButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
@@ -83,6 +81,7 @@ public class Drive extends VirtualSubsystem {
     public final Root structureRoot = new Root();
 
     private final SwerveSetpointGenerator setpointGenerator;
+    private PathConstraints appliedDriveConstraints = DriveConstants.normalDriveContraints;
     private SwerveSetpoint previousSetpoint;
 
     public final Module[] modules = new Module[DriveConstants.moduleConstants.length];
@@ -121,8 +120,8 @@ public class Drive extends VirtualSubsystem {
             module.periodic();
             modules[i] = module;
         }
-        this.setpointGenerator = new SwerveSetpointGenerator(DriveConstants.robotConfig, DriveConstants.maxTurnRate);
-        this.previousSetpoint = new SwerveSetpoint(emptySpeeds, emptyStates, DriveFeedforwards.zeros(DriveConstants.moduleConstants.length));
+        this.setpointGenerator = new SwerveSetpointGenerator(DriveConstants.robotConfig, DriveConstants.maxAzimuthVelocity);
+        this.previousSetpoint = new SwerveSetpoint(emptySpeeds, Arrays.stream(modules).map((module) -> module.getModuleState()).toArray(SwerveModuleState[]::new), DriveFeedforwards.zeros(DriveConstants.moduleConstants.length));
 
         Pose2d initialPose = new Pose2d();
         RobotState.getInstance().initializePoseEstimator(DriveConstants.kinematics, getGyroRotation(), getModulePositions(), initialPose);
@@ -254,12 +253,18 @@ public class Drive extends VirtualSubsystem {
     }
 
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
-        previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, robotSpeeds, DriveConstants.normalDriveContraints, RobotConstants.rioUpdatePeriodSecs);
-        setpointSpeeds = previousSetpoint.robotRelativeSpeeds();
-        Logger.recordOutput("Drive/Chassis Speeds/Setpoint", setpointSpeeds);
-        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(setpointSpeeds, rotationCorrection.get());
-        setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, centerOfRotation);
-        SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.maxDriveSpeed);
+        Logger.recordOutput("Drive/Chassis Speeds/Setpoint", robotSpeeds);
+        previousSetpoint = setpointGenerator.generateSetpoint(previousSetpoint, robotSpeeds, appliedDriveConstraints, rotationCorrection.get());
+        ChassisSpeeds correctedSpeeds = previousSetpoint.robotRelativeSpeeds();
+        setpointStates = previousSetpoint.moduleStates();
+        // Logger.recordOutput("Drive/Swerve States/Generated Setpoint", setpointStates);
+        Logger.recordOutput("Drive/Chassis Speeds/Generated Setpoint", correctedSpeeds);
+        Logger.recordOutput("Drive/Constraints/Max Velo", appliedDriveConstraints.maxVelocity());
+        Logger.recordOutput("Drive/Constraints/Max Accel", appliedDriveConstraints.maxAcceleration());
+        Logger.recordOutput("Drive/swerve setpoint", previousSetpoint);
+        // ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(setpointSpeeds, rotationCorrection.get());
+        // setpointStates = DriveConstants.kinematics.toSwerveModuleStates(setpointSpeeds, centerOfRotation);
+        // SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.maxDriveVelocity);
         runSetpoints(setpointStates);
     }
     public void runFieldSpeeds(ChassisSpeeds fieldSpeeds) {
@@ -299,6 +304,9 @@ public class Drive extends VirtualSubsystem {
     public void setCenterOfRotation(Translation2d cor) {
         centerOfRotation = cor;
         Logger.recordOutput("Drive/Center of Rotation", getPose().transformBy(new Transform2d(centerOfRotation, Rotation2d.kZero)));
+    }
+    public void setDriveConstraints(PathConstraints constraints) {
+        this.appliedDriveConstraints = constraints;
     }
 
     /** Zeros the drive encoders. */
@@ -538,8 +546,8 @@ public class Drive extends VirtualSubsystem {
                 var fieldVec = Perspective.getCurrent().toField(
                     translationalJoystick.toVector()
                     .times(
-                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble() * 
+                        DriveConstants.maxDriveVelocity.in(MetersPerSecond) * 
+                        DriveConstants.maxDriveVelocityEnvCoef.getAsDouble() * 
                         (precisionSupplier.getAsBoolean() ? DriveConstants.precisionLinearMultiplier : 1)
                     )
                 );
@@ -639,8 +647,8 @@ public class Drive extends VirtualSubsystem {
                         dot = -joyVec.dot(perpendicularLinear);
                     }
                     var omega = dot
-                        * DriveConstants.maxTurnRate.in(RadiansPerSecond)
-                        * DriveConstants.maxTurnRateEnvCoef.getAsDouble() * 0.25
+                        * DriveConstants.maxSpinVelocity.in(RadiansPerSecond)
+                        * DriveConstants.maxSpinVelocityEnvCoef.getAsDouble() * 0.25
                     ;
                     driveVelocity(omega);
                     if(desiredLinear.norm() <= defenseSpinLinearThreshold.get()) {
@@ -680,7 +688,7 @@ public class Drive extends VirtualSubsystem {
                     DriveConstants.headingKi,
                     DriveConstants.headingKd,
                     new Constraints(
-                        DriveConstants.maxTurnRate.in(RadiansPerSecond),
+                        DriveConstants.maxSpinVelocity.in(RadiansPerSecond),
                         5000
                     )
                 );
@@ -706,10 +714,10 @@ public class Drive extends VirtualSubsystem {
                     turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
                     turnInput = MathUtil.clamp(
                         turnInput, 
-                        -0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble(), 
-                        +0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble()
+                        -0.5 * DriveConstants.maxSpinVelocityEnvCoef.getAsDouble(), 
+                        +0.5 * DriveConstants.maxSpinVelocityEnvCoef.getAsDouble()
                     );
-                    driveVelocity(turnInput * DriveConstants.maxTurnRate.in(RadiansPerSecond));
+                    driveVelocity(turnInput * DriveConstants.maxSpinVelocity.in(RadiansPerSecond));
                 }
                 @Override
                 public void end(boolean interrupted) {
@@ -729,7 +737,7 @@ public class Drive extends VirtualSubsystem {
                     DriveConstants.headingKi,
                     DriveConstants.headingKd,
                     new Constraints(
-                        DriveConstants.maxTurnRate.in(RadiansPerSecond),
+                        DriveConstants.maxSpinVelocity.in(RadiansPerSecond),
                         5000
                     )
                 );
@@ -750,10 +758,10 @@ public class Drive extends VirtualSubsystem {
                     turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
                     turnInput = MathUtil.clamp(
                         turnInput, 
-                        -0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble(), 
-                        +0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble()
+                        -0.5 * DriveConstants.maxSpinVelocityEnvCoef.getAsDouble(), 
+                        +0.5 * DriveConstants.maxSpinVelocityEnvCoef.getAsDouble()
                     );
-                    driveVelocity(turnInput * DriveConstants.maxTurnRate.in(RadiansPerSecond));
+                    driveVelocity(turnInput * DriveConstants.maxSpinVelocity.in(RadiansPerSecond));
                 }
                 @Override
                 public void end(boolean interrupted) {

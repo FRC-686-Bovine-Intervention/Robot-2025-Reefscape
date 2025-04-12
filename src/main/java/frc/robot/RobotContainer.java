@@ -5,12 +5,15 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -306,8 +309,8 @@ public class RobotContainer {
                 var fieldVec = Perspective.getCurrent().toField(
                     driveJoystick.toVector()
                     .times(
-                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
+                        DriveConstants.maxDriveVelocity.in(MetersPerSecond) * 
+                        DriveConstants.maxDriveVelocityEnvCoef.getAsDouble()
                     )
                 );
                 var fieldSpeeds = new ChassisSpeeds(
@@ -341,7 +344,7 @@ public class RobotContainer {
             .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxSpinVelocity.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
 
@@ -611,6 +614,29 @@ public class RobotContainer {
                 // prevprepare = prepare;
             }
         });
+
+        // new Trigger(() -> superstructure.elevator.getLength().gt(Inches.of(40))).whileTrue(
+        driveController.povLeft().whileTrue(
+            Commands.startEnd(
+                () -> {
+                    drive.setDriveConstraints(DriveConstants.extendedConstriants);
+                    Logger.recordOutput("DEBUG/Driveconstraints", "extendned");
+                },
+                () -> {
+                    drive.setDriveConstraints(DriveConstants.normalDriveContraints);
+                    Logger.recordOutput("DEBUG/Driveconstraints", "normals");
+                }
+            )
+        );
+        driveController.povRight().whileTrue(
+            
+            Commands.run(
+                () -> {
+                    drive.runRobotSpeeds(new ChassisSpeeds(1,0,0));
+                },
+                drive.translationSubsystem, drive.rotationalSubsystem
+            )
+        );
         
         driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
