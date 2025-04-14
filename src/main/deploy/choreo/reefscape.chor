@@ -7,15 +7,29 @@
    "AlgaeGrabbingOffset":{
     "dimension":"Length",
     "var":{
-     "exp":"1 ft",
-     "val":0.3048
+     "exp":"0.5 ft",
+     "val":0.1524
+    }
+   },
+   "AlgaeTravelNetAcceleration":{
+    "dimension":"LinAcc",
+    "var":{
+     "exp":"5 m / s / s",
+     "val":5.0
     }
    },
    "BargeScoringOffset":{
     "dimension":"Length",
     "var":{
-     "exp":"0.5 m",
-     "val":0.5
+     "exp":"1 ft",
+     "val":0.3048
+    }
+   },
+   "BargeStartX":{
+    "dimension":"Length",
+    "var":{
+     "exp":"24.5 ft",
+     "val":7.4676
     }
    },
    "BlueCageInnerY":{
@@ -116,6 +130,13 @@
      "val":0.6604
     }
    },
+   "MaxAlgaeAcceleration":{
+    "dimension":"LinAcc",
+    "var":{
+     "exp":"2 m / s / s",
+     "val":2.0
+    }
+   },
    "MaxAlgaeRemoveVelocity":{
     "dimension":"LinVel",
     "var":{
@@ -190,8 +211,8 @@
   "poses":{
    "BargeCenter":{
     "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
+     "exp":"BargeStartX",
+     "val":7.4676
     },
     "y":{
      "exp":"(BlueCageMiddleY + BlueCageInnerY) / 2",
@@ -204,8 +225,8 @@
    },
    "BargeLeft":{
     "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
+     "exp":"BargeStartX",
+     "val":7.4676
     },
     "y":{
      "exp":"(BlueCageOuterY + BlueCageMiddleY) / 2",
@@ -232,8 +253,8 @@
    },
    "BargeRight":{
     "x":{
-     "exp":"StartingLineX - CenterToBumper",
-     "val":7.1244615194
+     "exp":"BargeStartX",
+     "val":7.4676
     },
     "y":{
      "exp":"(BlueCageInnerY + FieldWidth / 2) / 2",
@@ -247,7 +268,7 @@
    "BargeScoreCenter":{
     "x":{
      "exp":"BargeCenter.x + BargeScoringOffset",
-     "val":7.6244615194
+     "val":7.7724
     },
     "y":{
      "exp":"BargeCenter.y",
@@ -261,7 +282,7 @@
    "BargeScoreLeft":{
     "x":{
      "exp":"BargeLeft.x + BargeScoringOffset",
-     "val":7.6244615194
+     "val":7.7724
     },
     "y":{
      "exp":"BargeLeft.y",
@@ -275,7 +296,7 @@
    "BargeScoreRight":{
     "x":{
      "exp":"BargeRight.x + BargeScoringOffset",
-     "val":7.6244615194
+     "val":7.7724
     },
     "y":{
      "exp":"BargeRight.y",
@@ -471,11 +492,11 @@
    "Reef2Remove":{
     "x":{
      "exp":"Reef2.x - AlgaeGrabbingOffset * cos(Reef2.heading)",
-     "val":5.278849821667624
+     "val":5.202649821667624
     },
     "y":{
      "exp":"Reef2.y - AlgaeGrabbingOffset * sin(Reef2.heading)",
-     "val":2.6583798950349165
+     "val":2.790362166571665
     },
     "heading":{
      "exp":"Reef2.heading",
@@ -499,7 +520,7 @@
    "Reef3Remove":{
     "x":{
      "exp":"Reef3.x - AlgaeGrabbingOffset * cos(Reef3.heading)",
-     "val":6.06837464333525
+     "val":5.91597464333525
     },
     "y":{
      "exp":"Reef3.y - AlgaeGrabbingOffset * sin(Reef3.heading)",
@@ -527,11 +548,11 @@
    "Reef4Remove":{
     "x":{
      "exp":"Reef4.x - AlgaeGrabbingOffset * cos(Reef4.heading)",
-     "val":5.278849821667626
+     "val":5.202649821667626
     },
     "y":{
      "exp":"Reef4.y - AlgaeGrabbingOffset * sin(Reef4.heading)",
-     "val":5.393374104965083
+     "val":5.261391833428335
     },
     "heading":{
      "exp":"Reef4.heading",

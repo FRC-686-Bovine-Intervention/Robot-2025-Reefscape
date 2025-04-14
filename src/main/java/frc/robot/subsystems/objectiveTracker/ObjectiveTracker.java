@@ -101,7 +101,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var count = 0;
                 for (int i = 24; i < 36; i++) {
                     if (branchStates[i] == true) count++;
-                    if (count >= 5) return true;
+                    if (count >= 7) return true;
                 }
                 return false;
             }
@@ -112,7 +112,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var count = 0;
                 for (int i = 12; i < 24; i++) {
                     if (branchStates[i] == true) count++;
-                    if (count >= 5) return true;
+                    if (count >= 7) return true;
                 }
                 return false;
             }
@@ -123,7 +123,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var count = 0;
                 for (int i = 0; i < 12; i++) {
                     if (branchStates[i] == true) count++;
-                    if (count >= 5) return true;
+                    if (count >= 7) return true;
                 }
                 return false;
             }
@@ -131,7 +131,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Level1RP(Optional.empty(), true) {
             @Override
             public boolean isCompleted(boolean[] branchStates, int level1Count) {
-                return level1Count >= 5;
+                return level1Count >= 7;
             }
         },
         ;

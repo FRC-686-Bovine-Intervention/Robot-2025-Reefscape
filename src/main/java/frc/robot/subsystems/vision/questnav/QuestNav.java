@@ -63,11 +63,9 @@ public class QuestNav extends VirtualSubsystem {
         lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
         connectionAnimation.setStatus(inputs.isConnected);
 
-        if (calibrationInProgress) {
-            setPose(Pose2d.kZero);
-        } else if (DriverStation.isDisabled()) {
+        if (!calibrationInProgress && DriverStation.isDisabled()) {
             setPose(RobotState.getInstance().getPose());
-        } else if (inputs.isConnected && !isDisabled.get()) {
+        } else if (!calibrationInProgress && inputs.isConnected && !isDisabled.get()) {
             RobotState.getInstance()
                 .addVisionMeasurement(
                     getRobotPose(),
@@ -83,6 +81,7 @@ public class QuestNav extends VirtualSubsystem {
         Logger.recordOutput("QuestNav/QuestPose", getQuestPose());
         Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
         Logger.recordOutput("QuestNav/AverageRobotPose", getAverageRobotPose());
+        Logger.recordOutput("QuestNav/Calibration In Progress", calibrationInProgress);
     }
 
     public void setPose(Pose2d pose) {
@@ -133,34 +132,31 @@ public class QuestNav extends VirtualSubsystem {
     }
 
     public Command determineOffsetToRobotCenter(Drive drive) {
-        return 
-            Commands.sequence(
+        return
+            Commands.repeatingSequence(
+                Commands.run(
+                    () -> {
+                        drive.rotationalSubsystem.driveVelocity(new ChassisSpeeds(0, 0, 0.314));
+                    },
+                    drive.rotationalSubsystem).withTimeout(0.5),
                 Commands.runOnce(() -> {
-                    calibrationInProgress = true;
-                    calculatedOffsetToRobotCenterCount = 0;
-                    calculatedOffsetToRobotCenter = new Translation2d();
-                }),
-                Commands.repeatingSequence(
-                    Commands.run(
-                        () -> {
-                            drive.rotationalSubsystem.driveVelocity(new ChassisSpeeds(0, 0, 0.314));
-                        },
-                        drive.rotationalSubsystem).withTimeout(0.5),
-                    Commands.runOnce(() -> {
-                        Translation2d offset = calculateOffsetToRobotCenter();
+                    Translation2d offset = calculateOffsetToRobotCenter();
 
-                        calculatedOffsetToRobotCenter = calculatedOffsetToRobotCenter
-                                .times((double) calculatedOffsetToRobotCenterCount
-                                        / (calculatedOffsetToRobotCenterCount + 1))
-                                .plus(offset.div(calculatedOffsetToRobotCenterCount + 1));
-                        calculatedOffsetToRobotCenterCount++;
+                    calculatedOffsetToRobotCenter = calculatedOffsetToRobotCenter
+                            .times((double) calculatedOffsetToRobotCenterCount
+                                    / (calculatedOffsetToRobotCenterCount + 1))
+                            .plus(offset.div(calculatedOffsetToRobotCenterCount + 1));
+                    calculatedOffsetToRobotCenterCount++;
 
-                        Logger.recordOutput("QuestNav/Calculated Offset to Robot Center", calculatedOffsetToRobotCenter);
-                    }).onlyIf(() -> getRobotPose().getRotation().getMeasure().in(Degrees) > 30)
-                ),
-                Commands.runOnce(() -> {
-                    calibrationInProgress = false;
-                })
-            );
+                    Logger.recordOutput("QuestNav/Calculated Offset to Robot Center", calculatedOffsetToRobotCenter);
+                }).onlyIf(() -> getRobotPose().getRotation().getMeasure().in(Degrees) > 30)
+            ).beforeStarting(() -> {
+                calibrationInProgress = true;
+                calculatedOffsetToRobotCenterCount = 0;
+                calculatedOffsetToRobotCenter = new Translation2d();
+                setPose(Pose2d.kZero);
+            }).finallyDo(() -> {
+                calibrationInProgress = false;
+            });
     }
 }
