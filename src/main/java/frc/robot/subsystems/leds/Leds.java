@@ -29,14 +29,14 @@ public class Leds extends VirtualSubsystem {
 
     public Leds() {
         System.out.println("[Init Leds] Instantiating Leds");
-        hardwareStrip = new AddressableStrip(HardwareDevices.ledPort, 29 + 22 + 29);
+        hardwareStrip = new AddressableStrip(HardwareDevices.ledPort, 29 + 21 + 29);
 
         var rawLeftStrip = hardwareStrip.substrip(0, 29);
-        var rawBackStrip = hardwareStrip.substrip(29, 29+22);
-        var rawRightStrip = hardwareStrip.substrip(29+22, 29+22+29);
+        var rawBackStrip = hardwareStrip.substrip(29, 29+21);
+        var rawRightStrip = hardwareStrip.substrip(29+21, 29+21+29);
 
         var rawBackLeftStrip = rawBackStrip.substrip(0, 11);
-        var rawBackRightStrip = rawBackStrip.substrip(11, 22);
+        var rawBackRightStrip = rawBackStrip.substrip(11, 21);
 
         var leftStrip = rawLeftStrip;
         var rightStrip = rawRightStrip.reverse();
