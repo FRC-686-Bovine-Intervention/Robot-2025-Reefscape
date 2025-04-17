@@ -220,6 +220,7 @@ public class Superstructure extends SubsystemBase {
                 var targetLow = setpoint.elevatorLength.lt(Inches.of(35));
                 var targetHigh = setpoint.elevatorLength.gt(Inches.of(45));
                 var targetWristDown = setpoint.wristAngle.lt(Degrees.of(60).unaryMinus());
+                var targetPivotLow = setpoint.pivotAngle.lt(Degrees.of(40).unaryMinus());
 
                 Logger.recordOutput("Superstructure/Sequencing/initialVeryLow", initialVeryLow);
                 Logger.recordOutput("Superstructure/Sequencing/initialLow", initialLow);
@@ -309,6 +310,19 @@ public class Superstructure extends SubsystemBase {
                                 Degrees.of(MathUtil.clamp(initialState.pivotAngle.in(Degrees), 75, 90)),
                                 setpoint.elevatorLength,
                                 Degrees.of(90)
+                            ),
+                            Degrees.of(10),
+                            Inches.of(10),
+                            Degrees.of(10)
+                        )
+                    );
+                } else if (!initialVeryLow && targetPivotLow) {
+                    steps.add(
+                        new SuperstructureStep(
+                            SuperstructureState.fromParts(
+                                initialState.pivotAngle,
+                                setpoint.elevatorLength,
+                                setpoint.wristAngle
                             ),
                             Degrees.of(10),
                             Inches.of(10),
