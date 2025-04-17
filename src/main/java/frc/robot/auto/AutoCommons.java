@@ -96,30 +96,30 @@ public class AutoCommons {
         ;
     }
 
-    public static Command scoreInNet(PathPlannerPath pathToBarge, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        var targetState = Barge.superstructureState.get(direction);
-        var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToBarge));
-        var endRotation = AllianceFlipUtil.apply(pathToBarge.getGoalEndState().rotation());
-        var end = new Pose2d(endTranslation, endRotation);
-        return
-            Commands.deadline(
-                Commands.sequence(
-                    Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
-                    Commands.waitSeconds(0.5),
-                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
-                ),
-                Commands.sequence(
-                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
-                ),
-                Commands.sequence(
-                    drive.followBluePath(pathToBarge).withName("Follow Path to Net").asProxy(),
-                    drive.simplePIDTo(() -> end).withName("PID to Net").asProxy()
-                )
-            )
-        ;
-    }
+    // public static Command scoreInNet(PathPlannerPath pathToBarge, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+    //     var targetState = Barge.superstructureState.get(direction);
+    //     var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToBarge));
+    //     var endRotation = AllianceFlipUtil.apply(pathToBarge.getGoalEndState().rotation());
+    //     var end = new Pose2d(endTranslation, endRotation);
+    //     return
+    //         Commands.deadline(
+    //             Commands.sequence(
+    //                 Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
+    //                 Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
+    //                 Commands.waitSeconds(0.5),
+    //                 intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
+    //             ),
+    //             Commands.sequence(
+    //                 Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
+    //                 superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
+    //             ),
+    //             Commands.sequence(
+    //                 drive.followBluePath(pathToBarge).withName("Follow Path to Net").asProxy(),
+    //                 drive.simplePIDTo(() -> end).withName("PID to Net").asProxy()
+    //             )
+    //         )
+    //     ;
+    // }
     public static Command scoreInNet(PathPlannerPath pathToExtend, PathPlannerPath pathToNet, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
         var targetState = Barge.superstructureState.get(direction);
         var extendPose = new Pose2d(AllianceFlipUtil.apply(getLastPoint(pathToExtend)), AllianceFlipUtil.apply(pathToExtend.getGoalEndState().rotation()));
@@ -131,7 +131,7 @@ public class AutoCommons {
                         GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
                         && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
                     ),
-                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
+                    intake.ejectAlgae().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
                 ),
                 Commands.sequence(
                     Commands.sequence(

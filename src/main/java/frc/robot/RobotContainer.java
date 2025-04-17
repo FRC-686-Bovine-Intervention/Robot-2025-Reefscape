@@ -398,8 +398,11 @@ public class RobotContainer {
             new Supplier<Command>() {
                 private final Command eject = intake.eject();
                 private final Command ejectL1 = intake.ejectLevel1();
+                private final Command ejectAlgae = intake.ejectAlgae();
                 public Command get() {
-                    if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
+                    if (intake.hasAlgae.getAsBoolean()) {
+                        return ejectAlgae;
+                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
                         return ejectL1;
                     } else {
                         return eject;
