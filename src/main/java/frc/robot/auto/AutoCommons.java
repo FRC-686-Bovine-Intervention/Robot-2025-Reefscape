@@ -131,7 +131,7 @@ public class AutoCommons {
                         GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
                         && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
                     ),
-                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.25, DebounceType.kFalling))
+                    intake.eject().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
                 ),
                 Commands.sequence(
                     Commands.sequence(
