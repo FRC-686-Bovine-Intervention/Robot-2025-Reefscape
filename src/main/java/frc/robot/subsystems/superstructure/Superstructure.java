@@ -232,6 +232,7 @@ public class Superstructure extends SubsystemBase {
                 Logger.recordOutput("Superstructure/Sequencing/targetLow", targetLow);
                 Logger.recordOutput("Superstructure/Sequencing/targetHigh", targetHigh);
                 Logger.recordOutput("Superstructure/Sequencing/targetWristDown", targetWristDown);
+                Logger.recordOutput("Superstructure/Sequencing/targetPivotLow", targetPivotLow);
 
                 if (initialClimbing) {
 
