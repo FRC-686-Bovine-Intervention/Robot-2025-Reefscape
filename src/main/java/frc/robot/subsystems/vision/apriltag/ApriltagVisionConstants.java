@@ -49,13 +49,13 @@ public class ApriltagVisionConstants {
     public static final ApriltagCameraConstants backLeftApriltagCamera = new ApriltagCameraConstants(
         "Back Left",
         VisionConstants.backLeftMount,
-        5.0,
+        100.0,
         Meters.of(8)
     );
     public static final ApriltagCameraConstants backRightApriltagCamera = new ApriltagCameraConstants(
         "Back Right",
         VisionConstants.backRightMount,
-        5.0,
+        100.0,
         Meters.of(8)
     );
 
