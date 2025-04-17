@@ -45,6 +45,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     public static enum AlgaeGoal {
         NET,
+        NET_OPPONENT_SIDE,
         PROCESSOR,
         OPPONENT_PROCESSOR,
         ;
@@ -808,14 +809,18 @@ public class ObjectiveTracker extends VirtualSubsystem {
                     this.targetState = Processor.superstructureState.get(direction);
                 break;
                 case NET:
-                    var bargePoses = new RobotFlippedRobotPose[] {
-                        Barge.frontLeftBargePose.getOurs(),
-                        Barge.frontCenterBargePose.getOurs(),
-                        Barge.frontRightBargePose.getOurs(),
-                        Barge.backLeftBargePose.getOurs(),
-                        Barge.backCenterBargePose.getOurs(),
-                        Barge.backRightBargePose.getOurs(),
-                    };
+                case NET_OPPONENT_SIDE:
+                    var bargePoses = 
+                        this.algaeGoal == AlgaeGoal.NET ?
+                            new RobotFlippedRobotPose[] {
+                                Barge.frontLeftBargePose.getOurs(),
+                                Barge.frontCenterBargePose.getOurs(),
+                                Barge.frontRightBargePose.getOurs(),
+                            } : new RobotFlippedRobotPose[] {
+                                Barge.backLeftBargePose.getOurs(),
+                                Barge.backCenterBargePose.getOurs(),
+                                Barge.backRightBargePose.getOurs(),
+                            };
                     var closestBargePose = Arrays.stream(bargePoses).sorted(
                         (a,b) -> {
                             var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
