@@ -457,8 +457,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
                     Arrays.stream(Reef.reefs.getOurs().racks).map(BranchOrLevel1Object::fromLevel1)
                 )
                 .filter((branchOrLevel1) -> branchOrLevel1.isLevel1() || closestPipes.contains(branchOrLevel1.getBranch().pipe))
-                .filter((branchOrLevel1) -> levelLock.isEmpty() || branchOrLevel1.getBranchLevel().equals(levelLock.get()))
-                .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.isBranch() && branchOrLevel1.getBranch().pipe == pipeLock.get()))
+                .filter((branchOrLevel1) -> levelLock.isEmpty() || (branchOrLevel1.getBranchLevel().equals(levelLock.get())) || (pipeLock.isPresent() && (Arrays.stream(pipeLock.get().branches).anyMatch((branch) -> branchStates[branch.id] == false))))
+                .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.isBranch() && branchOrLevel1.getBranch().pipe == pipeLock.get()) || (Arrays.stream(pipeLock.get().branches).allMatch((branch) -> branchStates[branch.id] == true)))
                 .sorted((a,b) -> {
                     if (a.getBranchLevel().equals(b.getBranchLevel())) {
                         var aDistance = a.getPose().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
