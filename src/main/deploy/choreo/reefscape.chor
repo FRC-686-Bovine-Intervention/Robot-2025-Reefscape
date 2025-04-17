@@ -14,8 +14,8 @@
    "AlgaeTravelNetAcceleration":{
     "dimension":"LinAcc",
     "var":{
-     "exp":"5 m / s / s",
-     "val":5.0
+     "exp":"3 m / s / s",
+     "val":3.0
     }
    },
    "BargeScoringOffset":{
