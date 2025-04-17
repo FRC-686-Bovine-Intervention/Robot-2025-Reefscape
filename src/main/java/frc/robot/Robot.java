@@ -30,7 +30,7 @@ import frc.util.robotStructure.Mechanism3d;
 public class Robot extends LoggedRobot {
     private final RobotContainer robotContainer;
 
-    private final Watchdog robotPeriodicWatchdog = new Watchdog(defaultPeriodSecs, null);
+    private final Watchdog robotPeriodicWatchdog = new Watchdog(defaultPeriodSecs, () -> {});
 
     public Robot() {
         Leds.getInstance();
