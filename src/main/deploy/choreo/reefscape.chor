@@ -32,6 +32,13 @@
      "val":7.4676
     }
    },
+   "BargeStartXForward":{
+    "dimension":"Length",
+    "var":{
+     "exp":"BargeStartX + (10 in * 2)",
+     "val":7.9756
+    }
+   },
    "BlueCageInnerY":{
     "dimension":"Length",
     "var":{
@@ -265,6 +272,20 @@
      "val":3.141592653589793
     }
    },
+   "BargeRightForward":{
+    "x":{
+     "exp":"BargeStartXForward",
+     "val":7.9756
+    },
+    "y":{
+     "exp":"(BlueCageInnerY + FieldWidth / 2) / 2",
+     "val":4.5521626
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
    "BargeScoreCenter":{
     "x":{
      "exp":"BargeCenter.x + BargeScoringOffset",
@@ -305,6 +326,20 @@
     "heading":{
      "exp":"BargeRight.heading",
      "val":3.141592653589793
+    }
+   },
+   "BargeScoreRightForward":{
+    "x":{
+     "exp":"BargeRightForward.x + BargeScoringOffset",
+     "val":8.2804
+    },
+    "y":{
+     "exp":"(BlueCageInnerY + FieldWidth / 2) / 2",
+     "val":4.5521626
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
     }
    },
    "CoralStationLeft":{
