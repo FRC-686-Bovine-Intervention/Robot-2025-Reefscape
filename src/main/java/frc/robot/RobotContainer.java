@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
@@ -644,6 +645,16 @@ public class RobotContainer {
                 Leds.getInstance().algaeSecured.setFlagCommand().ignoringDisable(true)
             )
         ;
+        new Trigger(() -> DriverStation.isTeleop() && DriverStation.getMatchTime() <= 20)
+            .toggleOnTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> driveController.setRumble(RumbleType.kBothRumble, 0)),
+                    Commands.repeatingSequence(
+                        driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(.3),
+                        Commands.waitSeconds(.3)
+                    ).withTimeout(3)
+                )
+            );
     }
 
     private void configureAutos() {
