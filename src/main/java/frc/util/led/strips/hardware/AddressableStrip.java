@@ -40,6 +40,6 @@ public class AddressableStrip implements HardwareStrip {
     @Override
     public void refresh() {
         strip.setData(buffer);
-        Logger.recordOutput("LEDS/Strip", IntStream.range(0, buffer.getLength()).mapToObj((index) -> buffer.getLED(index).toHexString()).toArray(String[]::new));
+        // Logger.recordOutput("LEDS/Strip", IntStream.range(0, buffer.getLength()).mapToObj((index) -> buffer.getLED(index).toHexString()).toArray(String[]::new));
     }
 }
