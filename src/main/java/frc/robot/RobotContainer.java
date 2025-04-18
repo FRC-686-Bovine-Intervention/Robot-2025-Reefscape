@@ -89,6 +89,7 @@ import frc.robot.subsystems.vision.questnav.QuestNavConstants;
 import frc.robot.subsystems.vision.questnav.QuestNavIO;
 import frc.robot.subsystems.vision.questnav.QuestNavIOQuest3S;
 import frc.robot.subsystems.vision.questnav.QuestNavIOSim;
+import frc.util.Environment;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
@@ -645,8 +646,8 @@ public class RobotContainer {
                 Leds.getInstance().algaeSecured.setFlagCommand().ignoringDisable(true)
             )
         ;
-        new Trigger(() -> DriverStation.isTeleop() && DriverStation.getMatchTime() <= 20)
-            .toggleOnTrue(
+        new Trigger(() -> Environment.isCompetition() && DriverStation.isTeleop() && DriverStation.getMatchTime() <= 20)
+            .onTrue(
                 Commands.sequence(
                     Commands.runOnce(() -> driveController.setRumble(RumbleType.kBothRumble, 0)),
                     Commands.repeatingSequence(
