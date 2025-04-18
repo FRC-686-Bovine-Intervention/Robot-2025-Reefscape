@@ -235,9 +235,20 @@ public class ScoreAlgaeAndCoral extends AutoRoutine{
             var netToSecondAlgae = AutoPaths.loadChoreoTrajectory(AutoCommons.getBargePositionAsString(bargePosition) + " To " + algae2.rack.id);
             commands.add(AutoCommons.pickupAlgaeFromReef(netToSecondAlgae, algae2, Direction.Forward, drive, superstructure, intake));
 
-            var secondAlgaeToExtend = AutoPaths.loadChoreoTrajectory(algae2.rack.id + " To " + AutoCommons.getBargePositionAsString(bargePosition),0);
-            var secondAlgaeToNet = AutoPaths.loadChoreoTrajectory(algae2.rack.id + " To " + AutoCommons.getBargePositionAsString(bargePosition),1);
-            commands.add(AutoCommons.scoreInNet(secondAlgaeToExtend, secondAlgaeToNet, Direction.Backward, drive, superstructure, intake));
+            var secondAlgaeToScoreName = algae2.rack.id + " To " + AutoCommons.getBargePositionAsString(bargePosition);
+            if (thirdAlgae.isEmpty()) {
+                secondAlgaeToScoreName += " Forward";
+            }
+            var secondAlgaeScoreDirection = (thirdAlgae.isEmpty() ? (
+                Direction.Forward
+            ) : (
+                Direction.Backward
+            ));
+
+            var secondAlgaeToExtend = AutoPaths.loadChoreoTrajectory(secondAlgaeToScoreName,0);
+
+            var secondAlgaeToNet = AutoPaths.loadChoreoTrajectory(secondAlgaeToScoreName,1);
+            commands.add(AutoCommons.scoreInNet(secondAlgaeToExtend, secondAlgaeToNet, secondAlgaeScoreDirection, drive, superstructure, intake));
 
             if (thirdAlgae.isPresent()) {
                 var algae3 = thirdAlgae.get();
