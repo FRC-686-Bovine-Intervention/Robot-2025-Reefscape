@@ -45,6 +45,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     public static enum AlgaeGoal {
         NET,
+        NET_OPPONENT_SIDE,
         PROCESSOR,
         OPPONENT_PROCESSOR,
         ;
@@ -457,8 +458,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
                     Arrays.stream(Reef.reefs.getOurs().racks).map(BranchOrLevel1Object::fromLevel1)
                 )
                 .filter((branchOrLevel1) -> branchOrLevel1.isLevel1() || closestPipes.contains(branchOrLevel1.getBranch().pipe))
-                .filter((branchOrLevel1) -> levelLock.isEmpty() || branchOrLevel1.getBranchLevel().equals(levelLock.get()))
-                .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.isBranch() && branchOrLevel1.getBranch().pipe == pipeLock.get()))
+                .filter((branchOrLevel1) -> levelLock.isEmpty() || (branchOrLevel1.getBranchLevel().equals(levelLock.get())) || (pipeLock.isPresent() && (Arrays.stream(pipeLock.get().branches).anyMatch((branch) -> branchStates[branch.id] == false))))
+                .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.isBranch() && branchOrLevel1.getBranch().pipe == pipeLock.get()) || (Arrays.stream(pipeLock.get().branches).allMatch((branch) -> branchStates[branch.id] == true)))
                 .sorted((a,b) -> {
                     if (a.getBranchLevel().equals(b.getBranchLevel())) {
                         var aDistance = a.getPose().getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());
@@ -808,14 +809,18 @@ public class ObjectiveTracker extends VirtualSubsystem {
                     this.targetState = Processor.superstructureState.get(direction);
                 break;
                 case NET:
-                    var bargePoses = new RobotFlippedRobotPose[] {
-                        Barge.frontLeftBargePose.getOurs(),
-                        Barge.frontCenterBargePose.getOurs(),
-                        Barge.frontRightBargePose.getOurs(),
-                        Barge.backLeftBargePose.getOurs(),
-                        Barge.backCenterBargePose.getOurs(),
-                        Barge.backRightBargePose.getOurs(),
-                    };
+                case NET_OPPONENT_SIDE:
+                    var bargePoses = 
+                        this.algaeGoal == AlgaeGoal.NET ?
+                            new RobotFlippedRobotPose[] {
+                                Barge.frontLeftBargePose.getOurs(),
+                                Barge.frontCenterBargePose.getOurs(),
+                                Barge.frontRightBargePose.getOurs(),
+                            } : new RobotFlippedRobotPose[] {
+                                Barge.backLeftBargePose.getOurs(),
+                                Barge.backCenterBargePose.getOurs(),
+                                Barge.backRightBargePose.getOurs(),
+                            };
                     var closestBargePose = Arrays.stream(bargePoses).sorted(
                         (a,b) -> {
                             var aDistance = a.getClosest(currentPose.getRotation()).getTranslation().getDistance(currentPose.getTranslation());

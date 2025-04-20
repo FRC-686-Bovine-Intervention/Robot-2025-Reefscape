@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
@@ -88,6 +89,7 @@ import frc.robot.subsystems.vision.questnav.QuestNavConstants;
 import frc.robot.subsystems.vision.questnav.QuestNavIO;
 import frc.robot.subsystems.vision.questnav.QuestNavIOQuest3S;
 import frc.robot.subsystems.vision.questnav.QuestNavIOSim;
+import frc.util.Environment;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
@@ -398,8 +400,11 @@ public class RobotContainer {
             new Supplier<Command>() {
                 private final Command eject = intake.eject();
                 private final Command ejectL1 = intake.ejectLevel1();
+                private final Command ejectAlgae = intake.ejectAlgae();
                 public Command get() {
-                    if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
+                    if (intake.hasAlgae.getAsBoolean()) {
+                        return ejectAlgae;
+                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
                         return ejectL1;
                     } else {
                         return eject;
@@ -641,6 +646,16 @@ public class RobotContainer {
                 Leds.getInstance().algaeSecured.setFlagCommand().ignoringDisable(true)
             )
         ;
+        new Trigger(() -> Environment.isCompetition() && DriverStation.isTeleop() && DriverStation.getMatchTime() <= 20)
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> driveController.setRumble(RumbleType.kBothRumble, 0)),
+                    Commands.repeatingSequence(
+                        driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(.3),
+                        Commands.waitSeconds(.3)
+                    ).withTimeout(3)
+                )
+            );
     }
 
     private void configureAutos() {

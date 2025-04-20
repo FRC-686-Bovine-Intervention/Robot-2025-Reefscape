@@ -130,6 +130,7 @@ const l1SubtractDOM = document.getElementById("subtract");
 const coopDOM = document.getElementById("coop");
 const algaeGoalDOM = [
   document.getElementById("net"),
+  document.getElementById("opp_net"),
   document.getElementById("processor"),
   document.getElementById("opp_processor"),
 ];

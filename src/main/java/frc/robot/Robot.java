@@ -17,6 +17,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -28,6 +29,8 @@ import frc.util.robotStructure.Mechanism3d;
 
 public class Robot extends LoggedRobot {
     private final RobotContainer robotContainer;
+
+    private final Watchdog robotPeriodicWatchdog = new Watchdog(defaultPeriodSecs, () -> {});
 
     public Robot() {
         Leds.getInstance();
@@ -125,14 +128,27 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void robotPeriodic() {
+        robotPeriodicWatchdog.reset();
         GameState.getInstance().periodic();
+        robotPeriodicWatchdog.addEpoch("GameState.periodic()");
         VirtualSubsystem.periodicAll();
+        robotPeriodicWatchdog.addEpoch("VirtualSubsystem.periodicAll()");
         CommandScheduler.getInstance().run();
+        robotPeriodicWatchdog.addEpoch("CommandScheduler.run()");
         robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
+        robotPeriodicWatchdog.addEpoch("ObjectiveTracker.determineGoal");
         VirtualSubsystem.postCommandPeriodicAll();
+        robotPeriodicWatchdog.addEpoch("VirtualSubsystem.postCommandPeriodicAll()");
         RobotState.getInstance().log();
+        robotPeriodicWatchdog.addEpoch("RobotState.log()");
         Mechanism3d.logAscopeComponents();
+        robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeComponents()");
         Mechanism3d.logAscopeAxes();
+        robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeAxes()");
+        if (robotPeriodicWatchdog.isExpired()) {
+            System.out.println("RobotPeriodic loop overrun");
+            robotPeriodicWatchdog.printEpochs();
+        }
     }
 
     @Override

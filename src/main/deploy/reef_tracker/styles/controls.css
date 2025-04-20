@@ -78,6 +78,12 @@
   gap: 10px;
 }
 
+.secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 #algae_goal .button {
   width: 100%;
   padding: 15px;
