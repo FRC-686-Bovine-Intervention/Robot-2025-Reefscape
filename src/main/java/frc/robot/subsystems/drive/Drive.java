@@ -62,6 +62,7 @@ import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
+import frc.util.LoggedTracer;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
@@ -169,14 +170,22 @@ public class Drive extends VirtualSubsystem {
     public void periodic() {
         gyroIO.updateInputs(gyroInputs);
         Logger.processInputs("Inputs/Drive/Gyro", gyroInputs);
-        Arrays.stream(modules).forEach(Module::periodic);
-
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Process Gyro Inputs");
+        for (var module : modules) {
+            module.periodic();
+            LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + module.config.name);
+        }
+        // Arrays.stream(modules).forEach(Module::periodic);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic");
+        
         measuredStates = Arrays.stream(modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Get Measured States");
         Logger.recordOutput("Drive/Swerve States/Measured", measuredStates);
 
         // Update odometry
         // Update field velocity
         robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(measuredStates);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Calculate Measured Speeds");
         if (gyroInputs.connected) {
             gyroAngle = getGyroRotation();
             robotMeasuredSpeeds.omegaRadiansPerSecond = gyroInputs.yawVelocity.in(RadiansPerSecond);
@@ -187,8 +196,10 @@ public class Drive extends VirtualSubsystem {
             Twist2d twist = DriveConstants.kinematics.toTwist2d(wheelDeltas); // dtheta will be the estimated change in chassis angle
             gyroAngle = gyroAngle.plus(Rotation2d.fromRadians(twist.dtheta));
         }
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Calculate Rotational Velocity");
         Logger.recordOutput("Drive/Chassis Speeds/Measured", robotMeasuredSpeeds);
         RobotState.getInstance().addDriveMeasurement(gyroAngle, getModulePositions());
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Add Drive Measurement");
         structureRoot.setPose(getPose());
         fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotMeasuredSpeeds, gyroAngle);
 

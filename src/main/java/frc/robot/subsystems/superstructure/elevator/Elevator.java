@@ -12,6 +12,7 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import frc.util.LoggedTracer;
 import frc.util.robotStructure.linear.ExtenderMech;
 
 public class Elevator {
@@ -30,6 +31,7 @@ public class Elevator {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Elevator/Process Inputs");
 
         var stageDist = getLength().div(ElevatorConstants.movingStageCount);
 

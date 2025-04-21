@@ -37,6 +37,7 @@ import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
+import frc.util.LoggedTracer;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 
 public class Module {
@@ -71,20 +72,24 @@ public class Module {
 
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Drive/Module " + config.name, inputs);
-
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
+        
         angle = config.moduleForwardDirection.plus(new Rotation2d(inputs.turnMotor.encoder.position));
         moduleState.angle = angle;
         modulePosition.angle = angle;
-
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Calculate Module Angle");
+        
         wheelAngularPosition.mut_replace(inputs.driveMotor.encoder.position.div(DriveConstants.driveWheelGearReduction));
         wheelAngularVelocity.mut_replace(inputs.driveMotor.encoder.velocity.div(DriveConstants.driveWheelGearReduction));
         wheelLinearPosition.mut_replace(wheelAngularPosition.in(Radians) * wheelRadius.in(Meters), Meters);
         wheelLinearVelocity.mut_replace(wheelAngularVelocity.in(RadiansPerSecond) * wheelRadius.in(Meters), MetersPerSecond);
-
+        
         modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
         moduleState.speedMetersPerSecond = wheelLinearVelocity.in(MetersPerSecond);
-
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Update Positions and Velocities");
+        
         driveCurrentSpikeDetector.update(getDriveCurrent());
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Update Current Spike Detector");
     }
 
     /**

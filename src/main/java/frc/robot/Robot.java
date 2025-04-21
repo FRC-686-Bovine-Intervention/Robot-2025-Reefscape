@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.subsystems.leds.Leds;
+import frc.util.LoggedTracer;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
@@ -129,26 +130,47 @@ public class Robot extends LoggedRobot {
     @Override
     public void robotPeriodic() {
         robotPeriodicWatchdog.reset();
+        LoggedTracer.reset();
         GameState.getInstance().periodic();
+        LoggedTracer.logEpoch("GameState/Periodic");
         robotPeriodicWatchdog.addEpoch("GameState.periodic()");
         VirtualSubsystem.periodicAll();
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic");
         robotPeriodicWatchdog.addEpoch("VirtualSubsystem.periodicAll()");
         CommandScheduler.getInstance().run();
+        LoggedTracer.logEpoch("CommandScheduler/Periodic");
         robotPeriodicWatchdog.addEpoch("CommandScheduler.run()");
         robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
+        LoggedTracer.logEpoch("ObjectiveTracker/DetermineGoal");
         robotPeriodicWatchdog.addEpoch("ObjectiveTracker.determineGoal");
         VirtualSubsystem.postCommandPeriodicAll();
+        LoggedTracer.logEpoch("VirtualSubsystem/PostCommandPeriodic");
         robotPeriodicWatchdog.addEpoch("VirtualSubsystem.postCommandPeriodicAll()");
         RobotState.getInstance().log();
+        LoggedTracer.logEpoch("RobotState/Log");
         robotPeriodicWatchdog.addEpoch("RobotState.log()");
         Mechanism3d.logAscopeComponents();
+        LoggedTracer.logEpoch("Mechanism3d/LogAscopeComponents");
         robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeComponents()");
         Mechanism3d.logAscopeAxes();
+        LoggedTracer.logEpoch("Mechanism3d/LogAscopeAxes");
         robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeAxes()");
         if (robotPeriodicWatchdog.isExpired()) {
             System.out.println("RobotPeriodic loop overrun");
             robotPeriodicWatchdog.printEpochs();
         }
+
+        // LoggedTracer.reset();
+        // LoggedTracer.logEpoch("Testing1");
+        // LoggedTracer.logEpoch("Testing2/Sub1/Sub1");
+        // LoggedTracer.logEpoch("Testing2/Sub1/Sub2");
+        // LoggedTracer.logEpoch("Testing2/Sub1");
+        // LoggedTracer.logEpoch("Testing2/Sub2/Sub1");
+        // LoggedTracer.logEpoch("Testing2/Sub2/Sub2");
+        // LoggedTracer.logEpoch("Testing2/Sub2");
+        // LoggedTracer.logEpoch("Testing2");
+        // LoggedTracer.logEpoch("Testing3/Sub1");
+        // LoggedTracer.logEpoch("Testing3");
     }
 
     @Override

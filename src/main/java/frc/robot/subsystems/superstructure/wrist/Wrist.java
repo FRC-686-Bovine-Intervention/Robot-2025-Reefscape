@@ -8,6 +8,7 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import frc.util.LoggedTracer;
 import frc.util.robotStructure.angle.ArmMech;
 
 public class Wrist {
@@ -24,6 +25,7 @@ public class Wrist {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Wrist", inputs);
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Wrist/Process Inputs");
 
         var angle = getAngle();
 

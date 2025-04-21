@@ -34,6 +34,7 @@ import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristConstants;
+import frc.util.LoggedTracer;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlippable;
@@ -143,8 +144,12 @@ public class Superstructure extends SubsystemBase {
     @Override
     public void periodic() {
         pivot.periodic();
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Pivot");
         elevator.periodic();
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Elevator");
         wrist.periodic();
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Wrist");
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure");
     }
 
     public SuperstructureState getCurrentState() {

@@ -19,6 +19,7 @@ import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera.ApriltagCameraResult;
+import frc.util.LoggedTracer;
 import frc.util.VirtualSubsystem;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
@@ -52,9 +53,12 @@ public class ApriltagVision extends VirtualSubsystem {
             .map((constants) -> constants.mount.getFieldRelative())
             .toArray(Pose3d[]::new)
         );
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/ApriltagVision/Log Cam Poses");
         var results = Arrays.stream(cameras).map(ApriltagCamera::periodic).toArray(ApriltagCameraResult[]::new);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/ApriltagVision/Camera Periodic");
         for (var result : results) {
             var loggingKey = "Vision/Apriltags/Results/" + result.camMeta.hardwareName;
+            var tracingKey = "VirtualSubsystem/Periodic/ApriltagVision/Process Results/" + result.camMeta.hardwareName;
             var akitPose3d = new Pose3d[0];
             var akitTargetCorners = new Translation2d[0];
             for (var frame : result.frames) {
@@ -191,7 +195,9 @@ public class ApriltagVision extends VirtualSubsystem {
             }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
+            LoggedTracer.logEpoch(tracingKey);
         }
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/ApriltagVision/Process Results");
     }
 
     public AprilTagResultPose getPose() {
