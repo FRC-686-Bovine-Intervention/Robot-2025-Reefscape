@@ -66,7 +66,7 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setVoltage(voltage);
-                    this.elevator.setLength(ElevatorConstants.minLengthPhysical);
+                    this.elevator.setLengthGoal(ElevatorConstants.minLengthPhysical);
                     this.wrist.setAngle(Degrees.zero());
                 },
                 (log) -> {
@@ -122,7 +122,7 @@ public class Superstructure extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
                     this.pivot.setAngle(Degrees.of(90));
-                    this.elevator.setLength(ElevatorConstants.minLengthPhysical);
+                    this.elevator.setLengthGoal(ElevatorConstants.minLengthPhysical);
                     this.wrist.setVoltage(voltage);
                 },
                 (log) -> {
@@ -189,7 +189,7 @@ public class Superstructure extends SubsystemBase {
             @Override
             public void execute() {
                 pivot.setAngle(setpoint.pivotAngle);
-                elevator.setLength(setpoint.elevatorLength);
+                elevator.setLengthGoal(setpoint.elevatorLength);
                 wrist.setAngle(setpoint.wristAngle);
             }
         };
@@ -330,7 +330,7 @@ public class Superstructure extends SubsystemBase {
                 var elevatorSetpoint = currentStep.targetState.elevatorLength;
                 var wristSetpoint = currentStep.targetState.wristAngle;
                 pivot.setAngle(pivotSetpoint);
-                elevator.setLength(elevatorSetpoint);
+                elevator.setLengthGoal(elevatorSetpoint);
                 wrist.setAngle(wristSetpoint);
                 Logger.recordOutput("Superstructure/Setpoint/Pivot Setpoint", pivotSetpoint);
                 Logger.recordOutput("Superstructure/Setpoint/Elevator Setpoint", elevatorSetpoint);

@@ -57,4 +57,14 @@ public class LoggedTunablePID {
             .withKD(kD.get())
         ;
     }
+
+    public double getKP() {
+        return kP.get();
+    }
+    public double getKI() {
+        return kI.get();
+    }
+    public double getKD() {
+        return kD.get();
+    }
 }

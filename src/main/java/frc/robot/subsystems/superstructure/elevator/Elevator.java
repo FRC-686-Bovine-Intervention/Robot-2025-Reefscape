@@ -1,22 +1,61 @@
 package frc.robot.subsystems.superstructure.elevator;
 
+import static edu.wpi.first.units.Units.InchesPerSecond;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.MutDistance;
+import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.constants.RobotConstants;
+import frc.util.loggerUtil.tunables.LoggedTunableFF;
+import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
+import frc.util.loggerUtil.tunables.LoggedTunablePID;
 import frc.util.robotStructure.linear.ExtenderMech;
 
 public class Elevator {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
+
+    private final LoggedTunableLinearProfile profileConsts = new LoggedTunableLinearProfile(
+        "Superstructure/Elevator/Profile",
+        InchesPerSecond.of(20),
+        InchesPerSecond.per(Second).of(60)
+    );
+    private final LoggedTunableFF ffConsts = new LoggedTunableFF(
+        "Superstructure/Elevator/FF",
+        0.2,
+        0.3,
+        2,
+        0
+    );
+    private final LoggedTunablePID pidConsts = new LoggedTunablePID(
+        "Superstructure/Elevator/PID",
+        50,
+        0,
+        0
+    );
+
+    private TrapezoidProfile motionProfile = profileConsts.getTrapezoidProfile();
+    private State setpointState = new State();
+    private final ElevatorFeedforward feedforward = new ElevatorFeedforward(0,0,0,0);
+
+    private final MutDistance length = Meters.mutable(0);
+    private final MutLinearVelocity velocity = MetersPerSecond.mutable(0);
 
     public final ExtenderMech stage2Mech = new ExtenderMech(ElevatorConstants.stage2Base);
     public final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
@@ -25,11 +64,23 @@ public class Elevator {
     public Elevator(ElevatorIO io) {
         System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
         this.io = io;
+
+        ffConsts.update(feedforward);
+        this.io.configPID(
+            pidConsts.getKP(),
+            pidConsts.getKI(),
+            pidConsts.getKD()
+        );
     }
 
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
+
+        length.mut_replace(ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount));
+        velocity.mut_replace(ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount));
+        Logger.recordOutput("Superstructure/Elevator/Measured/Length", length);
+        Logger.recordOutput("Superstructure/Elevator/Measured/Velocity", velocity);
 
         var stageDist = getLength().div(ElevatorConstants.movingStageCount);
 
@@ -37,14 +88,26 @@ public class Elevator {
         stage3Mech.set(stageDist);
         stage4Mech.set(stageDist);
 
-        Logger.recordOutput("Superstructure/Elevator/Length", getLength());
+        if (profileConsts.hasChanged(hashCode())) {
+            motionProfile = profileConsts.getTrapezoidProfile();
+        }
+        if (ffConsts.hasChanged(hashCode())) {
+            ffConsts.update(feedforward);
+        }
+        if (pidConsts.hasChanged(hashCode())) {
+            io.configPID(
+                pidConsts.getKP(),
+                pidConsts.getKI(),
+                pidConsts.getKD()
+            );
+        }
     }
 
     public Distance getLength() {
-        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount);
+        return length;
     }
     public LinearVelocity getVelocity() {
-        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount);
+        return velocity;
     }
     public Voltage getVoltage() {
         return inputs.motor.motor.appliedVoltage;
@@ -53,10 +116,19 @@ public class Elevator {
     public void setVoltage(Measure<VoltageUnit> voltage) {
         io.setVoltage(voltage);
     }
-    public void setLength(Measure<DistanceUnit> length) {
-        io.setLength(length);
-    }
-    public void setFeedForward(Measure<VoltageUnit> feedForward) {
-        io.setFeedForward(feedForward);
+    public void setLengthGoal(Measure<DistanceUnit> length) {
+        var goalState = new State(length.in(Meters), 0);
+        var newSetpointState = motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, setpointState, goalState);
+        var ffout = feedforward.calculateWithVelocities(setpointState.velocity, newSetpointState.velocity);
+        setpointState = newSetpointState;
+        io.setPosition(
+            Radians.of(setpointState.position / ElevatorConstants.movingStageCount / ElevatorConstants.sprocketRadius.in(Meters)),
+            RadiansPerSecond.of(setpointState.velocity / ElevatorConstants.movingStageCount / ElevatorConstants.sprocketRadius.in(Meters)),
+            Volts.of(ffout)
+        );
+        Logger.recordOutput("Superstructure/Elevator/Setpoint/Length", setpointState.position);
+        Logger.recordOutput("Superstructure/Elevator/Setpoint/Velocity", setpointState.velocity);
+        Logger.recordOutput("Superstructure/Elevator/Goal/Length", goalState.position);
+        Logger.recordOutput("Superstructure/Elevator/Goal/Velocity", goalState.velocity);
     }
 }

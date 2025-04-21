@@ -6,6 +6,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -13,9 +15,9 @@ import frc.robot.constants.RobotConstants;
 
 public class ElevatorIOSim extends ElevatorIOKraken {
     private final ElevatorSim elevatorSim = new ElevatorSim(
-        20,
-        12,
-        DCMotor.getKrakenX60(1),
+        8,
+        2,
+        DCMotor.getKrakenX60(1).withReduction(16),
         ElevatorConstants.minLengthPhysical.in(Meters),
         ElevatorConstants.stageExtension.in(Meters),
         false,

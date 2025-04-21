@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 
 public class LoggedTunableFF {
     private final LoggedTunableNumber kS;
@@ -25,6 +26,12 @@ public class LoggedTunableFF {
     }
 
     public void update(ArmFeedforward ff) {
+        ff.setKs(kS.get());
+        ff.setKg(kG.get());
+        ff.setKv(kV.get());
+        ff.setKa(kA.get());
+    }
+    public void update(ElevatorFeedforward ff) {
         ff.setKs(kS.get());
         ff.setKg(kG.get());
         ff.setKv(kV.get());
@@ -62,5 +69,17 @@ public class LoggedTunableFF {
             .withKV(kV.get())
             .withKA(kA.get())
         ;
+    }
+    public double getKS() {
+        return kS.get();
+    }
+    public double getKG() {
+        return kG.get();
+    }
+    public double getKV() {
+        return kV.get();
+    }
+    public double getKA() {
+        return kA.get();
     }
 }

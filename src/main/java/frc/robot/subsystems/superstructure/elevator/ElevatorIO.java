@@ -2,7 +2,8 @@ package frc.robot.subsystems.superstructure.elevator;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
@@ -19,9 +20,7 @@ public interface ElevatorIO {
 
     public default void setVoltage(Measure<VoltageUnit> voltage) {}
 
-    public default void setLength(Measure<DistanceUnit> length) {}
+    public default void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {}
 
-    public default void setFeedForward(Measure<VoltageUnit> feedForward) {}
-
-    public default void stop() {}
+    public default void configPID(double kP, double kI, double kD) {}
 }

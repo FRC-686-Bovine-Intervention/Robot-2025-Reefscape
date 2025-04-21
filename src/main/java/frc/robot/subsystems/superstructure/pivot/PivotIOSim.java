@@ -11,8 +11,8 @@ import frc.robot.constants.RobotConstants;
 
 public class PivotIOSim extends PivotIOFalcon {
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(
-        LinearSystemId.identifyPositionSystem(5, 2),
-        DCMotor.getFalcon500(2),
+        LinearSystemId.identifyPositionSystem(17, 5),
+        DCMotor.getFalcon500(2).withReduction(237.6),
         PivotConstants.motorToMechanism.inverse().ratio(),
         1,
         PivotConstants.minAngle.in(Radians),
@@ -24,10 +24,10 @@ public class PivotIOSim extends PivotIOFalcon {
     @Override
     public void updateInputs(PivotIOInputs inputs) {
         var leftSimState = leftMotor.getSimState();
-        // var rightSimState = rightMotor.getSimState();
+        var rightSimState = rightMotor.getSimState();
         var cancoderSimState = cancoder.getSimState();
 
-        pivotSim.setInputVoltage(-leftSimState.getMotorVoltage());
+        pivotSim.setInputVoltage(-leftSimState.getMotorVoltage()+rightSimState.getMotorVoltage());
         pivotSim.update(RobotConstants.rioUpdatePeriodSecs);
 
         var position = Radians.of(pivotSim.getAngleRads());
@@ -37,7 +37,7 @@ public class PivotIOSim extends PivotIOFalcon {
         cancoderSimState.setVelocity(velocity.unaryMinus());
 
         leftSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-        // rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
         super.updateInputs(inputs);
     }
