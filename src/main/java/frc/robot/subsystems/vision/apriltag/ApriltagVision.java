@@ -195,6 +195,7 @@ public class ApriltagVision extends VirtualSubsystem {
             }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
+            Logger.recordOutput(loggingKey + "/Frame Count", result.frames.length);
             LoggedTracer.logEpoch(tracingKey);
         }
         LoggedTracer.logEpoch("VirtualSubsystem/Periodic/ApriltagVision/Process Results");
