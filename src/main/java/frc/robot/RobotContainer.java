@@ -710,15 +710,16 @@ public class RobotContainer {
             }
         );
         
-        SmartDashboard.putData("Wheel Calibration", Commands.defer(() -> 
-            new WheelRadiusCalibration(
-                drive,
-                (int)WheelRadiusCalibration.MAX_SAMPLES.get(),
-                WheelRadiusCalibration.SAMPLE_PERIOD.get(),
-                WheelRadiusCalibration.VOLTAGE_RAMP_RATE.get(),
-                WheelRadiusCalibration.MAX_VOLTAGE.get()
-            ).withName("Wheel Calibration"),
-            Set.of(drive.translationSubsystem, drive.rotationalSubsystem))
+        SmartDashboard.putData("Wheel Calibration", Commands.defer(
+            () -> 
+                new WheelRadiusCalibration(
+                    drive,
+                    WheelRadiusCalibration.VOLTAGE_RAMP_RATE.get(),
+                    WheelRadiusCalibration.MAX_VOLTAGE.get()
+                )
+                .withName("Wheel Calibration"),
+                Set.of(drive.translationSubsystem, drive.rotationalSubsystem)
+            )
         );
     }
 }
