@@ -135,9 +135,9 @@ public final class DriveConstants {
         .gear(15).gear(32).axle()
         .gear(10).gear(60).axle()
     ;
-    // public static final double driveWheelGearReduction = 1.0 / (1.0/4.0);
-    public static final double driveWheelGearReduction = 5.08;
-    public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
+    // // public static final double driveWheelGearReduction = 1.0 / (1.0/4.0);
+    // public static final double driveWheelGearReduction = 5.08;
+    // public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
 
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/

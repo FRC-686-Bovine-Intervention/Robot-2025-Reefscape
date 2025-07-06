@@ -73,8 +73,8 @@ public class PivotIOFalcon implements PivotIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(PivotConstants.motorToMechanism.concat(PivotConstants.sensorToMechanism.inverse()).inverse().ratio())
-            .withSensorToMechanismRatio(PivotConstants.sensorToMechanism.inverse().ratio())
+            .withRotorToSensorRatio(PivotConstants.motorToMechanism.then(PivotConstants.sensorToMechanism.inverse()).reductionUnsigned())
+            .withSensorToMechanismRatio(PivotConstants.sensorToMechanism.reductionUnsigned())
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)

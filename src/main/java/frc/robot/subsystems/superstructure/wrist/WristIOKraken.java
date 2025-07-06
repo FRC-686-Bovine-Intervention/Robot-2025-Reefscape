@@ -5,8 +5,6 @@ import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -69,8 +67,8 @@ public class WristIOKraken implements WristIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(WristConstants.motorToSensor.inverse().ratio())
-            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.inverse().ratio())
+            .withRotorToSensorRatio(WristConstants.motorToSensor.reductionUnsigned())
+            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.reductionUnsigned())
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)

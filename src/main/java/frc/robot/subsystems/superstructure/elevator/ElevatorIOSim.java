@@ -4,8 +4,6 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -33,15 +31,10 @@ public class ElevatorIOSim extends ElevatorIOKraken {
         var position = Radians.of(elevatorSim.getPositionMeters() / ElevatorConstants.sprocketRadius.in(Meters));
         var velocity = RadiansPerSecond.of(elevatorSim.getVelocityMetersPerSecond() / ElevatorConstants.sprocketRadius.in(Meters));
 
-        cancoderSimState.setRawPosition(position.div(-ElevatorConstants.sensorToMechanism.ratio()));
-        cancoderSimState.setVelocity(velocity.div(-ElevatorConstants.sensorToMechanism.ratio()));
+        cancoderSimState.setRawPosition(ElevatorConstants.sensorToMechanism.applyUnsigned(position));
+        cancoderSimState.setVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(velocity));
 
         motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        Logger.recordOutput("DEBUG/leftsimstate voltage", -motorSimState.getMotorVoltage());
-        Logger.recordOutput("DEBUG/sim position", position);
-        Logger.recordOutput("DEBUG/sim velocity", velocity);
-        Logger.recordOutput("DEBUG/ratio", -ElevatorConstants.sensorToMechanism.ratio());
 
         super.updateInputs(inputs);
     }

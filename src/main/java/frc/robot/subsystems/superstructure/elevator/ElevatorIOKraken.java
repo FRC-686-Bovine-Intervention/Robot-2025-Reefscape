@@ -6,8 +6,6 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -72,8 +70,8 @@ public class ElevatorIOKraken implements ElevatorIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(-ElevatorConstants.motorToMechanism.concat(ElevatorConstants.sensorToMechanism.inverse()).inverse().ratio())
-            .withSensorToMechanismRatio(-ElevatorConstants.sensorToMechanism.inverse().ratio())
+            .withRotorToSensorRatio(ElevatorConstants.motorToMechanism.then(ElevatorConstants.sensorToMechanism.inverse()).reductionUnsigned())
+            .withSensorToMechanismRatio(ElevatorConstants.sensorToMechanism.reductionUnsigned())
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)

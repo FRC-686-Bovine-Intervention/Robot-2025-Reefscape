@@ -76,8 +76,8 @@ public class Module {
         moduleState.angle = angle;
         modulePosition.angle = angle;
 
-        wheelAngularPosition.mut_replace(inputs.driveMotor.encoder.position.div(DriveConstants.driveWheelGearReduction));
-        wheelAngularVelocity.mut_replace(inputs.driveMotor.encoder.velocity.div(DriveConstants.driveWheelGearReduction));
+        wheelAngularPosition.mut_replace(DriveConstants.driveWheelGearRatio.applyUnsigned(inputs.driveMotor.encoder.position));
+        wheelAngularVelocity.mut_replace(DriveConstants.driveWheelGearRatio.applyUnsigned(inputs.driveMotor.encoder.velocity));
         wheelLinearPosition.mut_replace(wheelAngularPosition.in(Radians) * wheelRadius.in(Meters), Meters);
         wheelLinearVelocity.mut_replace(wheelAngularVelocity.in(RadiansPerSecond) * wheelRadius.in(Meters), MetersPerSecond);
 
@@ -99,7 +99,7 @@ public class Module {
 
         setpoint.speedMetersPerSecond *= turnSetpoint.minus(getAngle()).getCos();
 
-        double velocityRadPerSec = setpoint.speedMetersPerSecond / wheelRadius.in(Meters) * DriveConstants.driveWheelGearReduction;
+        double velocityRadPerSec = DriveConstants.driveWheelGearRatio.inverse().applyUnsigned(setpoint.speedMetersPerSecond / wheelRadius.in(Meters));
         io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec));
     }
 

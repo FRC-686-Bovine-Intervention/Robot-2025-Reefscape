@@ -33,10 +33,10 @@ public class Wrist {
     }
 
     public Angle getAngle() {
-        return WristConstants.sensorToMechanism.apply(inputs.encoder.position);
+        return WristConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position);
     }
     public AngularVelocity getVelocity() {
-        return WristConstants.sensorToMechanism.apply(inputs.encoder.velocity);
+        return WristConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity);
     }
     public Voltage getVoltage() {
         return inputs.motor.motor.appliedVoltage;

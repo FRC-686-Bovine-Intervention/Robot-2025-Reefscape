@@ -58,7 +58,7 @@ public class Climber extends SubsystemBase {
     }
 
     public Angle getAngle() {
-        return ClimberConstants.sensorToMechanismRatio.apply(inputs.motor.encoder.position).unaryMinus();
+        return ClimberConstants.sensorToMechanismRatio.applyUnsigned(inputs.motor.encoder.position).unaryMinus();
     }
 
     public Command idle() {

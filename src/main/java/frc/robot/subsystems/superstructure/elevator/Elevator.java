@@ -41,10 +41,10 @@ public class Elevator {
     }
 
     public Distance getLength() {
-        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount);
+        return ElevatorConstants.sprocketRadius.times(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position).in(Radians)).times(ElevatorConstants.movingStageCount);
     }
     public LinearVelocity getVelocity() {
-        return ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount);
+        return ElevatorConstants.sprocketRadius.times(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity).in(RadiansPerSecond)).per(Second).times(ElevatorConstants.movingStageCount);
     }
     public Voltage getVoltage() {
         return inputs.motor.motor.appliedVoltage;
