@@ -1,5 +1,6 @@
 package frc.util.mechanismUtil;
 
+import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Unit;
 import edu.wpi.first.units.measure.Angle;
@@ -114,8 +115,8 @@ public class GearRatio {
             return new GearRatio(this.axle().reductionSigned() * teeth / this.teeth);
         }
 
-        // public LinearRelation chain(double linkSize) {
-
-        // }
+        public LinearRelation chain(Measure<DistanceUnit> linkSize) {
+            return LinearRelation.wheelCircumference(linkSize.times(teeth));
+        }
     }
 }

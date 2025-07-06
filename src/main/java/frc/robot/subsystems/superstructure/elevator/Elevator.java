@@ -1,9 +1,5 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.Second;
-
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.DistanceUnit;
@@ -41,10 +37,10 @@ public class Elevator {
     }
 
     public Distance getLength() {
-        return ElevatorConstants.sprocketRadius.times(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position).in(Radians)).times(ElevatorConstants.movingStageCount);
+        return ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position)).times(ElevatorConstants.movingStageCount);
     }
     public LinearVelocity getVelocity() {
-        return ElevatorConstants.sprocketRadius.times(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity).in(RadiansPerSecond)).per(Second).times(ElevatorConstants.movingStageCount);
+        return ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount);
     }
     public Voltage getVoltage() {
         return inputs.motor.motor.appliedVoltage;

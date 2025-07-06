@@ -37,7 +37,7 @@ import frc.util.geometry.GeomUtil;
 import frc.util.hardwareID.can.CANDevice;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.mechanismUtil.GearRatio;
-import frc.util.mechanismUtil.Wheel;
+import frc.util.mechanismUtil.LinearRelation;
 
 public final class DriveConstants {
     public static final double odometryLoopFrequencyHz = RobotConstants.rioUpdateFrequencyHz;
@@ -124,14 +124,14 @@ public final class DriveConstants {
     
     public static final Distance driveBaseRadius = Meters.of(Arrays.stream(moduleTranslations).mapToDouble((t) -> t.getNorm()).max().orElse(0.5));
     private static final double correctionVal = 314.0 / 320.55;
-    public static final Distance wheelRadius = Inches.of(1.5 * correctionVal);
+    // public static final Distance wheelRadius = Inches.of(1.5 * correctionVal);
+    public static final LinearRelation wheel = LinearRelation.wheelRadius(Inches.of(1.5 * correctionVal));
 
-    public static final GearRatio driveWheelGearRatio = new GearRatio()
+    public static final GearRatio driveGearRatio = new GearRatio()
         .gear(14).gear(22).axle()
         .gear(15).gear(45).axle()
     ;
-    public static final Wheel driveWheel = Wheel.radius(wheelRadius);
-    public static final GearRatio turnWheelGearRatio = new GearRatio()
+    public static final GearRatio azimuthGearRatio = new GearRatio()
         .gear(15).gear(32).axle()
         .gear(10).gear(60).axle()
     ;
@@ -178,7 +178,7 @@ public final class DriveConstants {
         RobotConstants.robotWeight,
         RobotConstants.robotMOI,
         new com.pathplanner.lib.config.ModuleConfig(
-            DriveConstants.wheelRadius,
+            DriveConstants.wheel.effectiveRadius(),
             DriveConstants.maxDriveSpeed,
             1.0,
             DCMotor.getFalcon500(1),

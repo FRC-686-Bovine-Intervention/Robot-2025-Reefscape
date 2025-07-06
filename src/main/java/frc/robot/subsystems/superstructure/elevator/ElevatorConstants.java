@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Distance;
 import frc.util.mechanismUtil.GearRatio;
+import frc.util.mechanismUtil.LinearRelation;
 
 public class ElevatorConstants {
     public static final Distance pivotOffset = Inches.zero();
@@ -56,5 +57,9 @@ public class ElevatorConstants {
         .gear(90)
         .gear(18)
         .axle()
+    ;
+    public static final LinearRelation stage1LinearRelation = new GearRatio()
+        .sprocket(16)
+        .chain(Inches.of(0.25))
     ;
 }
