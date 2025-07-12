@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -49,6 +50,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.commands.AutoScore;
+import frc.robot.subsystems.drive.commands.MOICharacterization;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
@@ -717,7 +719,15 @@ public class RobotContainer {
                 WheelRadiusCalibration.SAMPLE_PERIOD.get(),
                 WheelRadiusCalibration.VOLTAGE_RAMP_RATE.get(),
                 WheelRadiusCalibration.MAX_VOLTAGE.get()
-            ).withName("Wheel Calibration"),
+            ),
+            Set.of(drive.translationSubsystem, drive.rotationalSubsystem))
+        );
+        SmartDashboard.putData("MOI Characterization", Commands.defer(() -> 
+            new MOICharacterization(
+                drive,
+                DCMotor.getFalcon500(1).withReduction(DriveConstants.driveWheelGearReduction),
+                MOICharacterization.VOLTAGE.get()
+            ),
             Set.of(drive.translationSubsystem, drive.rotationalSubsystem))
         );
     }
