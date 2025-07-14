@@ -33,8 +33,8 @@ public final class ClimberConstants {
     public static final Angle climberMaxAngle = Degrees.of(205);
 
     public static final GearRatio sensorToMechanismRatio = new GearRatio()
-        .planetary(1.0/5.0)
-        .planetary(1.0/5.0)
+        .planetary(5)
+        .planetary(5)
         .gear(40).gear(50).axle()
     ;
 

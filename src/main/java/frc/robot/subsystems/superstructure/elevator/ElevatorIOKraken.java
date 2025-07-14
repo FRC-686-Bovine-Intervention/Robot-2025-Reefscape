@@ -1,7 +1,5 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
@@ -47,14 +45,14 @@ public class ElevatorIOKraken implements ElevatorIO {
         ;
         motorConfig.Feedback
             .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(-ElevatorConstants.motorToMechanism.concat(ElevatorConstants.sensorToMechanism.inverse()).inverse().ratio())
-            .withSensorToMechanismRatio(-ElevatorConstants.sensorToMechanism.inverse().ratio())
+            .withRotorToSensorRatio(ElevatorConstants.motorToMechanism.then(ElevatorConstants.sensorToMechanism.inverse()).reductionUnsigned())
+            .withSensorToMechanismRatio(ElevatorConstants.sensorToMechanism.reductionUnsigned())
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)
-            .withReverseSoftLimitThreshold(Degrees.of(0))
+            .withReverseSoftLimitThreshold(ElevatorConstants.stage1LinearRelation.distanceToAngle(ElevatorConstants.minLengthPhysical.div(ElevatorConstants.movingStageCount)))
             .withForwardSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(Radians.of(ElevatorConstants.maxLengthSoftware.div(ElevatorConstants.movingStageCount).div(ElevatorConstants.sprocketRadius).baseUnitMagnitude()))
+            .withForwardSoftLimitThreshold(ElevatorConstants.stage1LinearRelation.distanceToAngle(ElevatorConstants.maxLengthSoftware.div(ElevatorConstants.movingStageCount)))
         ;
 
         motor.getConfigurator().apply(motorConfig);

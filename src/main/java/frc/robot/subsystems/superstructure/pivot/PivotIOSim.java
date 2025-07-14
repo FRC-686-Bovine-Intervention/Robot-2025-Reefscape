@@ -11,9 +11,9 @@ import frc.robot.constants.RobotConstants;
 
 public class PivotIOSim extends PivotIOFalcon {
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(
-        LinearSystemId.identifyPositionSystem(17, 5),
-        DCMotor.getFalcon500(2).withReduction(237.6),
-        PivotConstants.motorToMechanism.inverse().ratio(),
+        LinearSystemId.identifyPositionSystem(5, 2),
+        DCMotor.getFalcon500(2),
+        PivotConstants.motorToMechanism.reductionUnsigned(),
         1,
         PivotConstants.minAngle.in(Radians),
         PivotConstants.maxAngle.in(Radians),

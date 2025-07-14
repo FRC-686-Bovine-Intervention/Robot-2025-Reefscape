@@ -8,7 +8,6 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -21,7 +20,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.CurrentUnit;
-import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -44,7 +42,7 @@ public class Module {
     private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
     public final ModuleConstants config;
 
-    private static final LoggedTunableMeasure<DistanceUnit> wheelRadius = new LoggedTunableMeasure<>("Drive/Module/WheelRadius", DriveConstants.wheelRadius, Inches);
+    // private static final LoggedTunableMeasure<DistanceUnit> wheelRadius = new LoggedTunableMeasure<>("Drive/Module/WheelRadius", DriveConstants.wheelRadius, Inches);
     
     private Rotation2d angle = Rotation2d.kZero;
     private final MutAngle wheelAngularPosition = Radians.mutable(0);
@@ -76,10 +74,10 @@ public class Module {
         moduleState.angle = angle;
         modulePosition.angle = angle;
 
-        wheelAngularPosition.mut_replace(inputs.driveMotor.encoder.position.div(DriveConstants.driveWheelGearReduction));
-        wheelAngularVelocity.mut_replace(inputs.driveMotor.encoder.velocity.div(DriveConstants.driveWheelGearReduction));
-        wheelLinearPosition.mut_replace(wheelAngularPosition.in(Radians) * wheelRadius.in(Meters), Meters);
-        wheelLinearVelocity.mut_replace(wheelAngularVelocity.in(RadiansPerSecond) * wheelRadius.in(Meters), MetersPerSecond);
+        wheelAngularPosition.mut_replace(DriveConstants.driveGearRatio.applyUnsigned(inputs.driveMotor.encoder.position));
+        wheelAngularVelocity.mut_replace(DriveConstants.driveGearRatio.applyUnsigned(inputs.driveMotor.encoder.velocity));
+        wheelLinearPosition.mut_replace(DriveConstants.wheel.angleToDistance(wheelAngularPosition));
+        wheelLinearVelocity.mut_replace(DriveConstants.wheel.angularVelocityToLinearVelocity(wheelAngularVelocity));
 
         modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
         moduleState.speedMetersPerSecond = wheelLinearVelocity.in(MetersPerSecond);
@@ -99,7 +97,7 @@ public class Module {
 
         setpoint.speedMetersPerSecond *= turnSetpoint.minus(getAngle()).getCos();
 
-        double velocityRadPerSec = setpoint.speedMetersPerSecond / wheelRadius.in(Meters) * DriveConstants.driveWheelGearReduction;
+        double velocityRadPerSec = DriveConstants.driveGearRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
         io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec));
     }
 

@@ -1,12 +1,7 @@
 package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-
-import org.littletonrobotics.junction.Logger;
-
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
@@ -17,7 +12,7 @@ public class ElevatorIOSim extends ElevatorIOKraken {
     private final ElevatorSim elevatorSim = new ElevatorSim(
         8,
         2,
-        DCMotor.getKrakenX60(1).withReduction(16),
+        DCMotor.getKrakenX60(1).withReduction(ElevatorConstants.motorToMechanism.reductionUnsigned()),
         ElevatorConstants.minLengthPhysical.in(Meters),
         ElevatorConstants.stageExtension.in(Meters),
         false,
@@ -32,18 +27,13 @@ public class ElevatorIOSim extends ElevatorIOKraken {
         elevatorSim.setInputVoltage(-motorSimState.getMotorVoltage());
         elevatorSim.update(RobotConstants.rioUpdatePeriodSecs);
 
-        var position = Radians.of(elevatorSim.getPositionMeters() / ElevatorConstants.sprocketRadius.in(Meters));
-        var velocity = RadiansPerSecond.of(elevatorSim.getVelocityMetersPerSecond() / ElevatorConstants.sprocketRadius.in(Meters));
+        var sprocketPosition = ElevatorConstants.stage1LinearRelation.distanceToAngle(Meters.of(elevatorSim.getPositionMeters()));
+        var sprocketVelocity = ElevatorConstants.stage1LinearRelation.linearVelocityToAngularVelocity(MetersPerSecond.of(elevatorSim.getVelocityMetersPerSecond()));
 
-        cancoderSimState.setRawPosition(position.div(-ElevatorConstants.sensorToMechanism.ratio()));
-        cancoderSimState.setVelocity(velocity.div(-ElevatorConstants.sensorToMechanism.ratio()));
+        cancoderSimState.setRawPosition(ElevatorConstants.sensorToMechanism.inverse().applyUnsigned(sprocketPosition));
+        cancoderSimState.setVelocity(ElevatorConstants.sensorToMechanism.inverse().applyUnsigned(sprocketVelocity));
 
         motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        Logger.recordOutput("DEBUG/leftsimstate voltage", -motorSimState.getMotorVoltage());
-        Logger.recordOutput("DEBUG/sim position", position);
-        Logger.recordOutput("DEBUG/sim velocity", velocity);
-        Logger.recordOutput("DEBUG/ratio", -ElevatorConstants.sensorToMechanism.ratio());
 
         super.updateInputs(inputs);
     }

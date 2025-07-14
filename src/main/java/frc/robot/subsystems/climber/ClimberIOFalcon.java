@@ -96,7 +96,7 @@ public class ClimberIOFalcon implements ClimberIO {
         ;
 
         motorConfig.Feedback
-            .withSensorToMechanismRatio(-1.0/ClimberConstants.sensorToMechanismRatio.ratio())
+            .withSensorToMechanismRatio(ClimberConstants.sensorToMechanismRatio.reductionUnsigned())
         ;
 
         profileConsts.update(motorConfig.MotionMagic);

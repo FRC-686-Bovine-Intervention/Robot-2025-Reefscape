@@ -23,12 +23,12 @@ public class WristConstants {
     public static final Angle maxAngle = Degrees.of(90);
     
     public static final GearRatio motorToSensor = new GearRatio()
-        .planetary(1.0/5.0)
-        .planetary(1.0/4.0)
+        .planetary(5)
+        .planetary(4)
     ;
     public static final GearRatio sensorToMechanism = new GearRatio()
         .sprocket(20)
         .sprocket(32)
     ;
-    public static final GearRatio motorToMechanism = motorToSensor.concat(sensorToMechanism);
+    public static final GearRatio motorToMechanism = motorToSensor.then(sensorToMechanism);
 }

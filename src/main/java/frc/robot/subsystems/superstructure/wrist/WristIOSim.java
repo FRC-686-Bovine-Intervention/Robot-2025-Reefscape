@@ -11,9 +11,9 @@ import frc.robot.constants.RobotConstants;
 
 public class WristIOSim extends WristIOKraken {
     private final SingleJointedArmSim wristSim = new SingleJointedArmSim(
-        LinearSystemId.identifyPositionSystem(5, 1),
-        DCMotor.getKrakenX60(1).withReduction(32),
-        WristConstants.motorToMechanism.ratio(),
+        LinearSystemId.identifyPositionSystem(5, 5),
+        DCMotor.getKrakenX60(1),
+        WristConstants.motorToMechanism.reductionUnsigned(),
         0.2,
         WristConstants.minAngle.in(Radians),
         WristConstants.maxAngle.in(Radians),
@@ -32,8 +32,8 @@ public class WristIOSim extends WristIOKraken {
         var position = Radians.of(wristSim.getAngleRads());
         var velocity = RadiansPerSecond.of(wristSim.getVelocityRadPerSec());
 
-        cancoderSimState.setRawPosition(position.div(WristConstants.sensorToMechanism.ratio()).unaryMinus());
-        cancoderSimState.setVelocity(velocity.div(WristConstants.sensorToMechanism.ratio()).unaryMinus());
+        cancoderSimState.setRawPosition(WristConstants.sensorToMechanism.applyUnsigned(position));
+        cancoderSimState.setVelocity(WristConstants.sensorToMechanism.applyUnsigned(velocity));
 
         motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 

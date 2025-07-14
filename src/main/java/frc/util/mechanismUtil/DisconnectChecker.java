@@ -27,7 +27,7 @@ public class DisconnectChecker {
         update(encoder1.position, encoder1.velocity, encoder2.position, encoder2.velocity);
     }
     public void update(Angle position1, AngularVelocity velocity1, Angle position2, AngularVelocity velocity2) {
-        var positionError = new Rotation2d(gearRatio.apply(position1)).minus(new Rotation2d(position2)).minus(rotorOffset);
+        var positionError = new Rotation2d(gearRatio.applySigned(position1)).minus(new Rotation2d(position2)).minus(rotorOffset);
         var withinPositionTolerance = positionError.getCos() > positionTolerance.getCos();
         var velocityError = velocity1.minus(velocity2);
         var withinVelocityTolerance = velocityError.lte(velocityTolerance);

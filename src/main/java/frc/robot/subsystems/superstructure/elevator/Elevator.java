@@ -77,8 +77,8 @@ public class Elevator {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
 
-        length.mut_replace(ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.position.in(Radians))).times(ElevatorConstants.movingStageCount));
-        velocity.mut_replace(ElevatorConstants.sprocketRadius.times(-ElevatorConstants.sensorToMechanism.apply(inputs.encoder.velocity.in(RadiansPerSecond))).per(Second).times(ElevatorConstants.movingStageCount));
+        length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
+        velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));
         Logger.recordOutput("Superstructure/Elevator/Measured/Length", length);
         Logger.recordOutput("Superstructure/Elevator/Measured/Velocity", velocity);
 
@@ -122,8 +122,8 @@ public class Elevator {
         var ffout = feedforward.calculateWithVelocities(setpointState.velocity, newSetpointState.velocity);
         setpointState = newSetpointState;
         io.setPosition(
-            Radians.of(setpointState.position / ElevatorConstants.movingStageCount / ElevatorConstants.sprocketRadius.in(Meters)),
-            RadiansPerSecond.of(setpointState.velocity / ElevatorConstants.movingStageCount / ElevatorConstants.sprocketRadius.in(Meters)),
+            Radians.of(setpointState.position / ElevatorConstants.movingStageCount / ElevatorConstants.stage1LinearRelation.effectiveRadius().in(Meters)),
+            RadiansPerSecond.of(setpointState.velocity / ElevatorConstants.movingStageCount / ElevatorConstants.stage1LinearRelation.effectiveRadius().in(Meters)),
             Volts.of(ffout)
         );
         Logger.recordOutput("Superstructure/Elevator/Setpoint/Length", setpointState.position);

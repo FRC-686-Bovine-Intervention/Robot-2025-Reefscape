@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Distance;
 import frc.util.mechanismUtil.GearRatio;
+import frc.util.mechanismUtil.LinearRelation;
 
 public class ElevatorConstants {
     public static final Distance pivotOffset = Inches.zero();
@@ -38,7 +39,7 @@ public class ElevatorConstants {
 
     public static final int movingStageCount = 3;
     
-    public static final Distance sprocketRadius = Inches.of(1.273).div(2);
+    // public static final Distance sprocketRadius = Inches.of(1.273).div(2);
     // public static final Distance sprocketRadius = Inches.of(0.25).times(16).div(Math.PI*2);
 
     public static final Distance stageExtension = Inches.of(17);
@@ -49,12 +50,16 @@ public class ElevatorConstants {
     public static final Distance maxHeightPhysical = minHeightPhysical.plus(maxLengthPhysical);
 
     public static final GearRatio motorToMechanism = new GearRatio()
-        .planetary(1.0/4.0)
-        .planetary(1.0/4.0)
+        .planetary(4)
+        .planetary(4)
     ;
     public static final GearRatio sensorToMechanism = new GearRatio()
         .gear(90)
         .gear(18)
         .axle()
+    ;
+    public static final LinearRelation stage1LinearRelation = new GearRatio()
+        .sprocket(16)
+        .chain(Inches.of(0.25))
     ;
 }
