@@ -343,7 +343,7 @@ public class RobotContainer {
             .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.1).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
 

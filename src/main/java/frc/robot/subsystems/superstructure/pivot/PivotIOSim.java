@@ -33,8 +33,8 @@ public class PivotIOSim extends PivotIOFalcon {
         var position = Radians.of(pivotSim.getAngleRads());
         var velocity = RadiansPerSecond.of(pivotSim.getVelocityRadPerSec());
 
-        cancoderSimState.setRawPosition(position.unaryMinus());
-        cancoderSimState.setVelocity(velocity.unaryMinus());
+        cancoderSimState.setRawPosition(PivotConstants.sensorToMechanism.inverse().applyUnsigned(position.unaryMinus()));
+        cancoderSimState.setVelocity(PivotConstants.sensorToMechanism.inverse().applyUnsigned(velocity.unaryMinus()));
 
         leftSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
         rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());

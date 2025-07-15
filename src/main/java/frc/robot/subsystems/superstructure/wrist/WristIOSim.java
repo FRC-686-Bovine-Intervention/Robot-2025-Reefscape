@@ -32,8 +32,8 @@ public class WristIOSim extends WristIOKraken {
         var position = Radians.of(wristSim.getAngleRads());
         var velocity = RadiansPerSecond.of(wristSim.getVelocityRadPerSec());
 
-        cancoderSimState.setRawPosition(WristConstants.sensorToMechanism.applyUnsigned(position));
-        cancoderSimState.setVelocity(WristConstants.sensorToMechanism.applyUnsigned(velocity));
+        cancoderSimState.setRawPosition(WristConstants.sensorToMechanism.inverse().applyUnsigned(position.unaryMinus()));
+        cancoderSimState.setVelocity(WristConstants.sensorToMechanism.inverse().applyUnsigned(velocity.unaryMinus()));
 
         motorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 

@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 
@@ -34,6 +35,7 @@ import frc.robot.subsystems.superstructure.pivot.Pivot;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.superstructure.wrist.WristConstants;
+import frc.util.NeutralMode;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlippable;
@@ -67,7 +69,7 @@ public class Superstructure extends SubsystemBase {
                 (voltage) -> {
                     this.pivot.setVoltage(voltage);
                     this.elevator.setLengthGoal(ElevatorConstants.minLengthPhysical);
-                    this.wrist.setAngle(Degrees.zero());
+                    this.wrist.setAngleGoal(Degrees.zero());
                 },
                 (log) -> {
                     Logger.recordOutput("Superstructure/Pivot/SysID/Voltage", this.pivot.getVoltage());
@@ -93,9 +95,9 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setAngle(Degrees.of(90));
+                    this.pivot.setAngleGoal(Degrees.of(90));
                     this.elevator.setVoltage(voltage);
-                    this.wrist.setAngle(Degrees.zero());
+                    this.wrist.setAngleGoal(Degrees.zero());
                 },
                 (log) -> {
                     Logger.recordOutput("Superstructure/Elevator/SysID/Voltage", this.pivot.getVoltage());
@@ -121,7 +123,7 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setAngle(Degrees.of(90));
+                    this.pivot.setAngleGoal(Degrees.of(90));
                     this.elevator.setLengthGoal(ElevatorConstants.minLengthPhysical);
                     this.wrist.setVoltage(voltage);
                 },
@@ -176,6 +178,38 @@ public class Superstructure extends SubsystemBase {
                 elevator.setVoltage(elevatorVoltage.get().times(elevatorThrottle.getAsDouble()));
                 wrist.setVoltage(wristVoltage.get().times(wristThrottle.getAsDouble()));
             }
+            @Override
+            public void end(boolean interrupted) {
+                pivot.stop(Optional.empty());
+                elevator.stop(Optional.empty());
+                wrist.stop(Optional.empty());
+            }
+        };
+    }
+
+    public Command coast() {
+        var subsystem = this;
+        return new Command() {
+            {
+                addRequirements(subsystem);
+                setName("Coast");
+            }
+            @Override
+            public void initialize() {
+                pivot.stop(Optional.of(NeutralMode.Coast));
+                elevator.stop(Optional.of(NeutralMode.Coast));
+                wrist.stop(Optional.of(NeutralMode.Coast));
+            }
+            @Override
+            public void end(boolean interrupted) {
+                pivot.stop(Optional.empty());
+                elevator.stop(Optional.empty());
+                wrist.stop(Optional.empty());
+            }
+            @Override
+            public boolean runsWhenDisabled() {
+                return true;
+            }
         };
     }
 
@@ -188,9 +222,15 @@ public class Superstructure extends SubsystemBase {
             }
             @Override
             public void execute() {
-                pivot.setAngle(setpoint.pivotAngle);
+                pivot.setAngleGoal(setpoint.pivotAngle);
                 elevator.setLengthGoal(setpoint.elevatorLength);
-                wrist.setAngle(setpoint.wristAngle);
+                wrist.setAngleGoal(setpoint.wristAngle);
+            }
+            @Override
+            public void end(boolean interrupted) {
+                pivot.stop(Optional.empty());
+                elevator.stop(Optional.empty());
+                wrist.stop(Optional.empty());
             }
         };
     }
@@ -329,9 +369,9 @@ public class Superstructure extends SubsystemBase {
                 var pivotSetpoint = currentStep.targetState.pivotAngle;
                 var elevatorSetpoint = currentStep.targetState.elevatorLength;
                 var wristSetpoint = currentStep.targetState.wristAngle;
-                pivot.setAngle(pivotSetpoint);
+                pivot.setAngleGoal(pivotSetpoint);
                 elevator.setLengthGoal(elevatorSetpoint);
-                wrist.setAngle(wristSetpoint);
+                wrist.setAngleGoal(wristSetpoint);
                 Logger.recordOutput("Superstructure/Setpoint/Pivot Setpoint", pivotSetpoint);
                 Logger.recordOutput("Superstructure/Setpoint/Elevator Setpoint", elevatorSetpoint);
                 Logger.recordOutput("Superstructure/Setpoint/Wrist Setpoint", wristSetpoint);
@@ -339,7 +379,9 @@ public class Superstructure extends SubsystemBase {
             }
             @Override
             public void end(boolean interrupted) {
-                
+                pivot.stop(Optional.empty());
+                elevator.stop(Optional.empty());
+                wrist.stop(Optional.empty());
             }
             @Override
             public boolean isFinished() {

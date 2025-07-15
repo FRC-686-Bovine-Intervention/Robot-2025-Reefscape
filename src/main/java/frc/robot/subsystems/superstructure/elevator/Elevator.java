@@ -8,6 +8,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Optional;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -22,6 +24,7 @@ import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.constants.RobotConstants;
+import frc.util.NeutralMode;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -51,7 +54,7 @@ public class Elevator {
     );
 
     private TrapezoidProfile motionProfile = profileConsts.getTrapezoidProfile();
-    private State setpointState = new State();
+    private State setpointState = null;
     private final ElevatorFeedforward feedforward = new ElevatorFeedforward(0,0,0,0);
 
     private final MutDistance length = Meters.mutable(0);
@@ -66,11 +69,7 @@ public class Elevator {
         this.io = io;
 
         ffConsts.update(feedforward);
-        this.io.configPID(
-            pidConsts.getKP(),
-            pidConsts.getKI(),
-            pidConsts.getKD()
-        );
+        this.io.configPID(pidConsts.getConstants());
     }
 
     public void periodic() {
@@ -95,11 +94,7 @@ public class Elevator {
             ffConsts.update(feedforward);
         }
         if (pidConsts.hasChanged(hashCode())) {
-            io.configPID(
-                pidConsts.getKP(),
-                pidConsts.getKI(),
-                pidConsts.getKD()
-            );
+            io.configPID(pidConsts.getConstants());
         }
     }
 
@@ -114,9 +109,18 @@ public class Elevator {
     }
 
     public void setVoltage(Measure<VoltageUnit> voltage) {
+        this.setpointState = null;
         io.setVoltage(voltage);
     }
+    public void stop(Optional<NeutralMode> neutralMode) {
+        this.setpointState = null;
+        this.io.stop(neutralMode);
+    }
+    
     public void setLengthGoal(Measure<DistanceUnit> length) {
+        if (this.setpointState == null) {
+            this.setpointState = new State(this.getLength().in(Meters), this.getVelocity().in(MetersPerSecond));
+        }
         var goalState = new State(length.in(Meters), 0);
         var newSetpointState = motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, setpointState, goalState);
         var ffout = feedforward.calculateWithVelocities(setpointState.velocity, newSetpointState.velocity);

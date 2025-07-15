@@ -1,17 +1,17 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
+
+import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.CoastOut;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.StrictFollower;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -20,42 +20,22 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 
 public class PivotIOFalcon implements PivotIO {
     protected final TalonFX leftMotor = HardwareDevices.pivotLeftMotorID.talonFX();
     protected final TalonFX rightMotor = HardwareDevices.pivotRightMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.pivotEncoderID.cancoder();
 
-    private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
+    private final PositionVoltage positionRequest = new PositionVoltage(0);
 
-    private final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
-        "Pivot/Profile",
-        DegreesPerSecond.of(225),
-        DegreesPerSecondPerSecond.of(450)
-    );
-    private final LoggedTunableFF ffConsts = new LoggedTunableFF(
-        "Pivot/FF",
-        0,
-        0,
-        17,
-        0
-    );
-    private final LoggedTunablePID pidConsts = new LoggedTunablePID(
-        "Pivot/PID",
-        150,
-        0,
-        0
-    );
-
-    // Initial Configuration
     public PivotIOFalcon() {
         var encoderConfig = new CANcoderConfiguration();
 
@@ -82,14 +62,6 @@ public class PivotIOFalcon implements PivotIO {
             .withForwardSoftLimitEnable(true)
             .withForwardSoftLimitThreshold(PivotConstants.maxAngle)
         ;
-
-        profileConsts.update(motorConfig.MotionMagic);
-        ffConsts.update(motorConfig.Slot0);
-        pidConsts.update(motorConfig.Slot0);
-
-        profileConsts.hasChanged(hashCode());
-        ffConsts.hasChanged(hashCode());
-        pidConsts.hasChanged(hashCode());
 
         leftMotor.getConfigurator().apply(motorConfig);
 
@@ -127,55 +99,36 @@ public class PivotIOFalcon implements PivotIO {
         inputs.encoder.updateFrom(cancoder);
         inputs.leftMotor.updateFrom(leftMotor);
         inputs.rightMotor.updateFrom(rightMotor);
-
-        if (profileConsts.hasChanged(hashCode())) {
-            var config = new MotionMagicConfigs();
-            leftMotor.getConfigurator().refresh(config);
-            profileConsts.update(config);
-            leftMotor.getConfigurator().apply(config);
-        }
-        if (ffConsts.hasChanged(hashCode()) | pidConsts.hasChanged(hashCode())) {
-            var config = new Slot0Configs();
-            leftMotor.getConfigurator().refresh(config);
-            ffConsts.update(config);
-            pidConsts.update(config);
-            leftMotor.getConfigurator().apply(config);
-        }
-
-        // Logger.recordOutput("Superstructure/Pivot/Motor/posiion", leftMotor.getPosition().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Pivot/Motor/veloctiy", leftMotor.getVelocity().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Position", leftMotor.getClosedLoopReference().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Pivot/Motor/Profile/Velocity", leftMotor.getClosedLoopReferenceSlope().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Pivot/Motor/PID error", leftMotor.getClosedLoopError().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Pivot/Motor/Out", leftMotor.getClosedLoopOutput().getValueAsDouble());
     }
 
-    // Set Voltage
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
         leftMotor.setVoltage(voltage.in(Volts));
     }
 
-    // Set position based on profile
     @Override
-    public void setPosition(Measure<AngleUnit> position) {
-        leftMotor.setControl(positionRequest.withPosition(position.in(Rotations)));
+    public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
+        leftMotor.setControl(positionRequest
+            .withPosition(position.in(Rotations))
+            .withVelocity(velocity.in(RotationsPerSecond))
+            .withFeedForward(feedforward.in(Volts))
+        );
     }
     
     @Override
-    public void setFeedForward(Measure<VoltageUnit> feedForward) {
-        positionRequest.withFeedForward(feedForward.in(Volts));
+    public void stop(Optional<NeutralMode> neutralMode) {
+        leftMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
     }
 
-    private final CoastOut coastOut = new CoastOut();
     @Override
-    public void setCoastMode() {
-        leftMotor.setControl(coastOut);
-    }
-
-    // Immediately stop
-    @Override
-    public void stop() {
-        leftMotor.disable();
+    public void configPID(PIDConstants pidConstants) {
+        var leftConfig = new Slot0Configs();
+        var rightConfig = new Slot0Configs();
+        leftMotor.getConfigurator().refresh(leftConfig);
+        rightMotor.getConfigurator().refresh(rightConfig);
+        pidConstants.update(leftConfig);
+        pidConstants.update(rightConfig);
+        leftMotor.getConfigurator().apply(leftConfig);
+        rightMotor.getConfigurator().apply(rightConfig);
     }
 }

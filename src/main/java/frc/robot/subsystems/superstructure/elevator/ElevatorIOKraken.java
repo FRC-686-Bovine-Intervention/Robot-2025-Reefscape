@@ -4,10 +4,13 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Optional;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -22,6 +25,8 @@ import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 
 public class ElevatorIOKraken implements ElevatorIO {
     protected final TalonFX motor = HardwareDevices.elevatorMotorID.talonFX();
@@ -95,14 +100,15 @@ public class ElevatorIOKraken implements ElevatorIO {
     }
 
     @Override
-    public void configPID(double kP, double kI, double kD) {
+    public void stop(Optional<NeutralMode> neutralMode) {
+        motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+    }
+
+    @Override
+    public void configPID(PIDConstants pidConstants) {
         var config = new Slot0Configs();
         motor.getConfigurator().refresh(config);
-        config
-            .withKP(kP)
-            .withKI(kI)
-            .withKD(kD)
-        ;
+        pidConstants.update(config);
         motor.getConfigurator().apply(config);
     }
 }
