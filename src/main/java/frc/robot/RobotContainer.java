@@ -298,10 +298,7 @@ public class RobotContainer {
             // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
         ;
 
-        var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
-            driveJoystick,
-            () -> false
-        );
+        var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(driveJoystick);
 
         drive.translationSubsystem.setDefaultCommand(
             drive.translationSubsystem.run(() -> {

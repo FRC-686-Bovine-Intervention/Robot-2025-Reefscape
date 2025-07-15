@@ -7,7 +7,6 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -16,7 +15,6 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -110,7 +108,6 @@ public class Drive extends VirtualSubsystem {
             ModuleConstants config = DriveConstants.moduleConstants[i];
             System.out.println("[Init Drive] Instantiating Module " + config.name + " with Module IO: " + moduleIOs[i].getClass().getSimpleName());
             var module = new Module(moduleIOs[i], config);
-            module.setBrakeMode(false);
             module.periodic();
             modules[i] = module;
         }
@@ -300,7 +297,10 @@ public class Drive extends VirtualSubsystem {
 
     /** Stops the drive. */
     public void stop() {
-        Arrays.stream(modules).forEach(Module::stop);
+        Arrays.stream(modules).forEach((module) -> {
+            module.stopDrive(Optional.empty());
+            module.stopTurn(Optional.empty());
+        });
     }
 
     /**
@@ -316,12 +316,6 @@ public class Drive extends VirtualSubsystem {
                 DriveConstants.moduleConstants[i].moduleTranslation.getAngle()
             );
         });
-    }
-
-    public void setBrakeMode(boolean enabled) {
-        for (var module : modules) {
-            module.setBrakeMode(enabled);
-        }
     }
 
     /** Returns the maximum linear speed in meters per sec. */
@@ -523,14 +517,13 @@ public class Drive extends VirtualSubsystem {
             };
         }
 
-        public static Supplier<ChassisSpeeds> joystickSpectatorToFieldRelative(Joystick translationalJoystick, BooleanSupplier precisionSupplier) {
+        public static Supplier<ChassisSpeeds> joystickSpectatorToFieldRelative(Joystick translationalJoystick) {
             return () -> {
                 var fieldVec = Perspective.getCurrent().toField(
                     translationalJoystick.toVector()
                     .times(
                         DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble() * 
-                        (precisionSupplier.getAsBoolean() ? DriveConstants.precisionLinearMultiplier : 1)
+                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
                     )
                 );
                 return new ChassisSpeeds(

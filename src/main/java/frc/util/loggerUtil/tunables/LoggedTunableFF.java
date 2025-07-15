@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.SlotConfigs;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 public class LoggedTunableFF {
     private final LoggedTunableNumber kS;
@@ -25,51 +26,6 @@ public class LoggedTunableFF {
         return LoggedTunableNumber.hasChanged(hashCode, kS, kG, kV, kA);
     }
 
-    public void update(ArmFeedforward ff) {
-        ff.setKs(kS.get());
-        ff.setKg(kG.get());
-        ff.setKv(kV.get());
-        ff.setKa(kA.get());
-    }
-    public void update(ElevatorFeedforward ff) {
-        ff.setKs(kS.get());
-        ff.setKg(kG.get());
-        ff.setKv(kV.get());
-        ff.setKa(kA.get());
-    }
-
-    public void update(SlotConfigs ff) {
-        ff
-            .withKS(kS.get())
-            .withKG(kG.get())
-            .withKV(kV.get())
-            .withKA(kA.get())
-        ;
-    }
-    public void update(Slot0Configs ff) {
-        ff
-            .withKS(kS.get())
-            .withKG(kG.get())
-            .withKV(kV.get())
-            .withKA(kA.get())
-        ;
-    }
-    public void update(Slot1Configs ff) {
-        ff
-            .withKS(kS.get())
-            .withKG(kG.get())
-            .withKV(kV.get())
-            .withKA(kA.get())
-        ;
-    }
-    public void update(Slot2Configs ff) {
-        ff
-            .withKS(kS.get())
-            .withKG(kG.get())
-            .withKV(kV.get())
-            .withKA(kA.get())
-        ;
-    }
     public double getKS() {
         return kS.get();
     }
@@ -81,5 +37,56 @@ public class LoggedTunableFF {
     }
     public double getKA() {
         return kA.get();
+    }
+
+    public void update(SimpleMotorFeedforward ff) {
+        ff.setKs(getKS());
+        ff.setKv(getKV());
+        ff.setKa(getKA());
+    }
+    public void update(ArmFeedforward ff) {
+        ff.setKs(getKS());
+        ff.setKg(getKG());
+        ff.setKv(getKV());
+        ff.setKa(getKA());
+    }
+    public void update(ElevatorFeedforward ff) {
+        ff.setKs(getKS());
+        ff.setKg(getKG());
+        ff.setKv(getKV());
+        ff.setKa(getKA());
+    }
+
+    public void update(SlotConfigs ff) {
+        ff
+            .withKS(getKS())
+            .withKG(getKG())
+            .withKV(getKV())
+            .withKA(getKA())
+        ;
+    }
+    public void update(Slot0Configs ff) {
+        ff
+            .withKS(getKS())
+            .withKG(getKG())
+            .withKV(getKV())
+            .withKA(getKA())
+        ;
+    }
+    public void update(Slot1Configs ff) {
+        ff
+            .withKS(getKS())
+            .withKG(getKG())
+            .withKV(getKV())
+            .withKA(getKA())
+        ;
+    }
+    public void update(Slot2Configs ff) {
+        ff
+            .withKS(getKS())
+            .withKG(getKG())
+            .withKV(getKV())
+            .withKA(getKA())
+        ;
     }
 }

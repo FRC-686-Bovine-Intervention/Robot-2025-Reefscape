@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
@@ -33,6 +34,10 @@ public class LoggedEncoder implements StructSerializable {
         this.velocity.mut_replace(canCoder.getVelocity().getValue());
     }
 
+    public void updateFrom(RelativeEncoder encoder) {
+        this.position.mut_replace(encoder.getPosition(), Rotations);
+        this.velocity.mut_replace(encoder.getVelocity(), RotationsPerSecond);
+    }
     public void updateFrom(AbsoluteEncoder encoder) {
         this.position.mut_replace(encoder.getPosition(), Rotations);
         this.velocity.mut_replace(encoder.getVelocity(), RotationsPerSecond);
