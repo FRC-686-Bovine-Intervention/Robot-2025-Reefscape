@@ -1,5 +1,7 @@
 package frc.robot.subsystems.superstructure.pivot;
 
+import java.util.stream.IntStream;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.AngleUnit;
@@ -24,6 +26,12 @@ public class Pivot {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Pivot", inputs);
+
+        var array = new boolean[64];
+        for (int i = 0; i < 64; i++) {
+            array[i] = (inputs.rightMotorFaults.faults & (1 << i)) != 0;
+        }
+        Logger.recordOutput("DEBVUAG/bits", array);
 
         mech.set(inputs.encoder.position);
 

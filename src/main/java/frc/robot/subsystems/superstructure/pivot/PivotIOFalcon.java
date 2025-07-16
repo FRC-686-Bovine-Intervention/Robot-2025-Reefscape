@@ -127,6 +127,9 @@ public class PivotIOFalcon implements PivotIO {
         inputs.encoder.updateFrom(cancoder);
         inputs.leftMotor.updateFrom(leftMotor);
         inputs.rightMotor.updateFrom(rightMotor);
+        inputs.leftMotorFaults.updateFrom(leftMotor);
+        inputs.rightMotorFaults.updateFrom(rightMotor);
+        // inputs.encoderFaults.updateFrom(cancoder);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
