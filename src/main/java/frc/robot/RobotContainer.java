@@ -343,6 +343,7 @@ public class RobotContainer {
             drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.1).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
+        new Trigger(DriverStation::isDisabled).and(() -> driveJoystick.magnitude() > 0).whileTrue(drive.coast());
 
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());

@@ -61,6 +61,7 @@ import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
+import frc.util.NeutralMode;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
@@ -275,7 +276,26 @@ public class Drive extends VirtualSubsystem {
 
 
 
-
+    public Command coast() {
+        return new Command() {
+            {
+                addRequirements(subsystems);
+                setName("Coast");
+            }
+            @Override
+            public void initialize() {
+                Arrays.stream(modules).forEach((module) -> module.stopDrive(Optional.of(NeutralMode.Coast)));
+            }
+            @Override
+            public void end(boolean interrupted) {
+                Arrays.stream(modules).forEach((module) -> module.stopDrive(Optional.empty()));
+            }
+            @Override
+            public boolean runsWhenDisabled() {
+                return true;
+            }
+        };
+    }
 
     public Command followBluePath(PathPlannerPath path) {
         return new FollowPathCommand(
