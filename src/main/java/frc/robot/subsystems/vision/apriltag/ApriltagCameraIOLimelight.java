@@ -1,5 +1,7 @@
 package frc.robot.subsystems.vision.apriltag;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import java.util.Arrays;
 
 import edu.wpi.first.math.geometry.Translation2d;
@@ -48,7 +50,9 @@ public class ApriltagCameraIOLimelight implements ApriltagCameraIO {
             GeomUtil.toTransform3d(limelightTarget.getTargetPose_CameraSpace()),
             GeomUtil.toTransform3d(limelightTarget.getTargetPose_CameraSpace()),
             0,
-            new Translation2d[0]
+            new Translation2d[0],
+            Degrees.of(limelightTarget.tx),
+            Degrees.of(limelightTarget.ty)
         );
     }
 }

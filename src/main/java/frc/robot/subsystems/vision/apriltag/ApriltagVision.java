@@ -15,16 +15,21 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants;
+import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera.ApriltagCameraResult;
+import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraTarget;
 import frc.util.VirtualSubsystem;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class ApriltagVision extends VirtualSubsystem {
     private final ApriltagCamera[] cameras;
+    private final ObjectiveTracker objectiveTracker;
 
     private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
     private static final LoggedTunableMeasure<AngleUnit> gyroTolerance = new LoggedTunableMeasure<>("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees.of(10));
@@ -33,9 +38,10 @@ public class ApriltagVision extends VirtualSubsystem {
 
     private AprilTagResultPose robotPose = new AprilTagResultPose(Pose2d.kZero, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
     
-    public ApriltagVision(ApriltagCamera... cameras) {
+    public ApriltagVision(ObjectiveTracker objectiveTracker, ApriltagCamera... cameras) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");
         this.cameras = cameras;
+        this.objectiveTracker = objectiveTracker;
         Logger.recordOutput("Field/Tag Poses", FieldConstants.apriltagLayout.getTags().stream().map((tag) -> tag.pose).toArray(Pose3d[]::new));
         Logger.recordOutput("Field/Tag IDs", FieldConstants.apriltagLayout.getTags().stream().mapToInt((tag) -> tag.ID).toArray());
     }
@@ -78,8 +84,59 @@ public class ApriltagVision extends VirtualSubsystem {
                 // final because averageTagDist mapToDouble needs it
                 final Pose3d cameraPose3d;
                 final Pose3d robotPose3d;
+                final Pose3d robotPose3dReefObjective;
+                final Pose3d cameraPose3dReefObjective;
                 var useVisionRotation = false;
     
+                
+                if(objectiveTracker.getCurrentObjective().isPresent() && objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective) {
+                    ApriltagCameraTarget currentObjectiveTarget = findContainedTag(frame.targets, /*currentObjective.tagID */ 0);
+                    if(currentObjectiveTarget != null){
+                        var tagPose = FieldConstants.apriltagLayout.getTagPose(currentObjectiveTarget.tagID).get();
+                        var cameraMountAngleY = result.camMeta.mount.getRobotRelative().getRotation().getMeasureY();
+                        var cameraMountAngleZ = result.camMeta.mount.getFieldRelative().getRotation().getMeasureZ();
+                        var tagTYtoRobot = cameraMountAngleY.plus(currentObjectiveTarget.ty);
+                        var cameraDistanceToTarget = currentObjectiveTarget.bestCameraToTag.getTranslation().getNorm(); //meters
+                        var cameraDistanceHorizontalToTarget = Math.cos(tagTYtoRobot.in(Radians)) * cameraDistanceToTarget;
+                        var cameraAngleToTarget = tagPose.getRotation().getMeasureZ().minus(Degrees.of(180)).minus(cameraMountAngleZ);
+                        var oppositeAngle = cameraAngleToTarget.plus(currentObjectiveTarget.tx);
+                        var cameraToTag = new Transform3d(
+                            new Translation3d(
+                                Meters.of(cameraDistanceHorizontalToTarget * Math.cos(oppositeAngle.in(Radians))),
+                                Meters.of(-cameraDistanceHorizontalToTarget * Math.sin(oppositeAngle.in(Radians))),
+                                result.camMeta.mount.getRobotRelative().getTranslation().getMeasureZ()
+                            ),
+                            new Rotation3d(
+                                result.camMeta.mount.getRobotRelative().getRotation().getMeasureX(),
+                                result.camMeta.mount.getRobotRelative().getRotation().getMeasureY(),
+                                cameraMountAngleZ
+                            )
+                        );
+                        var cameraPose = tagPose.transformBy(cameraToTag.inverse());
+                        var robotPose = cameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
+                        cameraPose3dReefObjective = cameraPose;
+                        robotPose3dReefObjective = robotPose;
+                        Logger.recordOutput(loggingKey + "/Reef Objective Tag Seen", true);
+                        var robotPose2d = robotPose3dReefObjective.toPose2d();
+                        Logger.recordOutput(loggingKey + "/Poses/Robot2dReefObjective", robotPose2d);
+                        Logger.recordOutput(loggingKey + "/Poses/Camera3dReefObjective", cameraPose3dReefObjective);
+                        RobotState.getInstance().updateReefPose(result.camMeta.cameraId, robotPose2d);
+                    } else {
+                        cameraPose3dReefObjective = null;
+                        robotPose3dReefObjective = null;
+                        Logger.recordOutput(loggingKey + "/Poses/Robot2dReefObjective", robotPose3dReefObjective);
+                        Logger.recordOutput(loggingKey + "/Poses/Camera3dReefObjective", cameraPose3dReefObjective);
+                        Logger.recordOutput(loggingKey + "/Reef Objective Tag Seen", false);
+                        RobotState.getInstance().updateReefPose(result.camMeta.cameraId, null);
+                    }
+                } else {
+                    cameraPose3dReefObjective = null;
+                    robotPose3dReefObjective = null;
+                    Logger.recordOutput(loggingKey + "/Poses/Robot2dReefObjective", robotPose3dReefObjective);
+                    Logger.recordOutput(loggingKey + "/Poses/Camera3dReefObjective", cameraPose3dReefObjective);
+                    Logger.recordOutput(loggingKey + "/Reef Objective Tag Seen", false);
+                    RobotState.getInstance().updateReefPose(result.camMeta.cameraId, null);
+                }
                 if (frame.targets.length >= 2) {
                     cameraPose3d = frame.estimatedCameraPose;
                     robotPose3d = cameraPose3d.transformBy(result.camMeta.mount.getRobotRelative().inverse());
@@ -196,6 +253,15 @@ public class ApriltagVision extends VirtualSubsystem {
 
     public AprilTagResultPose getPose() {
         return robotPose;
+    }
+
+    private ApriltagCameraTarget findContainedTag(ApriltagCameraTarget[] targets, int tagID) {
+        for (var target : targets) {
+            if (target.tagID == tagID) {
+                return target;
+            }
+        }
+        return null;
     }
 
     public static record AprilTagResultPose(

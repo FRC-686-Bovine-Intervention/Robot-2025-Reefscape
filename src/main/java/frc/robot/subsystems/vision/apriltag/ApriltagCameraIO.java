@@ -1,11 +1,16 @@
 package frc.robot.subsystems.vision.apriltag;
 
+import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Degrees;
+
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Angle;
 
 public interface ApriltagCameraIO {
 
@@ -55,7 +60,9 @@ public interface ApriltagCameraIO {
                         targetTable.get("BestCameraToTag", Transform3d.kZero),
                         targetTable.get("AltCameraToTag", Transform3d.kZero),
                         targetTable.get("PoseAmbiguity", -1),
-                        targetTable.get("Corners", new Translation2d[0])
+                        targetTable.get("Corners", new Translation2d[0]),
+                        targetTable.get("tx", Degrees.of(0)),
+                        targetTable.get("ty", Degrees.of(0))
                     );
                 }
                 frames[frameI] = new ApriltagCameraFrame(
@@ -87,13 +94,17 @@ public interface ApriltagCameraIO {
         public final Transform3d altCameraToTag;
         public final double poseAmbiguity;
         public final Translation2d[] corners;
+        public final Angle tx;
+        public final Angle ty;
 
-        public ApriltagCameraTarget(int tagID, Transform3d bestCameraToTag, Transform3d altCameraToTag, double poseAmbiguity, Translation2d[] corners) {
+        public ApriltagCameraTarget(int tagID, Transform3d bestCameraToTag, Transform3d altCameraToTag, double poseAmbiguity, Translation2d[] corners, Angle tx, Angle ty) {
             this.tagID = tagID;
             this.bestCameraToTag = bestCameraToTag;
             this.altCameraToTag = altCameraToTag;
             this.poseAmbiguity = poseAmbiguity;
             this.corners = corners;
+            this.tx = tx;
+            this.ty = ty;
         }
 
         // public static final ApriltagCameraTargetStruct struct = new ApriltagCameraTargetStruct();

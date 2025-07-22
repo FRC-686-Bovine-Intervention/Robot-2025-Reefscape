@@ -136,7 +136,9 @@ public class RobotContainer {
                 );
                 intake = new Intake(new IntakeIOFalcon());
                 climber = new Climber(new ClimberIOFalcon());
+                objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
                 apriltagVision = new ApriltagVision(
+                    objectiveTracker,
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
                         new ApriltagCameraIOPhotonVision(ApriltagVisionConstants.frontLeftApriltagCamera),
@@ -159,7 +161,6 @@ public class RobotContainer {
                     )
                 );
                 questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S(), Leds.getInstance().questNavConnection);
-                objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
             break;
             case SIM:
                 drive = new Drive(
@@ -176,7 +177,9 @@ public class RobotContainer {
                 intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
                 // intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
                 climber = new Climber(new ClimberIO() {});
+                objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
                 apriltagVision = new ApriltagVision(
+                    objectiveTracker,
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
                         new ApriltagCameraIO() {},
@@ -199,7 +202,6 @@ public class RobotContainer {
                     )
                 );
                 questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim(), Leds.getInstance().questNavConnection);
-                objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
             break;
             default:
             case REPLAY:
@@ -217,7 +219,9 @@ public class RobotContainer {
                 );
                 intake = new Intake(new IntakeIO() {});
                 climber = new Climber(new ClimberIO() {});
+                objectiveTracker = new ObjectiveTracker(new ReefTrackerIO() {});
                 apriltagVision = new ApriltagVision(
+                    objectiveTracker,
                     new ApriltagCamera(
                         ApriltagVisionConstants.frontLeftApriltagCamera,
                         new ApriltagCameraIO() {},
@@ -240,7 +244,6 @@ public class RobotContainer {
                     )
                 );
                 questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {}, Leds.getInstance().questNavConnection);
-                objectiveTracker = new ObjectiveTracker(new ReefTrackerIO() {});
             break;
         }
         manualOverrides = new ManualOverrides();

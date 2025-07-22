@@ -1,11 +1,14 @@
 package frc.robot.subsystems.vision.apriltag;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.constants.FieldConstants;
@@ -53,7 +56,9 @@ public class ApriltagCameraIOPhotonVision implements ApriltagCameraIO {
             photonTarget.getBestCameraToTarget(),
             photonTarget.getAlternateCameraToTarget(),
             photonTarget.getPoseAmbiguity(),
-            Iterator.of(photonTarget.getDetectedCorners()).map((corner) -> new Translation2d(corner.x, corner.y)).collect_array(Translation2d[]::new)
+            Iterator.of(photonTarget.getDetectedCorners()).map((corner) -> new Translation2d(corner.x, corner.y)).collect_array(Translation2d[]::new),
+            Degrees.of(photonTarget.getYaw()),
+            Degrees.of(photonTarget.getPitch())
         );
     }
 }
