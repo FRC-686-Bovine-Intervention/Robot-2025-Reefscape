@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.subsystems.climber.ClimberConstants;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
@@ -224,15 +225,13 @@ public final class FieldConstants {
             )
         );
 
-        public static final AllianceFlipped<ReefObject> reefs = reefCenter.map((center) -> new ReefObject(center));
-
         public static final class ReefObject {
             public final RackObject[] racks;
             public final StagedAlgaeObject[] stagedAlgae;
             public final PipeObject[] pipes;
             public final BranchObject[] branches;
 
-            private ReefObject(Pose2d reefCenter) {
+            private ReefObject(Pose2d reefCenter, Alliance alliance) {
                 var rackDelta = Rotation2d.fromDegrees(60);
                 this.racks = IntStream.range(0, 6)
                     .mapToObj((id) ->
@@ -242,6 +241,7 @@ public final class FieldConstants {
                                 reefCenter.getRotation().plus(rackDelta.times(id))
                             ),
                             id,
+                            alliance,
                             StagedAlgaeLevel.values()[id % 2]
                         )
                     )
@@ -272,6 +272,7 @@ public final class FieldConstants {
             );
 
             public final int id;
+            public final int apriltagID;
 
             public final Pose2d intersectionPose;
             public final RobotFlippedRobotPose centerRobotPose;
@@ -280,11 +281,20 @@ public final class FieldConstants {
             public final PipeObject[] pipes;
             public final StagedAlgaeObject stagedAlgae;
 
-            private RackObject(Pose2d intersectionPose, int id, StagedAlgaeLevel algaeLevel) {
+            private RackObject(Pose2d intersectionPose, int id, Alliance alliance, StagedAlgaeLevel algaeLevel) {
                 this.id = id;
                 this.intersectionPose = intersectionPose;
                 this.centerRobotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.intersectionPose.transformBy(robotTransform));
                 this.level1ScoringTotalState = RobotFlippedTotalState.combine(this.centerRobotPose, level1SuperstructureStates);
+
+                this.apriltagID = switch (this.id) {
+                    default -> alliance == Alliance.Red ? 7 : 18;
+                    case 1 -> alliance == Alliance.Red ? 8 : 17;
+                    case 2 -> alliance == Alliance.Red ? 9 : 22;
+                    case 3 -> alliance == Alliance.Red ? 10 : 21;
+                    case 4 -> alliance == Alliance.Red ? 11 : 20;
+                    case 5 -> alliance == Alliance.Red ? 6 : 19;
+                };
 
                 this.pipes = Arrays.stream(Side.values())
                     .map((side) -> new PipeObject(this, side))
@@ -508,12 +518,14 @@ public final class FieldConstants {
             }
         }
 
+        public static final AllianceFlipped<ReefObject> reefs;
         public static final RackConcept[] racks;
         public static final PipeConcept[] pipes;
         public static final BranchConcept[] branches;
         public static final StagedAlgaeConcept[] stagedAlgae;
 
         static {
+            reefs = AllianceFlipped.fromFunction((alliance) -> new ReefObject(reefCenter.get(alliance), alliance));
             racks = IntStream.range(0, 6)
                 .mapToObj((id) ->
                     new RackConcept(
