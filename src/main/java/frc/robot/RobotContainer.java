@@ -298,10 +298,7 @@ public class RobotContainer {
             // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
         ;
 
-        var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(
-            driveJoystick,
-            () -> false
-        );
+        var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(driveJoystick);
 
         drive.translationSubsystem.setDefaultCommand(
             drive.translationSubsystem.run(() -> {
@@ -343,9 +340,10 @@ public class RobotContainer {
             .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
+            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.1).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
+        new Trigger(DriverStation::isDisabled).and(() -> driveJoystick.magnitude() > 0).whileTrue(drive.coast());
 
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());
@@ -617,11 +615,13 @@ public class RobotContainer {
             }
         });
         
-        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
             .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
         SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+
+        SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
     }
 
     private void setPose(Pose2d pose) {
@@ -710,15 +710,16 @@ public class RobotContainer {
             }
         );
         
-        SmartDashboard.putData("Wheel Calibration", Commands.defer(() -> 
-            new WheelRadiusCalibration(
-                drive,
-                (int)WheelRadiusCalibration.MAX_SAMPLES.get(),
-                WheelRadiusCalibration.SAMPLE_PERIOD.get(),
-                WheelRadiusCalibration.VOLTAGE_RAMP_RATE.get(),
-                WheelRadiusCalibration.MAX_VOLTAGE.get()
-            ).withName("Wheel Calibration"),
-            Set.of(drive.translationSubsystem, drive.rotationalSubsystem))
+        SmartDashboard.putData("Wheel Calibration", Commands.defer(
+            () -> 
+                new WheelRadiusCalibration(
+                    drive,
+                    WheelRadiusCalibration.VOLTAGE_RAMP_RATE.get(),
+                    WheelRadiusCalibration.MAX_VOLTAGE.get()
+                )
+                .withName("Wheel Calibration"),
+                Set.of(drive.translationSubsystem, drive.rotationalSubsystem)
+            )
         );
     }
 }
