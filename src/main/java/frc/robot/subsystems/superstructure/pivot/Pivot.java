@@ -41,7 +41,7 @@ public class Pivot {
         "Superstructure/Pivot/FF",
         0,
         0,
-        17,
+        17 /2/Math.PI,
         0
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
@@ -77,8 +77,8 @@ public class Pivot {
 
         this.mech.set(this.getAngle());
 
-        Logger.recordOutput("Superstructure/Pivot/Measured/Angle", this.getAngle());
-        Logger.recordOutput("Superstructure/Pivot/Measured/Velocity", this.getVelocity());
+        Logger.recordOutput("Superstructure/Pivot/Angle/Measured", this.getAngle());
+        Logger.recordOutput("Superstructure/Pivot/Velocity/Measured", this.getVelocity());
 
         if (profileConsts.hasChanged(hashCode())) {
             this.motionProfile = profileConsts.getTrapezoidProfile();
@@ -117,15 +117,16 @@ public class Pivot {
         var goalState = new State(angle.in(Radians), 0);
         var newSetpointState = this.motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, this.setpointState, goalState);
         var ffout = this.feedforward.calculateWithVelocities(this.setpointState.position, this.setpointState.velocity, newSetpointState.velocity);
+        Logger.recordOutput("Superstructure/Pivot/FF/FF Out", ffout);
         this.setpointState = newSetpointState;
         this.io.setPosition(
             Radians.of(this.setpointState.position),
             RadiansPerSecond.of(this.setpointState.velocity),
             Volts.of(ffout)
         );
-        Logger.recordOutput("Superstructure/Pivot/Setpoint/Angle", this.setpointState.position);
-        Logger.recordOutput("Superstructure/Pivot/Setpoint/Velocity", this.setpointState.velocity);
-        Logger.recordOutput("Superstructure/Pivot/Goal/Angle", goalState.position);
-        Logger.recordOutput("Superstructure/Pivot/Goal/Velocity", goalState.velocity);
+        Logger.recordOutput("Superstructure/Pivot/Angle/Setpoint", this.setpointState.position);
+        Logger.recordOutput("Superstructure/Pivot/Velocity/Setpoint", this.setpointState.velocity);
+        Logger.recordOutput("Superstructure/Pivot/Angle/Goal", goalState.position);
+        Logger.recordOutput("Superstructure/Pivot/Velocity/Goal", goalState.velocity);
     }
 }

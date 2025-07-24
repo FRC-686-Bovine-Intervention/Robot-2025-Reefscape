@@ -42,8 +42,8 @@ public class Elevator {
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Superstructure/Elevator/FF",
         0.2,
-        0.3,
-        2,
+        0.3 /2/Math.PI,
+        2 /2/Math.PI,
         0
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(
@@ -68,7 +68,7 @@ public class Elevator {
         System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
         this.io = io;
 
-        ffConsts.update(feedforward);
+        ffConsts.update(this.feedforward);
         this.io.configPID(pidConsts.getConstants());
     }
 
@@ -76,22 +76,23 @@ public class Elevator {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
 
-        length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
-        velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));
-        Logger.recordOutput("Superstructure/Elevator/Measured/Length", length);
-        Logger.recordOutput("Superstructure/Elevator/Measured/Velocity", velocity);
+        this.length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
+        this.velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));
 
-        var stageDist = getLength().div(ElevatorConstants.movingStageCount);
+        Logger.recordOutput("Superstructure/Elevator/Length/Measured", this.getLength());
+        Logger.recordOutput("Superstructure/Elevator/Velocity/Measured", this.getVelocity());
 
-        stage2Mech.set(stageDist);
-        stage3Mech.set(stageDist);
-        stage4Mech.set(stageDist);
+        var stageDist = this.getLength().div(ElevatorConstants.movingStageCount);
+
+        this.stage2Mech.set(stageDist);
+        this.stage3Mech.set(stageDist);
+        this.stage4Mech.set(stageDist);
 
         if (profileConsts.hasChanged(hashCode())) {
-            motionProfile = profileConsts.getTrapezoidProfile();
+            this.motionProfile = profileConsts.getTrapezoidProfile();
         }
         if (ffConsts.hasChanged(hashCode())) {
-            ffConsts.update(feedforward);
+            ffConsts.update(this.feedforward);
         }
         if (pidConsts.hasChanged(hashCode())) {
             io.configPID(pidConsts.getConstants());
@@ -122,17 +123,17 @@ public class Elevator {
             this.setpointState = new State(this.getLength().in(Meters), this.getVelocity().in(MetersPerSecond));
         }
         var goalState = new State(length.in(Meters), 0);
-        var newSetpointState = motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, setpointState, goalState);
-        var ffout = feedforward.calculateWithVelocities(setpointState.velocity, newSetpointState.velocity);
-        setpointState = newSetpointState;
+        var newSetpointState = motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, this.setpointState, goalState);
+        var ffout = feedforward.calculateWithVelocities(this.setpointState.velocity, newSetpointState.velocity);
+        this.setpointState = newSetpointState;
         io.setPosition(
-            Radians.of(setpointState.position / ElevatorConstants.movingStageCount / ElevatorConstants.stage1LinearRelation.effectiveRadius().in(Meters)),
-            RadiansPerSecond.of(setpointState.velocity / ElevatorConstants.movingStageCount / ElevatorConstants.stage1LinearRelation.effectiveRadius().in(Meters)),
+            Radians.of(this.setpointState.position / ElevatorConstants.movingStageCount / ElevatorConstants.stage1LinearRelation.effectiveRadius().in(Meters)),
+            RadiansPerSecond.of(this.setpointState.velocity / ElevatorConstants.movingStageCount / ElevatorConstants.stage1LinearRelation.effectiveRadius().in(Meters)),
             Volts.of(ffout)
         );
-        Logger.recordOutput("Superstructure/Elevator/Setpoint/Length", setpointState.position);
-        Logger.recordOutput("Superstructure/Elevator/Setpoint/Velocity", setpointState.velocity);
-        Logger.recordOutput("Superstructure/Elevator/Goal/Length", goalState.position);
-        Logger.recordOutput("Superstructure/Elevator/Goal/Velocity", goalState.velocity);
+        Logger.recordOutput("Superstructure/Elevator/Length/Setpoint", this.setpointState.position);
+        Logger.recordOutput("Superstructure/Elevator/Velocity/Setpoint", this.setpointState.velocity);
+        Logger.recordOutput("Superstructure/Elevator/Length/Goal", goalState.position);
+        Logger.recordOutput("Superstructure/Elevator/Velocity/Goal", goalState.velocity);
     }
 }

@@ -41,7 +41,7 @@ public class Wrist {
         "Superstructure/Wrist/FF",
         0,
         0,
-        5,
+        5 /2/Math.PI,
         0
     );
     private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
@@ -77,8 +77,8 @@ public class Wrist {
 
         this.mech.set(this.getAngle());
 
-        Logger.recordOutput("Superstructure/Wrist/Measured/Angle", this.getAngle());
-        Logger.recordOutput("Superstructure/Wrist/Measured/Velocity", this.getVelocity());
+        Logger.recordOutput("Superstructure/Wrist/Angle/Measured", this.getAngle());
+        Logger.recordOutput("Superstructure/Wrist/Velocity/Measured", this.getVelocity());
 
         if (profileConsts.hasChanged(hashCode())) {
             this.motionProfile = profileConsts.getTrapezoidProfile();
@@ -123,9 +123,9 @@ public class Wrist {
             RadiansPerSecond.of(this.setpointState.velocity),
             Volts.of(ffout)
         );
-        Logger.recordOutput("Superstructure/Wrist/Setpoint/Angle", this.setpointState.position);
-        Logger.recordOutput("Superstructure/Wrist/Setpoint/Velocity", this.setpointState.velocity);
-        Logger.recordOutput("Superstructure/Wrist/Goal/Angle", goalState.position);
-        Logger.recordOutput("Superstructure/Wrist/Goal/Velocity", goalState.velocity);
+        Logger.recordOutput("Superstructure/Wrist/Angle/Setpoint", this.setpointState.position);
+        Logger.recordOutput("Superstructure/Wrist/Velocity/Setpoint", this.setpointState.velocity);
+        Logger.recordOutput("Superstructure/Wrist/Angle/Goal", goalState.position);
+        Logger.recordOutput("Superstructure/Wrist/Velocity/Goal", goalState.velocity);
     }
 }
