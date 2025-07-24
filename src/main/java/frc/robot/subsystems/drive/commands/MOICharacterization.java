@@ -60,7 +60,7 @@ public class MOICharacterization extends Command {
         var totalChassisTorqueNM = Arrays.stream(drive.modules)
             .mapToDouble((module) -> Math.abs(module.getDriveCurrent().in(Amps)))
             .map((moduleCurrentAmps) -> driveMotor.getTorque(moduleCurrentAmps))
-            .map((wheelTorqueNM) -> wheelTorqueNM / DriveConstants.wheelRadius.in(Meters))
+            .map((wheelTorqueNM) -> wheelTorqueNM / DriveConstants.wheel.effectiveRadius().in(Meters))
             .map((wheelForceN) -> wheelForceN * DriveConstants.driveBaseRadius.in(Meters))
             .reduce(0, (acc, ele) -> acc + ele)
         ;

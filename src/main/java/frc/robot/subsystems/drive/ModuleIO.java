@@ -1,39 +1,41 @@
 package frc.robot.subsystems.drive;
 
+import java.util.Optional;
+
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
 
 public interface ModuleIO {
     @AutoLog
     public static class ModuleIOInputs {
         public LoggedEncodedMotor driveMotor = new LoggedEncodedMotor();
-        public LoggedEncodedMotor turnMotor = new LoggedEncodedMotor();
+        public LoggedEncodedMotor azimuthMotor = new LoggedEncodedMotor();
+        public LoggedEncoder azimuthEncoder = new LoggedEncoder();
     }
 
     /** Updates the set of loggable inputs. */
     public default void updateInputs(ModuleIOInputs inputs) {}
 
     /** Run the drive motor at the specified voltage. */
-    public default void setDriveVoltage(Measure<VoltageUnit> volts) {}
-    public default void setDriveVelocity(Measure<AngularVelocityUnit> velocity) {}
+    public default void setDriveVoltage(Measure<VoltageUnit> voltage) {}
+    public default void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward) {}
 
     /** Run the turn motor at the specified voltage. */
-    public default void setTurnVoltage(Measure<VoltageUnit> volts) {}
-    public default void setTurnAngle(Measure<AngleUnit> angle) {}
+    public default void setAzimuthVoltage(Measure<VoltageUnit> volts) {}
+    public default void setAzimuthAngle(Measure<AngleUnit> angle) {}
 
-    /** Enable or disable brake mode on the drive motor. */
-    public default void setDriveBrakeMode(boolean enable) {}
+    public default void stopDrive(Optional<NeutralMode> neutralMode) {}
+    public default void stopAzimuth(Optional<NeutralMode> neutralMode) {}
 
-    /** Enable or disable brake mode on the turn motor. */
-    public default void setTurnBrakeMode(boolean enable) {}
-
-    public default void stop() {}
-
-    /** Zero drive encoders */
-    // public default void zeroEncoders() {}
+    public default void configDrivePID(PIDConstants pidConstants) {}
+    public default void configAzimuthPID(PIDConstants pidConstants) {}
 }
