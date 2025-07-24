@@ -15,6 +15,8 @@ import static edu.wpi.first.units.Units.Rotations;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.pathplanner.lib.config.RobotConfig;
 
@@ -123,9 +125,7 @@ public final class DriveConstants {
     /** Weight with battery and bumpers */
     public static final Mass weightKg = Pounds.of(58.0);
     
-    private static final double correctionVal = 314.0 / 320.55;
-    // public static final Distance wheelRadius = Inches.of(1.5 * correctionVal);
-    public static final LinearRelation wheel = LinearRelation.wheelRadius(Inches.of(1.5 * correctionVal));
+    public static final LinearRelation wheel = LinearRelation.wheelRadius(Inches.of(1.53));
 
     public static final GearRatio driveRatio = new GearRatio()
         .gear(14).gear(22).axle()
@@ -138,6 +138,8 @@ public final class DriveConstants {
     // // public static final double driveWheelGearReduction = 1.0 / (1.0/4.0);
     // public static final double driveWheelGearReduction = 5.08;
     // public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
+
+    public static final LinearVelocity maxModuleSpeed = wheel.angularVelocityToLinearVelocity(driveRatio.applyUnsigned(RadiansPerSecond.of(DCMotor.getFalcon500(1).freeSpeedRadPerSec)));
 
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
