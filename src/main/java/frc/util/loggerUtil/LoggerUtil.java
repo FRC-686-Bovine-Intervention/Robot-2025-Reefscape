@@ -2,6 +2,10 @@ package frc.util.loggerUtil;
 
 import java.util.Optional;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 public class LoggerUtil {
     
@@ -12,6 +16,21 @@ public class LoggerUtil {
             array[0] = optional.get();
         } else {
             array = generator.apply(0);
+        }
+        return array;
+    }
+
+    public static void toLogArray(LogTable table, LoggableInputs... array) {
+        table.put("length", array.length);
+        for (int i = 0; i < array.length; i++) {
+            array[i].toLog(table.getSubtable(Integer.toString(i)));
+        }
+    }
+    public static <T extends LoggableInputs> T[] fromLogArray(LogTable table, Supplier<T> constructor, IntFunction<T[]> arrayGenerator) {
+        var array = arrayGenerator.apply(table.get("length", 0));
+        for (int i = 0; i < array.length; i++) {
+            array[i] = constructor.get();
+            array[i].fromLog(table.getSubtable(Integer.toString(i)));
         }
         return array;
     }

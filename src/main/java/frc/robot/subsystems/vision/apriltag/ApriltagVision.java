@@ -11,50 +11,31 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
 import frc.robot.constants.FieldConstants;
-import frc.robot.subsystems.vision.apriltag.ApriltagCamera.ApriltagCameraResult;
-import frc.util.VirtualSubsystem;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
-public class ApriltagVision extends VirtualSubsystem {
-    private final ApriltagCamera[] cameras;
+public class ApriltagVision {
+    private final ApriltagPipeline pipelines[];
 
-    private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
     private static final LoggedTunableMeasure<AngleUnit> gyroTolerance = new LoggedTunableMeasure<>("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees.of(10));
     private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
     private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", Double.POSITIVE_INFINITY);
 
-    private AprilTagResultPose robotPose = new AprilTagResultPose(Pose2d.kZero, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
-    
-    public ApriltagVision(ApriltagCamera... cameras) {
+    public ApriltagVision(ApriltagPipeline... pipelines) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");
-        this.cameras = cameras;
-        Logger.recordOutput("Field/Tag Poses", FieldConstants.apriltagLayout.getTags().stream().map((tag) -> tag.pose).toArray(Pose3d[]::new));
-        Logger.recordOutput("Field/Tag IDs", FieldConstants.apriltagLayout.getTags().stream().mapToInt((tag) -> tag.ID).toArray());
+        this.pipelines = pipelines;
     }
 
-    @Override
     public void periodic() {
-        Logger.recordOutput("Apriltag Cam Poses", Arrays.stream(
-            new ApriltagVisionConstants.ApriltagCameraConstants[]{
-                ApriltagVisionConstants.frontLeftApriltagCamera,
-                ApriltagVisionConstants.frontRightApriltagCamera,
-                ApriltagVisionConstants.backLeftApriltagCamera,
-                ApriltagVisionConstants.backRightApriltagCamera
-            })
-            .map((constants) -> constants.mount.getFieldRelative())
-            .toArray(Pose3d[]::new)
-        );
-        var results = Arrays.stream(cameras).map(ApriltagCamera::periodic).toArray(ApriltagCameraResult[]::new);
-        for (var result : results) {
-            var loggingKey = "Vision/Apriltags/Results/" + result.camMeta.hardwareName;
+        for (var pipeline : this.pipelines) {
+            var result = pipeline.getInputs();
+            var loggingKey = "Vision/Apriltags/Results/" + pipeline.cameraConstants.hardwareName;
             var akitPose3d = new Pose3d[0];
             var akitTargetCorners = new Translation2d[0];
             for (var frame : result.frames) {
@@ -81,18 +62,22 @@ public class ApriltagVision extends VirtualSubsystem {
                 var useVisionRotation = false;
     
                 if (frame.targets.length >= 2) {
-                    cameraPose3d = frame.estimatedCameraPose;
-                    robotPose3d = cameraPose3d.transformBy(result.camMeta.mount.getRobotRelative().inverse());
+                    // TODO: multitag
+                    // cameraPose3d = frame.estimatedCameraPose;
+                    // robotPose3d = cameraPose3d.transformBy(pipeline.cameraConstants.mount.getRobotRelative().inverse());
+                    // useVisionRotation = true;
+                    cameraPose3d = null;
+                    robotPose3d = null;
                     useVisionRotation = true;
                 } else if (frame.targets.length == 1) {
                     var target = frame.targets[0];
                     var tagPose = FieldConstants.apriltagLayout.getTagPose(target.tagID).get();
                     var translationToTarget = target.bestCameraToTag.getTranslation();
-                    var cameraRotation = result.camMeta.mount.getFieldRelative().getRotation();
+                    var cameraRotation = pipeline.cameraConstants.mount.getFieldRelative().getRotation();
                     var tagRotationRelativeToCamera = tagPose.getRotation().minus(cameraRotation);
                     var cameraToTag = new Transform3d(translationToTarget, tagRotationRelativeToCamera);
                     var cameraPose = tagPose.transformBy(cameraToTag.inverse());
-                    var robotPose = cameraPose.transformBy(result.camMeta.mount.getRobotRelative().inverse());
+                    var robotPose = cameraPose.transformBy(pipeline.cameraConstants.mount.getRobotRelative().inverse());
 
                     cameraPose3d = cameraPose;
                     robotPose3d = robotPose;
@@ -166,14 +151,14 @@ public class ApriltagVision extends VirtualSubsystem {
                     xyStdDevCoef.get()
                     * averageTagDistance * averageTagDistance
                     / usableTags.length
-                    * result.camMeta.cameraStdCoef
+                    * pipeline.cameraConstants.cameraStdCoef
                 ;
                 double thetaStdDev =
                     (useVisionRotation) ? (
                         thetaStdDevCoef.get()
                         * averageTagDistance * averageTagDistance
                         / usableTags.length
-                        * result.camMeta.cameraStdCoef
+                        * pipeline.cameraConstants.cameraStdCoef
                     ) : (
                         Double.POSITIVE_INFINITY
                     )
@@ -187,94 +172,10 @@ public class ApriltagVision extends VirtualSubsystem {
                     frame.timestamp
                 );
 
-                robotPose = new AprilTagResultPose(robotPose2d, xyStdDev, thetaStdDev);
+                // robotPose = new AprilTagResultPose(robotPose2d, xyStdDev, thetaStdDev);
             }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
         }
     }
-
-    public AprilTagResultPose getPose() {
-        return robotPose;
-    }
-
-    public static record AprilTagResultPose(
-        Pose2d robotPose,
-        double xyStdDev,
-        double thetaStdDev
-    ) {}
-
-    // public static record ApriltagResultTests(
-    //     boolean inField,
-    //     boolean closeToFloor
-    // ) implements StructSerializable {
-        
-    //     public static ApriltagResultTests runTests(ApriltagCameraResult result) {
-    //         var inField = false;
-    //         var closeToFloor = false;
-    //         return new ApriltagResultTests(
-    //             inField,
-    //             closeToFloor
-    //         );
-    //     }
-
-    //     public boolean allGood() {
-    //         return inField && closeToFloor;
-    //     }
-
-    //     public static final ApriltagResultTestsStruct struct = new ApriltagResultTestsStruct();
-    //     public static class ApriltagResultTestsStruct implements Struct<ApriltagResultTests> {
-    //         @Override
-    //         public Class<ApriltagResultTests> getTypeClass() {
-    //             return ApriltagResultTests.class;
-    //         }
-
-    //         @Override
-    //         public String getTypeName() {
-    //             return "ApriltagResultTests";
-    //         }
-
-    //         @Override
-    //         public int getSize() {
-    //             return kSizeInt8 * 1;
-    //         }
-
-    //         @Override
-    //         public String getSchema() {
-    //             return "boolean inField;boolean closeToFloor";
-    //         }
-
-    //         @Override
-    //         public ApriltagResultTests unpack(ByteBuffer bb) {
-    //             // for (boolean b : new boolean[]{
-    //             //     value.inField,
-    //             //     value.closeToFloor
-    //             // }) {
-    //             //     val <<= 1;
-    //             //     if (b) {
-    //             //         val |= 1;
-    //             //     }
-    //             // }
-    //             // return new ApriltagResultTests(
-    //             //     bb.get
-    //             // );
-    //             return new ApriltagResultTests(false, false);
-    //         }
-
-    //         @Override
-    //         public void pack(ByteBuffer bb, ApriltagResultTests value) {
-    //             byte val = 0;
-    //             for (boolean b : new boolean[]{
-    //                 value.inField,
-    //                 value.closeToFloor
-    //             }) {
-    //                 val <<= 1;
-    //                 if (b) {
-    //                     val |= 1;
-    //                 }
-    //             }
-    //             bb.put(val);
-    //         }
-    //     }
-    // }
 }
