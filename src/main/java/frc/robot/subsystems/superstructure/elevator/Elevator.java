@@ -36,8 +36,8 @@ public class Elevator {
 
     private final LoggedTunableLinearProfile profileConsts = new LoggedTunableLinearProfile(
         "Superstructure/Elevator/Profile",
-        InchesPerSecond.of(20),
-        InchesPerSecond.per(Second).of(60)
+        InchesPerSecond.of(80),
+        InchesPerSecond.per(Second).of(240)
     );
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Superstructure/Elevator/FF",
