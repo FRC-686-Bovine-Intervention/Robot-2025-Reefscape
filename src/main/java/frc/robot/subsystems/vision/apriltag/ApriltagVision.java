@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
@@ -19,6 +21,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
+import frc.robot.RobotState.TxTyObservation;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
 import frc.robot.subsystems.vision.apriltag.ApriltagCamera.ApriltagCameraResult;
@@ -29,7 +32,6 @@ import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class ApriltagVision extends VirtualSubsystem {
     private final ApriltagCamera[] cameras;
-    private final ObjectiveTracker objectiveTracker;
 
     private static final LoggedTunableNumber ambiguityThreshold = new LoggedTunableNumber("Vision/Apriltags/Filtering/Ambiguity Threshold", 0.4);
     private static final LoggedTunableMeasure<AngleUnit> gyroTolerance = new LoggedTunableMeasure<>("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees.of(10));
@@ -38,10 +40,9 @@ public class ApriltagVision extends VirtualSubsystem {
 
     private AprilTagResultPose robotPose = new AprilTagResultPose(Pose2d.kZero, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY); 
     
-    public ApriltagVision(ObjectiveTracker objectiveTracker, ApriltagCamera... cameras) {
+    public ApriltagVision(ApriltagCamera... cameras) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");
         this.cameras = cameras;
-        this.objectiveTracker = objectiveTracker;
         Logger.recordOutput("Field/Tag Poses", FieldConstants.apriltagLayout.getTags().stream().map((tag) -> tag.pose).toArray(Pose3d[]::new));
         Logger.recordOutput("Field/Tag IDs", FieldConstants.apriltagLayout.getTags().stream().mapToInt((tag) -> tag.ID).toArray());
     }
@@ -59,10 +60,12 @@ public class ApriltagVision extends VirtualSubsystem {
             .toArray(Pose3d[]::new)
         );
         var results = Arrays.stream(cameras).map(ApriltagCamera::periodic).toArray(ApriltagCameraResult[]::new);
+        Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>();
         for (var result : results) {
             var loggingKey = "Vision/Apriltags/Results/" + result.camMeta.hardwareName;
             var akitPose3d = new Pose3d[0];
             var akitTargetCorners = new Translation2d[0];
+            Map<Integer, TxTyObservation> txTyObservations = new HashMap<>();
             for (var frame : result.frames) {
                 var usableTags = Arrays
                     .stream(frame.targets)
@@ -88,9 +91,17 @@ public class ApriltagVision extends VirtualSubsystem {
                 final Pose3d cameraPose3dReefObjective;
                 var useVisionRotation = false;
     
-                
-                if(objectiveTracker.getCurrentObjective().isPresent() && objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective) {
-                    ApriltagCameraTarget currentObjectiveTarget = findContainedTag(frame.targets, /*currentObjective.tagID */ 0);
+                for (int i = 0; i < frame.targets.length; i++) {
+                    var target = frame.targets[i];
+                    var tagID = target.tagID;
+                    var distance = Meters.of(target.bestCameraToTag.getTranslation().getNorm());
+                    txTyObservations.put(
+                        tagID,
+                        new TxTyObservation(tagID, result.camMeta.cameraId, target.tx, target.ty, distance, frame.timestamp)
+                    );
+                }
+                /*if (objectiveTracker.getCurrentObjective().isPresent() && objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective) {
+                    ApriltagCameraTarget currentObjectiveTarget = findContainedTag(frame.targets, /*currentObjective.tagID  0);
                     if(currentObjectiveTarget != null){
                         var tagPose = FieldConstants.apriltagLayout.getTagPose(currentObjectiveTarget.tagID).get();
                         var cameraMountAngleY = result.camMeta.mount.getRobotRelative().getRotation().getMeasureY();
@@ -136,7 +147,7 @@ public class ApriltagVision extends VirtualSubsystem {
                     Logger.recordOutput(loggingKey + "/Poses/Camera3dReefObjective", cameraPose3dReefObjective);
                     Logger.recordOutput(loggingKey + "/Reef Objective Tag Seen", false);
                     RobotState.getInstance().updateReefPose(result.camMeta.cameraId, null);
-                }
+                }*/
                 if (frame.targets.length >= 2) {
                     cameraPose3d = frame.estimatedCameraPose;
                     robotPose3d = cameraPose3d.transformBy(result.camMeta.mount.getRobotRelative().inverse());
@@ -246,9 +257,16 @@ public class ApriltagVision extends VirtualSubsystem {
 
                 robotPose = new AprilTagResultPose(robotPose2d, xyStdDev, thetaStdDev);
             }
+            for (var observation : txTyObservations.values()) {
+                if (!allTxTyObservations.containsKey(observation.tagId())
+                    || observation.distance().in(Meters) < allTxTyObservations.get(observation.tagId()).distance().in(Meters)) {
+                  allTxTyObservations.put(observation.tagId(), observation);
+                }
+            }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
         }
+        allTxTyObservations.values().stream().forEach(RobotState.getInstance()::addTxTyObservation);
     }
 
     public AprilTagResultPose getPose() {

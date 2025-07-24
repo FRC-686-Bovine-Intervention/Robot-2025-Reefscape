@@ -65,6 +65,15 @@ public class ApriltagVisionConstants {
         Meters.of(8)
     );
 
+    public static ApriltagCameraConstants findApriltagCameraConstantsByID(int id) {
+        return switch (id) {
+            default -> frontLeftApriltagCamera;
+            case 1 -> frontRightApriltagCamera;
+            case 2 -> backLeftApriltagCamera;
+            case 3 -> backRightApriltagCamera;
+        };
+    }
+
     // TODO: figure out vision stdDevs
     // public static final double singleTagAmbiguityCutoff = 0.05;
     // public static final double minimumStdDev = 0.5;
