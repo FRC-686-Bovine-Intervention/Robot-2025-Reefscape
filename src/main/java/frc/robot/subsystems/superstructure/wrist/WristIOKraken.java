@@ -50,7 +50,7 @@ public class WristIOKraken implements WristIO {
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
-            .withRemoteCANcoder(cancoder)
+            .withRemoteCANcoder(this.cancoder)
             .withRotorToSensorRatio(WristConstants.motorToSensor.reductionUnsigned())
             .withSensorToMechanismRatio(WristConstants.sensorToMechanism.reductionUnsigned())
         ;
@@ -102,7 +102,7 @@ public class WristIOKraken implements WristIO {
 
     @Override
     public void stop(Optional<NeutralMode> neutralMode) {
-        motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        this.motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
     }
 
     @Override

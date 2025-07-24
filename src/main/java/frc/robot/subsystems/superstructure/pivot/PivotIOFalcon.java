@@ -35,16 +35,17 @@ public class PivotIOFalcon implements PivotIO {
     protected final CANcoder cancoder = HardwareDevices.pivotEncoderID.cancoder();
 
     private final PositionVoltage positionRequest = new PositionVoltage(0);
+    private final StrictFollower followerRequest;
 
     public PivotIOFalcon() {
         var encoderConfig = new CANcoderConfiguration();
 
-        cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
+        this.cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
         encoderConfig.MagnetSensor
             .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
         ;
 
-        cancoder.getConfigurator().apply(encoderConfig);
+        this.cancoder.getConfigurator().apply(encoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
@@ -52,7 +53,7 @@ public class PivotIOFalcon implements PivotIO {
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
-            .withRemoteCANcoder(cancoder)
+            .withRemoteCANcoder(this.cancoder)
             .withRotorToSensorRatio(PivotConstants.motorToMechanism.then(PivotConstants.sensorToMechanism.inverse()).reductionUnsigned())
             .withSensorToMechanismRatio(PivotConstants.sensorToMechanism.reductionUnsigned())
         ;
@@ -63,72 +64,76 @@ public class PivotIOFalcon implements PivotIO {
             .withForwardSoftLimitThreshold(PivotConstants.maxAngle)
         ;
 
-        leftMotor.getConfigurator().apply(motorConfig);
+        this.leftMotor.getConfigurator().apply(motorConfig);
 
         motorConfig.MotorOutput
             .withInverted(InvertedValue.CounterClockwise_Positive)
         ;
-        rightMotor.getConfigurator().apply(motorConfig);
-        rightMotor.setControl(new StrictFollower(leftMotor.getDeviceID()));
+        this.rightMotor.getConfigurator().apply(motorConfig);
+        this.followerRequest = new StrictFollower(this.leftMotor.getDeviceID());
+        this.rightMotor.setControl(this.followerRequest);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             RobotConstants.rioUpdateFrequency,
-            leftMotor.getRotorPosition(),
-            leftMotor.getRotorVelocity(),
-            rightMotor.getRotorPosition(),
-            rightMotor.getRotorVelocity(),
-            cancoder.getPosition(),
-            cancoder.getVelocity()
+            this.leftMotor.getRotorPosition(),
+            this.leftMotor.getRotorVelocity(),
+            this.rightMotor.getRotorPosition(),
+            this.rightMotor.getRotorVelocity(),
+            this.cancoder.getPosition(),
+            this.cancoder.getVelocity()
         );
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency.div(2),
-            leftMotor.getMotorVoltage(),
-            leftMotor.getStatorCurrent(),
-            leftMotor.getDeviceTemp(),
-            rightMotor.getMotorVoltage(),
-            rightMotor.getStatorCurrent(),
-            rightMotor.getDeviceTemp()
+            this.leftMotor.getMotorVoltage(),
+            this.leftMotor.getStatorCurrent(),
+            this.leftMotor.getDeviceTemp(),
+            this.rightMotor.getMotorVoltage(),
+            this.rightMotor.getStatorCurrent(),
+            this.rightMotor.getDeviceTemp()
         );
-        leftMotor.optimizeBusUtilization();
-        rightMotor.optimizeBusUtilization();
-        cancoder.optimizeBusUtilization();
+        this.leftMotor.optimizeBusUtilization();
+        this.rightMotor.optimizeBusUtilization();
+        this.cancoder.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(PivotIOInputs inputs) {
-        inputs.encoder.updateFrom(cancoder);
-        inputs.leftMotor.updateFrom(leftMotor);
-        inputs.rightMotor.updateFrom(rightMotor);
+        inputs.encoder.updateFrom(this.cancoder);
+        inputs.leftMotor.updateFrom(this.leftMotor);
+        inputs.rightMotor.updateFrom(this.rightMotor);
     }
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
-        leftMotor.setVoltage(voltage.in(Volts));
+        this.leftMotor.setVoltage(voltage.in(Volts));
+        this.rightMotor.setControl(this.followerRequest);
     }
 
     @Override
     public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
-        leftMotor.setControl(positionRequest
+        this.leftMotor.setControl(this.positionRequest
             .withPosition(position.in(Rotations))
             .withVelocity(velocity.in(RotationsPerSecond))
             .withFeedForward(feedforward.in(Volts))
         );
+        this.rightMotor.setControl(this.followerRequest);
     }
     
     @Override
     public void stop(Optional<NeutralMode> neutralMode) {
-        leftMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        this.leftMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        this.rightMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
     }
 
     @Override
     public void configPID(PIDConstants pidConstants) {
         var leftConfig = new Slot0Configs();
         var rightConfig = new Slot0Configs();
-        leftMotor.getConfigurator().refresh(leftConfig);
-        rightMotor.getConfigurator().refresh(rightConfig);
+        this.leftMotor.getConfigurator().refresh(leftConfig);
+        this.rightMotor.getConfigurator().refresh(rightConfig);
         pidConstants.update(leftConfig);
         pidConstants.update(rightConfig);
-        leftMotor.getConfigurator().apply(leftConfig);
-        rightMotor.getConfigurator().apply(rightConfig);
+        this.leftMotor.getConfigurator().apply(leftConfig);
+        this.rightMotor.getConfigurator().apply(rightConfig);
     }
 }

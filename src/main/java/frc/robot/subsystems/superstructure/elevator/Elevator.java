@@ -42,8 +42,8 @@ public class Elevator {
     private final LoggedTunableFF ffConsts = new LoggedTunableFF(
         "Superstructure/Elevator/FF",
         0.2,
-        0.3 /2/Math.PI,
-        2 /2/Math.PI,
+        0.3,
+        2,
         0
     );
     private final LoggedTunablePID pidConsts = new LoggedTunablePID(

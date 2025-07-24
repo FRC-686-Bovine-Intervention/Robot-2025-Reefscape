@@ -36,12 +36,12 @@ public class ElevatorIOKraken implements ElevatorIO {
 
     public ElevatorIOKraken() {
         var encoderConfig = new CANcoderConfiguration();
-        cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
+        this.cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
         encoderConfig.MagnetSensor
             .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
         ;
 
-        cancoder.getConfigurator().apply(encoderConfig);
+        this.cancoder.getConfigurator().apply(encoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
@@ -49,7 +49,7 @@ public class ElevatorIOKraken implements ElevatorIO {
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
-            .withRemoteCANcoder(cancoder)
+            .withRemoteCANcoder(this.cancoder)
             .withRotorToSensorRatio(ElevatorConstants.motorToMechanism.then(ElevatorConstants.sensorToMechanism.inverse()).reductionUnsigned())
             .withSensorToMechanismRatio(ElevatorConstants.sensorToMechanism.reductionUnsigned())
         ;
@@ -60,39 +60,39 @@ public class ElevatorIOKraken implements ElevatorIO {
             .withForwardSoftLimitThreshold(ElevatorConstants.stage1LinearRelation.distanceToAngle(ElevatorConstants.maxLengthSoftware.div(ElevatorConstants.movingStageCount)))
         ;
 
-        motor.getConfigurator().apply(motorConfig);
+        this.motor.getConfigurator().apply(motorConfig);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             RobotConstants.rioUpdateFrequency,
-            motor.getRotorPosition(),
-            motor.getRotorVelocity(),
-            cancoder.getPosition(),
-            cancoder.getVelocity()
+            this.motor.getRotorPosition(),
+            this.motor.getRotorVelocity(),
+            this.cancoder.getPosition(),
+            this.cancoder.getVelocity()
         );
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
+            this.motor.getMotorVoltage(),
+            this.motor.getStatorCurrent(),
+            this.motor.getDeviceTemp()
         );
-        motor.optimizeBusUtilization();
-        cancoder.optimizeBusUtilization();
+        this.motor.optimizeBusUtilization();
+        this.cancoder.optimizeBusUtilization();
     }
     
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.encoder.updateFrom(cancoder);
-        inputs.motor.updateFrom(motor);
+        inputs.encoder.updateFrom(this.cancoder);
+        inputs.motor.updateFrom(this.motor);
     }
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
-        motor.setVoltage(voltage.in(Volts));
+        this.motor.setVoltage(voltage.in(Volts));
     }
 
     @Override
     public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
-        motor.setControl(positionRequest
+        this.motor.setControl(this.positionRequest
             .withPosition(position.in(Rotations))
             .withVelocity(velocity.in(RotationsPerSecond))
             .withFeedForward(feedforward.in(Volts))
@@ -101,14 +101,14 @@ public class ElevatorIOKraken implements ElevatorIO {
 
     @Override
     public void stop(Optional<NeutralMode> neutralMode) {
-        motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        this.motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
     }
 
     @Override
     public void configPID(PIDConstants pidConstants) {
         var config = new Slot0Configs();
-        motor.getConfigurator().refresh(config);
+        this.motor.getConfigurator().refresh(config);
         pidConstants.update(config);
-        motor.getConfigurator().apply(config);
+        this.motor.getConfigurator().apply(config);
     }
 }

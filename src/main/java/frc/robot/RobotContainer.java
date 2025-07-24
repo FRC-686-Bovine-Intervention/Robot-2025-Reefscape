@@ -617,11 +617,13 @@ public class RobotContainer {
             }
         });
         
-        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())));
+        driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
         new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)
             .onTrue(Commands.runOnce(() -> this.setPose(apriltagVision.getPose().robotPose())));
 
         SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
+
+        SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
     }
 
     private void setPose(Pose2d pose) {
