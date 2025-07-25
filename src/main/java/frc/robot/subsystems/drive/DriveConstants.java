@@ -152,7 +152,7 @@ public final class DriveConstants {
         () -> 1,
         new LoggedTunableNumber("Demo Constraints/Max Rotational Percentage", 0.25)
     );
-    public static final double driveJoystickDeadbandPercent = 0.2;
+    public static final double driveJoystickDeadbandPercent = 0.1;
     public static final double driveMaxJerk = 200.0;
 
     public static final double poseMoveTranslationkP = 1;

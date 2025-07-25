@@ -297,6 +297,11 @@ public class RobotContainer {
             .radialSensitivity(0.75)
             // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
         ;
+        var adjustJoystick = driveController.rightStick
+            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
+            .radialSensitivity(0.75)
+            // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
+        ;
 
         var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(driveJoystick);
 
@@ -314,33 +319,21 @@ public class RobotContainer {
                     fieldVec.get(1),
                     0
                 );
-                ChassisSpeeds robotSpeeds;
-                if (driveController.leftTrigger.getAsDouble() > 0.1 && driveController.rightTrigger.getAsDouble() > 0.1) {
-                    robotSpeeds = new ChassisSpeeds(
-                        Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                        0,
-                        0
-                    );
-                } else {
-                    robotSpeeds = new ChassisSpeeds(
-                        0,
-                        (driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                        0
-                    );
-                }
+                var adjustVec = adjustJoystick.toVector().times(DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond));
+                ChassisSpeeds robotSpeeds = new ChassisSpeeds(
+                    adjustVec.get(1),
+                    -adjustVec.get(0),
+                    0
+                );
                 if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getTargetDirection().isForward()).isEmpty()) {
-                    robotSpeeds = new ChassisSpeeds(
-                        -robotSpeeds.vxMetersPerSecond,
-                        robotSpeeds.vyMetersPerSecond,
-                        robotSpeeds.omegaRadiansPerSecond
-                    );
+                    robotSpeeds.vxMetersPerSecond *= -1;
                 }
                 drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, drive.getRotation()).plus(robotSpeeds));
             })
             .withName("Driver Control Field Relative")
         );
         drive.rotationalSubsystem.setDefaultCommand(
-            drive.rotationalSubsystem.spin(driveController.rightStick.x().smoothDeadband(0.1).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
+            drive.rotationalSubsystem.spin(driveController.leftTrigger.add(driveController.rightTrigger.invert()).smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)))
                 .withName("Robot spin")
         );
         new Trigger(DriverStation::isDisabled).and(() -> driveJoystick.magnitude() > 0).whileTrue(drive.coast());
