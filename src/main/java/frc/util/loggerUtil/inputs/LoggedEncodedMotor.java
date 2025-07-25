@@ -30,7 +30,7 @@ public class LoggedEncodedMotor implements StructSerializable {
     }
 
     public void updateFrom(SparkMax spark) {
-        encoder.updateFrom(spark.getAbsoluteEncoder());
+        encoder.updateFrom(spark.getEncoder());
         motor.updateFrom(spark);
     }
 

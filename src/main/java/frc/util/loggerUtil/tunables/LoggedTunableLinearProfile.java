@@ -16,32 +16,30 @@ import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
 
 public class LoggedTunableLinearProfile {
-    private final LoggedTunableMeasure<LinearVelocityUnit> kV;
-    private final LoggedTunableMeasure<LinearAccelerationUnit> kA;
+    private final LoggedTunableMeasure<LinearVelocityUnit> maxVelocity;
+    private final LoggedTunableMeasure<LinearAccelerationUnit> maxAcceleration;
 
-    public LoggedTunableLinearProfile(String key,
-        Measure<LinearVelocityUnit> kV, Measure<LinearAccelerationUnit> kA
-    ) {
-        this.kV = new LoggedTunableMeasure<>(key + "/kV", kV);
-        this.kA = new LoggedTunableMeasure<>(key + "/kA", kA);
+    public LoggedTunableLinearProfile(String key, Measure<LinearVelocityUnit> maxVelocity, Measure<LinearAccelerationUnit> maxAcceleration) {
+        this.maxVelocity = new LoggedTunableMeasure<>(key + "/Max Velocity", maxVelocity);
+        this.maxAcceleration = new LoggedTunableMeasure<>(key + "/Max Acceleration", maxAcceleration);
     }
 
     public boolean hasChanged(int hashCode) {
-        return LoggedTunableMeasure.hasChanged(hashCode, kV, kA);
+        return LoggedTunableMeasure.hasChanged(hashCode, maxVelocity, maxAcceleration);
     }
 
     public void update(MotionMagicConfigs motionMagicConfigs, Measure<DistanceUnit> radius) {
         motionMagicConfigs
-            .withMotionMagicCruiseVelocity(RadiansPerSecond.of(kV.get().div(radius).baseUnitMagnitude()))
-            .withMotionMagicAcceleration(RadiansPerSecondPerSecond.of(kA.get().div(radius).baseUnitMagnitude()))
+            .withMotionMagicCruiseVelocity(RadiansPerSecond.of(maxVelocity.get().div(radius).baseUnitMagnitude()))
+            .withMotionMagicAcceleration(RadiansPerSecondPerSecond.of(maxAcceleration.get().div(radius).baseUnitMagnitude()))
         ;
     }
 
     public TrapezoidProfile getTrapezoidProfile() {
         return new TrapezoidProfile(
             new Constraints(
-                kV.get().in(MetersPerSecond),
-                kA.get().in(MetersPerSecondPerSecond)
+                maxVelocity.get().in(MetersPerSecond),
+                maxAcceleration.get().in(MetersPerSecondPerSecond)
             )
         );
     }
@@ -49,8 +47,8 @@ public class LoggedTunableLinearProfile {
     public void update(ProfiledPIDController profiledPIDController) {
         profiledPIDController.setConstraints(
             new Constraints(
-                kV.get().in(MetersPerSecond),
-                kA.get().in(MetersPerSecondPerSecond)
+                maxVelocity.get().in(MetersPerSecond),
+                maxAcceleration.get().in(MetersPerSecondPerSecond)
             )
         );
     }
