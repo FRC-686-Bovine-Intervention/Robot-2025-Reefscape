@@ -27,7 +27,7 @@ public class ObjectPipeline implements Pipeline {
     }
 
     @Override
-    public void updateFromPhotonResults(List<PhotonPipelineResult> results) {
+    public void updateInputsFromPhotonResults(List<PhotonPipelineResult> results) {
         this.inputs.frames = results.stream()
             .map((result) -> {
                 var timestamp = result.getTimestampSeconds();
@@ -50,13 +50,13 @@ public class ObjectPipeline implements Pipeline {
     }
 
     @Override
-    public void updateFromLimelightResults(LimelightResults results) {
+    public void updateInputsFromLimelightResults(LimelightResults results) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'updateFromLimelightResults'");
     }
 
     @Override
-    public void clear() {
+    public void clearInputs() {
         this.inputs.frames = new ObjectFrame[0];
     }
 

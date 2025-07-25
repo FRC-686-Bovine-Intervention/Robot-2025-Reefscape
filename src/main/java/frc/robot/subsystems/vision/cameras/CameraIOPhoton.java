@@ -17,9 +17,9 @@ public class CameraIOPhoton implements CameraIO {
         var selectedPipeline = this.photonCam.getPipelineIndex();
         for (int i = 0; i < pipelines.length; i++) {
             if (i == selectedPipeline) {
-                pipelines[i].updateFromPhotonResults(this.photonCam.getAllUnreadResults());
+                pipelines[i].updateInputsFromPhotonResults(this.photonCam.getAllUnreadResults());
             } else {
-                pipelines[i].clear();
+                pipelines[i].clearInputs();
             }
         }
     }

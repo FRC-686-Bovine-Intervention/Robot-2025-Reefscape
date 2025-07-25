@@ -11,25 +11,30 @@ import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.subsystems.vision.Pipeline;
 import frc.robot.subsystems.vision.apriltag.ApriltagPipeline.ApriltagPipelineInputs.ApriltagFrame;
 import frc.robot.subsystems.vision.apriltag.ApriltagPipeline.ApriltagPipelineInputs.ApriltagTarget;
-import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
+import frc.robot.subsystems.vision.cameras.Camera;
 import frc.robot.subsystems.vision.cameras.LimelightHelpers.LimelightResults;
 import frc.util.loggerUtil.LoggerUtil;
 
 public class ApriltagPipeline implements Pipeline {
     private final ApriltagPipelineInputs inputs = new ApriltagPipelineInputs();
-    public final ApriltagCameraConstants cameraConstants;
+    public final double pipelineStdScale;
+    public Camera camera;
 
-    public ApriltagPipeline(ApriltagCameraConstants cameraConstants) {
-        this.cameraConstants = cameraConstants;
+    public ApriltagPipeline(double pipelineStdScale) {
+        this.pipelineStdScale = pipelineStdScale;
     }
 
     @Override
     public ApriltagPipelineInputs getInputs() {
         return this.inputs;
     }
+    @Override
+    public void setCamera(Camera camera) {
+        this.camera = camera;
+    }
 
     @Override
-    public void updateFromPhotonResults(List<PhotonPipelineResult> results) {
+    public void updateInputsFromPhotonResults(List<PhotonPipelineResult> results) {
         this.inputs.frames = results.stream()
             .map((result) -> {
                 var timestamp = result.getTimestampSeconds();
@@ -51,13 +56,13 @@ public class ApriltagPipeline implements Pipeline {
     }
 
     @Override
-    public void updateFromLimelightResults(LimelightResults results) {
+    public void updateInputsFromLimelightResults(LimelightResults results) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'updateFromLimelightResults'");
     }
 
     @Override
-    public void clear() {
+    public void clearInputs() {
         this.inputs.frames = new ApriltagFrame[0];
     }
 
