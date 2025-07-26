@@ -67,17 +67,16 @@ public class Module {
 
     private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
         "Drive/Module/Drive/PID",
-        0.025928*2*Math.PI,
-        0*2*Math.PI,
-        0*2*Math.PI
+        0.1,
+        0,
+        0
     );
     private static final LoggedTunableFF driveFFConsts = new LoggedTunableFF(
         "Drive/Module/Drive/FF",
-        // 0.059813*2*Math.PI,
         0,
-        0*2*Math.PI,
-        0.017472*2*Math.PI,
-        0.0015521*2*Math.PI
+        0,
+        2.2,
+        0
     );
     private static final LoggedTunablePID azimuthPIDConsts = new LoggedTunablePID(
         "Drive/Module/Azimuth/PID",
