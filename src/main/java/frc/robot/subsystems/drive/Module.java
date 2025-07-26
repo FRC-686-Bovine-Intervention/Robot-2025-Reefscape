@@ -142,8 +142,10 @@ public class Module {
 
         setpoint.speedMetersPerSecond *= turnSetpoint.minus(this.getAngle()).getCos();
 
-        double velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
-        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.zero());
+        var velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
+
+        var ffout = this.driveFeedforward.calculateWithVelocities(this.wheelLinearVelocity.in(MetersPerSecond), setpoint.speedMetersPerSecond);
+        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.of(ffout));
     }
 
     /**

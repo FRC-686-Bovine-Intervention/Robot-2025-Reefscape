@@ -245,8 +245,29 @@ public class Drive extends VirtualSubsystem {
 
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
         this.desiredRobotSpeeds = robotSpeeds;
-        Logger.recordOutput("Drive/Chassis Speeds/Setpoint", this.desiredRobotSpeeds);
-        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(this.desiredRobotSpeeds, rotationCorrection.get());
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Speed", this.desiredRobotSpeeds);
+
+        var desiredDelta = this.desiredRobotSpeeds.minus(this.robotMeasuredSpeeds);
+        var desiredAccel = desiredDelta.div(RobotConstants.rioUpdatePeriodSecs);
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Delta", desiredDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Accel", desiredAccel);
+
+        var maxDesiredModuleAccel = Math.hypot(desiredAccel.vxMetersPerSecond, desiredAccel.vyMetersPerSecond) + Math.abs(desiredAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
+        Logger.recordOutput("Drive/Chassis Speeds/Max Desired Module Accel", maxDesiredModuleAccel);
+
+        var accelLimit = 10;
+        var limitingFactor = accelLimit / Math.max(maxDesiredModuleAccel, accelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Limiting Factor", limitingFactor);
+        
+        var limitedAccel = desiredAccel.times(limitingFactor);
+        var limitedDelta = limitedAccel.times(RobotConstants.rioUpdatePeriodSecs);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Accel", limitedAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Delta", limitedDelta);
+        
+        var limitedSpeeds = this.robotMeasuredSpeeds.plus(limitedDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Speed", limitedSpeeds);
+
+        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(limitedSpeeds, rotationCorrection.get());
         this.setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, this.centerOfRotation);
         SwerveDriveKinematics.desaturateWheelSpeeds(this.setpointStates, DriveConstants.maxDriveSpeed);
         this.runSetpoints(this.setpointStates);
