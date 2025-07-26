@@ -9,6 +9,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
@@ -46,6 +47,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.units.LinearAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearAcceleration;
@@ -67,6 +69,7 @@ import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.geometry.GeomUtil;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.robotStructure.Root;
 
@@ -243,6 +246,7 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", this.setpointStates);
     }
 
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> accelLimittunable = new LoggedTunableMeasure<>("Drive/Accel Limit", MetersPerSecondPerSecond.of(10));
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
         this.desiredRobotSpeeds = robotSpeeds;
         Logger.recordOutput("Drive/Chassis Speeds/Desired Speed", this.desiredRobotSpeeds);
@@ -255,7 +259,7 @@ public class Drive extends VirtualSubsystem {
         var maxDesiredModuleAccel = Math.hypot(desiredAccel.vxMetersPerSecond, desiredAccel.vyMetersPerSecond) + Math.abs(desiredAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
         Logger.recordOutput("Drive/Chassis Speeds/Max Desired Module Accel", maxDesiredModuleAccel);
 
-        var accelLimit = 10;
+        var accelLimit = accelLimittunable.get().in(MetersPerSecondPerSecond);
         var limitingFactor = accelLimit / Math.max(maxDesiredModuleAccel, accelLimit);
         Logger.recordOutput("Drive/Chassis Speeds/Limiting Factor", limitingFactor);
         
