@@ -246,7 +246,8 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", this.setpointStates);
     }
 
-    private static final LoggedTunableMeasure<LinearAccelerationUnit> accelLimittunable = new LoggedTunableMeasure<>("Drive/Accel Limit", MetersPerSecondPerSecond.of(10));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> forwardAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Forward Accel Limit", MetersPerSecondPerSecond.of(50));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> linearAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Linear Accel Limit", MetersPerSecondPerSecond.of(10));
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
         this.desiredRobotSpeeds = robotSpeeds;
         Logger.recordOutput("Drive/Chassis Speeds/Desired Speed", this.desiredRobotSpeeds);
@@ -256,19 +257,32 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Chassis Speeds/Desired Delta", desiredDelta);
         Logger.recordOutput("Drive/Chassis Speeds/Desired Accel", desiredAccel);
 
+        // Forward Accel Limit
+        var maxMeasuredModuleSpeed = Math.hypot(this.robotMeasuredSpeeds.vxMetersPerSecond, this.robotMeasuredSpeeds.vyMetersPerSecond) + Math.abs(this.robotMeasuredSpeeds.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
         var maxDesiredModuleAccel = Math.hypot(desiredAccel.vxMetersPerSecond, desiredAccel.vyMetersPerSecond) + Math.abs(desiredAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
-        Logger.recordOutput("Drive/Chassis Speeds/Max Desired Module Accel", maxDesiredModuleAccel);
+        var forwardAccelLimit = (1 - (maxMeasuredModuleSpeed / DriveConstants.maxModuleSpeed.in(MetersPerSecond))) * forwardAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var forwardAccelLimitingFactor = forwardAccelLimit / Math.max(maxDesiredModuleAccel, forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Measured Module Speed", maxMeasuredModuleSpeed);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Desired Module Accel", maxDesiredModuleAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Forward Accel Limit", forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Limiting Factor", forwardAccelLimitingFactor);
 
-        var accelLimit = accelLimittunable.get().in(MetersPerSecondPerSecond);
-        var limitingFactor = accelLimit / Math.max(maxDesiredModuleAccel, accelLimit);
-        Logger.recordOutput("Drive/Chassis Speeds/Limiting Factor", limitingFactor);
-        
+        // Linear Accel Limit
+        var desiredLinearAccel = Math.hypot(desiredAccel.vxMetersPerSecond, desiredAccel.vyMetersPerSecond);
+        var linearAccelLimit = linearAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var linearAccelLimitingFactor = linearAccelLimit / Math.max(desiredLinearAccel, linearAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Linear Limit/Desired Linear Accel", desiredLinearAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Linear Limit/Linear Accel Limit", forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Linear Limit/Limiting Factor", forwardAccelLimitingFactor);
+
+
+        var limitingFactor = Math.min(forwardAccelLimit, linearAccelLimitingFactor);
         var limitedAccel = desiredAccel.times(limitingFactor);
         var limitedDelta = limitedAccel.times(RobotConstants.rioUpdatePeriodSecs);
+        var limitedSpeeds = this.robotMeasuredSpeeds.plus(limitedDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Limiting Factor", limitingFactor);
         Logger.recordOutput("Drive/Chassis Speeds/Limited Accel", limitedAccel);
         Logger.recordOutput("Drive/Chassis Speeds/Limited Delta", limitedDelta);
-        
-        var limitedSpeeds = this.robotMeasuredSpeeds.plus(limitedDelta);
         Logger.recordOutput("Drive/Chassis Speeds/Limited Speed", limitedSpeeds);
 
         ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(limitedSpeeds, rotationCorrection.get());
