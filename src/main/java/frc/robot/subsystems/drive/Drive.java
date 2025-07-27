@@ -246,8 +246,15 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", this.setpointStates);
     }
 
-    private static final LoggedTunableMeasure<LinearAccelerationUnit> forwardAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Forward Accel Limit", MetersPerSecondPerSecond.of(500));
-    private static final LoggedTunableMeasure<LinearAccelerationUnit> linearAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Linear Accel Limit", MetersPerSecondPerSecond.of(10));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> forwardAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Accel Limits/Forward Accel Limit", MetersPerSecondPerSecond.of(5000));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> skidAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Accel Limits/Skid Accel Limit", MetersPerSecondPerSecond.of(60));
+
+    public static final Supplier<TiltAccelerationLimits> normalTiltLimitTunable = TiltAccelerationLimits.getTunable("Drive/Accel Limits/Tilt Limits/Normal", new TiltAccelerationLimits(500, 500, 500, 500));
+    public static final Supplier<TiltAccelerationLimits> extendedTiltLimitTunable = TiltAccelerationLimits.getTunable("Drive/Accel Limits/Tilt Limits/Extended", new TiltAccelerationLimits(10, 12, 20, 20));
+    private TiltAccelerationLimits tiltLimits = new TiltAccelerationLimits(10, 10, 10, 10);
+    public void setTiltLimits(TiltAccelerationLimits tiltLimits) {
+        this.tiltLimits = tiltLimits;
+    }
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
         this.desiredRobotSpeeds = robotSpeeds;
         Logger.recordOutput("Drive/Chassis Speeds/Desired Speed", this.desiredRobotSpeeds);
@@ -261,7 +268,7 @@ public class Drive extends VirtualSubsystem {
 
         // Forward Accel Limit
         var maxMeasuredModuleSpeed = Math.hypot(this.robotMeasuredSpeeds.vxMetersPerSecond, this.robotMeasuredSpeeds.vyMetersPerSecond) + Math.abs(this.robotMeasuredSpeeds.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
-        var maxDesiredModuleAccel = Math.hypot(desiredAccel.vxMetersPerSecond, desiredAccel.vyMetersPerSecond) + Math.abs(desiredAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
+        var maxDesiredModuleAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond) + Math.abs(limitedAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
         var forwardAccelLimit = (1 - (maxMeasuredModuleSpeed / DriveConstants.maxModuleSpeed.in(MetersPerSecond))) * forwardAccelLimitTunable.get().in(MetersPerSecondPerSecond);
         var forwardAccelLimitingFactor = forwardAccelLimit / Math.max(maxDesiredModuleAccel, forwardAccelLimit);
         Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Measured Module Speed", maxMeasuredModuleSpeed);
@@ -270,16 +277,31 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Limiting Factor", forwardAccelLimitingFactor);
         limitedAccel = limitedAccel.times(forwardAccelLimitingFactor);
 
-        // Linear Accel Limit
-        var desiredLinearAccel = Math.hypot(desiredAccel.vxMetersPerSecond, desiredAccel.vyMetersPerSecond);
-        var linearAccelLimit = linearAccelLimitTunable.get().in(MetersPerSecondPerSecond);
-        var linearAccelLimitingFactor = linearAccelLimit / Math.max(desiredLinearAccel, linearAccelLimit);
-        Logger.recordOutput("Drive/Chassis Speeds/Linear Limit/Desired Linear Accel", desiredLinearAccel);
-        Logger.recordOutput("Drive/Chassis Speeds/Linear Limit/Linear Accel Limit", linearAccelLimit);
-        Logger.recordOutput("Drive/Chassis Speeds/Linear Limit/Limiting Factor", linearAccelLimitingFactor);
+        // Tilt Accel Limit
+        var desiredTiltAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond);
+        var desiredTiltAccelHeading = Math.atan2(limitedAccel.vyMetersPerSecond, limitedAccel.vxMetersPerSecond);
+        var tiltAccelLimit = this.tiltLimits.getMaxTiltAccelerationMPSS(desiredTiltAccelHeading);
+        var tiltAccelLimitingFactor = tiltAccelLimit / Math.max(desiredTiltAccel, tiltAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Desired Tilt Accel", desiredTiltAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Desired Tilt Accel Heading", desiredTiltAccelHeading);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Til tAccel Limit", tiltAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Limiting Factor", tiltAccelLimitingFactor);
         limitedAccel = new ChassisSpeeds(
-            limitedAccel.vxMetersPerSecond * linearAccelLimitingFactor,
-            limitedAccel.vyMetersPerSecond * linearAccelLimitingFactor,
+            limitedAccel.vxMetersPerSecond * tiltAccelLimitingFactor,
+            limitedAccel.vyMetersPerSecond * tiltAccelLimitingFactor,
+            limitedAccel.omegaRadiansPerSecond
+        );
+
+        // Skid Accel Limit
+        var desiredSkidAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond);
+        var skidAccelLimit = skidAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var skidAccelLimitingFactor = skidAccelLimit / Math.max(desiredSkidAccel, skidAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Desired Skid Accel", desiredSkidAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Skid Accel Limit", skidAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Limiting Factor", skidAccelLimitingFactor);
+        limitedAccel = new ChassisSpeeds(
+            limitedAccel.vxMetersPerSecond * skidAccelLimitingFactor,
+            limitedAccel.vyMetersPerSecond * skidAccelLimitingFactor,
             limitedAccel.omegaRadiansPerSecond
         );
 
@@ -299,26 +321,6 @@ public class Drive extends VirtualSubsystem {
     public void runFieldSpeeds(ChassisSpeeds fieldSpeeds) {
         this.runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, this.getRotation()));
     }
-
-    private static final double forwardTiltAccelerationMPSS = 1.0;
-    private static final double backwardTiltAccelerationMPSS = 1.0;
-    private static final double leftTiltAccelerationMPSS = 1.0;
-    private static final double rightTiltAccelerationMPSS = 1.0;
-
-    private double getMaxTiltAccelerationMPSS(double heading) {
-        if (heading < Math.atan2(-rightTiltAccelerationMPSS, -backwardTiltAccelerationMPSS)) {
-            return -backwardTiltAccelerationMPSS / Math.cos(heading);
-        } else if (heading < Math.atan2(-rightTiltAccelerationMPSS, forwardTiltAccelerationMPSS)) {
-            return -rightTiltAccelerationMPSS / Math.sin(heading);
-        } else if (heading < Math.atan2(leftTiltAccelerationMPSS, forwardTiltAccelerationMPSS)) {
-            return forwardTiltAccelerationMPSS / Math.cos(heading);
-        } else if (heading < Math.atan2(leftTiltAccelerationMPSS, -backwardTiltAccelerationMPSS)) {
-            return leftTiltAccelerationMPSS / Math.sin(heading);
-        } else {
-            return -backwardTiltAccelerationMPSS / Math.cos(heading);
-        }
-    }
-
 
 
     public Command coast() {
