@@ -70,8 +70,8 @@ public class ModuleIOFalcon550 implements ModuleIO {
             // .withSupplyCurrentLowerLimit(Amps.of(70))
             // .withSupplyCurrentLowerTime(Seconds.of(0))
             .withSupplyCurrentLimitEnable(true)
-            .withStatorCurrentLimit(Amps.of(80))
-            .withStatorCurrentLimitEnable(true)
+            // .withStatorCurrentLimit(Amps.of(80))
+            // .withStatorCurrentLimitEnable(true)
         ;
         
         this.driveMotor.getConfigurator().apply(driveConfig);
