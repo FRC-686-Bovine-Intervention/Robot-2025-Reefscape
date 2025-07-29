@@ -100,7 +100,7 @@ public class RobotState {
         var cameraToTag = new Transform3d(
             new Translation3d(
                 Meters.of(cameraDistanceHorizontalToTarget * Math.cos(oppositeAngle.in(Radians))),
-                Meters.of(-cameraDistanceHorizontalToTarget * Math.sin(oppositeAngle.in(Radians))),
+                Meters.of(-1 * cameraDistanceHorizontalToTarget * Math.sin(oppositeAngle.in(Radians))),
                 camMeta.mount.getRobotRelative().getTranslation().getMeasureZ()
             ),
             new Rotation3d(
@@ -191,7 +191,7 @@ public class RobotState {
 
     public void updateReefPose(int cam_id, Pose2d pose) {
         reefObjectivePoses[cam_id] = pose;
-    }
+    }*/
 
     public void setPose(
         Rotation2d rotation,
@@ -208,7 +208,7 @@ public class RobotState {
     ) {
         poseEstimator.resetPosition(rotation, modulePositions, fieldToVehicle);
         robotPoseStdDevs = stdDevs;
-    }*/
+    }
 
     public record TxTyObservation(int tagId, int camera, Angle tx, Angle ty, Distance distance, double timestamp) {};
 
