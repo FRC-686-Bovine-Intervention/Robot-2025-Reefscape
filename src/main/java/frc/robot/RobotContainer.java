@@ -15,8 +15,8 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -57,9 +57,9 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
-import frc.robot.subsystems.objectiveTracker.ObjectiveTracker.ObjectiveType;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIO;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIOServer;
+import frc.robot.subsystems.objectiveTracker.objectives.Objective.ObjectiveType;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedCommand;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
@@ -402,7 +402,7 @@ public class RobotContainer {
                 public Command get() {
                     if (intake.hasAlgae.getAsBoolean()) {
                         return ejectAlgae;
-                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
+                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().getTargetBranch().isEmpty()) {
                         return ejectL1;
                     } else {
                         return eject;
@@ -439,7 +439,7 @@ public class RobotContainer {
                         return idle;
                     } else {
                         var stagedAlgaeObjective = optStagedAlgaeObjective.get();
-                        return stagedAlgaeCommands[stagedAlgaeObjective.algae.level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
+                        return stagedAlgaeCommands[stagedAlgaeObjective.getTargetAlgae().level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
                     }
                 }
             },
@@ -477,8 +477,8 @@ public class RobotContainer {
                 private final RobotFlippedCommand level1Command = Reef.level1SuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
-                    if (scoreCoralObjective.branchLevel.isPresent()) {
-                        return branchCommands[scoreCoralObjective.branchLevel.get().ordinal()].get(scoreCoralObjective.getTargetDirection());
+                    if (scoreCoralObjective.getTargetBranch().isPresent()) {
+                        return branchCommands[scoreCoralObjective.getTargetBranch().get().level.ordinal()].get(scoreCoralObjective.getTargetDirection());
                     } else {
                         return level1Command.get(scoreCoralObjective.getTargetDirection());
                     }
@@ -487,7 +487,7 @@ public class RobotContainer {
             Set.of(superstructure)
         ).deadlineFor(
             Commands.startEnd(
-                () -> objectiveTracker.addLevelLock(objectiveTracker.getScoreCoralObjective().branchLevel),
+                () -> objectiveTracker.addLevelLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().map((branch) -> branch.level)),
                 () -> objectiveTracker.removeLevelLock()
             )
         ).withName("Extend to Reef");
@@ -496,13 +496,10 @@ public class RobotContainer {
                 private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
                 public Command get() {
-                    switch (objectiveTracker.getScoreAlgaeObjective().algaeGoal) {
-                        default:
-                        case NET:
-                            return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
-                        case PROCESSOR:
-                        case OPPONENT_PROCESSOR:
-                            return processorCommand;
+                    if (objectiveTracker.getScoreAlgaeObjective().isProcessor()) {
+                        return processorCommand;
+                    } else {
+                        return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
                     }
                 }
             },
@@ -528,14 +525,14 @@ public class RobotContainer {
                 }
             }
         });
-        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
+        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
         driveController.rightBumper()
             .and(() -> objectiveTracker.getCurrentObjective().isPresent())
             .whileTrue(
                 drive.simplePIDTo(
                     () -> AutoScore.getTargetPose(
                         drive.getPose(),
-                        objectiveTracker.getCurrentObjective().get().getTargetPose(),
+                        objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs(),
                         objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
                     )
                 )
@@ -543,8 +540,8 @@ public class RobotContainer {
                     Commands.startEnd(
                         () -> {
                             if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getObjectiveType() == ObjectiveType.ScoreCoral).isPresent()) {
-                                if (objectiveTracker.getScoreCoralObjective().branch.isPresent()) {
-                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().branch.get().pipe);
+                                if (objectiveTracker.getScoreCoralObjective().getTargetBranch().isPresent()) {
+                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().get().getOurs().pipe);
                                 }
                             }
                         },
