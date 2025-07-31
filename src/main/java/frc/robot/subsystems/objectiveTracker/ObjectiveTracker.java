@@ -627,14 +627,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
             Leds.getInstance().goToOppositeSideOfReef.setFlag(false);
             Leds.getInstance().removeAlgae.setFlag(false);
-            if (!this.scoreCoralObjective.getTargetBranch().map((branch) -> branch.level).equals(uncompletedPriorities.get(0).level)) {
-                var topPriorityLevel = uncompletedPriorities.get(0).level.get();
-                if (closestPipes.stream().allMatch((pipe) -> branchStates[topPriorityLevel.ordinal() * 12 + pipe.id] == true)) {
-                    Leds.getInstance().goToOppositeSideOfReef.setFlag(true);
-                } else {
-                    Leds.getInstance().removeAlgae.setFlag(true);
-                }
-            }
+            // if (!this.scoreCoralObjective.getTargetBranch().map((branch) -> branch.level).equals(uncompletedPriorities.get(0).level)) {
+            //     var topPriorityLevel = uncompletedPriorities.get(0).level.get();
+            //     if (closestPipes.stream().allMatch((pipe) -> branchStates[topPriorityLevel.ordinal() * 12 + pipe.id] == true)) {
+            //         Leds.getInstance().goToOppositeSideOfReef.setFlag(true);
+            //     } else {
+            //         Leds.getInstance().removeAlgae.setFlag(true);
+            //     }
+            // }
         } else {
             this.scoreCoralObjective = switch (selectedCoralGoal.getFirst()) {
                 case BRANCH -> this.scoreCoralObjective = this.allScoreCoralObjectives
