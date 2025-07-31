@@ -173,8 +173,8 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOSim()),
                     new Wrist(new WristIOSim())
                 );
-                intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
-                // intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
+                // intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
                 climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
@@ -389,10 +389,10 @@ public class RobotContainer {
         // ));
 
         // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        // driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
-        // driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
-        // driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
-        // driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(-1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(-1)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(1)));
         
         driveController.a().whileTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
@@ -541,7 +541,7 @@ public class RobotContainer {
                         () -> {
                             if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getObjectiveType() == ObjectiveType.ScoreCoral).isPresent()) {
                                 if (objectiveTracker.getScoreCoralObjective().getTargetBranch().isPresent()) {
-                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().get().getOurs().pipe);
+                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().get().pipe);
                                 }
                             }
                         },

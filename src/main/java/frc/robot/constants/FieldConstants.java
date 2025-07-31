@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -36,6 +37,23 @@ import frc.util.flipping.AllianceFlipped;
 public final class FieldConstants {
     public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
     public static final Distance fieldWidth =  Inches.of(26*12 + 5);
+
+    public static final AllianceFlipped<Predicate<Translation2d>> onAllianceSide = new AllianceFlipped<>(
+        new Predicate<>() {
+            private final double halfline = fieldLength.div(2).in(Meters);
+            @Override
+            public boolean test(Translation2d t) {
+                return t.getX() <= this.halfline;
+            }
+        },
+        new Predicate<>() {
+            private final double halfline = fieldLength.div(2).in(Meters);
+            @Override
+            public boolean test(Translation2d t) {
+                return t.getX() >= this.halfline;
+            }
+        }
+    );
 
     public static final AprilTagFieldLayout apriltagLayout;
     static {
