@@ -28,10 +28,12 @@ import frc.robot.constants.FieldConstants;
 import frc.robot.constants.RobotConstants;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef;
+import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.FieldConstants.Reef.BranchObject;
 import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.RackObject;
+import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.objectiveTracker.objectives.ClimbObjective;
@@ -752,15 +754,26 @@ public class ObjectiveTracker extends VirtualSubsystem {
         return Commands.startEnd(() -> this.setTypeOverride(Optional.of(typeOverride)), () -> this.setTypeOverride(Optional.empty()));
     }
 
-    // public void addTargetLock() {
-    //     this.targetLocks += 1;
-    // }
-    // public void removeTargetLock() {
-    //     this.targetLocks -= 1;
-    // }
-    // public Command addTargetLockCommand() {
-    //     return Commands.startEnd(this::addTargetLock, this::removeTargetLock);
-    // }
+    public void placeCoral(Optional<BranchConcept> branch) {
+        if (branch.isPresent()) {
+            if (this.branchStates[branch.get().id] == false) {
+                this.branchStates[branch.get().id] = true;
+                this.updateAvailableScoreCoralObjectives();
+                this.updateUnblockedScoreCoralObjectives();
+                this.updateIncompletePriorities();
+            }
+        } else {
+            this.level1Count += 1;
+            this.updateIncompletePriorities();
+        }
+    }
+    public void removeAlgae(StagedAlgaeConcept algae) {
+        if (this.algaeStates[algae.rack.id] == true) {
+            this.algaeStates[algae.rack.id] = false;
+            this.updateAvailableIntakeAlgaeObjectives();
+            this.updateUnblockedScoreCoralObjectives();
+        }
+    }
 
     public void addLevelLock(Optional<BranchLevel> level) {
         this.levelLock = Optional.of(level);

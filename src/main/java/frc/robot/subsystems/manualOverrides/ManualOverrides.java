@@ -1,5 +1,19 @@
 package frc.robot.subsystems.manualOverrides;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+
 public class ManualOverrides {
-    public ManualOverrides() {}
+    private final LoggedNetworkBoolean disableSelfRecordCoral = new LoggedNetworkBoolean("Manual Overrides/Objective Tracker/Disable Self Record Coral", false);
+    private final LoggedNetworkBoolean disableSelfRecordAlgae = new LoggedNetworkBoolean("Manual Overrides/Objective Tracker/Disable Self Record Algae", false);
+    
+    public ManualOverrides() {
+
+    }
+
+    public boolean selfRecordCoralDisabled() {
+        return this.disableSelfRecordCoral.get();
+    }
+    public boolean selfRecordAlgaeDisabled() {
+        return this.disableSelfRecordAlgae.get();
+    }
 }

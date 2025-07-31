@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
@@ -89,11 +90,13 @@ import frc.robot.subsystems.vision.questnav.QuestNavConstants;
 import frc.robot.subsystems.vision.questnav.QuestNavIO;
 import frc.robot.subsystems.vision.questnav.QuestNavIOQuest3S;
 import frc.robot.subsystems.vision.questnav.QuestNavIOSim;
+import frc.util.EdgeDetector;
 import frc.util.Environment;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
+import frc.util.geometry.GeomUtil;
 import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.Mechanism3d;
 
@@ -348,47 +351,7 @@ public class RobotContainer {
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());
         climber.setDefaultCommand(climber.idle());
-        // SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
-        // SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
-        // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
-        // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
-        // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
-        //     drive.rotationalSubsystem.headingFromJoystick(
-        //         flickStick,
-        //         new Rotation2d[]{
-        //             // Cardinals
-        //             Rotation2d.kZero,
-        //             Rotation2d.kCCW_90deg,
-        //             Rotation2d.k180deg,
-        //             Rotation2d.kCW_90deg,
-        //         },
-        //         () -> RobotConstants.intakeForward
-        //     )
-        //     .withName("Flick Stick")
-        // );
 
-        // driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
-        //     new Supplier<Command>() {
-        //         private final Command[] commands = new Command[Rack.values().length * 2];
-        //         {
-        //             for (var rack : Rack.values()) {
-        //                 commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
-        //                 commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
-        //             }
-        //         }
-        //         public Command get() {
-        //             var rack = Rack.Rack2;
-        //             if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
-        //                 return commands[rack.ordinal() * 2];
-        //             } else {
-        //                 return commands[rack.ordinal() * 2 + 1];
-        //             }
-        //         }
-        //     },
-        //     Set.of(superstructure)
-        // ));
-
-        // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(1)));
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(-1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(-1)));
@@ -570,11 +533,7 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
-            // climber.testEngageRatchet()
         );
-        // driveController.start().toggleOnTrue(
-        //     climber.engageRatchet()
-        // );
 
         var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
         // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
@@ -619,6 +578,44 @@ public class RobotContainer {
         SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
 
         SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
+
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private final EdgeDetector coralEdgeDetector = new EdgeDetector();
+            @Override
+            public void run() {
+                this.coralEdgeDetector.update(intake.hasCoral.getAsBoolean());
+                if (manualOverrides.selfRecordCoralDisabled()) {return;}
+
+                if (this.coralEdgeDetector.fallingEdge()) {
+                    var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
+                    if (
+                        GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs(), drive.getPose(), Inches.of(2), Degrees.of(10))
+                        && superstructure.getCurrentState().isNear(scoreCoralObjective.getTargetState(), Degrees.of(2), Inches.of(2), Degrees.of(5))
+                    ) {
+                        objectiveTracker.placeCoral(scoreCoralObjective.getTargetBranch());
+                    }
+                }
+            }
+        });
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private final EdgeDetector algaeEdgeDetector = new EdgeDetector();
+            @Override
+            public void run() {
+                this.algaeEdgeDetector.update(intake.hasAlgae.getAsBoolean());
+                if (manualOverrides.selfRecordAlgaeDisabled()) {return;}
+
+                if (this.algaeEdgeDetector.risingEdge()) {
+                    var intakeAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
+                    if (intakeAlgaeObjective.isEmpty()) {return;}
+                    if (
+                        GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs(), drive.getPose(), Inches.of(5), Degrees.of(15))
+                        && superstructure.getCurrentState().isNear(intakeAlgaeObjective.get().getTargetState(), Degrees.of(2), Inches.of(2), Degrees.of(60))
+                    ) {
+                        objectiveTracker.removeAlgae(intakeAlgaeObjective.get().getTargetAlgae());
+                    }
+                }
+            }
+        });
     }
 
     private void setPose(Pose2d pose) {
