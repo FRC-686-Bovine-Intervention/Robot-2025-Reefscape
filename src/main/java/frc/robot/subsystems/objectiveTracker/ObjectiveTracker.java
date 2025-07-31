@@ -526,8 +526,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         if (mode == Mode.Smart) {
-            var closestPipes = Arrays.stream(Reef.reefs.getOurs().pipes)
-                .sorted(Comparator.comparingDouble((pipe) -> currentPose.getTranslation().getDistance(pipe.robotPose.getForward().getTranslation())))
+            var closestPipes = Arrays.stream(Reef.pipes)
+                .sorted(Comparator.comparingDouble((pipe) -> currentPose.getTranslation().getDistance(pipe.getOurs().robotPose.getForward().getTranslation())))
                 .limit(6)
                 .toList()
             ;
@@ -582,6 +582,15 @@ public class ObjectiveTracker extends VirtualSubsystem {
                     var bBlocked = bAvailable && !bUnblocked;
                     if (aBlocked ^ bBlocked) {
                         return Boolean.compare(aBlocked, bBlocked);
+                    }
+                    var aPipe = a.getTargetBranch().map((branch) -> branch.pipe);
+                    var bPipe = b.getTargetBranch().map((branch) -> branch.pipe);
+                    if (aPipe.isPresent() && bPipe.isPresent()) {
+                        var aOnClosest6Pipes = closestPipes.contains(aPipe.get());
+                        var bOnClosest6Pipes = closestPipes.contains(bPipe.get());
+                        if (aOnClosest6Pipes ^ bOnClosest6Pipes) {
+                            return -Boolean.compare(aOnClosest6Pipes, bOnClosest6Pipes);
+                        }
                     }
                     var aLevel = a.getTargetBranch().map((branch) -> branch.level);
                     var bLevel = b.getTargetBranch().map((branch) -> branch.level);
