@@ -230,12 +230,19 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 Degrees.of(75)
             )
         );
+        var allBranchAdjust = new Transform2d(
+            new Translation2d(
+                Inches.of(1),
+                Inches.of(0)
+            ),
+            Rotation2d.kZero
+        );
         for (var rackConcept : FieldConstants.Reef.racks) {
             scoreCoralObjectives[(rackConcept.id * 2) + 0] = new ScoreCoralObjective(rackConcept.map((rackObject) -> rackObject.centerRobotPose.getForward().transformBy(leftL1Transform)), Optional.empty(), Direction.Forward);
             scoreCoralObjectives[(rackConcept.id * 2) + 1] = new ScoreCoralObjective(rackConcept.map((rackObject) -> rackObject.centerRobotPose.getForward().transformBy(rightL1Transform)), Optional.empty(), Direction.Forward);
         }
         for (var branchConcept : FieldConstants.Reef.branches) {
-            scoreCoralObjectives[12 + branchConcept.id] = new ScoreCoralObjective(branchConcept.map((branchObject) -> branchObject.scoreTotalState.getRobotPose(Direction.Forward)), Optional.of(branchConcept), Direction.Forward);
+            scoreCoralObjectives[12 + branchConcept.id] = new ScoreCoralObjective(branchConcept.map((branchObject) -> branchObject.scoreTotalState.getRobotPose(Direction.Forward).plus(allBranchAdjust)), Optional.of(branchConcept), Direction.Forward);
         }
         this.allScoreCoralObjectives = Set.of(scoreCoralObjectives);
         this.availableScoreCoralObjectives = new HashSet<>(this.allScoreCoralObjectives.size());
