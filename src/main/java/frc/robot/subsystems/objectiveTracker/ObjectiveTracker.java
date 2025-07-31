@@ -655,9 +655,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
         }
 
         Leds.getInstance().level1Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().isEmpty());
-        Leds.getInstance().level2Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().equals(Optional.of(BranchLevel.Level2)));
-        Leds.getInstance().level3Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().equals(Optional.of(BranchLevel.Level3)));
-        Leds.getInstance().level4Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().equals(Optional.of(BranchLevel.Level4)));
+        Leds.getInstance().level2Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level2));
+        Leds.getInstance().level3Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level3));
+        Leds.getInstance().level4Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level4));
 
         this.scoreAlgaeObjective = switch (this.selectedAlgaeGoal) {
             case NET -> this.ourNetScoreAlgaeObjectives
