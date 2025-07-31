@@ -15,6 +15,8 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.AngleUnit;
@@ -721,6 +723,55 @@ public class RobotContainer {
                         && superstructure.getCurrentState().isNear(intakeAlgaeObjective.get().getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
                     ) {
                         objectiveTracker.removeAlgae(intakeAlgaeObjective.get().getTargetAlgae());
+                    }
+                }
+            }
+        });
+
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private static final LoggedTunableMeasure<AngleUnit> autoEjectPivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> autoEjectElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> autoEjectWristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> autoEjectLinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> autoEjectAngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Robot/Angular Tolerance", Degrees.of(5));
+
+            private final Command ejectBranch = intake.eject();
+            private final Command ejectL1 = intake.ejectLevel1();
+
+            private final Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising);
+
+            @Override
+            public void run() {
+                if (intake.hasCoral.getAsBoolean() && !manualOverrides.autoEjectCoralDisabled()) {
+                    var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
+                    var pivotInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, autoEjectPivotTolerance.get());
+                    var elevatorInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, autoEjectElevatorTolerance.get());
+                    var wristInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, autoEjectWristTolerance.get());
+                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), autoEjectLinearTolerance.get());
+                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), autoEjectAngularTolerance.get());
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Pivot", pivotInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Elevator", elevatorInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Wrist", wristInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Robot/Linear", linearInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Robot/Angular", angularInTolerance);
+
+                    if (this.debouncer.calculate(pivotInTolerance && elevatorInTolerance && wristInTolerance && linearInTolerance && angularInTolerance)) {
+                        if (scoreCoralObjective.getTargetBranch().isPresent()) {
+                            if (!ejectBranch.isScheduled()) {
+                                ejectBranch.schedule();
+                            }
+                        } else {
+                            if (!ejectL1.isScheduled()) {
+                                ejectL1.schedule();
+                            }
+                        }
+                    }
+                } else {
+                    if (ejectBranch.isScheduled()) {
+                        ejectBranch.cancel();
+                    }
+                    if (ejectL1.isScheduled()) {
+                        ejectL1.cancel();
                     }
                 }
             }
