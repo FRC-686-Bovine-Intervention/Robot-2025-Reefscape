@@ -8,6 +8,7 @@ import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
+import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
@@ -87,29 +88,43 @@ public class DeviceFaults implements StructSerializable {
         BootDuringEnable(1),
         BridgeBrownout(12),
         BridgeShort(24),
+        CAN(30),
         DeviceTemperature(11),
         DriveDisabledHallSensor(25),
+        EscEepromFault(31),
+        EscEepromWarning(38),
+        ExtEeprom(39),
         ForwardHardLimit(3),
         ForwardSoftLimit(5),
         FusedCancoderOutOfSync(18),
+        GateDriver(33),
         HallSensorMissing(26),
         Hardware(0),
+        HasReset(42),
         MissingDifferentialTalonFX(22),
         MissingRemoteLimitSwitch(8),
         MissingRemoteSoftLimit(9),
         MotorTempSensorMissing(27),
         MotorTempSensorTooHot(28),
+        MotorType(34),
+        Overcurrent(37),
         ProcessorTemperature(10),
         RemoteSensorDataInvalid(7),
         RemoteSensorPositionOverflow(20),
         RemoteSensorReset(21),
         ReverseHardLimit(4),
         ReverseSoftLimit(6),
+        SensorFault(35),
+        SensorWarning(40),
+        Stall(41),
         StaticBrakeDisabled(23),
         StatorCurrentLimit(16),
         SupplyCurrentLimit(17),
         SupplyOvervoltage(14),
+        Temperature(36),
         Undervoltage(13),
+        UnknownFault(63),
+        UnknownWarning(62),
         UnstableSupplyVoltage(15),
         UsingFusedCancoderWhileUnlicensed(19),
         UsingUnlicensedFeature(2),
@@ -542,6 +557,66 @@ public class DeviceFaults implements StructSerializable {
                 case Undervoltage -> cancoder.clearStickyFault_Undervoltage();
                 case UsingUnlicensedFeature -> cancoder.clearStickyFault_UnlicensedFeatureInUse();
                 default -> StatusCode.OK;
+            };
+        }
+        public static final FaultType[] possibleSparkMaxFaults = new FaultType[] {
+            CAN,
+            EscEepromFault,
+            EscEepromWarning,
+            ExtEeprom,
+            GateDriver,
+            Hardware,
+            HasReset,
+            MotorType,
+            Overcurrent,
+            SensorFault,
+            SensorWarning,
+            Stall,
+            Temperature,
+            Undervoltage,
+            UnknownFault,
+            UnknownWarning,
+        };
+        public boolean getFaultFrom(SparkMax sparkMax) {
+            return switch (this) {
+                case CAN -> sparkMax.getFaults().can;
+                case EscEepromFault -> sparkMax.getFaults().escEeprom;
+                case EscEepromWarning -> sparkMax.getWarnings().escEeprom;
+                case ExtEeprom -> sparkMax.getWarnings().extEeprom;
+                case GateDriver -> sparkMax.getFaults().gateDriver;
+                case Hardware -> sparkMax.getFaults().firmware;
+                case HasReset -> sparkMax.getWarnings().hasReset;
+                case MotorType -> sparkMax.getFaults().motorType;
+                case Overcurrent -> sparkMax.getWarnings().overcurrent;
+                case SensorFault -> sparkMax.getFaults().sensor;
+                case SensorWarning -> sparkMax.getWarnings().sensor;
+                case Stall -> sparkMax.getWarnings().stall;
+                case Temperature -> sparkMax.getFaults().temperature;
+                case Undervoltage -> sparkMax.getWarnings().brownout;
+                case UnknownFault -> sparkMax.getFaults().other;
+                case UnknownWarning -> sparkMax.getWarnings().other;
+                default -> false;
+            };
+        }
+        public boolean getStickyFaultFrom(SparkMax sparkMax) {
+            return switch (this) {
+                case CAN -> sparkMax.getStickyFaults().can;
+                case EscEepromFault -> sparkMax.getStickyFaults().escEeprom;
+                case EscEepromWarning -> sparkMax.getStickyWarnings().escEeprom;
+                case ExtEeprom -> sparkMax.getStickyWarnings().extEeprom;
+                case GateDriver -> sparkMax.getStickyFaults().gateDriver;
+                case Hardware -> sparkMax.getStickyFaults().firmware;
+                case HasReset -> sparkMax.getStickyWarnings().hasReset;
+                case MotorType -> sparkMax.getStickyFaults().motorType;
+                case Overcurrent -> sparkMax.getStickyWarnings().overcurrent;
+                case SensorFault -> sparkMax.getStickyFaults().sensor;
+                case SensorWarning -> sparkMax.getStickyWarnings().sensor;
+                case Stall -> sparkMax.getStickyWarnings().stall;
+                case Temperature -> sparkMax.getStickyFaults().temperature;
+                case Undervoltage -> sparkMax.getStickyWarnings().brownout;
+                case UnknownFault -> sparkMax.getStickyFaults().other;
+                case UnknownWarning -> sparkMax.getStickyWarnings().other;
+                default -> false;
             };
         }
     }

@@ -79,7 +79,7 @@ public class LoggedFaults implements StructSerializable {
 
         @Override
         public String getSchema() {
-            return "DeviceFaults activeFaults;DeviceFaults stickyFaults";
+            return "DeviceFaults activeFaults; DeviceFaults stickyFaults";
         }
 
         @Override
