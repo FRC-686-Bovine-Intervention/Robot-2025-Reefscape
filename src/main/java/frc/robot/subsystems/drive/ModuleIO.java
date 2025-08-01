@@ -27,7 +27,7 @@ public interface ModuleIO {
 
     /** Run the drive motor at the specified voltage. */
     public default void setDriveVoltage(Measure<VoltageUnit> voltage) {}
-    public default void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward) {}
+    public default void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward, boolean overrideWithBrakeMode) {}
 
     /** Run the turn motor at the specified voltage. */
     public default void setAzimuthVoltage(Measure<VoltageUnit> volts) {}
