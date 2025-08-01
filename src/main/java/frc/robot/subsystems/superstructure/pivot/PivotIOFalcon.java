@@ -25,7 +25,9 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
+import frc.util.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 
@@ -73,24 +75,17 @@ public class PivotIOFalcon implements PivotIO {
         this.followerRequest = new StrictFollower(this.leftMotor.getDeviceID());
         this.rightMotor.setControl(this.followerRequest);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            this.leftMotor.getRotorPosition(),
-            this.leftMotor.getRotorVelocity(),
-            this.rightMotor.getRotorPosition(),
-            this.rightMotor.getRotorVelocity(),
-            this.cancoder.getPosition(),
-            this.cancoder.getVelocity()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            this.leftMotor.getMotorVoltage(),
-            this.leftMotor.getStatorCurrent(),
-            this.leftMotor.getDeviceTemp(),
-            this.rightMotor.getMotorVoltage(),
-            this.rightMotor.getStatorCurrent(),
-            this.rightMotor.getDeviceTemp()
-        );
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.leftMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.rightMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.leftMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.rightMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.leftMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.leftMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.rightMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.rightMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.cancoder));
         this.leftMotor.optimizeBusUtilization();
         this.rightMotor.optimizeBusUtilization();
         this.cancoder.optimizeBusUtilization();

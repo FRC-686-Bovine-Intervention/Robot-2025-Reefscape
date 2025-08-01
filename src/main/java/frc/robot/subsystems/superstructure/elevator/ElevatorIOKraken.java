@@ -24,9 +24,11 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
+import frc.util.DeviceFaults.FaultType;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public class ElevatorIOKraken implements ElevatorIO {
     protected final TalonFX motor = HardwareDevices.elevatorMotorID.talonFX();
@@ -62,19 +64,13 @@ public class ElevatorIOKraken implements ElevatorIO {
 
         this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            this.motor.getRotorPosition(),
-            this.motor.getRotorVelocity(),
-            this.cancoder.getPosition(),
-            this.cancoder.getVelocity()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            this.motor.getMotorVoltage(),
-            this.motor.getStatorCurrent(),
-            this.motor.getDeviceTemp()
-        );
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.cancoder));
         this.motor.optimizeBusUtilization();
         this.cancoder.optimizeBusUtilization();
     }
@@ -83,6 +79,8 @@ public class ElevatorIOKraken implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.encoder.updateFrom(this.cancoder);
         inputs.motor.updateFrom(this.motor);
+        inputs.encoderFaults.updateFrom(this.cancoder);
+        inputs.motorFaults.updateFrom(this.motor);
     }
 
     @Override

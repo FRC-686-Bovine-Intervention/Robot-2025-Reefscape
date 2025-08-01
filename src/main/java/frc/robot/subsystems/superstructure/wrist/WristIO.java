@@ -12,12 +12,15 @@ import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedFaults;
 
 public interface WristIO {
     @AutoLog
     public static class WristIOInputs {
         LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor motor = new LoggedEncodedMotor();
+        LoggedFaults encoderFaults = new LoggedFaults();
+        LoggedFaults motorFaults = new LoggedFaults();
     }
     
     public default void updateInputs(WristIOInputs inputs) {}

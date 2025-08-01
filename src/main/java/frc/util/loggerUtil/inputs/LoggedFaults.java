@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
+import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
@@ -53,6 +54,21 @@ public class LoggedFaults implements StructSerializable {
                 activeBitfield |= faultType.getBitMask();
             }
             if (faultType.getStickyFaultFrom(cancoder)) {
+                stickyBitfield |= faultType.getBitMask();
+            }
+        }
+        this.activeFaults.mut_setBitfield(activeBitfield);
+        this.stickyFaults.mut_setBitfield(stickyBitfield);
+    }
+
+    public void updateFrom(SparkMax sparkMax) {
+        var activeBitfield = 0x0000000000000000;
+        var stickyBitfield = 0x0000000000000000;
+        for (var faultType : FaultType.possibleSparkMaxFaults) {
+            if (faultType.getFaultFrom(sparkMax)) {
+                activeBitfield |= faultType.getBitMask();
+            }
+            if (faultType.getStickyFaultFrom(sparkMax)) {
                 stickyBitfield |= faultType.getBitMask();
             }
         }

@@ -190,7 +190,7 @@ public class Module {
     }
 
     public Current getDriveCurrent() {
-        return this.inputs.driveMotor.motor.current;
+        return this.inputs.driveMotor.motor.statorCurrent;
     }
 
     public boolean currentSpiking() {

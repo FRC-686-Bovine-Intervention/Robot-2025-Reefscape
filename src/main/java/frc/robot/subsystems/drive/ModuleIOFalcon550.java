@@ -12,7 +12,6 @@ import java.util.Optional;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -32,17 +31,18 @@ import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
+import frc.util.DeviceFaults.FaultType;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
-import frc.util.TalonFXTempAlerts;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public class ModuleIOFalcon550 implements ModuleIO {
     protected final TalonFX driveMotor;
     protected final SparkMax azimuthMotor;
     protected final AbsoluteEncoder azimuthAbsoluteEncoder;
-
-    private final TalonFXTempAlerts tempAlerts;
 
     private final VoltageOut driveVolts = new VoltageOut(0);
     private final VelocityVoltage driveVelocity = new VelocityVoltage(0);
@@ -93,21 +93,11 @@ public class ModuleIOFalcon550 implements ModuleIO {
             1
         );
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency,
-            this.driveMotor.getRotorPosition(),
-            this.driveMotor.getRotorVelocity()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            this.driveMotor.getMotorVoltage(),
-            this.driveMotor.getStatorCurrent(),
-            this.driveMotor.getDeviceTemp(),
-            this.driveMotor.getFault_DeviceTemp()
-        );
+        BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.odometryLoopFrequency, LoggedEncoder.getStatusSignals(this.driveMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.driveMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.driveMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.driveMotor));
         this.driveMotor.optimizeBusUtilization();
-
-        this.tempAlerts = new TalonFXTempAlerts(this.driveMotor, config.name + " Module");
     }
 
     @Override
@@ -115,8 +105,8 @@ public class ModuleIOFalcon550 implements ModuleIO {
         inputs.driveMotor.updateFrom(this.driveMotor);
         inputs.azimuthMotor.updateFrom(this.azimuthMotor);
         inputs.azimuthEncoder.updateFrom(this.azimuthAbsoluteEncoder);
-
-        this.tempAlerts.update();
+        inputs.driveMotorFaults.updateFrom(this.driveMotor);
+        inputs.azimuthMotorFaults.updateFrom(this.azimuthMotor);
     }
 
     @Override

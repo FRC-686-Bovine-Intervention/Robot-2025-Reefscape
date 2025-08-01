@@ -13,6 +13,7 @@ import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedFaults;
 
 public interface ModuleIO {
     @AutoLog
@@ -20,6 +21,8 @@ public interface ModuleIO {
         public LoggedEncodedMotor driveMotor = new LoggedEncodedMotor();
         public LoggedEncodedMotor azimuthMotor = new LoggedEncodedMotor();
         public LoggedEncoder azimuthEncoder = new LoggedEncoder();
+        public LoggedFaults driveMotorFaults = new LoggedFaults();
+        public LoggedFaults azimuthMotorFaults = new LoggedFaults();
     }
 
     /** Updates the set of loggable inputs. */

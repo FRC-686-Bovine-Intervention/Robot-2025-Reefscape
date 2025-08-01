@@ -4,12 +4,14 @@ import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import frc.util.loggerUtil.inputs.LoggedFaults;
 import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public interface IntakeIO {
     @AutoLog
     public static class IntakeIOInputs {
         public LoggedMotor motor = new LoggedMotor();
+        public LoggedFaults motorFaults = new LoggedFaults();
 
         public boolean coralSensor = false;
         public boolean algaeSensor = false;

@@ -60,7 +60,7 @@ public class Intake extends SubsystemBase {
         }
         var second = debouncer.calculate(inputs.coralSensor);
         if (inputs.coralSensor) {
-            if (inputs.motor.current.gt(gamepieceDetectCurrent.get()) || second) {
+            if (inputs.motor.statorCurrent.gt(gamepieceDetectCurrent.get()) || second) {
                 hasGamepiece = true;
             }
         } else {
