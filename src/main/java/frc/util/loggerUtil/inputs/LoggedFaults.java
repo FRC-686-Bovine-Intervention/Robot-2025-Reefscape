@@ -2,39 +2,65 @@ package frc.util.loggerUtil.inputs;
 
 import java.nio.ByteBuffer;
 
-import com.ctre.phoenix.motorcontrol.Faults;
-import com.ctre.phoenix.motorcontrol.StickyFaults;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
-import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
+import frc.util.DeviceFaults;
+import frc.util.DeviceFaults.FaultType;
 
 public class LoggedFaults implements StructSerializable {
-    public long faults;
+    public final DeviceFaults activeFaults = new DeviceFaults();
+    public final DeviceFaults stickyFaults = new DeviceFaults();
 
-    public void updateFrom(TalonFX talon) {
-        this.faults = talon.getStickyFaultField().getValue().longValue();
-    }
-    private static final Faults phoenix5Faults = new Faults();
-    private static final StickyFaults phoenix5StickyFaults = new StickyFaults();
-    public void updateFrom(TalonSRX talon) {
-        talon.getFaults(phoenix5Faults);
-        talon.getStickyFaults(phoenix5StickyFaults);
-        this.faults = Integer.toUnsignedLong(phoenix5StickyFaults.toBitfield()) << 32 | Integer.toUnsignedLong(phoenix5Faults.toBitfield());
-    }
-    public void updateFrom(TalonFXS talon) {
-        this.faults = talon.getStickyFaultField().getValue().longValue() << 32 | talon.getFaultField().getValue().longValue();
+    public void updateFrom(TalonFX talonFX) {
+        var activeBitfield = 0x0000000000000000;
+        var stickyBitfield = 0x0000000000000000;
+        for (var faultType : FaultType.possibleTalonFXFaults) {
+            if (faultType.getFaultFrom(talonFX)) {
+                activeBitfield |= faultType.getBitMask();
+            }
+            if (faultType.getStickyFaultFrom(talonFX)) {
+                stickyBitfield |= faultType.getBitMask();
+            }
+        }
+        this.activeFaults.mut_setBitfield(activeBitfield);
+        this.stickyFaults.mut_setBitfield(stickyBitfield);
     }
 
-    public void updateFrom(SparkMax spark) {
-        this.faults = Integer.toUnsignedLong(spark.getStickyFaults().rawBits) << 32 | Integer.toUnsignedLong(spark.getFaults().rawBits);
+    public void updateFrom(TalonFXS talonFXS) {
+        var activeBitfield = 0x0000000000000000;
+        var stickyBitfield = 0x0000000000000000;
+        for (var faultType : FaultType.possibleTalonFXSFaults) {
+            if (faultType.getFaultFrom(talonFXS)) {
+                activeBitfield |= faultType.getBitMask();
+            }
+            if (faultType.getStickyFaultFrom(talonFXS)) {
+                stickyBitfield |= faultType.getBitMask();
+            }
+        }
+        this.activeFaults.mut_setBitfield(activeBitfield);
+        this.stickyFaults.mut_setBitfield(stickyBitfield);
+    }
+
+    public void updateFrom(CANcoder cancoder) {
+        var activeBitfield = 0x0000000000000000;
+        var stickyBitfield = 0x0000000000000000;
+        for (var faultType : FaultType.possibleCancoderFaults) {
+            if (faultType.getFaultFrom(cancoder)) {
+                activeBitfield |= faultType.getBitMask();
+            }
+            if (faultType.getStickyFaultFrom(cancoder)) {
+                stickyBitfield |= faultType.getBitMask();
+            }
+        }
+        this.activeFaults.mut_setBitfield(activeBitfield);
+        this.stickyFaults.mut_setBitfield(stickyBitfield);
     }
 
     public static final LoggedFaultsStruct struct = new LoggedFaultsStruct();
-
     public static class LoggedFaultsStruct implements Struct<LoggedFaults> {
         @Override
         public Class<LoggedFaults> getTypeClass() {
@@ -48,24 +74,31 @@ public class LoggedFaults implements StructSerializable {
 
         @Override
         public int getSize() {
-            return kSizeInt64;
+            return DeviceFaults.struct.getSize() * 2;
         }
 
         @Override
         public String getSchema() {
-            return "long faults";
+            return "DeviceFaults activeFaults;DeviceFaults stickyFaults";
         }
 
         @Override
         public LoggedFaults unpack(ByteBuffer bb) {
             var faults = new LoggedFaults();
-            faults.faults = bb.getLong();
+            this.unpackInto(faults, bb);
             return faults;
         }
 
         @Override
+        public void unpackInto(LoggedFaults out, ByteBuffer bb) {
+            DeviceFaults.struct.unpackInto(out.activeFaults, bb);
+            DeviceFaults.struct.unpackInto(out.stickyFaults, bb);
+        }
+
+        @Override
         public void pack(ByteBuffer bb, LoggedFaults value) {
-            bb.putLong(value.faults);
+            DeviceFaults.struct.pack(bb, value.activeFaults);
+            DeviceFaults.struct.pack(bb, value.stickyFaults);
         }
     }
 }

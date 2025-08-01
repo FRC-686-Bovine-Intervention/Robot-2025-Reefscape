@@ -89,6 +89,13 @@ public class Pivot {
         if (pidConsts.hasChanged(hashCode())) {
             this.io.configPID(pidConsts.getConstants());
         }
+
+        Logger.recordOutput("Superstructure/Pivot/Faults/Left Motor/Active Faults", this.inputs.leftMotorFaults.activeFaults.getActiveFaults());
+        Logger.recordOutput("Superstructure/Pivot/Faults/Left Motor/Sticky Faults", this.inputs.leftMotorFaults.stickyFaults.getActiveFaults());
+        Logger.recordOutput("Superstructure/Pivot/Faults/Right Motor/Active Faults", this.inputs.rightMotorFaults.activeFaults.getActiveFaults());
+        Logger.recordOutput("Superstructure/Pivot/Faults/Right Motor/Sticky Faults", this.inputs.rightMotorFaults.stickyFaults.getActiveFaults());
+        Logger.recordOutput("Superstructure/Pivot/Faults/Encoder/Active Faults", this.inputs.encoderFaults.activeFaults.getActiveFaults());
+        Logger.recordOutput("Superstructure/Pivot/Faults/Encoder/Sticky Faults", this.inputs.encoderFaults.stickyFaults.getActiveFaults());
     }
 
     public Angle getAngle() {

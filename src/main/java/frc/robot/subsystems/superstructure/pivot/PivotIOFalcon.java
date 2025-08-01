@@ -101,6 +101,9 @@ public class PivotIOFalcon implements PivotIO {
         inputs.encoder.updateFrom(this.cancoder);
         inputs.leftMotor.updateFrom(this.leftMotor);
         inputs.rightMotor.updateFrom(this.rightMotor);
+        inputs.encoderFaults.updateFrom(this.cancoder);
+        inputs.leftMotorFaults.updateFrom(this.leftMotor);
+        inputs.rightMotorFaults.updateFrom(this.rightMotor);
     }
 
     @Override

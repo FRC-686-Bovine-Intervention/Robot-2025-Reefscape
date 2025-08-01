@@ -85,8 +85,7 @@ public class LoggedEncoder implements StructSerializable {
         @Override
         public LoggedEncoder unpack(ByteBuffer bb) {
             var encoder = new LoggedEncoder();
-            encoder.position.mut_setBaseUnitMagnitude(bb.getDouble());
-            encoder.velocity.mut_setBaseUnitMagnitude(bb.getDouble());
+            this.unpackInto(encoder, bb);
             return encoder;
         }
 
