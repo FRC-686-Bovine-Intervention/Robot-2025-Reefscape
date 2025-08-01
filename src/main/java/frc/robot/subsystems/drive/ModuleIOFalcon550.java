@@ -33,10 +33,10 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
-import frc.util.DeviceFaults.FaultType;
-import frc.util.DeviceFaults;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
 import frc.util.loggerUtil.inputs.LoggedMotor;
 

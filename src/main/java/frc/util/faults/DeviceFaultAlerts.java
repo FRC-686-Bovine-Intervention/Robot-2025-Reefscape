@@ -1,9 +1,9 @@
-package frc.util;
+package frc.util.faults;
 
 import java.util.Arrays;
 
 import edu.wpi.first.wpilibj.Alert;
-import frc.util.DeviceFaults.FaultType;
+import frc.util.faults.DeviceFaults.FaultType;
 
 public class DeviceFaultAlerts {
     private final Alert alert;

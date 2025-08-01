@@ -14,8 +14,8 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.util.DeviceFaults;
-import frc.util.DeviceFaults.FaultType;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedMotor;
 
 

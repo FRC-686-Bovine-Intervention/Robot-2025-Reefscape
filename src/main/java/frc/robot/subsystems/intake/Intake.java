@@ -21,8 +21,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.util.DeviceFaultAlerts;
-import frc.util.DeviceFaults.FaultType;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.robotStructure.GamepiecePose;
 

@@ -9,8 +9,8 @@ import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
-import frc.util.DeviceFaults;
-import frc.util.DeviceFaults.FaultType;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 
 public class LoggedFaults implements StructSerializable {
     public final DeviceFaults activeFaults = new DeviceFaults();

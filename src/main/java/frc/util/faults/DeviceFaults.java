@@ -1,4 +1,4 @@
-package frc.util;
+package frc.util.faults;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
