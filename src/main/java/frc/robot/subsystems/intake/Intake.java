@@ -15,10 +15,14 @@ import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.util.DeviceFaultAlerts;
+import frc.util.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.robotStructure.GamepiecePose;
 
@@ -42,6 +46,9 @@ public class Intake extends SubsystemBase {
     private boolean grabbingCoral = true;
     public final Trigger hasCoral = new Trigger(() -> hasGamepiece && grabbingCoral);
     public final Trigger hasAlgae = new Trigger(() -> hasGamepiece && !grabbingCoral);
+
+    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
 
     public Intake(IntakeIO io) {
         System.out.println("[Init Intake] Instantiated Intake with " + io.getClass().getSimpleName());
@@ -87,6 +94,9 @@ public class Intake extends SubsystemBase {
                 new Pose3d[]{}
             )
         );
+
+        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
     }
 
     private Command genCommand(

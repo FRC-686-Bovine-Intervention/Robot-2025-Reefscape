@@ -65,9 +65,9 @@ public class Pivot {
     public final ArmMech mech = new ArmMech(PivotConstants.pivotBase);
 
     private final DeviceFaultAlerts leftMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts leftMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit);
+    private final DeviceFaultAlerts leftMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
     private final DeviceFaultAlerts rightMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts rightMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit);
+    private final DeviceFaultAlerts rightMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
     private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has active faults: ", AlertType.kError));
     private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
 

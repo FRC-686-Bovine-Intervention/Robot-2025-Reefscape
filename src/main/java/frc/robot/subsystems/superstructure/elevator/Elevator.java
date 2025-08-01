@@ -23,7 +23,11 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.DeviceFaultAlerts;
+import frc.util.DeviceFaults.FaultType;
 import frc.util.NeutralMode;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
@@ -64,6 +68,11 @@ public class Elevator {
     public final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
     public final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
 
+    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+
     public Elevator(ElevatorIO io) {
         System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
         this.io = io;
@@ -97,6 +106,11 @@ public class Elevator {
         if (pidConsts.hasChanged(hashCode())) {
             io.configPID(pidConsts.getConstants());
         }
+
+        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
     }
 
     public Distance getLength() {

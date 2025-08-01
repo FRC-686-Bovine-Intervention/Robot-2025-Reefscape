@@ -21,7 +21,11 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.DeviceFaultAlerts;
+import frc.util.DeviceFaults.FaultType;
 import frc.util.NeutralMode;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
@@ -60,6 +64,11 @@ public class Wrist {
 
     public final ArmMech mech = new ArmMech(WristConstants.wristBase);
 
+    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Encoder has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+
     public Wrist(WristIO io) {
         System.out.println("[Init Wrist] Instantiating Wrist with " + io.getClass().getSimpleName());
         this.io = io;
@@ -89,6 +98,11 @@ public class Wrist {
         if (pidConsts.hasChanged(hashCode())) {
             this.io.configPID(pidConsts.getConstants());
         }
+
+        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
     }
 
     public Angle getAngle() {
