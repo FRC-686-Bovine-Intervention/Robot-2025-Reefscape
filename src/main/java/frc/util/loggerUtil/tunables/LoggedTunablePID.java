@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 
 import edu.wpi.first.math.controller.PIDController;
+import frc.util.PIDConstants;
 
 public class LoggedTunablePID {
     private final LoggedTunableNumber kP;
@@ -22,39 +23,52 @@ public class LoggedTunablePID {
         return LoggedTunableNumber.hasChanged(hashCode, kP, kI, kD);
     }
 
+    public double getKP() {
+        return kP.get();
+    }
+    public double getKI() {
+        return kI.get();
+    }
+    public double getKD() {
+        return kD.get();
+    }
+    public PIDConstants getConstants() {
+        return new PIDConstants(getKP(), getKI(), getKD());
+    }
+
     public void update(PIDController pid) {
         pid.setPID(
-            kP.get(),
-            kI.get(),
-            kD.get()
+            getKP(),
+            getKI(),
+            getKD()
         );
     }
     public void update(SlotConfigs pid) {
         pid
-            .withKP(kP.get())
-            .withKI(kI.get())
-            .withKD(kD.get())
+            .withKP(getKP())
+            .withKI(getKI())
+            .withKD(getKD())
         ;
     }
     public void update(Slot0Configs pid) {
         pid
-            .withKP(kP.get())
-            .withKI(kI.get())
-            .withKD(kD.get())
+            .withKP(getKP())
+            .withKI(getKI())
+            .withKD(getKD())
         ;
     }
     public void update(Slot1Configs pid) {
         pid
-            .withKP(kP.get())
-            .withKI(kI.get())
-            .withKD(kD.get())
+            .withKP(getKP())
+            .withKI(getKI())
+            .withKD(getKD())
         ;
     }
     public void update(Slot2Configs pid) {
         pid
-            .withKP(kP.get())
-            .withKI(kI.get())
-            .withKD(kD.get())
+            .withKP(getKP())
+            .withKI(getKI())
+            .withKD(getKD())
         ;
     }
 }

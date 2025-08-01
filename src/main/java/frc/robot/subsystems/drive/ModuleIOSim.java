@@ -19,11 +19,11 @@ import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 public class ModuleIOSim extends ModuleIOFalcon550 {
     // jKg constants unknown, stolen from Mechanical Advnatage
     private final FlywheelSim driveSim = new FlywheelSim(
-        LinearSystemId.createFlywheelSystem(DCMotor.getFalcon500(1), 0.0025/DriveConstants.driveWheelGearReduction/DriveConstants.driveWheelGearReduction, 1),
+        LinearSystemId.createFlywheelSystem(DCMotor.getFalcon500(1), 0.0025 / DriveConstants.driveRatio.reductionUnsigned() / DriveConstants.driveRatio.reductionUnsigned(), 1),
         DCMotor.getFalcon500(1)
     );
-    private final FlywheelSim turnSim = new FlywheelSim(
-        LinearSystemId.createFlywheelSystem(DCMotor.getNeo550(1), 0.004, DriveConstants.turnWheelGearReduction),
+    private final FlywheelSim azimuthSim = new FlywheelSim(
+        LinearSystemId.createFlywheelSystem(DCMotor.getNeo550(1), 0.004, DriveConstants.azimuthRatio.reductionUnsigned()),
         DCMotor.getFalcon500(1)
     );
 
@@ -32,34 +32,24 @@ public class ModuleIOSim extends ModuleIOFalcon550 {
     }
 
     private final MutAngle driveRelativePosition = Radians.mutable(0);
-    // private final MutAngle turnRelativePosition = Radians.mutable(0);
-    private final MutAngle turnAbsolutePosition = Radians.mutable(0);
-    private final MutVoltage turnAppliedVolts = Volts.mutable(0);
-
-    // private boolean zeroEncodersFlag = false;
+    private final MutAngle azimuthAbsolutePosition = Radians.mutable(0);
+    private final MutVoltage azimuthAppliedVolts = Volts.mutable(0);
 
     public void updateInputs(ModuleIOInputs inputs) {
         var driveSimState = driveMotor.getSimState();
         if (DriverStation.isDisabled()) {
-            turnAppliedVolts.mut_setBaseUnitMagnitude(0);
+            azimuthAppliedVolts.mut_setBaseUnitMagnitude(0);
         }
         driveSim.setInputVoltage(driveSimState.getMotorVoltage());
-        turnSim.setInputVoltage(turnAppliedVolts.in(Volts));
+        azimuthSim.setInputVoltage(azimuthAppliedVolts.in(Volts));
         
         driveSim.update(RobotConstants.rioUpdatePeriodSecs);
-        turnSim.update(RobotConstants.rioUpdatePeriodSecs);
+        azimuthSim.update(RobotConstants.rioUpdatePeriodSecs);
 
-        var angleDiff = turnSim.getAngularVelocity().times(RobotConstants.rioUpdatePeriod);
-        // turnRelativePosition.mut_acc(angleDiff);
-        turnAbsolutePosition.mut_acc(angleDiff);
-        turnAbsolutePosition.mut_setMagnitude(MathUtil.angleModulus(turnAbsolutePosition.in(Radians)));
+        var angleDiff = azimuthSim.getAngularVelocity().times(RobotConstants.rioUpdatePeriod);
+        azimuthAbsolutePosition.mut_acc(angleDiff);
+        azimuthAbsolutePosition.mut_setMagnitude(MathUtil.angleModulus(azimuthAbsolutePosition.in(Radians)));
 
-        // if (zeroEncodersFlag) {
-        //     inputs.driveMotor.encoder.position.mut_setBaseUnitMagnitude(0.0);
-        //     turnAbsolutePosition.mut_minus(turnRelativePosition);
-        //     turnRelativePosition.mut_setMagnitude(0);
-        //     zeroEncodersFlag = false;
-        // }
         var driveAngularDiff = driveSim.getAngularVelocity().times(RobotConstants.rioUpdatePeriod);
         driveRelativePosition.mut_acc(driveAngularDiff);
         driveSimState.setRawRotorPosition(driveRelativePosition);
@@ -68,26 +58,22 @@ public class ModuleIOSim extends ModuleIOFalcon550 {
 
         super.updateInputs(inputs);
 
-        inputs.turnMotor.updateFrom(turnSim, turnAppliedVolts);
-        inputs.turnMotor.encoder.position.mut_replace(turnAbsolutePosition);
-        inputs.turnMotor.encoder.velocity.mut_replace(turnSim.getAngularVelocity());
+        inputs.azimuthMotor.updateFrom(azimuthSim, azimuthAppliedVolts);
+        inputs.azimuthMotor.encoder.position.mut_replace(azimuthAbsolutePosition);
+        inputs.azimuthMotor.encoder.velocity.mut_replace(azimuthSim.getAngularVelocity());
     }
     
     @Override
-    public void setTurnVolts(double volts) {
-        turnAppliedVolts.mut_replace(MathUtil.clamp(volts, -12, 12), Volts);
+    public void setAzimuthVolts(double volts) {
+        azimuthAppliedVolts.mut_replace(MathUtil.clamp(volts, -12, 12), Volts);
     }
     @Override
-    public void setTurnAngle(Measure<AngleUnit> angle) {
-        setTurnVolts(
-            turnPID.calculate(
-                turnAbsolutePosition.in(Rotations),
+    public void setAzimuthAngle(Measure<AngleUnit> angle) {
+        setAzimuthVolts(
+            azimuthPID.calculate(
+                azimuthAbsolutePosition.in(Rotations),
                 angle.in(Rotations)
             )
         );
     }
-
-    // public void zeroEncoders() {
-    //     zeroEncodersFlag = true;        
-    // }
 }

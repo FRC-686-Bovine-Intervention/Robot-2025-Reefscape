@@ -15,32 +15,30 @@ import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 
 public class LoggedTunableAngularProfile {
-    private final LoggedTunableMeasure<AngularVelocityUnit> kV;
-    private final LoggedTunableMeasure<AngularAccelerationUnit> kA;
+    private final LoggedTunableMeasure<AngularVelocityUnit> maxVelocity;
+    private final LoggedTunableMeasure<AngularAccelerationUnit> maxAcceleration;
 
-    public LoggedTunableAngularProfile(String key,
-        Measure<AngularVelocityUnit> kV, Measure<AngularAccelerationUnit> kA
-    ) {
-        this.kV = new LoggedTunableMeasure<>(key + "/kV", kV);
-        this.kA = new LoggedTunableMeasure<>(key + "/kA", kA);
+    public LoggedTunableAngularProfile(String key, Measure<AngularVelocityUnit> maxVelocity, Measure<AngularAccelerationUnit> maxAcceleration) {
+        this.maxVelocity = new LoggedTunableMeasure<>(key + "/Max Velocity", maxVelocity);
+        this.maxAcceleration = new LoggedTunableMeasure<>(key + "/Max Acceleration", maxAcceleration);
     }
 
     public boolean hasChanged(int hashCode) {
-        return LoggedTunableMeasure.hasChanged(hashCode, kV, kA);
+        return LoggedTunableMeasure.hasChanged(hashCode, maxVelocity, maxAcceleration);
     }
 
     public void update(MotionMagicConfigs motionMagicConfigs) {
         motionMagicConfigs
-            .withMotionMagicCruiseVelocity(kV.in(RotationsPerSecond))
-            .withMotionMagicAcceleration(kA.in(RotationsPerSecondPerSecond))
+            .withMotionMagicCruiseVelocity(maxVelocity.in(RotationsPerSecond))
+            .withMotionMagicAcceleration(maxAcceleration.in(RotationsPerSecondPerSecond))
         ;
     }
 
     public TrapezoidProfile getTrapezoidProfile() {
         return new TrapezoidProfile(
             new Constraints(
-                kV.get().in(RadiansPerSecond),
-                kA.get().in(RadiansPerSecondPerSecond)
+                maxVelocity.get().in(RadiansPerSecond),
+                maxAcceleration.get().in(RadiansPerSecondPerSecond)
             )
         );
     }
@@ -48,8 +46,8 @@ public class LoggedTunableAngularProfile {
     public void update(ProfiledPIDController profiledPIDController) {
         profiledPIDController.setConstraints(
             new Constraints(
-                kV.get().in(RadiansPerSecond),
-                kA.get().in(RadiansPerSecondPerSecond)
+                maxVelocity.get().in(RadiansPerSecond),
+                maxAcceleration.get().in(RadiansPerSecondPerSecond)
             )
         );
     }
