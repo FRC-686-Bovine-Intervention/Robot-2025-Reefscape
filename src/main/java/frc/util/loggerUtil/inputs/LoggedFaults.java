@@ -17,14 +17,14 @@ public class LoggedFaults implements StructSerializable {
     public final DeviceFaults stickyFaults = new DeviceFaults();
 
     public void updateFrom(TalonFX talonFX) {
-        var activeBitfield = 0x0000000000000000;
-        var stickyBitfield = 0x0000000000000000;
+        var activeBitfield = 0x0000000000000000L;
+        var stickyBitfield = 0x0000000000000000L;
         for (var faultType : FaultType.possibleTalonFXFaults) {
             if (faultType.getFaultFrom(talonFX)) {
-                activeBitfield |= faultType.getBitMask();
+                activeBitfield |= faultType.getBitmask();
             }
             if (faultType.getStickyFaultFrom(talonFX)) {
-                stickyBitfield |= faultType.getBitMask();
+                stickyBitfield |= faultType.getBitmask();
             }
         }
         this.activeFaults.mut_setBitfield(activeBitfield);
@@ -32,14 +32,14 @@ public class LoggedFaults implements StructSerializable {
     }
 
     public void updateFrom(TalonFXS talonFXS) {
-        var activeBitfield = 0x0000000000000000;
-        var stickyBitfield = 0x0000000000000000;
+        var activeBitfield = 0x0000000000000000L;
+        var stickyBitfield = 0x0000000000000000L;
         for (var faultType : FaultType.possibleTalonFXSFaults) {
             if (faultType.getFaultFrom(talonFXS)) {
-                activeBitfield |= faultType.getBitMask();
+                activeBitfield |= faultType.getBitmask();
             }
             if (faultType.getStickyFaultFrom(talonFXS)) {
-                stickyBitfield |= faultType.getBitMask();
+                stickyBitfield |= faultType.getBitmask();
             }
         }
         this.activeFaults.mut_setBitfield(activeBitfield);
@@ -47,14 +47,14 @@ public class LoggedFaults implements StructSerializable {
     }
 
     public void updateFrom(CANcoder cancoder) {
-        var activeBitfield = 0x0000000000000000;
-        var stickyBitfield = 0x0000000000000000;
+        var activeBitfield = 0x0000000000000000L;
+        var stickyBitfield = 0x0000000000000000L;
         for (var faultType : FaultType.possibleCancoderFaults) {
             if (faultType.getFaultFrom(cancoder)) {
-                activeBitfield |= faultType.getBitMask();
+                activeBitfield |= faultType.getBitmask();
             }
             if (faultType.getStickyFaultFrom(cancoder)) {
-                stickyBitfield |= faultType.getBitMask();
+                stickyBitfield |= faultType.getBitmask();
             }
         }
         this.activeFaults.mut_setBitfield(activeBitfield);
@@ -62,14 +62,14 @@ public class LoggedFaults implements StructSerializable {
     }
 
     public void updateFrom(SparkMax sparkMax) {
-        var activeBitfield = 0x0000000000000000;
-        var stickyBitfield = 0x0000000000000000;
+        var activeBitfield = 0x0000000000000000L;
+        var stickyBitfield = 0x0000000000000000L;
         for (var faultType : FaultType.possibleSparkMaxFaults) {
             if (faultType.getFaultFrom(sparkMax)) {
-                activeBitfield |= faultType.getBitMask();
+                activeBitfield |= faultType.getBitmask();
             }
             if (faultType.getStickyFaultFrom(sparkMax)) {
-                stickyBitfield |= faultType.getBitMask();
+                stickyBitfield |= faultType.getBitmask();
             }
         }
         this.activeFaults.mut_setBitfield(activeBitfield);

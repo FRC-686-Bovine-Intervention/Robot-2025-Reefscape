@@ -21,7 +21,11 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.DeviceFaultAlerts;
+import frc.util.DeviceFaults.FaultType;
 import frc.util.NeutralMode;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
@@ -60,6 +64,13 @@ public class Pivot {
 
     public final ArmMech mech = new ArmMech(PivotConstants.pivotBase);
 
+    private final DeviceFaultAlerts leftMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts leftMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit);
+    private final DeviceFaultAlerts rightMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts rightMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit);
+    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+
     public Pivot(PivotIO io) {
         System.out.println("[Init Pivot] Instantiating Pivot with " + io.getClass().getSimpleName());
         this.io = io;
@@ -90,12 +101,12 @@ public class Pivot {
             this.io.configPID(pidConsts.getConstants());
         }
 
-        Logger.recordOutput("Superstructure/Pivot/Faults/Left Motor/Active Faults", this.inputs.leftMotorFaults.activeFaults.getActiveFaults());
-        Logger.recordOutput("Superstructure/Pivot/Faults/Left Motor/Sticky Faults", this.inputs.leftMotorFaults.stickyFaults.getActiveFaults());
-        Logger.recordOutput("Superstructure/Pivot/Faults/Right Motor/Active Faults", this.inputs.rightMotorFaults.activeFaults.getActiveFaults());
-        Logger.recordOutput("Superstructure/Pivot/Faults/Right Motor/Sticky Faults", this.inputs.rightMotorFaults.stickyFaults.getActiveFaults());
-        Logger.recordOutput("Superstructure/Pivot/Faults/Encoder/Active Faults", this.inputs.encoderFaults.activeFaults.getActiveFaults());
-        Logger.recordOutput("Superstructure/Pivot/Faults/Encoder/Sticky Faults", this.inputs.encoderFaults.stickyFaults.getActiveFaults());
+        this.leftMotorActiveFaultsAlert.updateFrom(this.inputs.leftMotorFaults.activeFaults);
+        this.leftMotorStickyFaultsAlert.updateFrom(this.inputs.leftMotorFaults.stickyFaults);
+        this.rightMotorActiveFaultsAlert.updateFrom(this.inputs.rightMotorFaults.activeFaults);
+        this.rightMotorStickyFaultsAlert.updateFrom(this.inputs.rightMotorFaults.stickyFaults);
+        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
     }
 
     public Angle getAngle() {

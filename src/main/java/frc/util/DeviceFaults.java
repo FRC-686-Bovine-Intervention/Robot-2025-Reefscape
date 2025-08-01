@@ -14,10 +14,13 @@ import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
 
 public class DeviceFaults implements StructSerializable {
+    public static final long noneMask = 0x0000000000000000L;
+    public static final long allMask = 0xFFFFFFFFFFFFFFFFL;
+
     private long bitfield;
 
     public DeviceFaults() {
-        this(0x0000000000000000);
+        this(noneMask);
     }
 
     public DeviceFaults(long bitfield) {
@@ -32,7 +35,10 @@ public class DeviceFaults implements StructSerializable {
     }
 
     public boolean getFault(FaultType faultType) {
-        return (this.getRawBitfield() & faultType.bitMask) == faultType.bitMask;
+        return (this.getRawBitfield() & faultType.getBitmask()) == faultType.getBitmask();
+    }
+    public boolean anyOf(long bitmask) {
+        return (this.getRawBitfield() & bitmask) != noneMask;
     }
 
     public FaultType[] getActiveFaults() {
@@ -42,7 +48,13 @@ public class DeviceFaults implements StructSerializable {
             .toArray(FaultType[]::new)
         ;
     }
-
+    public FaultType[] getActiveFaults(long bitmask) {
+        return Arrays
+            .stream(FaultType.values())
+            .filter((faultType) -> (this.getRawBitfield() & faultType.getBitmask() & bitmask) == faultType.getBitmask())
+            .toArray(FaultType[]::new)
+        ;
+    }
 
     public static final DeviceFaultsStruct struct = new DeviceFaultsStruct();
     public static class DeviceFaultsStruct implements Struct<DeviceFaults> {
@@ -84,57 +96,57 @@ public class DeviceFaults implements StructSerializable {
     }
 
     public static enum FaultType {
-        BadMagnet(29),
-        BootDuringEnable(1),
-        BridgeBrownout(12),
-        BridgeShort(24),
-        CAN(30),
-        DeviceTemperature(11),
-        DriveDisabledHallSensor(25),
-        EscEepromFault(31),
-        EscEepromWarning(38),
-        ExtEeprom(39),
-        ForwardHardLimit(3),
-        ForwardSoftLimit(5),
-        FusedCancoderOutOfSync(18),
-        GateDriver(33),
-        HallSensorMissing(26),
         Hardware(0),
-        HasReset(42),
-        MissingDifferentialTalonFX(22),
+        BootDuringEnable(1),
+        UsingUnlicensedFeature(2),
+        ForwardHardLimit(3),
+        ReverseHardLimit(4),
+        ForwardSoftLimit(5),
+        ReverseSoftLimit(6),
+        RemoteSensorDataInvalid(7),
         MissingRemoteLimitSwitch(8),
         MissingRemoteSoftLimit(9),
-        MotorTempSensorMissing(27),
-        MotorTempSensorTooHot(28),
-        MotorType(34),
-        Overcurrent(37),
         ProcessorTemperature(10),
-        RemoteSensorDataInvalid(7),
-        RemoteSensorPositionOverflow(20),
-        RemoteSensorReset(21),
-        ReverseHardLimit(4),
-        ReverseSoftLimit(6),
-        SensorFault(35),
-        SensorWarning(40),
-        Stall(41),
-        StaticBrakeDisabled(23),
+        DeviceTemperature(11),
+        BridgeBrownout(12),
+        Undervoltage(13),
+        SupplyOvervoltage(14),
+        UnstableSupplyVoltage(15),
         StatorCurrentLimit(16),
         SupplyCurrentLimit(17),
-        SupplyOvervoltage(14),
-        Temperature(36),
-        Undervoltage(13),
-        UnknownFault(63),
-        UnknownWarning(62),
-        UnstableSupplyVoltage(15),
+        FusedCancoderOutOfSync(18),
         UsingFusedCancoderWhileUnlicensed(19),
-        UsingUnlicensedFeature(2),
+        RemoteSensorPositionOverflow(20),
+        RemoteSensorReset(21),
+        MissingDifferentialTalonFX(22),
+        StaticBrakeDisabled(23),
+        BridgeShort(24),
+        DriveDisabledHallSensor(25),
+        HallSensorMissing(26),
+        MotorTempSensorMissing(27),
+        MotorTempSensorTooHot(28),
+        BadMagnet(29),
+        CAN(30),
+        EscEepromFault(31),
+        EscEepromWarning(32),
+        ExtEeprom(33),
+        MotorType(34),
+        GateDriver(35),
+        Overcurrent(36),
+        Stall(37),
+        Temperature(38),
+        SensorFault(39),
+        SensorWarning(40),
+        HasReset(41),
+        UnknownWarning(62),
+        UnknownFault(63),
         ;
-        private final long bitMask;
+        private final long bitmask;
         FaultType(int bitPos) {
-            this.bitMask = 1 << bitPos;
+            this.bitmask = 0x0000000000000001L << bitPos;
         }
-        public long getBitMask() {
-            return this.bitMask;
+        public long getBitmask() {
+            return this.bitmask;
         }
         public static final FaultType[] possibleTalonFXFaults = new FaultType[] {
             BootDuringEnable,
