@@ -41,4 +41,7 @@ public interface ModuleIO {
 
     public default void configDrivePID(PIDConstants pidConstants) {}
     public default void configAzimuthPID(PIDConstants pidConstants) {}
+
+    public default void clearDriveStickyFaults(long bitmask) {}
+    public default void clearAzimuthStickyFaults(long bitmask) {}
 }

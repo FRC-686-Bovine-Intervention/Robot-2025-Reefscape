@@ -21,4 +21,5 @@ public interface IntakeIO {
     
     public default void setMotorVoltage(Measure<VoltageUnit> voltage) {}
     
+    public default void clearMotorStickyFaults(long bitmask) {}
 }

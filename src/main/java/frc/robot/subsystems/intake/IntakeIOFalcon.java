@@ -14,6 +14,7 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
+import frc.util.DeviceFaults;
 import frc.util.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedMotor;
 
@@ -55,5 +56,19 @@ public class IntakeIOFalcon implements IntakeIO {
     @Override
     public void setMotorVoltage(Measure<VoltageUnit> voltage) {
         this.motor.setVoltage(voltage.in(Volts));
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
     }
 }

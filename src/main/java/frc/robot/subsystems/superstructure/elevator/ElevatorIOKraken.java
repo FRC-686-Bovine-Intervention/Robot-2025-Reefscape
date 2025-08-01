@@ -24,6 +24,7 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
+import frc.util.DeviceFaults;
 import frc.util.DeviceFaults.FaultType;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
@@ -108,5 +109,32 @@ public class ElevatorIOKraken implements ElevatorIO {
         this.motor.getConfigurator().refresh(config);
         pidConstants.update(config);
         this.motor.getConfigurator().apply(config);
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearEncoderStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.cancoder.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleCancoderFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.cancoder);
+                }
+            }
+        }
     }
 }

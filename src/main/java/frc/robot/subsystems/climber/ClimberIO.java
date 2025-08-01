@@ -27,4 +27,6 @@ public interface ClimberIO {
     public default void setNonClimbingAngle(Measure<AngleUnit> angle) {}
 
     public default void setClimbingAngle(Measure<AngleUnit> angle) {}
+
+    public default void clearMotorStickyFaults(long bitmask) {}
 }

@@ -34,6 +34,7 @@ import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.DeviceFaults.FaultType;
+import frc.util.DeviceFaults;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
@@ -160,5 +161,24 @@ public class ModuleIOFalcon550 implements ModuleIO {
     @Override
     public void configAzimuthPID(PIDConstants pidConstants) {
         pidConstants.update(this.azimuthPID);
+    }
+
+    @Override
+    public void clearDriveStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.driveMotor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.driveMotor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearAzimuthStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        this.azimuthMotor.clearFaults();
     }
 }

@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
+import frc.util.DeviceFaults;
 import frc.util.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
 import frc.util.loggerUtil.inputs.LoggedMotor;
@@ -182,5 +183,19 @@ public class ClimberIOFalcon implements ClimberIO {
     @Override
     public void setClimbingAngle(Measure<AngleUnit> angle) {
         this.motor.setControl(this.climbingPositionRequest.withPosition(angle.in(Rotations)));
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
     }
 }

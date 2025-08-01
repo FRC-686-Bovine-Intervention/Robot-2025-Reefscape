@@ -28,8 +28,11 @@ public interface ElevatorIO {
     public default void setVoltage(Measure<VoltageUnit> voltage) {}
 
     public default void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {}
+    
+    public default void stop(Optional<NeutralMode> neutralMode) {}
 
     public default void configPID(PIDConstants pidConstants) {}
 
-    public default void stop(Optional<NeutralMode> neutralMode) {}
+    public default void clearMotorStickyFaults(long bitmask) {}
+    public default void clearEncoderStickyFaults(long bitmask) {}
 }

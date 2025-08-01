@@ -28,6 +28,7 @@ import frc.robot.constants.RobotConstants;
 import frc.util.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
 import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.DeviceFaults;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 
@@ -133,5 +134,45 @@ public class PivotIOFalcon implements PivotIO {
         pidConstants.update(rightConfig);
         this.leftMotor.getConfigurator().apply(leftConfig);
         this.rightMotor.getConfigurator().apply(rightConfig);
+    }
+
+    @Override
+    public void clearLeftMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.leftMotor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.leftMotor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearRightMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.rightMotor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.rightMotor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearEncoderStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.cancoder.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleCancoderFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.cancoder);
+                }
+            }
+        }
     }
 }

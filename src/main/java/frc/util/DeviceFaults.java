@@ -148,6 +148,9 @@ public class DeviceFaults implements StructSerializable {
         public long getBitmask() {
             return this.bitmask;
         }
+        public boolean isPartOf(long bitfield) {
+            return (bitfield & this.getBitmask()) == this.getBitmask();
+        }
         public static final FaultType[] possibleTalonFXFaults = new FaultType[] {
             BootDuringEnable,
             BridgeBrownout,
