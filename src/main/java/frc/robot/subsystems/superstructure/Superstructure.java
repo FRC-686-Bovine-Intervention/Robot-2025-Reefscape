@@ -22,6 +22,9 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -493,15 +496,7 @@ public class Superstructure extends SubsystemBase {
             };
         }
 
-        // public SuperstructureState plus(SuperstructureState other) {
-        //     return newConstrained(
-        //         this.pivotAngle.plus(other.pivotAngle),
-        //         this.elevatorLength.plus(other.elevatorLength),
-        //         this.wristAngle.plus(other.wristAngle)
-        //     );
-        // }
-
-        public boolean isNear(SuperstructureState other, Angle pivotTolerance, Distance elevatorTolerance, Angle wristTolerance) {
+        public boolean isNear(SuperstructureState other, Measure<AngleUnit> pivotTolerance, Measure<DistanceUnit> elevatorTolerance, Measure<AngleUnit> wristTolerance) {
             return
                 MeasureUtil.isNear(other.pivotAngle, this.pivotAngle, pivotTolerance) &&
                 MeasureUtil.isNear(other.elevatorLength, this.elevatorLength, elevatorTolerance) &&
