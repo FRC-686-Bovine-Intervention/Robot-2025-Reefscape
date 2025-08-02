@@ -23,8 +23,14 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
 import frc.util.NeutralMode;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -64,6 +70,13 @@ public class Elevator {
     public final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
     public final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
 
+    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Elevator/Motor Sticky Faults");
+    private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Elevator/Encoder Sticky Faults");
+
     public Elevator(ElevatorIO io) {
         System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
         this.io = io;
@@ -97,6 +110,13 @@ public class Elevator {
         if (pidConsts.hasChanged(hashCode())) {
             io.configPID(pidConsts.getConstants());
         }
+
+        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
+        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
     }
 
     public Distance getLength() {

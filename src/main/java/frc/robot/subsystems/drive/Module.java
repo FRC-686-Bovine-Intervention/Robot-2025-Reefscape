@@ -38,9 +38,15 @@ import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
 import frc.util.NeutralMode;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -88,6 +94,13 @@ public class Module {
 
     private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0,0,0);
 
+    private final DeviceFaultAlerts driveMotorActiveFaultsAlert;
+    private final DeviceFaultAlerts driveMotorStickyFaultsAlert;
+    private final DeviceFaultAlerts azimuthMotorActiveFaultsAlert;
+    private final DeviceFaultAlerts azimuthMotorStickyFaultsAlert;
+    private final DeviceFaultClearer driveMotorStickyFaultClearer;
+    private final DeviceFaultClearer azimuthMotorStickyFaultClearer;
+
     public Module(ModuleIO io, ModuleConstants config) {
         this.io = io;
         this.config = config;
@@ -95,6 +108,13 @@ public class Module {
         driveFFConsts.update(this.driveFeedforward);
         this.io.configDrivePID(drivePIDConsts.getConstants());
         this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
+
+        this.driveMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has active faults: ", AlertType.kError));
+        this.driveMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.azimuthMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has active faults: ", AlertType.kError));
+        this.azimuthMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.driveMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Drive Motor Sticky Faults");
+        this.azimuthMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Azimuth Motor Sticky Faults");
     }
 
     /** Updates inputs and checks tunable numbers. */
@@ -128,6 +148,13 @@ public class Module {
         if (azimuthPIDConsts.hasChanged(hashCode())) {
             this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
         }
+
+        this.driveMotorActiveFaultsAlert.updateFrom(this.inputs.driveMotorFaults.activeFaults);
+        this.driveMotorStickyFaultsAlert.updateFrom(this.inputs.driveMotorFaults.stickyFaults);
+        this.azimuthMotorActiveFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.activeFaults);
+        this.azimuthMotorStickyFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.stickyFaults);
+        this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
+        this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
     }
 
     /**
@@ -190,7 +217,7 @@ public class Module {
     }
 
     public Current getDriveCurrent() {
-        return this.inputs.driveMotor.motor.current;
+        return this.inputs.driveMotor.motor.statorCurrent;
     }
 
     public boolean currentSpiking() {

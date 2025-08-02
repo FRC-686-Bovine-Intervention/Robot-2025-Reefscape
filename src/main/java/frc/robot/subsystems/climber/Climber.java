@@ -12,10 +12,16 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.leds.Leds;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.angle.AngularMech;
@@ -34,6 +40,10 @@ public class Climber extends SubsystemBase {
     private static final LoggedTunableMeasure<TimeUnit> ratchetTime = new LoggedTunableMeasure<>("Climber/Ratchet Time", Seconds.of(0.25));
 
     public final AngularMech mech = new AngularMech(ClimberConstants.climberBase, VecBuilder.fill(0,1,0));
+
+    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Climber/Alerts", "Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Climber/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Climber/Motor Sticky Faults");
 
     private boolean ratchetEngaged = true;
 
@@ -55,6 +65,10 @@ public class Climber extends SubsystemBase {
         mech.set(ClimberConstants.climberMaxAngle.times(percentToDeploy));
 
         Leds.getInstance().climbing.setPos(getAngle().div(climbAngle.get()).baseUnitMagnitude());
+
+        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
     }
 
     public Angle getAngle() {

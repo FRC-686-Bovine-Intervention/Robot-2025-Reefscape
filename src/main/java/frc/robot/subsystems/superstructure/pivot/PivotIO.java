@@ -12,6 +12,7 @@ import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedFaults;
 
 public interface PivotIO {
     @AutoLog
@@ -19,6 +20,9 @@ public interface PivotIO {
         LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
         LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();
+        LoggedFaults leftMotorFaults = new LoggedFaults();
+        LoggedFaults rightMotorFaults = new LoggedFaults();
+        LoggedFaults encoderFaults = new LoggedFaults();
     }
 
     public default void updateInputs(PivotIOInputs inputs) {}
@@ -26,8 +30,12 @@ public interface PivotIO {
     public default void setVoltage(Measure<VoltageUnit> voltage) {}
 
     public default void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {}
+    
+    public default void stop(Optional<NeutralMode> neutralMode) {}
 
     public default void configPID(PIDConstants pidConstants) {}
 
-    public default void stop(Optional<NeutralMode> neutralMode) {}
+    public default void clearLeftMotorStickyFaults(long bitmask) {}
+    public default void clearRightMotorStickyFaults(long bitmask) {}
+    public default void clearEncoderStickyFaults(long bitmask) {}
 }

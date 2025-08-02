@@ -26,7 +26,10 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -111,40 +114,25 @@ public class ClimberIOFalcon implements ClimberIO {
         climbingFFConsts.hasChanged(hashCode());
         climbingPIDConsts.hasChanged(hashCode());
 
-        motor.getConfigurator().apply(motorConfig);
+        this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getRotorPosition(),
-            motor.getRotorVelocity()
-        );
-        // BaseStatusSignal.setUpdateFrequencyForAll(
-        //     RobotConstants.rioUpdateFrequency,
-        //     motor.getPosition(),
-        //     motor.getVelocity(),
-        //     motor.getClosedLoopReference(),
-        //     motor.getClosedLoopReferenceSlope(),
-        //     motor.getClosedLoopError(),
-        //     motor.getClosedLoopOutput()
-        // );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
-        );
-        motor.optimizeBusUtilization();
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        this.motor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
-        inputs.motor.updateFrom(motor);
+        inputs.motor.updateFrom(this.motor);
+        inputs.motorFaults.updateFrom(this.motor);
 
-        inputs.sensor = sensor.get() ^ ClimberConstants.climberSensorInverted;
+        inputs.sensor = this.sensor.get() ^ ClimberConstants.climberSensorInverted;
 
-        voltageRequest.withLimitReverseMotion(inputs.sensor);
-        nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
-        climbingPositionRequest.withLimitReverseMotion(inputs.sensor);
+        this.voltageRequest.withLimitReverseMotion(inputs.sensor);
+        this.nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
+        this.climbingPositionRequest.withLimitReverseMotion(inputs.sensor);
 
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
@@ -179,21 +167,35 @@ public class ClimberIOFalcon implements ClimberIO {
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage, boolean brakeMode) {
-        motor.setControl(voltageRequest.withOutput(voltage.in(Volts)).withOverrideBrakeDurNeutral(brakeMode));
+        this.motor.setControl(this.voltageRequest.withOutput(voltage.in(Volts)).withOverrideBrakeDurNeutral(brakeMode));
     }
 
     @Override
     public void setRatchetServoAngle(Measure<AngleUnit> angle) {
-        servo.setAngle(angle.in(Degrees));
+        this.servo.setAngle(angle.in(Degrees));
     }
 
     @Override
     public void setNonClimbingAngle(Measure<AngleUnit> angle) {
-        motor.setControl(nonClimbingPositionRequest.withPosition(angle.in(Rotations)));
+        this.motor.setControl(this.nonClimbingPositionRequest.withPosition(angle.in(Rotations)));
     }
 
     @Override
     public void setClimbingAngle(Measure<AngleUnit> angle) {
-        motor.setControl(climbingPositionRequest.withPosition(angle.in(Rotations)));
+        this.motor.setControl(this.climbingPositionRequest.withPosition(angle.in(Rotations)));
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
     }
 }
