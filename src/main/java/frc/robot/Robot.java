@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -22,6 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.leds.Leds;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
@@ -135,6 +138,13 @@ public class Robot extends LoggedRobot {
         robotPeriodicWatchdog.addEpoch("VirtualSubsystem.periodicAll()");
         CommandScheduler.getInstance().run();
         robotPeriodicWatchdog.addEpoch("CommandScheduler.run()");
+        this.robotContainer.drive.setTiltLimits(
+            (this.robotContainer.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
+                Drive.extendedTiltLimitTunable.get()
+            ) : (
+                Drive.normalTiltLimitTunable.get()
+            )
+        );
         robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
         robotPeriodicWatchdog.addEpoch("ObjectiveTracker.determineGoal");
         VirtualSubsystem.postCommandPeriodicAll();

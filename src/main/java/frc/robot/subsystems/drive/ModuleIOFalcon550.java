@@ -58,7 +58,7 @@ public class ModuleIOFalcon550 implements ModuleIO {
         var driveConfig = new TalonFXConfiguration();
         driveConfig.MotorOutput
             .withInverted(config.driveInverted)
-            .withNeutralMode(NeutralModeValue.Brake)
+            .withNeutralMode(NeutralModeValue.Coast)
         ;
         driveConfig.ClosedLoopRamps
             .withVoltageClosedLoopRampPeriod(Seconds.of(0.075))
@@ -71,8 +71,8 @@ public class ModuleIOFalcon550 implements ModuleIO {
             // .withSupplyCurrentLowerLimit(Amps.of(70))
             // .withSupplyCurrentLowerTime(Seconds.of(0))
             .withSupplyCurrentLimitEnable(true)
-            .withStatorCurrentLimit(Amps.of(80))
-            .withStatorCurrentLimitEnable(true)
+            // .withStatorCurrentLimit(Amps.of(80))
+            // .withStatorCurrentLimitEnable(true)
         ;
         
         this.driveMotor.getConfigurator().apply(driveConfig);
@@ -115,11 +115,12 @@ public class ModuleIOFalcon550 implements ModuleIO {
         this.driveMotor.setControl(this.driveVolts.withOutput(volts.in(Volts)));
     }
     @Override
-    public void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward) {
+    public void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward, boolean overrideWithBrakeMode) {
         this.driveMotor.setControl(this.driveVelocity
             .withVelocity(velocity.in(RotationsPerSecond))
             .withAcceleration(acceleration.in(RotationsPerSecondPerSecond))
             .withFeedForward(feedforward.in(Volts))
+            .withOverrideBrakeDurNeutral(overrideWithBrakeMode)
         );
     }
 

@@ -8,6 +8,7 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -25,6 +26,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.CurrentUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -70,20 +72,21 @@ public class Module {
     private static final LoggedTunableMeasure<CurrentUnit> currentSpikeThreshold = new LoggedTunableMeasure<>("Drive/Current Spike Threshold", Amps.of(0)); 
     private static final LoggedTunableMeasure<TimeUnit> currentSpikeTime = new LoggedTunableMeasure<>("Drive/Current Spike Time", Seconds.of(0));
     private final CurrentSpikeDetector driveCurrentSpikeDetector = new CurrentSpikeDetector(currentSpikeThreshold, currentSpikeTime);
-
+    
+    private static final LoggedTunableMeasure<LinearVelocityUnit> brakeModeThreshold = new LoggedTunableMeasure<>("Drive/Brake Mode Threshold", InchesPerSecond.of(1)); 
+    
     private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
         "Drive/Module/Drive/PID",
-        0.025928*2*Math.PI,
-        0*2*Math.PI,
-        0*2*Math.PI
+        0.1,
+        0,
+        0
     );
     private static final LoggedTunableFF driveFFConsts = new LoggedTunableFF(
         "Drive/Module/Drive/FF",
-        // 0.059813*2*Math.PI,
         0,
-        0*2*Math.PI,
-        0.017472*2*Math.PI,
-        0.0015521*2*Math.PI
+        0,
+        2.2,
+        0
     );
     private static final LoggedTunablePID azimuthPIDConsts = new LoggedTunablePID(
         "Drive/Module/Azimuth/PID",
@@ -169,8 +172,13 @@ public class Module {
 
         setpoint.speedMetersPerSecond *= turnSetpoint.minus(this.getAngle()).getCos();
 
-        double velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
-        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.zero());
+        var velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
+
+        var ffout = this.driveFeedforward.calculateWithVelocities(this.wheelLinearVelocity.in(MetersPerSecond), setpoint.speedMetersPerSecond);
+
+        var belowBrakeModeThreshold = Math.abs(setpoint.speedMetersPerSecond) < brakeModeThreshold.get().in(MetersPerSecond);
+
+        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.of(ffout), belowBrakeModeThreshold);
     }
 
     /**
