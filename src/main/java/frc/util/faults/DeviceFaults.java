@@ -34,6 +34,9 @@ public class DeviceFaults implements StructSerializable {
         this.bitfield = bitfield;
     }
 
+    public boolean isAllOk() {
+        return this.getRawBitfield() == noneMask;
+    }
     public boolean getFault(FaultType faultType) {
         return (this.getRawBitfield() & faultType.getBitmask()) == faultType.getBitmask();
     }

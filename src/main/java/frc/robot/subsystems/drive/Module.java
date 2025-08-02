@@ -44,6 +44,8 @@ import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
@@ -96,6 +98,8 @@ public class Module {
     private final DeviceFaultAlerts driveMotorStickyFaultsAlert;
     private final DeviceFaultAlerts azimuthMotorActiveFaultsAlert;
     private final DeviceFaultAlerts azimuthMotorStickyFaultsAlert;
+    private final DeviceFaultClearer driveMotorStickyFaultClearer;
+    private final DeviceFaultClearer azimuthMotorStickyFaultClearer;
 
     public Module(ModuleIO io, ModuleConstants config) {
         this.io = io;
@@ -109,6 +113,8 @@ public class Module {
         this.driveMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
         this.azimuthMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has active faults: ", AlertType.kError));
         this.azimuthMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.driveMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Drive Motor Sticky Faults");
+        this.azimuthMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Azimuth Motor Sticky Faults");
     }
 
     /** Updates inputs and checks tunable numbers. */
@@ -147,6 +153,8 @@ public class Module {
         this.driveMotorStickyFaultsAlert.updateFrom(this.inputs.driveMotorFaults.stickyFaults);
         this.azimuthMotorActiveFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.activeFaults);
         this.azimuthMotorStickyFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.stickyFaults);
+        this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
+        this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
     }
 
     /**

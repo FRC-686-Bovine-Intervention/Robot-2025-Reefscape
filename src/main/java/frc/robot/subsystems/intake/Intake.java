@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.robotStructure.GamepiecePose;
@@ -49,6 +51,7 @@ public class Intake extends SubsystemBase {
 
     private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has active faults: ", AlertType.kError));
     private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Intake/Motor Sticky Faults");
 
     public Intake(IntakeIO io) {
         System.out.println("[Init Intake] Instantiated Intake with " + io.getClass().getSimpleName());
@@ -97,6 +100,7 @@ public class Intake extends SubsystemBase {
 
         this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
     }
 
     private Command genCommand(
