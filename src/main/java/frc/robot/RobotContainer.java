@@ -500,12 +500,9 @@ public class RobotContainer {
         driveController.rightBumper()
             .and(() -> objectiveTracker.getCurrentObjective().isPresent())
             .whileTrue(
-                drive.simplePIDTo(
-                    () -> AutoScore.getTargetPose(
-                        drive.getPose(),
-                        objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs(),
-                        objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
-                    )
+                AutoScore.pilotDriveToReef(
+                    drive,
+                    () -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs()
                 )
                 .deadlineFor(
                     Commands.startEnd(
