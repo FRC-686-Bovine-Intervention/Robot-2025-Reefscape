@@ -80,8 +80,8 @@ public class ElevatorIOKraken implements ElevatorIO {
     public void updateInputs(ElevatorIOInputs inputs) {
         inputs.encoder.updateFrom(this.cancoder);
         inputs.motor.updateFrom(this.motor);
-        inputs.encoderFaults.updateFrom(this.cancoder);
-        inputs.motorFaults.updateFrom(this.motor);
+        // inputs.encoderFaults.updateFrom(this.cancoder);
+        // inputs.motorFaults.updateFrom(this.motor);
     }
 
     @Override

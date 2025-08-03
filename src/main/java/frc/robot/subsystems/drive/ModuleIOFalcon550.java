@@ -106,8 +106,8 @@ public class ModuleIOFalcon550 implements ModuleIO {
         inputs.driveMotor.updateFrom(this.driveMotor);
         inputs.azimuthMotor.updateFrom(this.azimuthMotor);
         inputs.azimuthEncoder.updateFrom(this.azimuthAbsoluteEncoder);
-        inputs.driveMotorFaults.updateFrom(this.driveMotor);
-        inputs.azimuthMotorFaults.updateFrom(this.azimuthMotor);
+        // inputs.driveMotorFaults.updateFrom(this.driveMotor);
+        // inputs.azimuthMotorFaults.updateFrom(this.azimuthMotor);
     }
 
     @Override
