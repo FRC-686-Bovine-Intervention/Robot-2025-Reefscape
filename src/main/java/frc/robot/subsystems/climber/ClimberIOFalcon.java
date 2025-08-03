@@ -126,7 +126,7 @@ public class ClimberIOFalcon implements ClimberIO {
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
         inputs.motor.updateFrom(this.motor);
-        inputs.motorFaults.updateFrom(this.motor);
+        // inputs.motorFaults.updateFrom(this.motor);
 
         inputs.sensor = this.sensor.get() ^ ClimberConstants.climberSensorInverted;
 

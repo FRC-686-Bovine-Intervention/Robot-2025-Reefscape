@@ -27,6 +27,7 @@ import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
 import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
@@ -97,9 +98,11 @@ public class PivotIOFalcon implements PivotIO {
         inputs.encoder.updateFrom(this.cancoder);
         inputs.leftMotor.updateFrom(this.leftMotor);
         inputs.rightMotor.updateFrom(this.rightMotor);
-        inputs.encoderFaults.updateFrom(this.cancoder);
-        inputs.leftMotorFaults.updateFrom(this.leftMotor);
-        inputs.rightMotorFaults.updateFrom(this.rightMotor);
+        // LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Pivot/Normal Inputs");
+        // inputs.encoderFaults.updateFrom(this.cancoder);
+        // inputs.leftMotorFaults.updateFrom(this.leftMotor);
+        // inputs.rightMotorFaults.updateFrom(this.rightMotor);
+        // LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Pivot/Faults");
     }
 
     @Override

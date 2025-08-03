@@ -47,7 +47,7 @@ public class IntakeIOFalcon implements IntakeIO {
     @Override
     public void updateInputs(IntakeIOInputs inputs){
         inputs.motor.updateFrom(this.motor);
-        inputs.motorFaults.updateFrom(this.motor);
+        // inputs.motorFaults.updateFrom(this.motor);
 
         inputs.coralSensor = this.coralSensor.get() ^ IntakeConstants.coralSensorInverted;
         inputs.algaeSensor = this.algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;

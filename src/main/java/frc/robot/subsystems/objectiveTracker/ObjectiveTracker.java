@@ -25,7 +25,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.RobotConstants;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
@@ -35,6 +34,7 @@ import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.RackObject;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
+import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.objectiveTracker.objectives.ClimbObjective;
 import frc.robot.subsystems.objectiveTracker.objectives.IntakeAlgaeObjective;
@@ -164,12 +164,12 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Mode mode = Mode.Dumb;
 
     private final boolean[] branchStates = new boolean[] {
-        false,false,false,false,false,false,false,false,false,false,false,false,
-        false,false,false,false,false,false,false,false,false,false,false,false,
-        false,false,false,false,false,false,false,false,false,false,false,false,
+        true,true,true,true,true,true,true,true,true,true,false,false,
+        true,true,true,true,true,true,true,true,true,true,false,false,
+        true,true,true,true,true,true,true,true,true,true,false,false,
     };
     private int level1Count = 0;
-    private final boolean[] algaeStates = new boolean[] {true,true,true,true,true,true};
+    private final boolean[] algaeStates = new boolean[] {false,false,false,false,false,true};
     private boolean coopState = false;
 
     private final Set<ScoreCoralObjective> allScoreCoralObjectives;

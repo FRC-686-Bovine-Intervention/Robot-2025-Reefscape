@@ -132,17 +132,21 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void robotPeriodic() {
-        robotPeriodicWatchdog.reset();
+        // robotPeriodicWatchdog.reset();
         LoggedTracer.reset();
+
         GameState.getInstance().periodic();
         LoggedTracer.logEpoch("GameState/Periodic");
-        robotPeriodicWatchdog.addEpoch("GameState.periodic()");
+        // robotPeriodicWatchdog.addEpoch("GameState.periodic()");
         VirtualSubsystem.periodicAll();
         LoggedTracer.logEpoch("VirtualSubsystem/Periodic");
-        robotPeriodicWatchdog.addEpoch("VirtualSubsystem.periodicAll()");
+        // robotPeriodicWatchdog.addEpoch("VirtualSubsystem.periodicAll()");
+        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
+        LoggedTracer.logEpoch("ObjectiveTracker/DetermineGoal");
+        // robotPeriodicWatchdog.addEpoch("ObjectiveTracker.determineGoal");
         CommandScheduler.getInstance().run();
         LoggedTracer.logEpoch("CommandScheduler/Periodic");
-        robotPeriodicWatchdog.addEpoch("CommandScheduler.run()");
+        // robotPeriodicWatchdog.addEpoch("CommandScheduler.run()");
         this.robotContainer.drive.setTiltLimits(
             (this.robotContainer.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
                 Drive.extendedTiltLimitTunable.get()
@@ -150,38 +154,23 @@ public class Robot extends LoggedRobot {
                 Drive.normalTiltLimitTunable.get()
             )
         );
-        LoggedTracer.logEpoch("Set Tilt Limits");
-        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
-        LoggedTracer.logEpoch("ObjectiveTracker/DetermineGoal");
-        robotPeriodicWatchdog.addEpoch("ObjectiveTracker.determineGoal");
+        LoggedTracer.logEpoch("Drive/SetTiltLimits");
         VirtualSubsystem.postCommandPeriodicAll();
         LoggedTracer.logEpoch("VirtualSubsystem/PostCommandPeriodic");
-        robotPeriodicWatchdog.addEpoch("VirtualSubsystem.postCommandPeriodicAll()");
+        // robotPeriodicWatchdog.addEpoch("VirtualSubsystem.postCommandPeriodicAll()");
         RobotState.getInstance().log();
         LoggedTracer.logEpoch("RobotState/Log");
-        robotPeriodicWatchdog.addEpoch("RobotState.log()");
+        // robotPeriodicWatchdog.addEpoch("RobotState.log()");
         Mechanism3d.logAscopeComponents();
         LoggedTracer.logEpoch("Mechanism3d/LogAscopeComponents");
-        robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeComponents()");
+        // robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeComponents()");
         Mechanism3d.logAscopeAxes();
         LoggedTracer.logEpoch("Mechanism3d/LogAscopeAxes");
-        robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeAxes()");
-        if (robotPeriodicWatchdog.isExpired()) {
-            System.out.println("RobotPeriodic loop overrun");
-            robotPeriodicWatchdog.printEpochs();
-        }
-
-        // LoggedTracer.reset();
-        // LoggedTracer.logEpoch("Testing1");
-        // LoggedTracer.logEpoch("Testing2/Sub1/Sub1");
-        // LoggedTracer.logEpoch("Testing2/Sub1/Sub2");
-        // LoggedTracer.logEpoch("Testing2/Sub1");
-        // LoggedTracer.logEpoch("Testing2/Sub2/Sub1");
-        // LoggedTracer.logEpoch("Testing2/Sub2/Sub2");
-        // LoggedTracer.logEpoch("Testing2/Sub2");
-        // LoggedTracer.logEpoch("Testing2");
-        // LoggedTracer.logEpoch("Testing3/Sub1");
-        // LoggedTracer.logEpoch("Testing3");
+        // robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeAxes()");
+        // if (robotPeriodicWatchdog.isExpired()) {
+        //     System.out.println("RobotPeriodic loop overrun");
+        //     robotPeriodicWatchdog.printEpochs();
+        // }
     }
 
     @Override

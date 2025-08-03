@@ -81,8 +81,8 @@ public class WristIOKraken implements WristIO {
     public void updateInputs(WristIOInputs inputs) {
         inputs.encoder.updateFrom(this.cancoder);
         inputs.motor.updateFrom(this.motor);
-        inputs.encoderFaults.updateFrom(this.cancoder);
-        inputs.motorFaults.updateFrom(this.motor);
+        // inputs.encoderFaults.updateFrom(this.cancoder);
+        // inputs.motorFaults.updateFrom(this.motor);
     }
 
     @Override
