@@ -44,6 +44,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
@@ -127,10 +128,12 @@ public class Module {
 
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Drive/Module " + this.config.name, this.inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
 
         this.angle = this.config.moduleForwardDirection.plus(new Rotation2d(this.inputs.azimuthEncoder.position));
         this.moduleState.angle = this.angle;
         this.modulePosition.angle = this.angle;
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Calculate Module Angle");
 
         this.wheelAngularPosition.mut_replace(DriveConstants.driveRatio.applyUnsigned(this.inputs.driveMotor.encoder.position));
         this.wheelAngularVelocity.mut_replace(DriveConstants.driveRatio.applyUnsigned(this.inputs.driveMotor.encoder.velocity));
@@ -139,8 +142,10 @@ public class Module {
 
         this.modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
         this.moduleState.speedMetersPerSecond = wheelLinearVelocity.in(MetersPerSecond);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Update Positions and Velocities");
 
         this.driveCurrentSpikeDetector.update(this.getDriveCurrent());
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + config.name + "/Update Current Spike Detector");
 
         if (driveFFConsts.hasChanged(hashCode())) {
             driveFFConsts.update(this.driveFeedforward);

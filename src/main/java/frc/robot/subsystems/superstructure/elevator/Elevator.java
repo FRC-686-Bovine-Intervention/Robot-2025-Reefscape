@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
@@ -88,6 +89,7 @@ public class Elevator {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
+        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Elevator/Process Inputs");
 
         this.length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
         this.velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));

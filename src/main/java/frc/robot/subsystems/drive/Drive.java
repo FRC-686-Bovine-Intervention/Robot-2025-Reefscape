@@ -50,7 +50,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.units.LinearAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -63,6 +62,7 @@ import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
@@ -171,10 +171,16 @@ public class Drive extends VirtualSubsystem {
     public void periodic() {
         this.gyroIO.updateInputs(this.gyroInputs);
         Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
-        Arrays.stream(this.modules).forEach(Module::periodic);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Process Gyro Inputs");
+        for (var module : modules) {
+            module.periodic();
+            LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic/" + module.config.name);
+        }
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Module Periodic");
 
         this.measuredStates = Arrays.stream(this.modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
         Logger.recordOutput("Drive/Swerve States/Measured", this.measuredStates);
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Get Measured States");
 
         // Update odometry
         // Update field velocity
@@ -189,8 +195,10 @@ public class Drive extends VirtualSubsystem {
             Twist2d twist = DriveConstants.kinematics.toTwist2d(wheelDeltas); // dtheta will be the estimated change in chassis angle
             this.gyroAngle = gyroAngle.plus(Rotation2d.fromRadians(twist.dtheta));
         }
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Calculate Rotational Velocity");
         Logger.recordOutput("Drive/Chassis Speeds/Measured", this.robotMeasuredSpeeds);
         RobotState.getInstance().addDriveMeasurement(this.gyroAngle, this.getModulePositions());
+        LoggedTracer.logEpoch("VirtualSubsystem/Periodic/Drive/Add Drive Measurement");
         this.structureRoot.setPose(this.getPose());
         this.fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.robotMeasuredSpeeds, this.gyroAngle);
 
