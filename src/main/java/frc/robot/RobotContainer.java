@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
@@ -12,11 +13,18 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.Measure;
 import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -57,9 +65,9 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.manualOverrides.ManualOverrides;
 import frc.robot.subsystems.objectiveTracker.ObjectiveTracker;
-import frc.robot.subsystems.objectiveTracker.ObjectiveTracker.ObjectiveType;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIO;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIOServer;
+import frc.robot.subsystems.objectiveTracker.objectives.Objective.ObjectiveType;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedCommand;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
@@ -89,11 +97,14 @@ import frc.robot.subsystems.vision.questnav.QuestNavConstants;
 import frc.robot.subsystems.vision.questnav.QuestNavIO;
 import frc.robot.subsystems.vision.questnav.QuestNavIOQuest3S;
 import frc.robot.subsystems.vision.questnav.QuestNavIOSim;
+import frc.util.EdgeDetector;
 import frc.util.Environment;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
+import frc.util.geometry.GeomUtil;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.Mechanism3d;
 
@@ -173,8 +184,8 @@ public class RobotContainer {
                     new Elevator(new ElevatorIOSim()),
                     new Wrist(new WristIOSim())
                 );
-                intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
-                // intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
+                // intake = new Intake(new IntakeIOSim(simJoystick.button(1), simJoystick.button(2)));
+                intake = new Intake(new IntakeIOSim(driveController.povDown(), simJoystick.button(2)));
                 climber = new Climber(new ClimberIO() {});
                 apriltagVision = new ApriltagVision(
                     new ApriltagCamera(
@@ -348,51 +359,11 @@ public class RobotContainer {
         superstructure.setDefaultCommand(superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
         intake.setDefaultCommand(intake.idle());
         climber.setDefaultCommand(climber.idle());
-        // SmartDashboard.putData("Superstructure/Down", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(-60))));
-        // SmartDashboard.putData("Superstructure/Up", superstructure.goToSetpoint(SuperstructureState.newConstrained(Degrees.of(90), ElevatorConstants.minLengthPhysical, Degrees.of(60))));
-        // driveController.leftStickButton().onTrue(Commands.runOnce(() -> drive.setPose(Pose2d.kZero)));
-        // var flickStick = driveController.rightStick.roughRadialDeadband(0.85);
-        // new Trigger(() -> flickStick.magnitude() > 0 && drive.rotationalSubsystem.getCurrentCommand() == null).onTrue(
-        //     drive.rotationalSubsystem.headingFromJoystick(
-        //         flickStick,
-        //         new Rotation2d[]{
-        //             // Cardinals
-        //             Rotation2d.kZero,
-        //             Rotation2d.kCCW_90deg,
-        //             Rotation2d.k180deg,
-        //             Rotation2d.kCW_90deg,
-        //         },
-        //         () -> RobotConstants.intakeForward
-        //     )
-        //     .withName("Flick Stick")
-        // );
 
-        // driveController.rightBumper().toggleOnTrue(new ContinuouslySwappingCommand(
-        //     new Supplier<Command>() {
-        //         private final Command[] commands = new Command[Rack.values().length * 2];
-        //         {
-        //             for (var rack : Rack.values()) {
-        //                 commands[rack.ordinal() * 2] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeForward(rack.algaeLevel));
-        //                 commands[rack.ordinal() * 2 + 1] = superstructure.goToSetpointSequenced(SuperstructureState.fromAlgaeBackward(rack.algaeLevel));
-        //             }
-        //         }
-        //         public Command get() {
-        //             var rack = Rack.Rack2;
-        //             if (drive.getRotation().minus(rack.getAlgaePose().getOurs().getRotation().toRotation2d()).getCos() >= 0) {
-        //                 return commands[rack.ordinal() * 2];
-        //             } else {
-        //                 return commands[rack.ordinal() * 2 + 1];
-        //             }
-        //         }
-        //     },
-        //     Set.of(superstructure)
-        // ));
-
-        // driveController.a().onTrue(Commands.runOnce(() -> objectiveTracker.toggleSelectedNode()));
-        // driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, 1)));
-        // driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(0, -1)));
-        // driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(-1, 0)));
-        // driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.moveSelectedBranch(1, 0)));
+        driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(1)));
+        driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(-1)));
+        driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(-1)));
+        driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(1)));
         
         driveController.a().whileTrue(new ContinuouslySwappingCommand(
             new Supplier<Command>() {
@@ -402,7 +373,7 @@ public class RobotContainer {
                 public Command get() {
                     if (intake.hasAlgae.getAsBoolean()) {
                         return ejectAlgae;
-                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().branchLevel.isEmpty()) {
+                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().getTargetBranch().isEmpty()) {
                         return ejectL1;
                     } else {
                         return eject;
@@ -439,7 +410,7 @@ public class RobotContainer {
                         return idle;
                     } else {
                         var stagedAlgaeObjective = optStagedAlgaeObjective.get();
-                        return stagedAlgaeCommands[stagedAlgaeObjective.algae.level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
+                        return stagedAlgaeCommands[stagedAlgaeObjective.getTargetAlgae().level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
                     }
                 }
             },
@@ -477,8 +448,8 @@ public class RobotContainer {
                 private final RobotFlippedCommand level1Command = Reef.level1SuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
-                    if (scoreCoralObjective.branchLevel.isPresent()) {
-                        return branchCommands[scoreCoralObjective.branchLevel.get().ordinal()].get(scoreCoralObjective.getTargetDirection());
+                    if (scoreCoralObjective.getTargetBranch().isPresent()) {
+                        return branchCommands[scoreCoralObjective.getTargetBranch().get().level.ordinal()].get(scoreCoralObjective.getTargetDirection());
                     } else {
                         return level1Command.get(scoreCoralObjective.getTargetDirection());
                     }
@@ -487,7 +458,7 @@ public class RobotContainer {
             Set.of(superstructure)
         ).deadlineFor(
             Commands.startEnd(
-                () -> objectiveTracker.addLevelLock(objectiveTracker.getScoreCoralObjective().branchLevel),
+                () -> objectiveTracker.addLevelLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().map((branch) -> branch.level)),
                 () -> objectiveTracker.removeLevelLock()
             )
         ).withName("Extend to Reef");
@@ -496,13 +467,10 @@ public class RobotContainer {
                 private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
                 private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
                 public Command get() {
-                    switch (objectiveTracker.getScoreAlgaeObjective().algaeGoal) {
-                        default:
-                        case NET:
-                            return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
-                        case PROCESSOR:
-                        case OPPONENT_PROCESSOR:
-                            return processorCommand;
+                    if (objectiveTracker.getScoreAlgaeObjective().isProcessor()) {
+                        return processorCommand;
+                    } else {
+                        return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
                     }
                 }
             },
@@ -528,14 +496,14 @@ public class RobotContainer {
                 }
             }
         });
-        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getRotation()));
+        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
         driveController.rightBumper()
             .and(() -> objectiveTracker.getCurrentObjective().isPresent())
             .whileTrue(
                 drive.simplePIDTo(
                     () -> AutoScore.getTargetPose(
                         drive.getPose(),
-                        objectiveTracker.getCurrentObjective().get().getTargetPose(),
+                        objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs(),
                         objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
                     )
                 )
@@ -543,8 +511,8 @@ public class RobotContainer {
                     Commands.startEnd(
                         () -> {
                             if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getObjectiveType() == ObjectiveType.ScoreCoral).isPresent()) {
-                                if (objectiveTracker.getScoreCoralObjective().branch.isPresent()) {
-                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().branch.get().pipe);
+                                if (objectiveTracker.getScoreCoralObjective().getTargetBranch().isPresent()) {
+                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().get().pipe);
                                 }
                             }
                         },
@@ -573,11 +541,7 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
-            // climber.testEngageRatchet()
         );
-        // driveController.start().toggleOnTrue(
-        //     climber.engageRatchet()
-        // );
 
         var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
         // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
@@ -622,6 +586,196 @@ public class RobotContainer {
         SmartDashboard.putData("QuestNav/Quest Calibrate", questNav.determineOffsetToRobotCenter(drive));
 
         SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
+
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l4WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l4LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l4AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Robot/Angular Tolerance", Degrees.of(5));
+            
+            private static final LoggedTunableMeasure<AngleUnit> l3PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l3ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l3WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l3LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l3AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Robot/Angular Tolerance", Degrees.of(5));
+            
+            private static final LoggedTunableMeasure<AngleUnit> l2PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l2ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l2WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l2LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l2AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Robot/Angular Tolerance", Degrees.of(5));
+            
+            private static final LoggedTunableMeasure<AngleUnit> l1PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Superstructure/Pivot Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l1ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l1WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l1LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Robot/Linear Tolerance", Inches.of(6));
+            private static final LoggedTunableMeasure<AngleUnit> l1AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Robot/Angular Tolerance", Degrees.of(10));
+            
+            private final EdgeDetector coralEdgeDetector = new EdgeDetector();
+            @Override
+            public void run() {
+                this.coralEdgeDetector.update(intake.hasCoral.getAsBoolean());
+                if (manualOverrides.selfRecordCoralDisabled()) {return;}
+
+                if (this.coralEdgeDetector.fallingEdge()) {
+                    var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
+                    final Measure<AngleUnit> pivotTolerance;
+                    final Measure<DistanceUnit> elevatorTolerance;
+                    final Measure<AngleUnit> wristTolerance;
+                    final Measure<DistanceUnit> linearTolerance;
+                    final Measure<AngleUnit> angularTolerance;
+                    if (scoreCoralObjective.getTargetBranch().isPresent()) {
+                        switch (scoreCoralObjective.getTargetBranch().get().level) {
+                            case Level2:
+                                pivotTolerance = l2PivotTolerance.get();
+                                elevatorTolerance = l2ElevatorTolerance.get();
+                                wristTolerance = l2WristTolerance.get();
+                                linearTolerance = l2LinearTolerance.get();
+                                angularTolerance = l2AngularTolerance.get();
+                            break;
+                            case Level3:
+                                pivotTolerance = l3PivotTolerance.get();
+                                elevatorTolerance = l3ElevatorTolerance.get();
+                                wristTolerance = l3WristTolerance.get();
+                                linearTolerance = l3LinearTolerance.get();
+                                angularTolerance = l3AngularTolerance.get();
+                            break;
+                            case Level4: default:
+                                pivotTolerance = l4PivotTolerance.get();
+                                elevatorTolerance = l4ElevatorTolerance.get();
+                                wristTolerance = l4WristTolerance.get();
+                                linearTolerance = l4LinearTolerance.get();
+                                angularTolerance = l4AngularTolerance.get();
+                            break;
+                        }
+                    } else {
+                        pivotTolerance = l1PivotTolerance.get();
+                        elevatorTolerance = l1ElevatorTolerance.get();
+                        wristTolerance = l1WristTolerance.get();
+                        linearTolerance = l1LinearTolerance.get();
+                        angularTolerance = l1AngularTolerance.get();
+                    }
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance));
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance));
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance));
+                    Logger.recordOutput("Self Record/Coral/Robot/Linear", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), linearTolerance));
+                    Logger.recordOutput("Self Record/Coral/Robot/Angular", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), angularTolerance));
+                    if (
+                        GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs(), drive.getPose(), linearTolerance, angularTolerance)
+                        && superstructure.getCurrentState().isNear(scoreCoralObjective.getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
+                    ) {
+                        objectiveTracker.placeCoral(scoreCoralObjective.getTargetBranch());
+                    }
+                }
+            }
+        });
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private static final LoggedTunableMeasure<AngleUnit> lowPivotTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Pivot Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> lowElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Elevator Tolerance", Inches.of(4));
+            private static final LoggedTunableMeasure<AngleUnit> lowWristTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Wrist Tolerance", Degrees.of(15));
+            private static final LoggedTunableMeasure<DistanceUnit> lowLinearTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Robot/Linear Tolerance", Inches.of(12));
+            private static final LoggedTunableMeasure<AngleUnit> lowAngularTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Robot/Angular Tolerance", Degrees.of(30));
+            
+            private static final LoggedTunableMeasure<AngleUnit> highPivotTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Superstructure/Pivot Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> highElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Superstructure/Elevator Tolerance", Inches.of(4));
+            private static final LoggedTunableMeasure<AngleUnit> highWristTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Superstructure/Wrist Tolerance", Degrees.of(15));
+            private static final LoggedTunableMeasure<DistanceUnit> highLinearTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Robot/Linear Tolerance", Inches.of(12));
+            private static final LoggedTunableMeasure<AngleUnit> highAngularTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Robot/Angular Tolerance", Degrees.of(30));
+
+            private final EdgeDetector algaeEdgeDetector = new EdgeDetector();
+            @Override
+            public void run() {
+                this.algaeEdgeDetector.update(intake.hasAlgae.getAsBoolean());
+                if (manualOverrides.selfRecordAlgaeDisabled()) {return;}
+
+                if (this.algaeEdgeDetector.risingEdge()) {
+                    var intakeAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
+                    if (intakeAlgaeObjective.isEmpty()) {return;}
+                    final Measure<AngleUnit> pivotTolerance;
+                    final Measure<DistanceUnit> elevatorTolerance;
+                    final Measure<AngleUnit> wristTolerance;
+                    final Measure<DistanceUnit> linearTolerance;
+                    final Measure<AngleUnit> angularTolerance;
+                    switch (intakeAlgaeObjective.get().getTargetAlgae().level) {
+                        case Low: default:
+                            pivotTolerance = lowPivotTolerance.get();
+                            elevatorTolerance = lowElevatorTolerance.get();
+                            wristTolerance = lowWristTolerance.get();
+                            linearTolerance = lowLinearTolerance.get();
+                            angularTolerance = lowAngularTolerance.get();
+                        break;
+                        case High:
+                            pivotTolerance = highPivotTolerance.get();
+                            elevatorTolerance = highElevatorTolerance.get();
+                            wristTolerance = highWristTolerance.get();
+                            linearTolerance = highLinearTolerance.get();
+                            angularTolerance = highAngularTolerance.get();
+                        break;
+                    }
+                    Logger.recordOutput("Self Record/Algae/Superstructure/Pivot", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance));
+                    Logger.recordOutput("Self Record/Algae/Superstructure/Elevator", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance));
+                    Logger.recordOutput("Self Record/Algae/Superstructure/Wrist", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance));
+                    Logger.recordOutput("Self Record/Algae/Robot/Linear", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), linearTolerance));
+                    Logger.recordOutput("Self Record/Algae/Robot/Angular", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), angularTolerance));
+                    if (
+                        GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs(), drive.getPose(), linearTolerance, angularTolerance)
+                        && superstructure.getCurrentState().isNear(intakeAlgaeObjective.get().getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
+                    ) {
+                        objectiveTracker.removeAlgae(intakeAlgaeObjective.get().getTargetAlgae());
+                    }
+                }
+            }
+        });
+
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+            private static final LoggedTunableMeasure<AngleUnit> autoEjectPivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> autoEjectElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> autoEjectWristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> autoEjectLinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> autoEjectAngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Robot/Angular Tolerance", Degrees.of(5));
+
+            private final Command ejectBranch = intake.eject();
+            private final Command ejectL1 = intake.ejectLevel1();
+
+            private final Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising);
+
+            @Override
+            public void run() {
+                if (intake.hasCoral.getAsBoolean() && !manualOverrides.autoEjectCoralDisabled()) {
+                    var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
+                    var pivotInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, autoEjectPivotTolerance.get());
+                    var elevatorInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, autoEjectElevatorTolerance.get());
+                    var wristInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, autoEjectWristTolerance.get());
+                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), autoEjectLinearTolerance.get());
+                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), autoEjectAngularTolerance.get());
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Pivot", pivotInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Elevator", elevatorInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Wrist", wristInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Robot/Linear", linearInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Robot/Angular", angularInTolerance);
+
+                    if (this.debouncer.calculate(pivotInTolerance && elevatorInTolerance && wristInTolerance && linearInTolerance && angularInTolerance)) {
+                        if (scoreCoralObjective.getTargetBranch().isPresent()) {
+                            if (!ejectBranch.isScheduled()) {
+                                ejectBranch.schedule();
+                            }
+                        } else {
+                            if (!ejectL1.isScheduled()) {
+                                ejectL1.schedule();
+                            }
+                        }
+                    }
+                } else {
+                    if (ejectBranch.isScheduled()) {
+                        ejectBranch.cancel();
+                    }
+                    if (ejectL1.isScheduled()) {
+                        ejectL1.cancel();
+                    }
+                }
+            }
+        });
     }
 
     private void setPose(Pose2d pose) {

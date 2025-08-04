@@ -21,9 +21,15 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -61,6 +67,16 @@ public class Pivot {
 
     public final ArmMech mech = new ArmMech(PivotConstants.pivotBase);
 
+    private final DeviceFaultAlerts leftMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts leftMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultAlerts rightMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts rightMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has active faults: ", AlertType.kError));
+    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+    private final DeviceFaultClearer leftMotorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Left Motor Sticky Faults");
+    private final DeviceFaultClearer rightMotorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Right Motor Sticky Faults");
+    private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Encoder Sticky Faults");
+
     public Pivot(PivotIO io) {
         System.out.println("[Init Pivot] Instantiating Pivot with " + io.getClass().getSimpleName());
         this.io = io;
@@ -72,7 +88,7 @@ public class Pivot {
     public void periodic() {
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Superstructure/Pivot", this.inputs);
-        LoggedTracer.logEpoch("CommandScheduler/Periodic/Subsystem/Superstructure/Pivot/Process Inputs");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Process Inputs");
 
         this.angle.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position));
         this.velocity.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity));
@@ -91,6 +107,16 @@ public class Pivot {
         if (pidConsts.hasChanged(hashCode())) {
             this.io.configPID(pidConsts.getConstants());
         }
+
+        this.leftMotorActiveFaultsAlert.updateFrom(this.inputs.leftMotorFaults.activeFaults);
+        this.leftMotorStickyFaultsAlert.updateFrom(this.inputs.leftMotorFaults.stickyFaults);
+        this.rightMotorActiveFaultsAlert.updateFrom(this.inputs.rightMotorFaults.activeFaults);
+        this.rightMotorStickyFaultsAlert.updateFrom(this.inputs.rightMotorFaults.stickyFaults);
+        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
+        this.leftMotorStickyFaultClearer.clear(this.inputs.leftMotorFaults.stickyFaults, this.io::clearLeftMotorStickyFaults, DeviceFaults.allMask);
+        this.rightMotorStickyFaultClearer.clear(this.inputs.rightMotorFaults.stickyFaults, this.io::clearRightMotorStickyFaults, DeviceFaults.allMask);
+        this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
     }
 
     public Angle getAngle() {

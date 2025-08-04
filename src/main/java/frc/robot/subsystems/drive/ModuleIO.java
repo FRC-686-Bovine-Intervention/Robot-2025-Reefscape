@@ -13,6 +13,7 @@ import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
 import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedFaults;
 
 public interface ModuleIO {
     @AutoLog
@@ -20,6 +21,8 @@ public interface ModuleIO {
         public LoggedEncodedMotor driveMotor = new LoggedEncodedMotor();
         public LoggedEncodedMotor azimuthMotor = new LoggedEncodedMotor();
         public LoggedEncoder azimuthEncoder = new LoggedEncoder();
+        public LoggedFaults driveMotorFaults = new LoggedFaults();
+        public LoggedFaults azimuthMotorFaults = new LoggedFaults();
     }
 
     /** Updates the set of loggable inputs. */
@@ -27,7 +30,7 @@ public interface ModuleIO {
 
     /** Run the drive motor at the specified voltage. */
     public default void setDriveVoltage(Measure<VoltageUnit> voltage) {}
-    public default void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward) {}
+    public default void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward, boolean overrideWithBrakeMode) {}
 
     /** Run the turn motor at the specified voltage. */
     public default void setAzimuthVoltage(Measure<VoltageUnit> volts) {}
@@ -38,4 +41,7 @@ public interface ModuleIO {
 
     public default void configDrivePID(PIDConstants pidConstants) {}
     public default void configAzimuthPID(PIDConstants pidConstants) {}
+
+    public default void clearDriveStickyFaults(long bitmask) {}
+    public default void clearAzimuthStickyFaults(long bitmask) {}
 }

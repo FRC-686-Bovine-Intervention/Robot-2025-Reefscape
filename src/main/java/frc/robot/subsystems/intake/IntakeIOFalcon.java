@@ -14,7 +14,9 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 
 
 public class IntakeIOFalcon implements IntakeIO {
@@ -33,31 +35,40 @@ public class IntakeIOFalcon implements IntakeIO {
             .withStatorCurrentLimitEnable(true)
         ;
 
-        motor.getConfigurator().apply(motorConfig);
+        this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getStatorCurrent()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
-        );
-        motor.optimizeBusUtilization();
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motor.getStatorCurrent());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        this.motor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(IntakeIOInputs inputs){
-        inputs.motor.updateFrom(motor);
+        inputs.motor.updateFrom(this.motor);
+        // inputs.motorFaults.updateFrom(this.motor);
 
-        inputs.coralSensor = coralSensor.get() ^ IntakeConstants.coralSensorInverted;
-        inputs.algaeSensor = algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;
+        inputs.coralSensor = this.coralSensor.get() ^ IntakeConstants.coralSensorInverted;
+        inputs.algaeSensor = this.algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;
     }
 
     @Override
     public void setMotorVoltage(Measure<VoltageUnit> voltage) {
-        motor.setVoltage(voltage.in(Volts));
+        this.motor.setVoltage(voltage.in(Volts));
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
     }
 }

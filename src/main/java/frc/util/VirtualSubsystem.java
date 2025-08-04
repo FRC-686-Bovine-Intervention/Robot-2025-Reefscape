@@ -29,7 +29,7 @@ public abstract class VirtualSubsystem {
         watchdog.reset();
         for (var subsystem : subsystems) {
             subsystem.periodic();
-            LoggedTracer.logEpoch("VirtualSubsystem/Periodic/" + subsystem.getClass().getSimpleName());
+            LoggedTracer.logEpoch("VirtualSubsystem Periodic/" + subsystem.getClass().getSimpleName());
             watchdog.addEpoch(subsystem.getClass().getSimpleName());
         }
         if (watchdog.isExpired()) {
@@ -41,7 +41,7 @@ public abstract class VirtualSubsystem {
         watchdog.reset();
         for (var subsystem : subsystems) {
             subsystem.postCommandPeriodic();
-            LoggedTracer.logEpoch("VirtualSubsystem/PostCommandPeriodic/" + subsystem.getClass().getSimpleName());
+            LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/" + subsystem.getClass().getSimpleName());
             watchdog.addEpoch(subsystem.getClass().getSimpleName());
         }
         if (watchdog.isExpired()) {
