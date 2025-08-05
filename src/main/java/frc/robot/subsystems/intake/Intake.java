@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.util.LoggedTracer;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults;
@@ -64,6 +65,7 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Intake", inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake/Process Inputs");
 
         if (gamepieceDetectTime.hasChanged(hashCode())) {
             debouncer.setDebounceTime(gamepieceDetectTime.get().in(Seconds));
@@ -101,6 +103,7 @@ public class Intake extends SubsystemBase {
         this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
         this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake");
     }
 
     private Command genCommand(

@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.leds.Leds;
+import frc.util.LoggedTracer;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults;
@@ -54,10 +55,11 @@ public class Climber extends SubsystemBase {
 
     @Override
     public void periodic() {
-        io.updateInputs(inputs);
+        this.io.updateInputs(this.inputs);
+        Logger.processInputs("Inputs/Climber", this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Process Inputs");
 
         var angle = getAngle();
-        Logger.processInputs("Inputs/Climber", inputs);
         Logger.recordOutput("Climber/Position", angle);
         Logger.recordOutput("Climber/Ratchet Engaged", ratchetEngaged);
 
@@ -69,6 +71,7 @@ public class Climber extends SubsystemBase {
         this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
         this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber");
     }
 
     public Angle getAngle() {

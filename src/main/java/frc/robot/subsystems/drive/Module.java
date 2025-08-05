@@ -44,6 +44,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
@@ -127,6 +128,7 @@ public class Module {
 
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Drive/Module " + this.config.name, this.inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
 
         this.angle = this.config.moduleForwardDirection.plus(new Rotation2d(this.inputs.azimuthEncoder.position));
         this.moduleState.angle = this.angle;

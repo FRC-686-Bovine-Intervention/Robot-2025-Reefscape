@@ -25,7 +25,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.constants.FieldConstants;
-import frc.robot.constants.RobotConstants;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
@@ -35,6 +34,7 @@ import frc.robot.constants.FieldConstants.Reef.PipeConcept;
 import frc.robot.constants.FieldConstants.Reef.RackObject;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
+import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.objectiveTracker.objectives.ClimbObjective;
 import frc.robot.subsystems.objectiveTracker.objectives.IntakeAlgaeObjective;
@@ -45,6 +45,7 @@ import frc.robot.subsystems.objectiveTracker.objectives.ScoreAlgaeObjective;
 import frc.robot.subsystems.objectiveTracker.objectives.ScoreCoralObjective;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
+import frc.util.LoggedTracer;
 import frc.util.VirtualSubsystem;
 import frc.util.flipping.AllianceFlipped;
 import frc.util.loggerUtil.LoggerUtil;
@@ -324,6 +325,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     public void periodic() {
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Objective Tracker", this.inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Process Inputs");
 
         if (this.inputs.mode != -1) {
             this.mode = Mode.values()[this.inputs.mode];
@@ -341,6 +343,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             this.selectedAlgaeGoal = AlgaeGoal.values()[this.inputs.algaeGoal];
             this.inputs.algaeGoal = -1;
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Dumb Mode");
 
         this.io.setMode(this.mode.ordinal());
         switch (this.selectedCoralGoal.getFirst()) {
@@ -360,12 +363,14 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var branchID = branchState ? changedBranch : changedBranch + 36;
             this.branchStates[(int) branchID] = branchState;
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Branch States");
 
         var level1Changed = false;
         for (var changedLevel1 : inputs.level1Queue) {
             level1Changed = true;
             level1Count += changedLevel1;
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Level 1 Count");
 
         var algaeChanged = false;
         for (var changedBranch : inputs.algaeQueue) {
@@ -374,6 +379,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var algaeID = algaeState ? changedBranch : changedBranch + 6;
             this.algaeStates[(int) algaeID] = algaeState;
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Algae States");
 
         var strategyChanged = false;
         for (var changedPriority : this.inputs.priorityListQueue) {
@@ -382,28 +388,34 @@ public class ObjectiveTracker extends VirtualSubsystem {
             var newIndex = changedPriority[1];
             Collections.swap(this.fullStrategy, oldIndex, newIndex);
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Full Strategy");
 
         var coopChanged = false;
         for (var changedCoop : this.inputs.coop) {
             coopChanged = true;
             this.coopState = changedCoop;
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Coop State");
 
         if (branchesChanged) {
             this.updateAvailableScoreCoralObjectives();
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Available Score Coral Objectives");
 
         if (algaeChanged) {
             this.updateAvailableIntakeAlgaeObjectives();
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Available Intake Algae Objectives");
 
         if (algaeChanged || branchesChanged) {
             this.updateUnblockedScoreCoralObjectives();
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Unblocked Score Coral Objectives");
 
         if (branchesChanged || strategyChanged || level1Changed || coopChanged) {
             this.updateIncompletePriorities();
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Update Incompete Priorities");
 
         // TODO: ON ALLIANCE CHANGE UPDATE ALL
 
@@ -422,6 +434,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 priority.isCompleted(this.branchStates, this.level1Count)
             );
         }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ObjectiveTracker/Log Priorities");
 
         this.io.setCoralState(this.branchStates);
         this.io.setLevel1Count(this.level1Count);
@@ -509,6 +522,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             .findFirst()
             .get()
         ;
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Intake Coral Objective");
 
         if (FieldConstants.onAllianceSide.getOurs().test(currentPose.getTranslation())) {
             this.intakeAlgaeObjective = this.ourIntakeAlgaeObjectives
@@ -537,6 +551,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 .findFirst()
             ;
         }
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Intake Algae Objective");
 
         if (mode == Mode.Smart) {
             var closestPipes = Arrays.stream(Reef.pipes)
@@ -653,11 +668,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 ;
             };
         }
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Score Coral Objective");
 
         Leds.getInstance().level1Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().isEmpty());
         Leds.getInstance().level2Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().isPresent() && this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level2));
         Leds.getInstance().level3Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().isPresent() && this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level3));
         Leds.getInstance().level4Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().isPresent() && this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level4));
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Update LED Flags");
 
         this.scoreAlgaeObjective = switch (this.selectedAlgaeGoal) {
             case NET -> this.ourNetScoreAlgaeObjectives
@@ -675,6 +692,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             case PROCESSOR -> this.processorScoreAlgaeObjective;
             case OPPONENT_PROCESSOR -> this.opponentProcessorScoreAlgaeObjective;
         };
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Score Algae Objective");
 
         this.climbObjective = this.allClimbObjectives
             .stream()
@@ -682,6 +700,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             .findFirst()
             .get()
         ;
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Climb Objective");
 
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Direction", intakeCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Intake/Coral/Target Pose", intakeCoralObjective.getTargetPose().getOurs());
@@ -700,6 +719,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Climb/Target Direction", climbObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Climb/Target Pose", climbObjective.getTargetPose().getOurs());
         Logger.recordOutput("Objective Tracker/Climb/Target Mechs", climbObjective.getTargetState().getMechTransforms());
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Log State");
 
         if (typeOverride.isEmpty()) {
             if (hasCoral && hasAlgae) {
@@ -726,6 +746,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 case Climb -> target = Optional.of(climbObjective);
             };
         }
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Current Objective");
     }
 
     public IntakeCoralObjective getIntakeCoralObjective() {

@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
@@ -84,6 +85,7 @@ public class Wrist {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/Superstructure/Wrist", inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist/Process Inputs");
 
         this.angle.mut_replace(WristConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position));
         this.velocity.mut_replace(WristConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity));

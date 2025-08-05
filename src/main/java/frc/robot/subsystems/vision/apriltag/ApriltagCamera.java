@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraFrame;
 import frc.robot.subsystems.vision.apriltag.ApriltagCameraIO.ApriltagCameraIOInputs;
 import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants.ApriltagCameraConstants;
+import frc.util.LoggedTracer;
 import frc.util.led.animation.StatusLightAnimation;
 
 public class ApriltagCamera {
@@ -28,9 +29,12 @@ public class ApriltagCamera {
     public ApriltagCameraResult periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/ApriltagVision/" + camMeta.hardwareName, inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ApriltagVision/Camera Periodic/" + camMeta.hardwareName + "/Process Inputs");
 
         notConnectedAlert.set(!inputs.isConnected);
         connectionAnimation.setStatus(inputs.isConnected);
+
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ApriltagVision/Camera Periodic/" + camMeta.hardwareName);
         return ApriltagCameraResult.from(camMeta, inputs);
     }
 

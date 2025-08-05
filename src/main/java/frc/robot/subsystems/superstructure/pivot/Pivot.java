@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
@@ -87,6 +88,7 @@ public class Pivot {
     public void periodic() {
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Superstructure/Pivot", this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Process Inputs");
 
         this.angle.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position));
         this.velocity.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity));
