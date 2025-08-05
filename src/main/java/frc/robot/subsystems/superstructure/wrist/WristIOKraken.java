@@ -24,9 +24,12 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public class WristIOKraken implements WristIO {
     protected final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
@@ -37,12 +40,12 @@ public class WristIOKraken implements WristIO {
     public WristIOKraken() {
         var cancoderConfig = new CANcoderConfiguration();
 
-        cancoder.getConfigurator().refresh(cancoderConfig.MagnetSensor);
+        this.cancoder.getConfigurator().refresh(cancoderConfig.MagnetSensor);
         cancoderConfig.MagnetSensor
             .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
         ;
 
-        cancoder.getConfigurator().apply(cancoderConfig);
+        this.cancoder.getConfigurator().apply(cancoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
@@ -61,39 +64,35 @@ public class WristIOKraken implements WristIO {
             .withForwardSoftLimitThreshold(WristConstants.maxAngle)
         ;
 
-        motor.getConfigurator().apply(motorConfig);
+        this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getRotorPosition(),
-            motor.getRotorVelocity(),
-            cancoder.getPosition(),
-            cancoder.getVelocity()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
-        );
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.cancoder));
         motor.optimizeBusUtilization();
         cancoder.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(WristIOInputs inputs) {
-        inputs.encoder.updateFrom(cancoder);
-        inputs.motor.updateFrom(motor);
+        inputs.encoder.updateFrom(this.cancoder);
+        inputs.motor.updateFrom(this.motor);
+        // inputs.encoderFaults.updateFrom(this.cancoder);
+        // inputs.motorFaults.updateFrom(this.motor);
     }
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
-        motor.setVoltage(voltage.in(Volts));
+        this.motor.setVoltage(voltage.in(Volts));
     }
 
     @Override
     public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
-        motor.setControl(positionRequest
+        this.motor.setControl(this.positionRequest
             .withPosition(position.in(Rotations))
             .withVelocity(velocity.in(RotationsPerSecond))
             .withFeedForward(feedforward.in(Volts))
@@ -108,9 +107,36 @@ public class WristIOKraken implements WristIO {
     @Override
     public void configPID(PIDConstants pidConstants) {
         var config = new Slot0Configs();
-        motor.getConfigurator().refresh(config);
+        this.motor.getConfigurator().refresh(config);
         pidConstants.update(config);
-        motor.getConfigurator().apply(config);
+        this.motor.getConfigurator().apply(config);
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearEncoderStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.cancoder.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleCancoderFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.cancoder);
+                }
+            }
+        }
     }
 }
 

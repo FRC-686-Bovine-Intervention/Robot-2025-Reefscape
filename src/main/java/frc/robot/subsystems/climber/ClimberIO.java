@@ -6,12 +6,14 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
+import frc.util.loggerUtil.inputs.LoggedFaults;
 
 public interface ClimberIO {
     
     @AutoLog
     public class ClimberIOInputs {
         public LoggedEncodedMotor motor = new LoggedEncodedMotor();
+        public LoggedFaults motorFaults = new LoggedFaults();
 
         public boolean sensor = false;
     }
@@ -25,4 +27,6 @@ public interface ClimberIO {
     public default void setNonClimbingAngle(Measure<AngleUnit> angle) {}
 
     public default void setClimbingAngle(Measure<AngleUnit> angle) {}
+
+    public default void clearMotorStickyFaults(long bitmask) {}
 }

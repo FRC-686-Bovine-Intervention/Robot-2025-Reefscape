@@ -7,8 +7,10 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import java.nio.ByteBuffer;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 
@@ -25,13 +27,35 @@ public class LoggedEncoder implements StructSerializable {
     public final MutAngle position = Radians.mutable(0);
     public final MutAngularVelocity velocity = RadiansPerSecond.mutable(0);
 
-    public void updateFrom(TalonFX talon) {
-        this.position.mut_replace(talon.getRotorPosition().getValue());
-        this.velocity.mut_replace(talon.getRotorVelocity().getValue());
+    public void updateFrom(TalonFX talonFX) {
+        this.position.mut_replace(talonFX.getRotorPosition().getValue());
+        this.velocity.mut_replace(talonFX.getRotorVelocity().getValue());
+    }
+    public static BaseStatusSignal[] getStatusSignals(TalonFX talonFX) {
+        return new BaseStatusSignal[] {
+            talonFX.getRotorPosition(),
+            talonFX.getRotorVelocity(),
+        };
+    }
+    public void updateFrom(TalonFXS talonFXS) {
+        this.position.mut_replace(talonFXS.getRotorPosition().getValue());
+        this.velocity.mut_replace(talonFXS.getRotorVelocity().getValue());
+    }
+    public static BaseStatusSignal[] getStatusSignals(TalonFXS talonFXS) {
+        return new BaseStatusSignal[] {
+            talonFXS.getRotorPosition(),
+            talonFXS.getRotorVelocity(),
+        };
     }
     public void updateFrom(CANcoder canCoder) {
         this.position.mut_replace(canCoder.getPosition().getValue());
         this.velocity.mut_replace(canCoder.getVelocity().getValue());
+    }
+    public static BaseStatusSignal[] getStatusSignals(CANcoder cancoder) {
+        return new BaseStatusSignal[] {
+            cancoder.getPosition(),
+            cancoder.getVelocity(),
+        };
     }
 
     public void updateFrom(RelativeEncoder encoder) {
@@ -85,8 +109,7 @@ public class LoggedEncoder implements StructSerializable {
         @Override
         public LoggedEncoder unpack(ByteBuffer bb) {
             var encoder = new LoggedEncoder();
-            encoder.position.mut_setBaseUnitMagnitude(bb.getDouble());
-            encoder.velocity.mut_setBaseUnitMagnitude(bb.getDouble());
+            this.unpackInto(encoder, bb);
             return encoder;
         }
 

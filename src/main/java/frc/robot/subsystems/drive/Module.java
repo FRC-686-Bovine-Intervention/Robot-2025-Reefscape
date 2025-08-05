@@ -8,6 +8,7 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -25,6 +26,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.CurrentUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -38,9 +40,16 @@ import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
+import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -64,20 +73,21 @@ public class Module {
     private static final LoggedTunableMeasure<CurrentUnit> currentSpikeThreshold = new LoggedTunableMeasure<>("Drive/Current Spike Threshold", Amps.of(0)); 
     private static final LoggedTunableMeasure<TimeUnit> currentSpikeTime = new LoggedTunableMeasure<>("Drive/Current Spike Time", Seconds.of(0));
     private final CurrentSpikeDetector driveCurrentSpikeDetector = new CurrentSpikeDetector(currentSpikeThreshold, currentSpikeTime);
-
+    
+    private static final LoggedTunableMeasure<LinearVelocityUnit> brakeModeThreshold = new LoggedTunableMeasure<>("Drive/Brake Mode Threshold", InchesPerSecond.of(1)); 
+    
     private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
         "Drive/Module/Drive/PID",
-        0.025928*2*Math.PI,
-        0*2*Math.PI,
-        0*2*Math.PI
+        0.1,
+        0,
+        0
     );
     private static final LoggedTunableFF driveFFConsts = new LoggedTunableFF(
         "Drive/Module/Drive/FF",
-        // 0.059813*2*Math.PI,
         0,
-        0*2*Math.PI,
-        0.017472*2*Math.PI,
-        0.0015521*2*Math.PI
+        0,
+        2.2,
+        0
     );
     private static final LoggedTunablePID azimuthPIDConsts = new LoggedTunablePID(
         "Drive/Module/Azimuth/PID",
@@ -88,6 +98,13 @@ public class Module {
 
     private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0,0,0);
 
+    private final DeviceFaultAlerts driveMotorActiveFaultsAlert;
+    private final DeviceFaultAlerts driveMotorStickyFaultsAlert;
+    private final DeviceFaultAlerts azimuthMotorActiveFaultsAlert;
+    private final DeviceFaultAlerts azimuthMotorStickyFaultsAlert;
+    private final DeviceFaultClearer driveMotorStickyFaultClearer;
+    private final DeviceFaultClearer azimuthMotorStickyFaultClearer;
+
     public Module(ModuleIO io, ModuleConstants config) {
         this.io = io;
         this.config = config;
@@ -95,6 +112,13 @@ public class Module {
         driveFFConsts.update(this.driveFeedforward);
         this.io.configDrivePID(drivePIDConsts.getConstants());
         this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
+
+        this.driveMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has active faults: ", AlertType.kError));
+        this.driveMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.azimuthMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has active faults: ", AlertType.kError));
+        this.azimuthMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.driveMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Drive Motor Sticky Faults");
+        this.azimuthMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Azimuth Motor Sticky Faults");
     }
 
     /** Updates inputs and checks tunable numbers. */
@@ -104,6 +128,7 @@ public class Module {
 
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Drive/Module " + this.config.name, this.inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
 
         this.angle = this.config.moduleForwardDirection.plus(new Rotation2d(this.inputs.azimuthEncoder.position));
         this.moduleState.angle = this.angle;
@@ -128,6 +153,13 @@ public class Module {
         if (azimuthPIDConsts.hasChanged(hashCode())) {
             this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
         }
+
+        this.driveMotorActiveFaultsAlert.updateFrom(this.inputs.driveMotorFaults.activeFaults);
+        this.driveMotorStickyFaultsAlert.updateFrom(this.inputs.driveMotorFaults.stickyFaults);
+        this.azimuthMotorActiveFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.activeFaults);
+        this.azimuthMotorStickyFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.stickyFaults);
+        this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
+        this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
     }
 
     /**
@@ -142,8 +174,13 @@ public class Module {
 
         setpoint.speedMetersPerSecond *= turnSetpoint.minus(this.getAngle()).getCos();
 
-        double velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
-        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.zero());
+        var velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
+
+        var ffout = this.driveFeedforward.calculateWithVelocities(this.wheelLinearVelocity.in(MetersPerSecond), setpoint.speedMetersPerSecond);
+
+        var belowBrakeModeThreshold = Math.abs(setpoint.speedMetersPerSecond) < brakeModeThreshold.get().in(MetersPerSecond);
+
+        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.of(ffout), belowBrakeModeThreshold);
     }
 
     /**
@@ -190,7 +227,7 @@ public class Module {
     }
 
     public Current getDriveCurrent() {
-        return this.inputs.driveMotor.motor.current;
+        return this.inputs.driveMotor.motor.statorCurrent;
     }
 
     public boolean currentSpiking() {

@@ -15,8 +15,6 @@ import static edu.wpi.first.units.Units.Rotations;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.pathplanner.lib.config.RobotConfig;
 
