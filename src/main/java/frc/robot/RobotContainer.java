@@ -758,11 +758,29 @@ public class RobotContainer {
         });
 
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
-            private static final LoggedTunableMeasure<AngleUnit> autoEjectPivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> autoEjectElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> autoEjectWristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> autoEjectLinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> autoEjectAngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l4WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l4LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l4AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Robot/Angular Tolerance", Degrees.of(5));
+            
+            private static final LoggedTunableMeasure<AngleUnit> l3PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l3ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l3WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l3LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l3AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Robot/Angular Tolerance", Degrees.of(5));
+
+            private static final LoggedTunableMeasure<AngleUnit> l2PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l2ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l2WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l2LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l2AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Robot/Angular Tolerance", Degrees.of(5));
+
+            private static final LoggedTunableMeasure<AngleUnit> l1PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Superstructure/Pivot Tolerance", Degrees.of(2));
+            private static final LoggedTunableMeasure<DistanceUnit> l1ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Superstructure/Elevator Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l1WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Superstructure/Wrist Tolerance", Degrees.of(5));
+            private static final LoggedTunableMeasure<DistanceUnit> l1LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Robot/Linear Tolerance", Inches.of(2));
+            private static final LoggedTunableMeasure<AngleUnit> l1AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Robot/Angular Tolerance", Degrees.of(5));
 
             private final Command ejectBranch = intake.eject();
             private final Command ejectL1 = intake.ejectLevel1();
@@ -773,11 +791,47 @@ public class RobotContainer {
             public void run() {
                 if (intake.hasCoral.getAsBoolean() && !manualOverrides.autoEjectCoralDisabled()) {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
-                    var pivotInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, autoEjectPivotTolerance.get());
-                    var elevatorInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, autoEjectElevatorTolerance.get());
-                    var wristInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, autoEjectWristTolerance.get());
-                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), autoEjectLinearTolerance.get());
-                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), autoEjectAngularTolerance.get());
+                    final Measure<AngleUnit> pivotTolerance;
+                    final Measure<DistanceUnit> elevatorTolerance;
+                    final Measure<AngleUnit> wristTolerance;
+                    final Measure<DistanceUnit> linearTolerance;
+                    final Measure<AngleUnit> angularTolerance;
+                    if (scoreCoralObjective.getTargetBranch().isPresent()) {
+                        switch (scoreCoralObjective.getTargetBranch().get().level) {
+                            case Level2:
+                                pivotTolerance = l2PivotTolerance.get();
+                                elevatorTolerance = l2ElevatorTolerance.get();
+                                wristTolerance = l2WristTolerance.get();
+                                linearTolerance = l2LinearTolerance.get();
+                                angularTolerance = l2AngularTolerance.get();
+                            break;
+                            case Level3:
+                                pivotTolerance = l3PivotTolerance.get();
+                                elevatorTolerance = l3ElevatorTolerance.get();
+                                wristTolerance = l3WristTolerance.get();
+                                linearTolerance = l3LinearTolerance.get();
+                                angularTolerance = l3AngularTolerance.get();
+                            break;
+                            case Level4: default:
+                                pivotTolerance = l4PivotTolerance.get();
+                                elevatorTolerance = l4ElevatorTolerance.get();
+                                wristTolerance = l4WristTolerance.get();
+                                linearTolerance = l4LinearTolerance.get();
+                                angularTolerance = l4AngularTolerance.get();
+                            break;
+                        }
+                    } else {
+                        pivotTolerance = l1PivotTolerance.get();
+                        elevatorTolerance = l1ElevatorTolerance.get();
+                        wristTolerance = l1WristTolerance.get();
+                        linearTolerance = l1LinearTolerance.get();
+                        angularTolerance = l1AngularTolerance.get();
+                    }
+                    var pivotInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance);
+                    var elevatorInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance);
+                    var wristInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance);
+                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), linearTolerance);
+                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), angularTolerance);
                     Logger.recordOutput("Auto Eject/Coral/Superstructure/Pivot", pivotInTolerance);
                     Logger.recordOutput("Auto Eject/Coral/Superstructure/Elevator", elevatorInTolerance);
                     Logger.recordOutput("Auto Eject/Coral/Superstructure/Wrist", wristInTolerance);
