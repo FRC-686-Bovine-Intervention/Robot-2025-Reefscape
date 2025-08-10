@@ -497,32 +497,61 @@ public class RobotContainer {
             }
         });
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
-        driveController.rightBumper()
-            .and(() -> objectiveTracker.getCurrentObjective().isPresent())
-            .whileTrue(
-                drive.simplePIDTo(
-                    () -> AutoScore.getTargetPose(
-                        drive.getPose(),
-                        objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs(),
-                        objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
-                    )
-                )
-                .deadlineFor(
-                    Commands.startEnd(
-                        () -> {
-                            if (objectiveTracker.getCurrentObjective().filter((objective) -> objective.getObjectiveType() == ObjectiveType.ScoreCoral).isPresent()) {
-                                if (objectiveTracker.getScoreCoralObjective().getTargetBranch().isPresent()) {
-                                    objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().get().pipe);
-                                }
-                            }
-                        },
-                        () -> {
-                            objectiveTracker.removePipeLock();
-                        }
-                    )
-                )
+
+        final Command autoDriveScoreCoral = this.drive.simplePIDTo(
+            () -> AutoScore.getTargetPose(
+                this.drive.getPose(),
+                this.objectiveTracker.getScoreCoralObjective().getTargetPose().getOurs()
             )
-        ; //Auto drive
+        ).deadlineFor(
+            Commands.startEnd(
+                () -> {
+                    if (objectiveTracker.getScoreCoralObjective().getTargetBranch().isPresent()) {
+                        objectiveTracker.addPipeLock(objectiveTracker.getScoreCoralObjective().getTargetBranch().get().pipe);
+                    }
+                },
+                () -> {
+                    objectiveTracker.removePipeLock();
+                }
+            )
+        );
+        final Command autoDriveIntakeAlgae = this.drive.simplePIDTo(
+            () -> AutoScore.getTargetPose(
+                this.drive.getPose(),
+                this.objectiveTracker.getIntakeAlgaeObjective().get().getTargetPose().getOurs()
+            )
+        );
+        final Command autoDriveIntakeCoral = this.drive.simplePIDTo(() -> this.objectiveTracker.getIntakeCoralObjective().getTargetPose().getOurs());
+        final Command autoDriveScoreAlgae = this.drive.simplePIDTo(() -> this.objectiveTracker.getScoreAlgaeObjective().getTargetPose().getOurs());
+        final Command autoDriveClimb = this.drive.simplePIDTo(() -> this.objectiveTracker.getClimbObjective().getTargetPose().getOurs());
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
+            if (driveController.hid.getRightBumperButtonPressed()) {
+                if (this.objectiveTracker.getCurrentObjective().isEmpty()) return;
+                switch (this.objectiveTracker.getCurrentObjective().get().getObjectiveType()) {
+                    case ScoreCoral: autoDriveScoreCoral.schedule(); break;
+                    case IntakeAlgae: autoDriveIntakeAlgae.schedule(); break;
+                    case IntakeCoral: autoDriveIntakeCoral.schedule(); break;
+                    case ScoreAlgae: autoDriveScoreAlgae.schedule(); break;
+                    case Climb: autoDriveClimb.schedule(); break;
+                }
+            } else if (driveController.hid.getRightBumperButtonReleased()) {
+                if (autoDriveScoreCoral.isScheduled()) {
+                    autoDriveScoreCoral.cancel();
+                }
+                if (autoDriveIntakeAlgae.isScheduled()) {
+                    autoDriveIntakeAlgae.cancel();
+                }
+                if (autoDriveIntakeCoral.isScheduled()) {
+                    autoDriveIntakeCoral.cancel();
+                }
+                if (autoDriveScoreAlgae.isScheduled()) {
+                    autoDriveScoreAlgae.cancel();
+                }
+                if (autoDriveClimb.isScheduled()) {
+                    autoDriveClimb.cancel();
+                }
+            }
+        });
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),

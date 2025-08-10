@@ -16,20 +16,16 @@ public class AutoScore {
     public static final LoggedTunableNumber xScalar = new LoggedTunableNumber("Auto Score/xScalar", -2);
     public static final LoggedTunableNumber yScalar = new LoggedTunableNumber("Auto Score/yScalar", -0.5);
 
-    public static Pose2d getTargetPose(Pose2d currentPose, Pose2d target, boolean isGoingToReef){
-        if(isGoingToReef){
-            var relativePose = currentPose.relativeTo(target);
-            return target.transformBy(
-                new Transform2d(
-                    new Translation2d(
-                        (Math.max(relativePose.getX(), 0) * xScalar.get()) + (Math.abs(relativePose.getY()) * yScalar.get()),
-                        0
-                    ),
-                    Rotation2d.kZero
-                )
-            );
-        } else {
-            return target;
-        }
+    public static Pose2d getTargetPose(Pose2d currentPose, Pose2d target) {
+        var relativePose = currentPose.relativeTo(target);
+        return target.transformBy(
+            new Transform2d(
+                new Translation2d(
+                    (Math.max(relativePose.getX(), 0) * xScalar.get()) + (Math.abs(relativePose.getY()) * yScalar.get()),
+                    0
+                ),
+                Rotation2d.kZero
+            )
+        );
     }
 }
