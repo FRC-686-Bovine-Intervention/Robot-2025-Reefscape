@@ -202,14 +202,19 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final List<Priority> uncompletedPriorities = new ArrayList<>(fullStrategy.size());
 
     private IntakeCoralObjective intakeCoralObjective;
+
     private Optional<IntakeAlgaeObjective> intakeAlgaeObjective;
-    private ScoreCoralObjective scoreCoralObjective;
-    private ScoreAlgaeObjective scoreAlgaeObjective;
-    private ClimbObjective climbObjective;
-    private Optional<Objective> target = Optional.empty();
-    private Optional<ObjectiveType> typeOverride = Optional.empty();
+
     private Optional<Optional<BranchLevel>> levelLock = Optional.empty();
     private Optional<PipeConcept> pipeLock = Optional.empty();
+    private ScoreCoralObjective scoreCoralObjective;
+
+    private ScoreAlgaeObjective scoreAlgaeObjective;
+
+    private ClimbObjective climbObjective;
+
+    private Optional<ObjectiveType> typeOverride = Optional.empty();
+    private Optional<Objective> currentObjective = Optional.empty();
 
     public ObjectiveTracker(ReefTrackerIO io) {
         System.out.println("[Init ObjectiveTracker] Instantiating ObjectiveTracker with " + io.getClass().getSimpleName());
@@ -319,6 +324,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         this.updateAvailableIntakeAlgaeObjectives();
         this.updateUnblockedScoreCoralObjectives();
         this.updateIncompletePriorities();
+        this.determineGoal(Pose2d.kZero, false, false);
     }
 
     @Override
@@ -524,32 +530,34 @@ public class ObjectiveTracker extends VirtualSubsystem {
         ;
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Intake Coral Objective");
 
-        if (FieldConstants.onAllianceSide.getOurs().test(currentPose.getTranslation())) {
-            this.intakeAlgaeObjective = this.ourIntakeAlgaeObjectives
-                .stream()
-                .sorted((a,b) -> {
-                    if (a.getTargetAlgae() == b.getTargetAlgae()) {
-                        return closestToCurrentRotation.compare(a, b);
-                    } else {
-                        return closestToCurrentTranslation.compare(a, b);
-                    }
-                })
-                .limit(3)
-                .filter(this.availableIntakeAlgaeObjectives::contains)
-                .findFirst()
-            ;
-        } else {
-            this.intakeAlgaeObjective = this.opponentIntakeAlgaeObjectives
-                .stream()
-                .sorted((a,b) -> {
-                    if (a.getTargetAlgae() == b.getTargetAlgae()) {
-                        return closestToCurrentRotation.compare(a, b);
-                    } else {
-                        return closestToCurrentTranslation.compare(a, b);
-                    }
-                })
-                .findFirst()
-            ;
+        if (!hasAlgae) {
+            if (FieldConstants.onAllianceSide.getOurs().test(currentPose.getTranslation())) {
+                this.intakeAlgaeObjective = this.ourIntakeAlgaeObjectives
+                    .stream()
+                    .sorted((a,b) -> {
+                        if (a.getTargetAlgae() == b.getTargetAlgae()) {
+                            return closestToCurrentRotation.compare(a, b);
+                        } else {
+                            return closestToCurrentTranslation.compare(a, b);
+                        }
+                    })
+                    .limit(3)
+                    .filter(this.availableIntakeAlgaeObjectives::contains)
+                    .findFirst()
+                ;
+            } else {
+                this.intakeAlgaeObjective = this.opponentIntakeAlgaeObjectives
+                    .stream()
+                    .sorted((a,b) -> {
+                        if (a.getTargetAlgae() == b.getTargetAlgae()) {
+                            return closestToCurrentRotation.compare(a, b);
+                        } else {
+                            return closestToCurrentTranslation.compare(a, b);
+                        }
+                    })
+                    .findFirst()
+                ;
+            }
         }
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Intake Algae Objective");
 
@@ -726,24 +734,24 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var distToCoral = scoreCoralObjective.getTargetPose().getOurs().getTranslation().getDistance(currentPose.getTranslation());
                 var distToAlgae = scoreAlgaeObjective.getTargetPose().getOurs().getTranslation().getDistance(currentPose.getTranslation());
                 if (distToCoral < distToAlgae) {
-                    target = Optional.of(scoreCoralObjective);
+                    currentObjective = Optional.of(scoreCoralObjective);
                 } else {
-                    target = Optional.of(scoreAlgaeObjective);
+                    currentObjective = Optional.of(scoreAlgaeObjective);
                 }
             } else if (hasCoral) {
-                target = Optional.of(scoreCoralObjective);
+                currentObjective = Optional.of(scoreCoralObjective);
             } else if (hasAlgae) {
-                target = Optional.of(scoreAlgaeObjective);
+                currentObjective = Optional.of(scoreAlgaeObjective);
             } else {
-                target = Optional.of(intakeCoralObjective);
+                currentObjective = Optional.of(intakeCoralObjective);
             }
         } else {
-            target = switch (typeOverride.get()) {
-                case IntakeCoral -> target = Optional.of(intakeCoralObjective);
-                case IntakeAlgae -> target = intakeAlgaeObjective.map((objective) -> objective);
-                case ScoreCoral -> target = Optional.of(scoreCoralObjective);
-                case ScoreAlgae -> target = Optional.of(scoreAlgaeObjective);
-                case Climb -> target = Optional.of(climbObjective);
+            currentObjective = switch (typeOverride.get()) {
+                case IntakeCoral -> currentObjective = Optional.of(intakeCoralObjective);
+                case IntakeAlgae -> currentObjective = intakeAlgaeObjective.map((objective) -> objective);
+                case ScoreCoral -> currentObjective = Optional.of(scoreCoralObjective);
+                case ScoreAlgae -> currentObjective = Optional.of(scoreAlgaeObjective);
+                case Climb -> currentObjective = Optional.of(climbObjective);
             };
         }
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Current Objective");
@@ -765,7 +773,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         return climbObjective;
     }
     public Optional<Objective> getCurrentObjective() {
-        return target;
+        return currentObjective;
     }
 
     public void setTypeOverride(Optional<ObjectiveType> typeOverride) {
