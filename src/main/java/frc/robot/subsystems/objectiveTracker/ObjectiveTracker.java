@@ -176,9 +176,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final Set<ScoreCoralObjective> availableScoreCoralObjectives;
     private final Set<ScoreCoralObjective> availableUnblockedScoreCoralObjectives;
 
-    private final Set<ScoreAlgaeObjective> ourNetScoreAlgaeObjectives;
-    private final Set<ScoreAlgaeObjective> opponentNetScoreAlgaeObjectives;
-    private final ScoreAlgaeObjective processorScoreAlgaeObjective;
+    private final Set<ScoreAlgaeObjective> ourSideNetScoreAlgaeObjectives;
+    private final Set<ScoreAlgaeObjective> opponentSideNetScoreAlgaeObjectives;
+    private final ScoreAlgaeObjective ourProcessorScoreAlgaeObjective;
     private final ScoreAlgaeObjective opponentProcessorScoreAlgaeObjective;
     
     private final Set<IntakeCoralObjective> allIntakeCoralObjectives;
@@ -209,7 +209,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private Optional<PipeConcept> pipeLock = Optional.empty();
     private ScoreCoralObjective scoreCoralObjective;
 
-    private ScoreAlgaeObjective scoreAlgaeObjective;
+    private ScoreAlgaeObjective scoreNetObjective;
+    private ScoreAlgaeObjective scoreProcessorObjective;
 
     private ClimbObjective climbObjective;
 
@@ -259,7 +260,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         this.availableUnblockedScoreCoralObjectives = new HashSet<>(this.allScoreCoralObjectives.size());
 
         // Score Algae
-        this.ourNetScoreAlgaeObjectives = Set.of(
+        this.ourSideNetScoreAlgaeObjectives = Set.of(
             new ScoreAlgaeObjective(FieldConstants.Barge.frontLeftBargePose.map((barge) -> barge.get(Direction.Forward)), false, Direction.Forward),
             new ScoreAlgaeObjective(FieldConstants.Barge.frontCenterBargePose.map((barge) -> barge.get(Direction.Forward)), false, Direction.Forward),
             new ScoreAlgaeObjective(FieldConstants.Barge.frontRightBargePose.map((barge) -> barge.get(Direction.Forward)), false, Direction.Forward),
@@ -267,7 +268,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             new ScoreAlgaeObjective(FieldConstants.Barge.frontCenterBargePose.map((barge) -> barge.get(Direction.Backward)), false, Direction.Backward),
             new ScoreAlgaeObjective(FieldConstants.Barge.frontRightBargePose.map((barge) -> barge.get(Direction.Backward)), false, Direction.Backward)
         );
-        this.opponentNetScoreAlgaeObjectives = Set.of(
+        this.opponentSideNetScoreAlgaeObjectives = Set.of(
             new ScoreAlgaeObjective(FieldConstants.Barge.backLeftBargePose.map((barge) -> barge.get(Direction.Forward)), false, Direction.Forward),
             new ScoreAlgaeObjective(FieldConstants.Barge.backCenterBargePose.map((barge) -> barge.get(Direction.Forward)), false, Direction.Forward),
             new ScoreAlgaeObjective(FieldConstants.Barge.backRightBargePose.map((barge) -> barge.get(Direction.Forward)), false, Direction.Forward),
@@ -275,7 +276,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             new ScoreAlgaeObjective(FieldConstants.Barge.backCenterBargePose.map((barge) -> barge.get(Direction.Backward)), false, Direction.Backward),
             new ScoreAlgaeObjective(FieldConstants.Barge.backRightBargePose.map((barge) -> barge.get(Direction.Backward)), false, Direction.Backward)
         );
-        this.processorScoreAlgaeObjective = new ScoreAlgaeObjective(FieldConstants.Processor.processorTargetPose.map((barge) -> barge.get(Direction.Forward)), true, Direction.Forward);
+        this.ourProcessorScoreAlgaeObjective = new ScoreAlgaeObjective(FieldConstants.Processor.processorTargetPose.map((barge) -> barge.get(Direction.Forward)), true, Direction.Forward);
         this.opponentProcessorScoreAlgaeObjective = new ScoreAlgaeObjective(FieldConstants.Processor.processorTargetPose.invert().map((barge) -> barge.get(Direction.Forward)), true, Direction.Forward);
 
         // Intake Coral
@@ -568,26 +569,6 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 .toList()
             ;
 
-            // var target = this.availableUnblockedScoreCoralObjectives
-            //     .stream()
-            //     .filter((branchOrLevel1) -> branchOrLevel1.getTargetBranch().isEmpty() || closestPipes.contains(branchOrLevel1.getTargetBranch().get().getOurs().pipe))
-            //     .filter((branchOrLevel1) -> levelLock.isEmpty() || (branchOrLevel1.getTargetBranch().map((branch) -> branch.level).equals(levelLock.get())) || (pipeLock.isPresent() && (Arrays.stream(pipeLock.get().branches).anyMatch((branch) -> branchStates[branch.id] == false))))
-            //     .filter((branchOrLevel1) -> pipeLock.isEmpty() || (branchOrLevel1.getTargetBranch().isPresent() && branchOrLevel1.getTargetBranch().get().getOurs().pipe == pipeLock.get()) || (Arrays.stream(pipeLock.get().branches).allMatch((branch) -> branchStates[branch.id] == true)))
-            //     .sorted((a,b) -> {
-            //         if (a.getTargetBranch().equals(b.getTargetBranch())) {
-            //             return closestToCurrentRotation.compare(a, b);
-            //         } else if (a.getTargetBranch().map((branch) -> branch.level).equals(b.getTargetBranch().map((branch) -> branch.level))) {
-            //             return closestToCurrentTranslation.compare(a, b);
-            //         } else {
-            //             for (var priority : uncompletedPriorities) {
-            //                 if (a.getTargetBranch().map((branch) -> branch.level).equals(priority.level)) return -1;
-            //                 if (b.getTargetBranch().map((branch) -> branch.level).equals(priority.level)) return 1;
-            //             }
-            //             return 0;
-            //         }
-            //     })
-            //     .findFirst()
-            // ;
             var target = this.allScoreCoralObjectives
                 .stream()
                 .sorted((a,b) -> {
@@ -684,22 +665,23 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Leds.getInstance().level4Targeted.setFlag(this.scoreCoralObjective.getTargetBranch().isPresent() && this.scoreCoralObjective.getTargetBranch().get().level.equals(BranchLevel.Level4));
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Update LED Flags");
 
-        this.scoreAlgaeObjective = switch (this.selectedAlgaeGoal) {
-            case NET -> this.ourNetScoreAlgaeObjectives
+        if (FieldConstants.onAllianceSide.getOurs().test(currentPose.getTranslation())) {
+            this.scoreNetObjective = this.ourSideNetScoreAlgaeObjectives
                 .stream()
                 .sorted(closestToCurrentTranslation)
                 .findFirst()
                 .get()
             ;
-            case NET_OPPONENT_SIDE -> this.opponentNetScoreAlgaeObjectives
+            this.scoreProcessorObjective = this.ourProcessorScoreAlgaeObjective;
+        } else {
+            this.scoreNetObjective = this.opponentSideNetScoreAlgaeObjectives
                 .stream()
                 .sorted(closestToCurrentTranslation)
                 .findFirst()
                 .get()
             ;
-            case PROCESSOR -> this.processorScoreAlgaeObjective;
-            case OPPONENT_PROCESSOR -> this.opponentProcessorScoreAlgaeObjective;
-        };
+            this.scoreProcessorObjective = this.opponentProcessorScoreAlgaeObjective;
+        }
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Score Algae Objective");
 
         this.climbObjective = this.allClimbObjectives
@@ -721,59 +703,66 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Direction", scoreCoralObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Pose", scoreCoralObjective.getTargetPose().getOurs());
         Logger.recordOutput("Objective Tracker/Score/Coral/Target Mechs", scoreCoralObjective.getTargetState().getMechTransforms());
-        Logger.recordOutput("Objective Tracker/Score/Algae/Target Direction", scoreAlgaeObjective.getTargetDirection());
-        Logger.recordOutput("Objective Tracker/Score/Algae/Target Pose", scoreAlgaeObjective.getTargetPose().getOurs());
-        Logger.recordOutput("Objective Tracker/Score/Algae/Target Mechs", scoreAlgaeObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Score/Net/Target Direction", scoreNetObjective.getTargetDirection());
+        Logger.recordOutput("Objective Tracker/Score/Net/Target Pose", scoreNetObjective.getTargetPose().getOurs());
+        Logger.recordOutput("Objective Tracker/Score/Net/Target Mechs", scoreNetObjective.getTargetState().getMechTransforms());
+        Logger.recordOutput("Objective Tracker/Score/Processor/Target Direction", scoreProcessorObjective.getTargetDirection());
+        Logger.recordOutput("Objective Tracker/Score/Processor/Target Pose", scoreProcessorObjective.getTargetPose().getOurs());
+        Logger.recordOutput("Objective Tracker/Score/Processor/Target Mechs", scoreProcessorObjective.getTargetState().getMechTransforms());
         Logger.recordOutput("Objective Tracker/Climb/Target Direction", climbObjective.getTargetDirection());
         Logger.recordOutput("Objective Tracker/Climb/Target Pose", climbObjective.getTargetPose().getOurs());
         Logger.recordOutput("Objective Tracker/Climb/Target Mechs", climbObjective.getTargetState().getMechTransforms());
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Log State");
 
-        if (typeOverride.isEmpty()) {
+        if (this.typeOverride.isEmpty()) {
             if (hasCoral && hasAlgae) {
-                var distToCoral = scoreCoralObjective.getTargetPose().getOurs().getTranslation().getDistance(currentPose.getTranslation());
-                var distToAlgae = scoreAlgaeObjective.getTargetPose().getOurs().getTranslation().getDistance(currentPose.getTranslation());
-                if (distToCoral < distToAlgae) {
-                    currentObjective = Optional.of(scoreCoralObjective);
+                var distToCoral = this.scoreCoralObjective.getTargetPose().getOurs().getTranslation().getDistance(currentPose.getTranslation());
+                var distToNet = this.scoreNetObjective.getTargetPose().getOurs().getTranslation().getDistance(currentPose.getTranslation());
+                if (distToCoral < distToNet) {
+                    this.currentObjective = Optional.of(this.scoreCoralObjective);
                 } else {
-                    currentObjective = Optional.of(scoreAlgaeObjective);
+                    this.currentObjective = Optional.of(this.scoreNetObjective);
                 }
             } else if (hasCoral) {
-                currentObjective = Optional.of(scoreCoralObjective);
+                this.currentObjective = Optional.of(this.scoreCoralObjective);
             } else if (hasAlgae) {
-                currentObjective = Optional.of(scoreAlgaeObjective);
+                this.currentObjective = Optional.of(this.scoreNetObjective);
             } else {
-                currentObjective = Optional.of(intakeCoralObjective);
+                this.currentObjective = Optional.of(this.intakeCoralObjective);
             }
         } else {
-            currentObjective = switch (typeOverride.get()) {
-                case IntakeCoral -> currentObjective = Optional.of(intakeCoralObjective);
-                case IntakeAlgae -> currentObjective = intakeAlgaeObjective.map((objective) -> objective);
-                case ScoreCoral -> currentObjective = Optional.of(scoreCoralObjective);
-                case ScoreAlgae -> currentObjective = Optional.of(scoreAlgaeObjective);
-                case Climb -> currentObjective = Optional.of(climbObjective);
+            this.currentObjective = switch (this.typeOverride.get()) {
+                case IntakeCoral -> Optional.of(this.intakeCoralObjective);
+                case IntakeAlgae -> this.intakeAlgaeObjective.map((objective) -> objective);
+                case ScoreCoral -> Optional.of(this.scoreCoralObjective);
+                case ScoreNet -> Optional.of(this.scoreNetObjective);
+                case ScoreProcessor -> Optional.of(this.scoreProcessorObjective);
+                case Climb -> Optional.of(this.climbObjective);
             };
         }
         LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal/Determine Current Objective");
     }
 
     public IntakeCoralObjective getIntakeCoralObjective() {
-        return intakeCoralObjective;
+        return this.intakeCoralObjective;
     }
     public Optional<IntakeAlgaeObjective> getIntakeAlgaeObjective() {
-        return intakeAlgaeObjective;
+        return this.intakeAlgaeObjective;
     }
     public ScoreCoralObjective getScoreCoralObjective() {
-        return scoreCoralObjective;
+        return this.scoreCoralObjective;
     }
-    public ScoreAlgaeObjective getScoreAlgaeObjective() {
-        return scoreAlgaeObjective;
+    public ScoreAlgaeObjective getScoreNetObjective() {
+        return this.scoreNetObjective;
+    }
+    public ScoreAlgaeObjective getScoreProcessorObjective() {
+        return this.scoreProcessorObjective;
     }
     public ClimbObjective getClimbObjective() {
-        return climbObjective;
+        return this.climbObjective;
     }
     public Optional<Objective> getCurrentObjective() {
-        return currentObjective;
+        return this.currentObjective;
     }
 
     public void setTypeOverride(Optional<ObjectiveType> typeOverride) {

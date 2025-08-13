@@ -2,33 +2,21 @@ package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Radians;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Algae;
 import frc.robot.constants.FieldConstants.Coral;
+import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 
 public class SuperstructureConstants {
-    public static final Transform2d coralScoringForwardTransform = new Transform2d(
-        new Translation2d(
-            Coral.length.plus(Inches.of(6)),
-            Inches.of(-2)
-        ),
-        new Rotation2d(Degrees.of(35).unaryMinus())
-    ).inverse();   
-
-    public static final Transform2d algaeStagedForwardTransform = new Transform2d(
-        new Translation2d(
-            Algae.radius.plus(Inches.of(9)),
-            Inches.of(-3)
-        ),
-        Rotation2d.fromDegrees(0)
-    ).inverse();
-
     public static final Transform2d coralIntakeForwardTransform = new Transform2d(
         new Translation2d(
             Inches.of(12),
@@ -36,14 +24,6 @@ public class SuperstructureConstants {
         ),
         Rotation2d.kZero
     ).inverse();
-
-    public static final Transform2d algaeOuttakeForwardTransform = new Transform2d(
-        new Translation2d(
-            Inches.of(2),
-            Inches.zero()
-        ),
-        Rotation2d.kZero
-    );
 
     public static final Transform2d wristAxisToCoralTip = new Transform2d(
         new Translation2d(
@@ -56,15 +36,114 @@ public class SuperstructureConstants {
 
     public static final Transform2d wristAxisToAlgaeCenter = new Transform2d(
         new Translation2d(
-            Inches.of(10).plus(Algae.radius),
+            Inches.of(8).plus(Algae.radius),
             Inches.zero()
         ),
         Rotation2d.kZero
     );
     public static final Transform2d algaeCenterToWristAxis = wristAxisToAlgaeCenter.inverse();
 
+
+    // Coral Intaking
+    public static final SuperstructureState coralStationForwardState = SuperstructureState.fromWristAxisRobotSpace(
+        new Pose2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper.minus(Inches.of(3)),//.plus(Coral.radius.times(2)),
+                FieldConstants.CoralStation.chuteBottomHeight.plus(Coral.radius.times(Math.cos(FieldConstants.CoralStation.chuteAngle.in(Radians)))).plus(Inches.of(-2.75))
+            ),
+            new Rotation2d(FieldConstants.CoralStation.chuteAngle)
+        )
+        .transformBy(SuperstructureConstants.coralIntakeForwardTransform)
+    );
+    public static final SuperstructureState coralStationBackwardState = SuperstructureState.fromParts(
+        Degrees.of(85),
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(148)
+    );
+
+    // Algae Intaking
+    public static final SuperstructureState highAlgaeState = SuperstructureState.fromAlgaeCenterRobotSpace(
+        new Pose2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper.plus(Inches.of(0)),
+                FieldConstants.Reef.StagedAlgaeLevel.High.height.plus(Inches.of(3))
+            ),
+            Rotation2d.fromDegrees(-15)
+        )
+    );
+    public static final SuperstructureState lowAlgaeState = SuperstructureState.fromAlgaeCenterRobotSpace(
+        new Pose2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper.plus(Inches.of(0)),
+                FieldConstants.Reef.StagedAlgaeLevel.Low.height.plus(Inches.of(3))
+            ),
+            Rotation2d.fromDegrees(-15)
+        )
+    );
+    public static final SuperstructureState groundAlgaeState = SuperstructureState.fromParts(
+        PivotConstants.minAngle,
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(-35)
+    );
+
+    // Reef Scoring
+    public static final SuperstructureState l4State = SuperstructureState.fromCoralTipRobotSpace(
+        new Pose2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
+                FieldConstants.Reef.BranchLevel.Level4.branchTipHeight.plus(Inches.of(4))
+            ),
+            Rotation2d.fromDegrees(-15)
+        )
+    );
+    public static final SuperstructureState l3State = SuperstructureState.fromCoralTipRobotSpace(
+        new Pose2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
+                FieldConstants.Reef.BranchLevel.Level3.branchTipHeight.plus(Inches.of(4))
+            ),
+            Rotation2d.fromDegrees(-15)
+        )
+    );
+    public static final SuperstructureState l2State = SuperstructureState.fromCoralTipRobotSpace(
+        new Pose2d(
+            new Translation2d(
+                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
+                FieldConstants.Reef.BranchLevel.Level2.branchTipHeight.plus(Inches.of(4))
+            ),
+            Rotation2d.fromDegrees(-15)
+        )
+    );
+    public static final SuperstructureState l1State = SuperstructureState.fromParts(
+        PivotConstants.minAngle,
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(20)
+    );
+
+    // Algae Scoring
+    public static final SuperstructureState processorState = SuperstructureState.fromParts(
+        PivotConstants.minAngle,
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(10)
+    );
+    public static final SuperstructureState netForwardState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        ElevatorConstants.maxLengthSoftware,
+        Degrees.of(60)
+    );
+    public static final SuperstructureState netBackwardState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        ElevatorConstants.maxLengthSoftware,
+        Degrees.of(120)
+    );
+    public static final SuperstructureState netAutoPrepareState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        Inches.of(12),
+        Degrees.of(90)
+    );
+
     public static final SuperstructureState idleState = SuperstructureState.fromParts(
-        Degrees.of(70),
+        l4State.pivotAngle,
         ElevatorConstants.minLengthPhysical,
         Degrees.of(90)
     );
@@ -73,30 +152,19 @@ public class SuperstructureConstants {
         ElevatorConstants.minLengthPhysical,
         Degrees.of(110)
     );
-    public static final SuperstructureState climbingState = SuperstructureState.fromParts(
-        Degrees.of(105),
-        ElevatorConstants.minLengthPhysical,
-        Degrees.of(180)
-    );
     public static final SuperstructureState prepareClimbingState = SuperstructureState.fromParts(
         Degrees.of(90),
         ElevatorConstants.minLengthPhysical,
         Degrees.of(-10)
     );
-    // public static final SuperstructureState prepareSelfRightingState = SuperstructureState.newConstrained(
-    //     Degrees.of(35),
-    //     ElevatorConstants.minLengthPhysical,
-    //     Degrees.of(90)
-    // );
+    public static final SuperstructureState climbingState = SuperstructureState.fromParts(
+        Degrees.of(105),
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(180)
+    );
     public static final SuperstructureState selfRightingState = SuperstructureState.fromParts(
         Degrees.of(112),
         ElevatorConstants.minLengthPhysical,
         Degrees.of(180)
-    );
-
-    public static final SuperstructureState netPrepareState = SuperstructureState.fromParts(
-        Degrees.of(90),
-        Inches.of(12),
-        Degrees.of(90)
     );
 }

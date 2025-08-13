@@ -10,7 +10,8 @@ public interface Objective {
         IntakeCoral(false),
         IntakeAlgae(true),
         ScoreCoral(true),
-        ScoreAlgae(false),
+        ScoreNet(false),
+        ScoreProcessor(false),
         Climb(false),
         ;
         public final boolean isReefObjective;

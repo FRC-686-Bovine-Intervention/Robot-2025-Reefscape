@@ -144,7 +144,7 @@ public class AutoCommons {
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netAutoPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
                     superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
                 )
             )

@@ -39,12 +39,7 @@ import frc.robot.auto.AutoSelector;
 import frc.robot.auto.routines.DrivePastLine;
 import frc.robot.auto.routines.ScoreAlgaeAndCoral;
 import frc.robot.auto.routines.ScoreCoral;
-import frc.robot.constants.FieldConstants.Barge;
-import frc.robot.constants.FieldConstants.CoralStation;
-import frc.robot.constants.FieldConstants.Processor;
 import frc.robot.constants.FieldConstants.Reef;
-import frc.robot.constants.FieldConstants.Reef.BranchLevel;
-import frc.robot.constants.FieldConstants.Reef.StagedAlgaeLevel;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIO;
@@ -69,16 +64,12 @@ import frc.robot.subsystems.objectiveTracker.ReefTrackerIO;
 import frc.robot.subsystems.objectiveTracker.ReefTrackerIOServer;
 import frc.robot.subsystems.objectiveTracker.objectives.Objective.ObjectiveType;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedCommand;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIO;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.superstructure.elevator.ElevatorIOSim;
 import frc.robot.subsystems.superstructure.pivot.Pivot;
-import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotIO;
 import frc.robot.subsystems.superstructure.pivot.PivotIOFalcon;
 import frc.robot.subsystems.superstructure.pivot.PivotIOSim;
@@ -309,8 +300,6 @@ public class RobotContainer {
             // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
         ;
 
-        var joystickTranslational = Drive.Translational.joystickSpectatorToFieldRelative(driveJoystick);
-
         drive.translationSubsystem.setDefaultCommand(
             drive.translationSubsystem.run(() -> {
                 var fieldVec = Perspective.getCurrent().toField(
@@ -365,28 +354,40 @@ public class RobotContainer {
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(-1)));
         driveController.povRight().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(1)));
         
-        driveController.a().whileTrue(new ContinuouslySwappingCommand(
-            new Supplier<Command>() {
-                private final Command eject = intake.eject();
-                private final Command ejectL1 = intake.ejectLevel1();
-                private final Command ejectAlgae = intake.ejectAlgae();
-                public Command get() {
-                    if (intake.hasAlgae.getAsBoolean()) {
-                        return ejectAlgae;
-                    } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().getTargetBranch().isEmpty()) {
-                        return ejectL1;
-                    } else {
-                        return eject;
-                    }
+        // Eject
+        final Command ejectNormal = this.intake.eject();
+        final Command ejectL1 = this.intake.ejectLevel1();
+        final Command ejectAlgae = this.intake.ejectAlgae();
+        CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
+            if (driveController.hid.getAButtonPressed()) {
+                if (intake.hasAlgae.getAsBoolean()) {
+                    ejectAlgae.schedule();
+                } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().getTargetBranch().isEmpty()) {
+                    ejectL1.schedule();
+                } else {
+                    ejectNormal.schedule();
                 }
-            },
-            Set.of(intake)
-        )); //Eject
+            } else if (driveController.hid.getAButtonReleased()) {
+                if (ejectNormal.isScheduled()) {
+                    ejectNormal.cancel();
+                } else if (ejectL1.isScheduled()) {
+                    ejectL1.cancel();
+                } else if (ejectAlgae.isScheduled()) {
+                    ejectAlgae.cancel();
+                }
+            }
+        });
+
+        // Coral Intake
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final RobotFlippedCommand coralStationCommands = CoralStation.intakePosition.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).raceWith(intake.intakeCoral().until(intake.hasCoral)));
+                private final Command forwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationForwardState).raceWith(intake.intakeCoral().until(intake.hasCoral));
+                private final Command backwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationBackwardState).raceWith(intake.intakeCoral().until(intake.hasCoral));
                 public Command get() {
-                    return coralStationCommands.get(objectiveTracker.getIntakeCoralObjective().getTargetDirection());
+                    return switch (objectiveTracker.getIntakeCoralObjective().getTargetDirection()) {
+                        case Forward -> this.forwardCommand;
+                        case Backward -> this.backwardCommand;
+                    };
                 }
             },
             Set.of(superstructure, intake)
@@ -395,28 +396,33 @@ public class RobotContainer {
             if (driveController.hid.getBButtonPressed()) {
                 if (coralIntakeCommand.isScheduled()) {
                     coralIntakeCommand.cancel();
-                } else {
+                } else if (!intake.hasCoral.getAsBoolean() && !intake.hasAlgae.getAsBoolean()) {
                     coralIntakeCommand.schedule();
                 }
             }
         });
+
+        // Algae Intake
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final RobotFlippedCommand[] stagedAlgaeCommands = Arrays.stream(StagedAlgaeLevel.values()).map((level) -> level.intakeSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state).alongWith(intake.intakeAlgae()))).toArray(RobotFlippedCommand[]::new);;
-                private final Command idle = superstructure.goToSetpointSequenced(SuperstructureConstants.idleState).alongWith(intake.idle());
+                private final Command highCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.highAlgaeState).alongWith(intake.intakeAlgae());
+                private final Command lowCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.lowAlgaeState).alongWith(intake.intakeAlgae());
                 public Command get() {
-                    var optStagedAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
-                    if (optStagedAlgaeObjective.isEmpty()) {
-                        return idle;
-                    } else {
-                        var stagedAlgaeObjective = optStagedAlgaeObjective.get();
-                        return stagedAlgaeCommands[stagedAlgaeObjective.getTargetAlgae().level.ordinal()].get(stagedAlgaeObjective.getTargetDirection());
-                    }
+                    var intakeAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
+                    if (intakeAlgaeObjective.isEmpty()) {return this.lowCommand;}
+                    return switch (intakeAlgaeObjective.get().getTargetAlgae().level) {
+                        case High -> this.highCommand;
+                        case Low -> this.lowCommand;
+                    };
                 }
             },
             Set.of(superstructure, intake)
         ).deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae)).withName("Intake Staged Algae");
-        final Command groundAlgaeIntakeCommand = superstructure.goToSetpointSequenced(SuperstructureState.fromParts(PivotConstants.minAngle, ElevatorConstants.minLengthPhysical, Degrees.of(-35))).alongWith(intake.intakeAlgae()).withName("Intake Ground Algae");
+        final Command groundAlgaeIntakeCommand = superstructure
+            .goToSetpointSequenced(SuperstructureConstants.groundAlgaeState)
+            .alongWith(intake.intakeAlgae())
+            .withName("Intake Ground Algae")
+        ;
         final Timer algaeIntakeButtonTimer = new Timer();
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getYButtonPressed()) {
@@ -424,12 +430,11 @@ public class RobotContainer {
                     stagedAlgaeIntakeCommand.cancel();
                 } else if (groundAlgaeIntakeCommand.isScheduled()) {
                     groundAlgaeIntakeCommand.cancel();
-                } else {
+                } else if (!intake.hasCoral.getAsBoolean() && !intake.hasAlgae.getAsBoolean()) {
                     algaeIntakeButtonTimer.start();
                 }
-            }
-            if (driveController.hid.getYButtonReleased()) {
-                if (!algaeIntakeButtonTimer.hasElapsed(0.25) && algaeIntakeButtonTimer.isRunning()) {
+            } else if (driveController.hid.getYButtonReleased()) {
+                if (!algaeIntakeButtonTimer.hasElapsed(0.25) && algaeIntakeButtonTimer.isRunning() && objectiveTracker.getIntakeAlgaeObjective().isPresent()) {
                     stagedAlgaeIntakeCommand.schedule();
                 }
                 algaeIntakeButtonTimer.stop();
@@ -442,17 +447,21 @@ public class RobotContainer {
             }
         });
 
+        // Extend
         final Command coralScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final RobotFlippedCommand[] branchCommands = Arrays.stream(BranchLevel.values()).map((level) -> level.scoringSuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state))).toArray(RobotFlippedCommand[]::new);
-                private final RobotFlippedCommand level1Command = Reef.level1SuperstructureStates.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
+                private final Command l1Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l1State);
+                private final Command l2Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l2State);
+                private final Command l3Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l3State);
+                private final Command l4Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l4State);
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
-                    if (scoreCoralObjective.getTargetBranch().isPresent()) {
-                        return branchCommands[scoreCoralObjective.getTargetBranch().get().level.ordinal()].get(scoreCoralObjective.getTargetDirection());
-                    } else {
-                        return level1Command.get(scoreCoralObjective.getTargetDirection());
-                    }
+                    if (scoreCoralObjective.getTargetBranch().isEmpty()) {return this.l1Command;}
+                    return switch (scoreCoralObjective.getTargetBranch().get().level) {
+                        case Level2 -> this.l2Command;
+                        case Level3 -> this.l3Command;
+                        case Level4 -> this.l4Command;
+                    };
                 }
             },
             Set.of(superstructure)
@@ -462,42 +471,49 @@ public class RobotContainer {
                 () -> objectiveTracker.removeLevelLock()
             )
         ).withName("Extend to Reef");
-        final Command algaeScoreCommand = new ContinuouslySwappingCommand(
+        final Command netCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final RobotFlippedCommand netCommands = Barge.superstructureState.mapToCommand((state) -> superstructure.goToSetpointSequenced(state));
-                private final Command processorCommand = superstructure.goToSetpointSequenced(Processor.superstructureState.getForward());
+                private final Command forwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.netForwardState);
+                private final Command backwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.netBackwardState);
                 public Command get() {
-                    if (objectiveTracker.getScoreAlgaeObjective().isProcessor()) {
-                        return processorCommand;
-                    } else {
-                        return netCommands.get(objectiveTracker.getScoreAlgaeObjective().getTargetDirection());
-                    }
+                    return switch (objectiveTracker.getScoreNetObjective().getTargetDirection()) {
+                        case Forward -> this.forwardCommand;
+                        case Backward -> this.backwardCommand;
+                    };
                 }
             },
             Set.of(superstructure)
-        ).withName("Extend to Algae Goal");
-
+        ).withName("Extend to Net");
+        final Command processorCommand = superstructure
+            .goToSetpointSequenced(SuperstructureConstants.processorState)
+            .deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae))
+            .withName("Extend to Processor")
+        ;
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getXButtonPressed()) {
-                if (!coralScoreCommand.isScheduled() && !algaeScoreCommand.isScheduled()) {
-                    if (intake.hasCoral.getAsBoolean()) {
-                        coralScoreCommand.schedule();
-                    }
-                    if (intake.hasAlgae.getAsBoolean()) {
-                        algaeScoreCommand.schedule();
-                    }
-                } else {
-                    if (coralScoreCommand.isScheduled()) {
-                        coralScoreCommand.cancel();
-                    }
-                    if (algaeScoreCommand.isScheduled()) {
-                        algaeScoreCommand.cancel();
-                    }
+                if (coralScoreCommand.isScheduled()) {
+                    coralScoreCommand.cancel();
+                } else if (netCommand.isScheduled()) {
+                    netCommand.cancel();
+                } else if (processorCommand.isScheduled()) {
+                    processorCommand.cancel();
+                } else if (intake.hasCoral.getAsBoolean()) {
+                    coralScoreCommand.schedule();
+                } else if (intake.hasAlgae.getAsBoolean()) {
+                    netCommand.schedule();
+                }
+            }
+            if (driveController.hid.getBButtonPressed()) {
+                if (processorCommand.isScheduled()) {
+                    processorCommand.cancel();
+                } else if (intake.hasAlgae.getAsBoolean()) {
+                    processorCommand.cancel();
                 }
             }
         });
-        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
 
+        // Auto Drive
+        driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
         final Command autoDriveScoreCoral = this.drive.simplePIDTo(
             () -> AutoScore.getTargetPose(
                 this.drive.getPose(),
@@ -522,7 +538,8 @@ public class RobotContainer {
             )
         );
         final Command autoDriveIntakeCoral = this.drive.simplePIDTo(() -> this.objectiveTracker.getIntakeCoralObjective().getTargetPose().getOurs());
-        final Command autoDriveScoreAlgae = this.drive.simplePIDTo(() -> this.objectiveTracker.getScoreAlgaeObjective().getTargetPose().getOurs());
+        final Command autoDriveScoreNet = this.drive.simplePIDTo(() -> this.objectiveTracker.getScoreNetObjective().getTargetPose().getOurs());
+        final Command autoDriveScoreProcessor = this.drive.simplePIDTo(() -> this.objectiveTracker.getScoreProcessorObjective().getTargetPose().getOurs());
         final Command autoDriveClimb = this.drive.simplePIDTo(() -> this.objectiveTracker.getClimbObjective().getTargetPose().getOurs());
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getRightBumperButtonPressed()) {
@@ -531,7 +548,8 @@ public class RobotContainer {
                     case ScoreCoral: autoDriveScoreCoral.schedule(); break;
                     case IntakeAlgae: autoDriveIntakeAlgae.schedule(); break;
                     case IntakeCoral: autoDriveIntakeCoral.schedule(); break;
-                    case ScoreAlgae: autoDriveScoreAlgae.schedule(); break;
+                    case ScoreNet: autoDriveScoreNet.schedule(); break;
+                    case ScoreProcessor: autoDriveScoreProcessor.schedule(); break;
                     case Climb: autoDriveClimb.schedule(); break;
                 }
             } else if (driveController.hid.getRightBumperButtonReleased()) {
@@ -544,14 +562,19 @@ public class RobotContainer {
                 if (autoDriveIntakeCoral.isScheduled()) {
                     autoDriveIntakeCoral.cancel();
                 }
-                if (autoDriveScoreAlgae.isScheduled()) {
-                    autoDriveScoreAlgae.cancel();
+                if (autoDriveScoreNet.isScheduled()) {
+                    autoDriveScoreNet.cancel();
+                }
+                if (autoDriveScoreProcessor.isScheduled()) {
+                    autoDriveScoreProcessor.cancel();
                 }
                 if (autoDriveClimb.isScheduled()) {
                     autoDriveClimb.cancel();
                 }
             }
         });
+
+        // Climb
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 climber.prepareClimb(),
@@ -560,7 +583,6 @@ public class RobotContainer {
             .deadlineFor(
                 objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
             )
-            // climber.testDisengageRatchet()
         );
         driveController.back().toggleOnTrue(
             Commands.parallel(
@@ -572,14 +594,12 @@ public class RobotContainer {
             )
         );
 
-        var selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
-        // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
+        // Self Right
+        final Command selfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
             private boolean prevSelfRight = true;
-            // private boolean prevprepare = true;
             public void run() {
                 var selfRightButton = driveController.hid.getPOV() == 0;
-                // var prepare = driveController.hid.getPOV() == 90;
                 var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
                 Leds.getInstance().tipped.setFlag(tipped);
                 if (selfRightButton && !prevSelfRight) {
@@ -594,17 +614,7 @@ public class RobotContainer {
                 if (selfRightCommand.isScheduled() && !tipped) {
                     selfRightCommand.cancel();
                 }
-                // if (prepare && !prevprepare) {
-                //     if (prepareSelfRightCommand.isScheduled()) {
-                //         prepareSelfRightCommand.cancel();
-                //     } else {
-                //         // if (tipped) {
-                //             prepareSelfRightCommand.schedule();
-                //         // }
-                //     }
-                // }
                 prevSelfRight = selfRightButton;
-                // prevprepare = prepare;
             }
         });
         
@@ -616,6 +626,7 @@ public class RobotContainer {
 
         SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
 
+        // Self Record Coral
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
             private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
             private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
@@ -699,6 +710,7 @@ public class RobotContainer {
                 }
             }
         });
+        // Self Record Algae
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
             private static final LoggedTunableMeasure<AngleUnit> lowPivotTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Pivot Tolerance", Degrees.of(5));
             private static final LoggedTunableMeasure<DistanceUnit> lowElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Elevator Tolerance", Inches.of(4));
@@ -757,6 +769,7 @@ public class RobotContainer {
             }
         });
 
+        // Auto Eject Coral
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
             private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
             private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
@@ -840,21 +853,21 @@ public class RobotContainer {
 
                     if (this.debouncer.calculate(pivotInTolerance && elevatorInTolerance && wristInTolerance && linearInTolerance && angularInTolerance)) {
                         if (scoreCoralObjective.getTargetBranch().isPresent()) {
-                            if (!ejectBranch.isScheduled()) {
-                                ejectBranch.schedule();
+                            if (!this.ejectBranch.isScheduled()) {
+                                this.ejectBranch.schedule();
                             }
                         } else {
-                            if (!ejectL1.isScheduled()) {
-                                ejectL1.schedule();
+                            if (!this.ejectL1.isScheduled()) {
+                                this.ejectL1.schedule();
                             }
                         }
                     }
                 } else {
-                    if (ejectBranch.isScheduled()) {
-                        ejectBranch.cancel();
+                    if (this.ejectBranch.isScheduled()) {
+                        this.ejectBranch.cancel();
                     }
-                    if (ejectL1.isScheduled()) {
-                        ejectL1.cancel();
+                    if (this.ejectL1.isScheduled()) {
+                        this.ejectL1.cancel();
                     }
                 }
             }

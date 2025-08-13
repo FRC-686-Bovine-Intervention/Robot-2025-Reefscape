@@ -591,24 +591,7 @@ public class Drive extends VirtualSubsystem {
                 }
             };
         }
-
-        public static Supplier<ChassisSpeeds> joystickSpectatorToFieldRelative(Joystick translationalJoystick) {
-            return () -> {
-                var fieldVec = Perspective.getCurrent().toField(
-                    translationalJoystick.toVector()
-                    .times(
-                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
-                    )
-                );
-                return new ChassisSpeeds(
-                    fieldVec.get(0),
-                    fieldVec.get(1),
-                    0
-                );
-            };
-        }
-
+        
         public Command simplePIDTo(Supplier<Translation2d> target) {
             var subsystem = this;
             return new Command() {

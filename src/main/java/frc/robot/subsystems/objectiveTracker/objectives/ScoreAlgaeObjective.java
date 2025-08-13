@@ -38,7 +38,11 @@ public class ScoreAlgaeObjective implements Objective {
 
     @Override
     public ObjectiveType getObjectiveType() {
-        return ObjectiveType.ScoreAlgae;
+        if (isProcessor) {
+            return ObjectiveType.ScoreProcessor;
+        } else {
+            return ObjectiveType.ScoreNet;
+        }
     }
 
     public boolean isProcessor() {

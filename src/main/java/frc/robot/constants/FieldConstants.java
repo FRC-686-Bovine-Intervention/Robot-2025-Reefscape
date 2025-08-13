@@ -213,8 +213,10 @@ public final class FieldConstants {
             ;
             private final Transform3d branchTipTransform;
 
+            public final Distance branchTipHeight;
             public final RobotFlippedSuperstructureState scoringSuperstructureStates;
             BranchLevel(Distance branchTipHeight, Distance branchTipHorizontalLength, Angle branchTipAngle, RobotFlippedSuperstructureState scoringSuperstructureStates) {
+                this.branchTipHeight = branchTipHeight;
                 this.branchTipTransform = new Transform3d(
                     new Translation3d(
                         branchTipHorizontalLength.unaryMinus(),
@@ -485,9 +487,11 @@ public final class FieldConstants {
                 )
             )),
             ;
+            public final Distance height;
             public final Transform3d transform;
             public final RobotFlippedSuperstructureState intakeSuperstructureStates;
             StagedAlgaeLevel(Distance height, Distance radius, RobotFlippedSuperstructureState intakeSuperstructureStates) {
+                this.height = height;
                 this.transform = new Transform3d(
                     new Translation3d(
                         radius.unaryMinus(),
