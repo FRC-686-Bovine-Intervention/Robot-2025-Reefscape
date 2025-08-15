@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -17,20 +19,19 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.leds.Leds;
+import frc.util.LoggedTracer;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.robotStructure.Mechanism3d;
 
 public class Robot extends LoggedRobot {
     private final RobotContainer robotContainer;
-
-    private final Watchdog robotPeriodicWatchdog = new Watchdog(defaultPeriodSecs, () -> {});
 
     public Robot() {
         Leds.getInstance();
@@ -119,7 +120,7 @@ public class Robot extends LoggedRobot {
 
         System.out.println("[Init Robot] Instantiating RobotContainer");
         this.robotContainer = new RobotContainer();
-        System.out.println("[Init Robot] Starting Deploy Webserver");
+        System.out.println("[Init Robot] Starting Elastic Layout Webserver");
         WebServer.start(5800, Filesystem.getDeployDirectory().getPath() + "/elastic");
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
@@ -128,27 +129,40 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void robotPeriodic() {
-        robotPeriodicWatchdog.reset();
+        LoggedTracer.reset();
+
         GameState.getInstance().periodic();
-        robotPeriodicWatchdog.addEpoch("GameState.periodic()");
+        LoggedTracer.logEpoch("GameState Periodic");
+
         VirtualSubsystem.periodicAll();
-        robotPeriodicWatchdog.addEpoch("VirtualSubsystem.periodicAll()");
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic");
+
+        this.robotContainer.objectiveTracker.determineGoal(this.robotContainer.drive.getPose(), this.robotContainer.intake.hasCoral.getAsBoolean(), this.robotContainer.intake.hasAlgae.getAsBoolean());
+        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal");
+
         CommandScheduler.getInstance().run();
-        robotPeriodicWatchdog.addEpoch("CommandScheduler.run()");
-        robotContainer.objectiveTracker.determineGoal(robotContainer.drive.getPose(), robotContainer.intake.hasCoral.getAsBoolean(), robotContainer.intake.hasAlgae.getAsBoolean());
-        robotPeriodicWatchdog.addEpoch("ObjectiveTracker.determineGoal");
+        LoggedTracer.logEpoch("CommandScheduler Periodic");
+
+        this.robotContainer.drive.setTiltLimits(
+            (this.robotContainer.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
+                Drive.extendedTiltLimitTunable.get()
+            ) : (
+                Drive.normalTiltLimitTunable.get()
+            )
+        );
+        LoggedTracer.logEpoch("Set Drive Tilt Limits");
+
         VirtualSubsystem.postCommandPeriodicAll();
-        robotPeriodicWatchdog.addEpoch("VirtualSubsystem.postCommandPeriodicAll()");
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic");
+
         RobotState.getInstance().log();
-        robotPeriodicWatchdog.addEpoch("RobotState.log()");
+        LoggedTracer.logEpoch("RobotState Log");
+
         Mechanism3d.logAscopeComponents();
-        robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeComponents()");
+        LoggedTracer.logEpoch("Mechanism3d LogAscopeComponents");
+
         Mechanism3d.logAscopeAxes();
-        robotPeriodicWatchdog.addEpoch("Mechanism3d.logAscopeAxes()");
-        if (robotPeriodicWatchdog.isExpired()) {
-            System.out.println("RobotPeriodic loop overrun");
-            robotPeriodicWatchdog.printEpochs();
-        }
+        LoggedTracer.logEpoch("Mechanism3d LogAscopeAxes");
     }
 
     @Override
@@ -162,7 +176,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousInit() {
-        robotContainer.autoManager.startAuto();
+        this.robotContainer.autoManager.startAuto();
     }
 
     @Override
@@ -170,7 +184,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousExit() {
-        robotContainer.autoManager.endAuto();
+        this.robotContainer.autoManager.endAuto();
     }
 
     @Override
@@ -183,9 +197,7 @@ public class Robot extends LoggedRobot {
     public void teleopExit() {}
 
     @Override
-    public void testInit() {
-        CommandScheduler.getInstance().cancelAll();
-    }
+    public void testInit() {}
 
     @Override
     public void testPeriodic() {}

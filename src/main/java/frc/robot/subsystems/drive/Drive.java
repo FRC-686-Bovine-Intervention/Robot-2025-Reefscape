@@ -7,16 +7,15 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -48,6 +47,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.units.LinearAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Timer;
@@ -62,11 +62,14 @@ import frc.robot.RobotState;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
+import frc.util.LoggedTracer;
+import frc.util.NeutralMode;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.geometry.GeomUtil;
+import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.robotStructure.Root;
 
@@ -91,7 +94,7 @@ public class Drive extends VirtualSubsystem {
 
     private static final LoggedTunableNumber rotationCorrection = new LoggedTunableNumber("Drive/Rotation Correction", 0.125);
 
-    private ChassisSpeeds setpointSpeeds = new ChassisSpeeds();
+    private ChassisSpeeds desiredRobotSpeeds = new ChassisSpeeds();
     private Translation2d centerOfRotation = new Translation2d();
     private SwerveModuleState[] setpointStates = new SwerveModuleState[] {
         new SwerveModuleState(),
@@ -110,18 +113,17 @@ public class Drive extends VirtualSubsystem {
             ModuleConstants config = DriveConstants.moduleConstants[i];
             System.out.println("[Init Drive] Instantiating Module " + config.name + " with Module IO: " + moduleIOs[i].getClass().getSimpleName());
             var module = new Module(moduleIOs[i], config);
-            module.setBrakeMode(false);
             module.periodic();
-            modules[i] = module;
+            this.modules[i] = module;
         }
 
         Pose2d initialPose = new Pose2d();
-        RobotState.getInstance().initializePoseEstimator(DriveConstants.kinematics, getGyroRotation(), getModulePositions(), initialPose);
-        gyroAngle = getPose().getRotation();
+        RobotState.getInstance().initializePoseEstimator(DriveConstants.kinematics, this.getGyroRotation(), this.getModulePositions(), initialPose);
+        this.gyroAngle = getPose().getRotation();
 
         this.translationSubsystem = new Translational(this);
         this.rotationalSubsystem = new Rotational(this);
-        subsystems = Set.of(translationSubsystem, rotationalSubsystem);
+        this.subsystems = Set.of(this.translationSubsystem, this.rotationalSubsystem);
         AutoBuilder.configure(
             this::getPose,
             this::setPose,
@@ -130,8 +132,8 @@ public class Drive extends VirtualSubsystem {
             autoConfig(),
             DriveConstants.robotConfig,
             AllianceFlipUtil::shouldFlip,
-            translationSubsystem,
-            rotationalSubsystem
+            this.translationSubsystem,
+            this.rotationalSubsystem
         );
 
         var routine = new SysIdRoutine(
@@ -145,10 +147,10 @@ public class Drive extends VirtualSubsystem {
             ),
             new SysIdRoutine.Mechanism(
                 (volts) -> {
-                    Arrays.stream(modules).forEach((module) -> module.runVoltage(volts, Rotation2d.kZero));
+                    Arrays.stream(this.modules).forEach((module) -> module.runVoltage(volts, Rotation2d.kZero));
                 },
                 (log) -> {
-                    Arrays.stream(modules).forEach((module) -> {
+                    Arrays.stream(this.modules).forEach((module) -> {
                         Logger.recordOutput("SysID/Drive/" + module.config.name + "/Position", module.getWheelAngularPosition());
                         Logger.recordOutput("SysID/Drive/" + module.config.name + "/Velocity", module.getWheelAngularVelocity());
                         Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getAppliedVoltage());
@@ -167,30 +169,38 @@ public class Drive extends VirtualSubsystem {
     private static final SwerveModuleState[] emptyStates = new SwerveModuleState[0];
     private static final ChassisSpeeds emptySpeeds = new ChassisSpeeds();
     public void periodic() {
-        gyroIO.updateInputs(gyroInputs);
-        Logger.processInputs("Inputs/Drive/Gyro", gyroInputs);
-        Arrays.stream(modules).forEach(Module::periodic);
+        this.gyroIO.updateInputs(this.gyroInputs);
+        Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
 
-        measuredStates = Arrays.stream(modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
-        Logger.recordOutput("Drive/Swerve States/Measured", measuredStates);
+        for (var module : modules) {
+            module.periodic();
+            LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + module.config.name);
+        }
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic");
+
+        this.measuredStates = Arrays.stream(this.modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
+        Logger.recordOutput("Drive/Swerve States/Measured", this.measuredStates);
 
         // Update odometry
         // Update field velocity
-        robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(measuredStates);
-        if (gyroInputs.connected) {
-            gyroAngle = getGyroRotation();
-            robotMeasuredSpeeds.omegaRadiansPerSecond = gyroInputs.yawVelocity.in(RadiansPerSecond);
+        this.robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(this.measuredStates);
+        if (this.gyroInputs.connected) {
+            this.gyroAngle = this.getGyroRotation();
+            this.robotMeasuredSpeeds.omegaRadiansPerSecond = this.gyroInputs.yawVelocity.in(RadiansPerSecond);
         } else {
             // either the gyro is disconnected or we are in a simulation
             // accumulate a gyro estimate using module kinematics
-            var wheelDeltas = getModulePositionDeltas(); // get change in module positions
+            var wheelDeltas = this.getModulePositionDeltas(); // get change in module positions
             Twist2d twist = DriveConstants.kinematics.toTwist2d(wheelDeltas); // dtheta will be the estimated change in chassis angle
-            gyroAngle = gyroAngle.plus(Rotation2d.fromRadians(twist.dtheta));
+            this.gyroAngle = gyroAngle.plus(Rotation2d.fromRadians(twist.dtheta));
         }
-        Logger.recordOutput("Drive/Chassis Speeds/Measured", robotMeasuredSpeeds);
-        RobotState.getInstance().addDriveMeasurement(gyroAngle, getModulePositions());
-        structureRoot.setPose(getPose());
-        fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotMeasuredSpeeds, gyroAngle);
+
+        Logger.recordOutput("Drive/Chassis Speeds/Measured", this.robotMeasuredSpeeds);
+        RobotState.getInstance().addDriveMeasurement(this.gyroAngle, this.getModulePositions());
+
+        this.structureRoot.setPose(this.getPose());
+        this.fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.robotMeasuredSpeeds, this.gyroAngle);
 
         // Skid Detection
         // SwerveModuleState[] rotationalStates = new SwerveModuleState[DriveConstants.modules.length];
@@ -221,6 +231,8 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Chassis Speeds/Setpoint", emptySpeeds);
         Logger.recordOutput("Drive/Swerve States/Setpoints", emptyStates);
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", emptyStates);
+
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Clear Log Fields");
     }
 
     public void postCommandPeriodic() {
@@ -230,30 +242,116 @@ public class Drive extends VirtualSubsystem {
         //     //     module.stop();
         //     // }
         // } else
-        if (translationSubsystem.needsPostProcessing || rotationalSubsystem.needsPostProcessing) {
-            runRobotSpeeds(setpointSpeeds);
+        if (this.translationSubsystem.needsPostProcessing || this.rotationalSubsystem.needsPostProcessing) {
+            this.runRobotSpeeds(this.desiredRobotSpeeds);
         }
     }
 
     public void runSetpoints(SwerveModuleState... states) {
-        translationSubsystem.needsPostProcessing = false;
-        rotationalSubsystem.needsPostProcessing = false;
-        setpointStates = states;
-        Logger.recordOutput("Drive/Swerve States/Setpoints", setpointStates);
-        IntStream.range(0, modules.length).forEach((i) -> modules[i].runSetpoint(setpointStates[i]));
-        Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", setpointStates);
+        this.translationSubsystem.needsPostProcessing = false;
+        this.rotationalSubsystem.needsPostProcessing = false;
+        this.setpointStates = states;
+        Logger.recordOutput("Drive/Swerve States/Setpoints", this.setpointStates);
+        IntStream.range(0, this.modules.length).forEach((i) -> this.modules[i].runSetpoint(this.setpointStates[i]));
+        Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", this.setpointStates);
     }
 
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> forwardAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Accel Limits/Forward Accel Limit", MetersPerSecondPerSecond.of(5000));
+    private static final LoggedTunableMeasure<LinearAccelerationUnit> skidAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Accel Limits/Skid Accel Limit", MetersPerSecondPerSecond.of(60));
+
+    public static final Supplier<TiltAccelerationLimits> normalTiltLimitTunable = TiltAccelerationLimits.getTunable("Drive/Accel Limits/Tilt Limits/Normal", new TiltAccelerationLimits(500, 500, 500, 500));
+    public static final Supplier<TiltAccelerationLimits> extendedTiltLimitTunable = TiltAccelerationLimits.getTunable("Drive/Accel Limits/Tilt Limits/Extended", new TiltAccelerationLimits(10, 12, 20, 20));
+    private TiltAccelerationLimits tiltLimits = new TiltAccelerationLimits(10, 10, 10, 10);
+    public void setTiltLimits(TiltAccelerationLimits tiltLimits) {
+        this.tiltLimits = tiltLimits;
+    }
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
-        setpointSpeeds = robotSpeeds;
-        Logger.recordOutput("Drive/Chassis Speeds/Setpoint", setpointSpeeds);
-        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(setpointSpeeds, rotationCorrection.get());
-        setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, centerOfRotation);
-        SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.maxDriveSpeed);
-        runSetpoints(setpointStates);
+        this.desiredRobotSpeeds = robotSpeeds;
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Speed", this.desiredRobotSpeeds);
+
+        var desiredDelta = this.desiredRobotSpeeds.minus(this.robotMeasuredSpeeds);
+        var desiredAccel = desiredDelta.div(RobotConstants.rioUpdatePeriodSecs);
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Delta", desiredDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Accel", desiredAccel);
+
+        var limitedAccel = desiredAccel;
+
+        // Forward Accel Limit
+        var maxMeasuredModuleSpeed = Math.hypot(this.robotMeasuredSpeeds.vxMetersPerSecond, this.robotMeasuredSpeeds.vyMetersPerSecond) + Math.abs(this.robotMeasuredSpeeds.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
+        var maxDesiredModuleAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond) + Math.abs(limitedAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
+        var forwardAccelLimit = (1 - (maxMeasuredModuleSpeed / DriveConstants.maxModuleSpeed.in(MetersPerSecond))) * forwardAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var forwardAccelLimitingFactor = forwardAccelLimit / Math.max(maxDesiredModuleAccel, forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Measured Module Speed", maxMeasuredModuleSpeed);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Desired Module Accel", maxDesiredModuleAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Forward Accel Limit", forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Limiting Factor", forwardAccelLimitingFactor);
+        limitedAccel = limitedAccel.times(forwardAccelLimitingFactor);
+
+        // Tilt Accel Limit
+        var desiredTiltAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond);
+        var desiredTiltAccelHeading = Math.atan2(limitedAccel.vyMetersPerSecond, limitedAccel.vxMetersPerSecond);
+        var tiltAccelLimit = this.tiltLimits.getMaxTiltAccelerationMPSS(desiredTiltAccelHeading);
+        var tiltAccelLimitingFactor = tiltAccelLimit / Math.max(desiredTiltAccel, tiltAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Desired Tilt Accel", desiredTiltAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Desired Tilt Accel Heading", desiredTiltAccelHeading);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Til tAccel Limit", tiltAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Limiting Factor", tiltAccelLimitingFactor);
+        limitedAccel = new ChassisSpeeds(
+            limitedAccel.vxMetersPerSecond * tiltAccelLimitingFactor,
+            limitedAccel.vyMetersPerSecond * tiltAccelLimitingFactor,
+            limitedAccel.omegaRadiansPerSecond
+        );
+
+        // Skid Accel Limit
+        var desiredSkidAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond);
+        var skidAccelLimit = skidAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var skidAccelLimitingFactor = skidAccelLimit / Math.max(desiredSkidAccel, skidAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Desired Skid Accel", desiredSkidAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Skid Accel Limit", skidAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Limiting Factor", skidAccelLimitingFactor);
+        limitedAccel = new ChassisSpeeds(
+            limitedAccel.vxMetersPerSecond * skidAccelLimitingFactor,
+            limitedAccel.vyMetersPerSecond * skidAccelLimitingFactor,
+            limitedAccel.omegaRadiansPerSecond
+        );
+
+
+        var limitedDelta = limitedAccel.times(RobotConstants.rioUpdatePeriodSecs);
+        var limitedSpeeds = this.robotMeasuredSpeeds.plus(limitedDelta);
+        // Logger.recordOutput("Drive/Chassis Speeds/Limiting Factor", limitingFactor);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Accel", limitedAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Delta", limitedDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Speed", limitedSpeeds);
+
+        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(limitedSpeeds, rotationCorrection.get());
+        this.setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, this.centerOfRotation);
+        SwerveDriveKinematics.desaturateWheelSpeeds(this.setpointStates, DriveConstants.maxDriveSpeed);
+        this.runSetpoints(this.setpointStates);
     }
     public void runFieldSpeeds(ChassisSpeeds fieldSpeeds) {
-        runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation()));
+        this.runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, this.getRotation()));
+    }
+
+
+    public Command coast() {
+        return new Command() {
+            {
+                addRequirements(subsystems);
+                setName("Coast");
+            }
+            @Override
+            public void initialize() {
+                Arrays.stream(modules).forEach((module) -> module.stopDrive(Optional.of(NeutralMode.Coast)));
+            }
+            @Override
+            public void end(boolean interrupted) {
+                Arrays.stream(modules).forEach((module) -> module.stopDrive(Optional.of(NeutralMode.Brake)));
+            }
+            @Override
+            public boolean runsWhenDisabled() {
+                return true;
+            }
+        };
     }
 
     public Command followBluePath(PathPlannerPath path) {
@@ -283,24 +381,20 @@ public class Drive extends VirtualSubsystem {
 
     public void drivePPVelocity(ChassisSpeeds speeds, DriveFeedforwards ff) {
         //TODO: Actually do something with PP ff
-        runRobotSpeeds(speeds);
+        this.runRobotSpeeds(speeds);
     }
 
     public void setCenterOfRotation(Translation2d cor) {
-        centerOfRotation = cor;
-        Logger.recordOutput("Drive/Center of Rotation", getPose().transformBy(new Transform2d(centerOfRotation, Rotation2d.kZero)));
+        this.centerOfRotation = cor;
+        Logger.recordOutput("Drive/Center of Rotation", this.getPose().transformBy(new Transform2d(this.centerOfRotation, Rotation2d.kZero)));
     }
-
-    /** Zeros the drive encoders. */
-    // public void zeroEncoders() {
-    //     for(var module : modules) {
-    //         module.zeroEncoders();
-    //     }
-    // }
 
     /** Stops the drive. */
     public void stop() {
-        Arrays.stream(modules).forEach(Module::stop);
+        Arrays.stream(this.modules).forEach((module) -> {
+            module.stopDrive(Optional.empty());
+            module.stopTurn(Optional.empty());
+        });
     }
 
     /**
@@ -311,32 +405,12 @@ public class Drive extends VirtualSubsystem {
      */
     public void stopWithX() {
         IntStream.range(0, DriveConstants.moduleConstants.length).forEach((i) -> {
-            setpointStates[i] = new SwerveModuleState(
+            this.setpointStates[i] = new SwerveModuleState(
                 0,
                 DriveConstants.moduleConstants[i].moduleTranslation.getAngle()
             );
         });
     }
-
-    public void setBrakeMode(boolean enabled) {
-        for (var module : modules) {
-            module.setBrakeMode(enabled);
-        }
-    }
-
-    /** Returns the maximum linear speed in meters per sec. */
-    // public double getMaxLinearSpeedMetersPerSec() {
-    //     return DriveConstants.maxDriveSpeed.in(MetersPerSecond)
-    //         * DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
-    //     ;
-    // }
-
-    /** Returns the maximum angular speed in radians per sec. */
-    // public double getMaxAngularSpeedRadiansPerSec() {
-    //     return DriveConstants.maxTurnRate.in(RadiansPerSecond)
-    //         * DriveConstants.maxTurnRateEnvCoef.getAsDouble()
-    //     ;
-    // }
 
     /**
      * Returns the measured X, Y, and theta field velocities in meters per sec. The
@@ -344,42 +418,42 @@ public class Drive extends VirtualSubsystem {
      * twist are velocities and NOT changes in position.
      */
     public Twist2d getFieldVelocity() {
-        return fieldVelocity;
+        return this.fieldVelocity;
     }
 
     /** Returns the current yaw (Z rotation). */
     public Rotation2d getGyroRotation() {
-        return gyroInputs.rotation.toRotation2d();
+        return this.gyroInputs.rotation.toRotation2d();
     }
 
     /** Returns the current yaw (Z rotation). */
     public Angle getYaw() {
-        return gyroInputs.rotation.getMeasureZ();
+        return this.gyroInputs.rotation.getMeasureZ();
     }
 
     /** Returns the current pitch (Y rotation). */
     public Angle getPitch() {
-        return gyroInputs.rotation.getMeasureY();
+        return this.gyroInputs.rotation.getMeasureY();
     }
 
     /** Returns the current roll (X rotation). */
     public Angle getRoll() {
-        return gyroInputs.rotation.getMeasureX();
+        return this.gyroInputs.rotation.getMeasureX();
     }
 
     /** Returns the current pitch velocity (Y rotation) in radians per second. */
     public AngularVelocity getYawVelocity() {
-        return gyroInputs.yawVelocity;
+        return this.gyroInputs.yawVelocity;
     }
 
     /** Returns the current pitch velocity (Y rotation) in radians per second. */
     public AngularVelocity getPitchVelocity() {
-        return gyroInputs.pitchVelocity;
+        return this.gyroInputs.pitchVelocity;
     }
 
     /** Returns the current roll velocity (X rotation) in radians per second. */
     public AngularVelocity getRollVelocity() {
-        return gyroInputs.rollVelocity;
+        return this.gyroInputs.rollVelocity;
     }
 
     /** Returns the current odometry pose. */
@@ -389,50 +463,45 @@ public class Drive extends VirtualSubsystem {
 
     /** Returns the current odometry rotation. */
     public Rotation2d getRotation() {
-        return getPose().getRotation();
+        return this.getPose().getRotation();
     }
 
     /** Resets the current odometry pose. */
     public void setPose(Pose2d newPose) {
-        gyroIO.resetYaw(newPose.getRotation().getMeasure());
-        RobotState.getInstance().setPose(getGyroRotation(), getModulePositions(), newPose);
+        this.gyroIO.resetYaw(newPose.getRotation().getMeasure());
+        RobotState.getInstance().setPose(this.getGyroRotation(), this.getModulePositions(), newPose);
     }
-
-    /** Adds vision data to the pose esimation. */
-    // public void addVisionData(List<TimestampedVisionUpdate> visionData) {
-    // poseEstimator.addVisionData(visionData);
-    // }
 
     /** Returns an array of module positions. */
     public SwerveModulePosition[] getModulePositions() {
-        return Arrays.stream(modules).map(Module::getModulePosition).toArray(SwerveModulePosition[]::new);
+        return Arrays.stream(this.modules).map(Module::getModulePosition).toArray(SwerveModulePosition[]::new);
     }
 
     /** Returns an array of module positions. */
     public SwerveModulePosition[] getModulePositionDeltas() {
-        return Arrays.stream(modules).map(Module::getModulePositionDelta).toArray(SwerveModulePosition[]::new);
+        return Arrays.stream(this.modules).map(Module::getModulePositionDelta).toArray(SwerveModulePosition[]::new);
     }
 
     /** Returns the average drive distance in radians */
     public double getAverageModuleDistance() {
         double avgDist = 0.0;
         for (int i = 0; i < DriveConstants.moduleConstants.length; i++) {
-            avgDist += Math.abs(modules[i].getWheelAngularPosition().in(Radians));
+            avgDist += Math.abs(this.modules[i].getWheelAngularPosition().in(Radians));
         }
         return avgDist / DriveConstants.moduleConstants.length;
     }
 
     public ChassisSpeeds getRobotMeasuredSpeeds() {
-        return robotMeasuredSpeeds;
+        return this.robotMeasuredSpeeds;
     }
 
     public ChassisSpeeds getFieldMeasuredSpeeds() {
-        return fieldMeasuredSpeeds;
+        return this.fieldMeasuredSpeeds;
     }
 
     /** Returns the average drive velocity in radians/sec. */
     public double getCharacterizationVelocity() {
-        return Arrays.stream(modules).map(Module::getWheelAngularVelocity).mapToDouble(AngularVelocity::baseUnitMagnitude).average().orElse(0);
+        return Arrays.stream(this.modules).map(Module::getWheelAngularVelocity).mapToDouble(AngularVelocity::baseUnitMagnitude).average().orElse(0);
     }
 
     // public boolean collisionDetected() {
@@ -477,7 +546,7 @@ public class Drive extends VirtualSubsystem {
     // }
 
     public final Command simplePIDTo(Supplier<Pose2d> target) {
-        return Commands.parallel(translationSubsystem.simplePIDTo(() -> target.get().getTranslation()), rotationalSubsystem.pidControlledOptionalHeading(() -> Optional.of(target.get().getRotation())));
+        return Commands.parallel(this.translationSubsystem.simplePIDTo(() -> target.get().getTranslation()), this.rotationalSubsystem.pidControlledOptionalHeading(() -> Optional.of(target.get().getRotation())));
     }
 
     public final Translational translationSubsystem;
@@ -492,17 +561,17 @@ public class Drive extends VirtualSubsystem {
         }
 
         public void driveVelocity(double vx, double vy) {
-            needsPostProcessing = true;
-            drive.setpointSpeeds.vxMetersPerSecond = vx;
-            drive.setpointSpeeds.vyMetersPerSecond = vy;
+            this.needsPostProcessing = true;
+            this.drive.desiredRobotSpeeds.vxMetersPerSecond = vx;
+            this.drive.desiredRobotSpeeds.vyMetersPerSecond = vy;
         }
         public void driveVelocity(ChassisSpeeds speeds) {
-            driveVelocity(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+            this.driveVelocity(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
         }
 
         public void stop() {
-            needsPostProcessing = false;
-            driveVelocity(0,0);
+            this.needsPostProcessing = false;
+            this.driveVelocity(0,0);
         }
 
         public Command fieldRelative(Supplier<ChassisSpeeds> speeds) {
@@ -523,14 +592,13 @@ public class Drive extends VirtualSubsystem {
             };
         }
 
-        public static Supplier<ChassisSpeeds> joystickSpectatorToFieldRelative(Joystick translationalJoystick, BooleanSupplier precisionSupplier) {
+        public static Supplier<ChassisSpeeds> joystickSpectatorToFieldRelative(Joystick translationalJoystick) {
             return () -> {
                 var fieldVec = Perspective.getCurrent().toField(
                     translationalJoystick.toVector()
                     .times(
                         DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble() * 
-                        (precisionSupplier.getAsBoolean() ? DriveConstants.precisionLinearMultiplier : 1)
+                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
                     )
                 );
                 return new ChassisSpeeds(
@@ -585,15 +653,15 @@ public class Drive extends VirtualSubsystem {
         }
 
         public void driveVelocity(double omega) {
-            needsPostProcessing = true;
-            drive.setpointSpeeds.omegaRadiansPerSecond = omega;
+            this.needsPostProcessing = true;
+            this.drive.desiredRobotSpeeds.omegaRadiansPerSecond = omega;
         }
         public void driveVelocity(ChassisSpeeds speeds) {
-            driveVelocity(speeds.omegaRadiansPerSecond);
+            this.driveVelocity(speeds.omegaRadiansPerSecond);
         }
         public void stop() {
-            needsPostProcessing = false;
-            driveVelocity(0);
+            this.needsPostProcessing = false;
+            this.driveVelocity(0);
         }
 
         public Command spin(DoubleSupplier omega) {
@@ -619,8 +687,8 @@ public class Drive extends VirtualSubsystem {
                 public void execute() {
                     // Leds.getInstance().defenseSpin.setFlag(true);
                     var joyVec = Perspective.getCurrent().toField(joystick.toVector());
-                    var desiredLinear = VecBuilder.fill(drive.setpointSpeeds.vxMetersPerSecond, drive.setpointSpeeds.vyMetersPerSecond);
-                    var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.setpointSpeeds, drive.getRotation());
+                    var desiredLinear = VecBuilder.fill(drive.desiredRobotSpeeds.vxMetersPerSecond, drive.desiredRobotSpeeds.vyMetersPerSecond);
+                    var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.desiredRobotSpeeds, drive.getRotation());
                     var perpendicularLinear = new Vector<N2>(perpendicularMatrix.times(
                         VecBuilder.fill(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond)
                     ));

@@ -7,13 +7,13 @@ import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Optional;
+
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
-import com.ctre.phoenix6.configs.SlotConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
-import com.ctre.phoenix6.controls.StaticBrake;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -27,72 +27,38 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
-import frc.util.TalonFXTempAlerts;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public class ModuleIOFalcon550 implements ModuleIO {
     protected final TalonFX driveMotor;
-    protected final SparkMax turnMotor;
-    protected final AbsoluteEncoder turnAbsoluteEncoder;
+    protected final SparkMax azimuthMotor;
+    protected final AbsoluteEncoder azimuthAbsoluteEncoder;
 
-    private final TalonFXTempAlerts tempAlerts;
+    private final VoltageOut driveVolts = new VoltageOut(0);
+    private final VelocityVoltage driveVelocity = new VelocityVoltage(0);
 
-    private final VoltageOut driveVolts = 
-        new VoltageOut(0)
-        .withOverrideBrakeDurNeutral(true)
-    ;
-    private final MotionMagicVelocityVoltage driveVelocity = 
-        new MotionMagicVelocityVoltage(0)
-        .withAcceleration(0)
-        // .withOverrideBrakeDurNeutral(true)
-    ;
-    private final StaticBrake driveBrake = new StaticBrake();
-    private final NeutralOut driveNeutral = new NeutralOut();
-
-
-    private static final LoggedTunableAngularProfile driveProfileConsts = new LoggedTunableAngularProfile(
-        "Drive/Module/Drive/Profile",
-        RotationsPerSecond.of(50000),
-        RotationsPerSecondPerSecond.of(5000)
-    );
-    private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
-        "Drive/Module/Drive/PID",
-        0.025928*2*Math.PI,
-        0*2*Math.PI,
-        0*2*Math.PI
-    );
-    private static final LoggedTunableFF driveFFConsts = new LoggedTunableFF(
-        "Drive/Module/Drive/FF",
-        // 0.059813*2*Math.PI,
-        0,
-        0*2*Math.PI,
-        0.017472*2*Math.PI,
-        0.0015521*2*Math.PI
-    );
-    private static final LoggedTunablePID turnPIDConsts = new LoggedTunablePID(
-        "Drive/Module/Turn/PID",
-        5*2*Math.PI,
-        0*2*Math.PI,
-        0*2*Math.PI
-    );
-    protected final PIDController turnPID = new PIDController(0, 0, 0);
+    protected final PIDController azimuthPID = new PIDController(0, 0, 0);
 
     public ModuleIOFalcon550(ModuleConstants config) {
-        driveMotor = config.driveMotorID.talonFX();
-        turnMotor = config.turnMotorID.sparkMax(MotorType.kBrushless);
-        turnAbsoluteEncoder = turnMotor.getAbsoluteEncoder();
+        this.driveMotor = config.driveMotorID.talonFX();
+        this.azimuthMotor = config.azimuthMotorID.sparkMax(MotorType.kBrushless);
+        this.azimuthAbsoluteEncoder = this.azimuthMotor.getAbsoluteEncoder();
 
         var driveConfig = new TalonFXConfiguration();
         driveConfig.MotorOutput
             .withInverted(config.driveInverted)
             .withNeutralMode(NeutralModeValue.Coast)
-            .withDutyCycleNeutralDeadband(0)
         ;
         driveConfig.ClosedLoopRamps
             .withVoltageClosedLoopRampPeriod(Seconds.of(0.075))
@@ -105,129 +71,115 @@ public class ModuleIOFalcon550 implements ModuleIO {
             // .withSupplyCurrentLowerLimit(Amps.of(70))
             // .withSupplyCurrentLowerTime(Seconds.of(0))
             .withSupplyCurrentLimitEnable(true)
-            .withStatorCurrentLimit(Amps.of(80))
-            .withStatorCurrentLimitEnable(true)
+            // .withStatorCurrentLimit(Amps.of(80))
+            // .withStatorCurrentLimitEnable(true)
         ;
-        driveFFConsts.update(driveConfig.Slot0);
-        drivePIDConsts.update(driveConfig.Slot0);
-        driveProfileConsts.update(driveConfig.MotionMagic);
-
-        driveFFConsts.hasChanged(hashCode());
-        drivePIDConsts.hasChanged(hashCode());
-        driveProfileConsts.hasChanged(hashCode());
         
-        driveMotor.getConfigurator().apply(driveConfig);
+        this.driveMotor.getConfigurator().apply(driveConfig);
 
-        var turnConfig = new SparkMaxConfig();
-        turnConfig
+        var azimuthConfig = new SparkMaxConfig();
+        azimuthConfig
             .idleMode(IdleMode.kCoast)
             .inverted(false)
             .smartCurrentLimit(40)
-            // .signals
-            //     .absoluteEncoderPositionPeriodMs((int) RobotConstants.rioUpdatePeriod.in(Milliseconds))
         ;
-        turnConfig.absoluteEncoder
+        azimuthConfig.absoluteEncoder
             .zeroOffset(config.encoderZeroOffset.in(Rotations))
             .inverted(true)
         ;
 
-        // turnMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus5, 20);
-        // turnMotor.setPeriodicFramePeriod(PeriodicFrame.kStatus0, 20);
-
-        turnMotor.configure(turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        turnPID.enableContinuousInput(
+        this.azimuthMotor.configure(azimuthConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        this.azimuthPID.enableContinuousInput(
             0,
             1
         );
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency,
-            driveMotor.getRotorPosition(),
-            driveMotor.getRotorVelocity()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            driveMotor.getMotorVoltage(),
-            driveMotor.getStatorCurrent(),
-            driveMotor.getDeviceTemp(),
-            driveMotor.getFault_DeviceTemp()
-        );
-        driveMotor.optimizeBusUtilization();
-
-        // zeroEncoders();
-
-        tempAlerts = new TalonFXTempAlerts(driveMotor, config.name + " Module");
+        BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.odometryLoopFrequency, LoggedEncoder.getStatusSignals(this.driveMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.driveMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.driveMotor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.driveMotor));
+        this.driveMotor.optimizeBusUtilization();
     }
 
+    @Override
     public void updateInputs(ModuleIOInputs inputs) {
-        if (drivePIDConsts.hasChanged(hashCode()) | driveFFConsts.hasChanged(hashCode())) {
-            var slotConfig = new SlotConfigs();
-            driveMotor.getConfigurator().refresh(slotConfig);
-            drivePIDConsts.update(slotConfig);
-            driveFFConsts.update(slotConfig);
-            driveMotor.getConfigurator().apply(slotConfig);
-        }
-        if (driveProfileConsts.hasChanged(hashCode())) {
-            var motionMagic = new MotionMagicConfigs();
-            driveMotor.getConfigurator().refresh(motionMagic);
-            driveProfileConsts.update(motionMagic);
-            driveMotor.getConfigurator().apply(motionMagic);
-        }
-        if (turnPIDConsts.hasChanged(hashCode())) {
-            turnPIDConsts.update(turnPID);
-        }
-        
-        inputs.driveMotor.updateFrom(driveMotor);
-        // inputs.driveMotor.encoder.position.mut_divide(DriveConstants.driveWheelGearReduction);
-        // inputs.driveMotor.encoder.velocity.mut_divide(DriveConstants.driveWheelGearReduction);
-
-        inputs.turnMotor.updateFrom(turnMotor);
-        // inputs.turnMotor.encoder.position.mut_replace(MathUtil.angleModulus(Units.rotationsToRadians(turnAbsoluteEncoder.getPosition())) - initialTurnOffset.in(Radians), Radians);
-
-        tempAlerts.update();
+        inputs.driveMotor.updateFrom(this.driveMotor);
+        inputs.azimuthMotor.updateFrom(this.azimuthMotor);
+        inputs.azimuthEncoder.updateFrom(this.azimuthAbsoluteEncoder);
+        // inputs.driveMotorFaults.updateFrom(this.driveMotor);
+        // inputs.azimuthMotorFaults.updateFrom(this.azimuthMotor);
     }
 
-    // public void zeroEncoders() {
-    //     driveMotor.setPosition(0.0);
-    //     // turnRelativeEncoder.setPosition(turnAbsoluteEncoder.getPosition());
-    // }
-
+    @Override
     public void setDriveVoltage(Measure<VoltageUnit> volts) {
-        driveMotor.setControl(driveVolts.withOutput(volts.in(Volts)));
+        this.driveMotor.setControl(this.driveVolts.withOutput(volts.in(Volts)));
     }
-    public void setDriveVelocity(Measure<AngularVelocityUnit> velocity) {
-        driveMotor.setControl(driveVelocity.withVelocity(velocity.in(RotationsPerSecond)));
+    @Override
+    public void setDriveVelocity(Measure<AngularVelocityUnit> velocity, Measure<AngularAccelerationUnit> acceleration, Measure<VoltageUnit> feedforward, boolean overrideWithBrakeMode) {
+        this.driveMotor.setControl(this.driveVelocity
+            .withVelocity(velocity.in(RotationsPerSecond))
+            .withAcceleration(acceleration.in(RotationsPerSecondPerSecond))
+            .withFeedForward(feedforward.in(Volts))
+            .withOverrideBrakeDurNeutral(overrideWithBrakeMode)
+        );
     }
 
-    protected void setTurnVolts(double volts) {
-        turnMotor.setVoltage(volts);
+    protected void setAzimuthVolts(double volts) {
+        this.azimuthMotor.setVoltage(volts);
     }
-    public void setTurnVoltage(Measure<VoltageUnit> volts) {
-        setTurnVolts(volts.in(Volts));
+    @Override
+    public void setAzimuthVoltage(Measure<VoltageUnit> volts) {
+        this.setAzimuthVolts(volts.in(Volts));
     }
-    public void setTurnAngle(Measure<AngleUnit> angle) {
-        setTurnVolts(
-            turnPID.calculate(
-                turnAbsoluteEncoder.getPosition(),
+    @Override
+    public void setAzimuthAngle(Measure<AngleUnit> angle) {
+        this.setAzimuthVolts(
+            this.azimuthPID.calculate(
+                this.azimuthAbsoluteEncoder.getPosition(),
                 angle.in(Rotations)
             )
         );
     }
     
     @Override
-    public void setDriveBrakeMode(boolean enable) {
-        driveMotor.setControl(enable ? driveBrake : driveNeutral);
+    public void stopDrive(Optional<NeutralMode> neutralMode) {
+        this.driveMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
     }
-
     @Override
-    public void setTurnBrakeMode(boolean enable) {
+    public void stopAzimuth(Optional<NeutralMode> neutralMode) {
         //TODO Reimplement module turn brake mode
         // turnMotor.setIdleMode(enable ? IdleMode.kBrake : IdleMode.kCoast);
+        this.azimuthMotor.stopMotor();
     }
 
     @Override
-    public void stop() {
-        driveMotor.stopMotor();
-        setTurnVoltage(Volts.zero());
+    public void configDrivePID(PIDConstants pidConstants) {
+        var config = new Slot0Configs();
+        this.driveMotor.getConfigurator().refresh(config);
+        pidConstants.update(config);
+        this.driveMotor.getConfigurator().apply(config);
+    }
+    @Override
+    public void configAzimuthPID(PIDConstants pidConstants) {
+        pidConstants.update(this.azimuthPID);
+    }
+
+    @Override
+    public void clearDriveStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.driveMotor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.driveMotor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearAzimuthStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        this.azimuthMotor.clearFaults();
     }
 }

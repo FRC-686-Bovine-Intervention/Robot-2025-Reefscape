@@ -8,20 +8,25 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
+
+import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.CurrentUnit;
-import edu.wpi.first.units.DistanceUnit;
+import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -35,16 +40,26 @@ import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.CurrentSpikeDetector;
+import frc.util.LoggedTracer;
+import frc.util.NeutralMode;
+import frc.util.faults.DeviceFaultAlerts;
+import frc.util.faults.DeviceFaultClearer;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunablePID;
 
 public class Module {
     private final ModuleIO io;
     private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
     public final ModuleConstants config;
 
-    private static final LoggedTunableMeasure<DistanceUnit> wheelRadius = new LoggedTunableMeasure<>("Drive/Module/WheelRadius", DriveConstants.wheelRadius, Inches);
+    // private static final LoggedTunableMeasure<DistanceUnit> wheelRadius = new LoggedTunableMeasure<>("Drive/Module/WheelRadius", DriveConstants.wheelRadius, Inches);
     
     private Rotation2d angle = Rotation2d.kZero;
     private final MutAngle wheelAngularPosition = Radians.mutable(0);
@@ -58,33 +73,93 @@ public class Module {
     private static final LoggedTunableMeasure<CurrentUnit> currentSpikeThreshold = new LoggedTunableMeasure<>("Drive/Current Spike Threshold", Amps.of(0)); 
     private static final LoggedTunableMeasure<TimeUnit> currentSpikeTime = new LoggedTunableMeasure<>("Drive/Current Spike Time", Seconds.of(0));
     private final CurrentSpikeDetector driveCurrentSpikeDetector = new CurrentSpikeDetector(currentSpikeThreshold, currentSpikeTime);
+    
+    private static final LoggedTunableMeasure<LinearVelocityUnit> brakeModeThreshold = new LoggedTunableMeasure<>("Drive/Brake Mode Threshold", InchesPerSecond.of(1)); 
+    
+    private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
+        "Drive/Module/Drive/PID",
+        0.1,
+        0,
+        0
+    );
+    private static final LoggedTunableFF driveFFConsts = new LoggedTunableFF(
+        "Drive/Module/Drive/FF",
+        0,
+        0,
+        2.2,
+        0
+    );
+    private static final LoggedTunablePID azimuthPIDConsts = new LoggedTunablePID(
+        "Drive/Module/Azimuth/PID",
+        5*2*Math.PI,
+        0*2*Math.PI,
+        0*2*Math.PI
+    );
+
+    private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0,0,0);
+
+    private final DeviceFaultAlerts driveMotorActiveFaultsAlert;
+    private final DeviceFaultAlerts driveMotorStickyFaultsAlert;
+    private final DeviceFaultAlerts azimuthMotorActiveFaultsAlert;
+    private final DeviceFaultAlerts azimuthMotorStickyFaultsAlert;
+    private final DeviceFaultClearer driveMotorStickyFaultClearer;
+    private final DeviceFaultClearer azimuthMotorStickyFaultClearer;
 
     public Module(ModuleIO io, ModuleConstants config) {
         this.io = io;
         this.config = config;
+
+        driveFFConsts.update(this.driveFeedforward);
+        this.io.configDrivePID(drivePIDConsts.getConstants());
+        this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
+
+        this.driveMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has active faults: ", AlertType.kError));
+        this.driveMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.azimuthMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has active faults: ", AlertType.kError));
+        this.azimuthMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        this.driveMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Drive Motor Sticky Faults");
+        this.azimuthMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Azimuth Motor Sticky Faults");
     }
 
     /** Updates inputs and checks tunable numbers. */
     public void periodic() {
-        prevModulePosition.distanceMeters = modulePosition.distanceMeters;
-        prevModulePosition.angle = modulePosition.angle;
+        this.prevModulePosition.distanceMeters = this.modulePosition.distanceMeters;
+        this.prevModulePosition.angle = this.modulePosition.angle;
 
-        io.updateInputs(inputs);
-        Logger.processInputs("Inputs/Drive/Module " + config.name, inputs);
+        this.io.updateInputs(this.inputs);
+        Logger.processInputs("Inputs/Drive/Module " + this.config.name, this.inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
 
-        angle = config.moduleForwardDirection.plus(new Rotation2d(inputs.turnMotor.encoder.position));
-        moduleState.angle = angle;
-        modulePosition.angle = angle;
+        this.angle = this.config.moduleForwardDirection.plus(new Rotation2d(this.inputs.azimuthEncoder.position));
+        this.moduleState.angle = this.angle;
+        this.modulePosition.angle = this.angle;
 
-        wheelAngularPosition.mut_replace(inputs.driveMotor.encoder.position.div(DriveConstants.driveWheelGearReduction));
-        wheelAngularVelocity.mut_replace(inputs.driveMotor.encoder.velocity.div(DriveConstants.driveWheelGearReduction));
-        wheelLinearPosition.mut_replace(wheelAngularPosition.in(Radians) * wheelRadius.in(Meters), Meters);
-        wheelLinearVelocity.mut_replace(wheelAngularVelocity.in(RadiansPerSecond) * wheelRadius.in(Meters), MetersPerSecond);
+        this.wheelAngularPosition.mut_replace(DriveConstants.driveRatio.applyUnsigned(this.inputs.driveMotor.encoder.position));
+        this.wheelAngularVelocity.mut_replace(DriveConstants.driveRatio.applyUnsigned(this.inputs.driveMotor.encoder.velocity));
+        this.wheelLinearPosition.mut_replace(DriveConstants.wheel.angleToDistance(this.wheelAngularPosition));
+        this.wheelLinearVelocity.mut_replace(DriveConstants.wheel.angularVelocityToLinearVelocity(this.wheelAngularVelocity));
 
-        modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
-        moduleState.speedMetersPerSecond = wheelLinearVelocity.in(MetersPerSecond);
+        this.modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
+        this.moduleState.speedMetersPerSecond = wheelLinearVelocity.in(MetersPerSecond);
 
-        driveCurrentSpikeDetector.update(getDriveCurrent());
+        this.driveCurrentSpikeDetector.update(this.getDriveCurrent());
+
+        if (driveFFConsts.hasChanged(hashCode())) {
+            driveFFConsts.update(this.driveFeedforward);
+        }
+        if (drivePIDConsts.hasChanged(hashCode())) {
+            this.io.configDrivePID(drivePIDConsts.getConstants());
+        }
+        if (azimuthPIDConsts.hasChanged(hashCode())) {
+            this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
+        }
+
+        this.driveMotorActiveFaultsAlert.updateFrom(this.inputs.driveMotorFaults.activeFaults);
+        this.driveMotorStickyFaultsAlert.updateFrom(this.inputs.driveMotorFaults.stickyFaults);
+        this.azimuthMotorActiveFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.activeFaults);
+        this.azimuthMotorStickyFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.stickyFaults);
+        this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
+        this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
     }
 
     /**
@@ -92,95 +167,88 @@ public class Module {
      * periodically.
      */
     public void runSetpoint(SwerveModuleState setpoint) {
-        setpoint.optimize(getAngle());
+        setpoint.optimize(this.getAngle());
         
         var turnSetpoint = setpoint.angle;
-        io.setTurnAngle(turnSetpoint.minus(config.moduleForwardDirection).getMeasure());
+        this.io.setAzimuthAngle(turnSetpoint.minus(this.config.moduleForwardDirection).getMeasure());
 
-        setpoint.speedMetersPerSecond *= turnSetpoint.minus(getAngle()).getCos();
+        setpoint.speedMetersPerSecond *= turnSetpoint.minus(this.getAngle()).getCos();
 
-        double velocityRadPerSec = setpoint.speedMetersPerSecond / wheelRadius.in(Meters) * DriveConstants.driveWheelGearReduction;
-        io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec));
+        var velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
+
+        var ffout = this.driveFeedforward.calculateWithVelocities(this.wheelLinearVelocity.in(MetersPerSecond), setpoint.speedMetersPerSecond);
+
+        var belowBrakeModeThreshold = Math.abs(setpoint.speedMetersPerSecond) < brakeModeThreshold.get().in(MetersPerSecond);
+
+        this.io.setDriveVelocity(RadiansPerSecond.of(velocityRadPerSec), RadiansPerSecondPerSecond.zero(), Volts.of(ffout), belowBrakeModeThreshold);
     }
 
     /**
-     * Runs the module with the specified voltage while controlling to zero degrees.
+     * Runs the module with the specified voltage
      * Must be called periodically.
      */
     public void runVoltage(Measure<VoltageUnit> volts, Rotation2d moduleAngle) {
-        io.setTurnAngle(moduleAngle.minus(config.moduleForwardDirection).getMeasure());
-        io.setDriveVoltage(volts);
+        this.io.setAzimuthAngle(moduleAngle.minus(this.config.moduleForwardDirection).getMeasure());
+        this.io.setDriveVoltage(volts);
     }
 
-    /** Disables all outputs to motors. */
-    public void stop() {
-        io.stop();
+    public void stopDrive(Optional<NeutralMode> neutralMode) {
+        this.io.stopDrive(neutralMode);
     }
-
-    /** Sets whether brake mode is enabled. */
-    public void setBrakeMode(boolean enabled) {
-        io.setDriveBrakeMode(enabled);
-        io.setTurnBrakeMode(enabled);
+    public void stopTurn(Optional<NeutralMode> neutralMode) {
+        this.io.stopAzimuth(neutralMode);
     }
 
     /** Returns the current turn angle of the module. */
     public Rotation2d getAngle() {
-        return angle;
+        return this.angle;
     }
 
     /** Returns the current drive position of the module in radians. */
     public Angle getWheelAngularPosition() {
-        return wheelAngularPosition;
+        return this.wheelAngularPosition;
     }
     /** Returns the drive velocity in radians/sec. */
     public AngularVelocity getWheelAngularVelocity() {
-        return wheelAngularVelocity;
+        return this.wheelAngularVelocity;
     }
     /** Returns the current drive position of the module in radians. */
     public Distance getWheelLinearPosition() {
-        return wheelLinearPosition;
+        return this.wheelLinearPosition;
     }
     /** Returns the drive velocity in radians/sec. */
     public LinearVelocity getWheelLinearVelocity() {
-        return wheelLinearVelocity;
+        return this.wheelLinearVelocity;
     }
 
     /** Returns the drive velocity in radians/sec. */
     public Voltage getAppliedVoltage() {
-        return inputs.driveMotor.motor.appliedVoltage;
+        return this.inputs.driveMotor.motor.appliedVoltage;
     }
 
     public Current getDriveCurrent() {
-        return inputs.driveMotor.motor.current;
+        return this.inputs.driveMotor.motor.statorCurrent;
     }
 
     public boolean currentSpiking() {
-        return driveCurrentSpikeDetector.hasSpike();
+        return this.driveCurrentSpikeDetector.hasSpike();
     }
 
     /** Returns the module position (turn angle and drive position). */
     public SwerveModulePosition getModulePosition() {
-        return modulePosition;
+        return this.modulePosition;
     }
 
     /** Returns the module state (turn angle and drive velocity). */
     public SwerveModuleState getModuleState() {
-        return moduleState;
+        return this.moduleState;
     }
 
     /** Returns change in module position since last tick */
     public SwerveModulePosition getModulePositionDelta() {
         return new SwerveModulePosition(
-            modulePosition.distanceMeters - prevModulePosition.distanceMeters,
-            angle
+            this.modulePosition.distanceMeters - this.prevModulePosition.distanceMeters,
+            this.angle
         );
     }
-    
-    /** Zeros module encoders. */
-    // public void zeroEncoders() {
-    //     io.zeroEncoders();
-    //     // need to also reset prevModulePosition because drive is driven by deltas in
-    //     // position
-    //     prevModulePosition = getPosition();
-    // }
 }

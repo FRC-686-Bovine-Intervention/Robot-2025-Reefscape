@@ -1,18 +1,17 @@
 package frc.robot.subsystems.superstructure.wrist;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
+import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -20,47 +19,33 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncoder;
+import frc.util.loggerUtil.inputs.LoggedMotor;
 
 public class WristIOKraken implements WristIO {
     protected final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
     protected final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
-    private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
-    private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
-        "Wrist/Profile",
-        DegreesPerSecond.of(720),
-        DegreesPerSecondPerSecond.of(1080)
-    );
-    private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
-        "Wrist/FF",
-        0,
-        0,
-        5,
-        0
-    );
-    private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
-        "Wrist/PID",
-        50,
-        0,
-        0
-    );
+
+    private final PositionVoltage positionRequest = new PositionVoltage(0);
     
     public WristIOKraken() {
         var cancoderConfig = new CANcoderConfiguration();
 
-        cancoder.getConfigurator().refresh(cancoderConfig.MagnetSensor);
+        this.cancoder.getConfigurator().refresh(cancoderConfig.MagnetSensor);
         cancoderConfig.MagnetSensor
             .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
         ;
 
-        cancoder.getConfigurator().apply(cancoderConfig);
+        this.cancoder.getConfigurator().apply(cancoderConfig);
 
         var motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput
@@ -68,9 +53,9 @@ public class WristIOKraken implements WristIO {
             .withNeutralMode(NeutralModeValue.Brake)
         ;
         motorConfig.Feedback
-            .withRemoteCANcoder(cancoder)
-            .withRotorToSensorRatio(WristConstants.motorToSensor.inverse().ratio())
-            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.inverse().ratio())
+            .withRemoteCANcoder(this.cancoder)
+            .withRotorToSensorRatio(WristConstants.motorToSensor.reductionUnsigned())
+            .withSensorToMechanismRatio(WristConstants.sensorToMechanism.reductionUnsigned())
         ;
         motorConfig.SoftwareLimitSwitch
             .withReverseSoftLimitEnable(true)
@@ -79,74 +64,79 @@ public class WristIOKraken implements WristIO {
             .withForwardSoftLimitThreshold(WristConstants.maxAngle)
         ;
 
-        profileConsts.update(motorConfig.MotionMagic);
-        ffConsts.update(motorConfig.Slot0);
-        pidConsts.update(motorConfig.Slot0);
+        this.motor.getConfigurator().apply(motorConfig);
 
-        profileConsts.hasChanged(hashCode());
-        ffConsts.hasChanged(hashCode());
-        pidConsts.hasChanged(hashCode());
-
-        motor.getConfigurator().apply(motorConfig);
-
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getRotorPosition(),
-            motor.getRotorVelocity(),
-            cancoder.getPosition(),
-            cancoder.getVelocity()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
-        );
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.cancoder));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.cancoder));
         motor.optimizeBusUtilization();
         cancoder.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(WristIOInputs inputs) {
-        inputs.encoder.updateFrom(cancoder);
-        inputs.motor.updateFrom(motor);
-
-        if (profileConsts.hasChanged(hashCode())) {
-            var config = new MotionMagicConfigs();
-            motor.getConfigurator().refresh(config);
-            profileConsts.update(config);
-            motor.getConfigurator().apply(config);
-        }
-
-        if (ffConsts.hasChanged(hashCode()) | pidConsts.hasChanged(hashCode())) {
-            var config = new Slot0Configs();
-            motor.getConfigurator().refresh(config);
-            ffConsts.update(config);
-            pidConsts.update(config);
-            motor.getConfigurator().apply(config);
-        }
-
-        // Logger.recordOutput("Superstructure/Wrist/Motor/posiion", motor.getPosition().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Wrist/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Wrist/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Wrist/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Wrist/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
-        // Logger.recordOutput("Superstructure/Wrist/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
+        inputs.encoder.updateFrom(this.cancoder);
+        inputs.motor.updateFrom(this.motor);
+        // inputs.encoderFaults.updateFrom(this.cancoder);
+        // inputs.motorFaults.updateFrom(this.motor);
     }
 
     @Override
     public void setVoltage(Measure<VoltageUnit> voltage) {
-        motor.setVoltage(voltage.in(Volts));
+        this.motor.setVoltage(voltage.in(Volts));
     }
 
     @Override
-    public void setAngle(Measure<AngleUnit> angle) {
-        motor.setControl(positionRequest.withPosition(angle.in(Rotations)));
+    public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
+        this.motor.setControl(this.positionRequest
+            .withPosition(position.in(Rotations))
+            .withVelocity(velocity.in(RotationsPerSecond))
+            .withFeedForward(feedforward.in(Volts))
+        );
     }
-    
+
     @Override
-    public void setFeedForward(Measure<VoltageUnit> feedForward) {
-        positionRequest.withFeedForward(feedForward.in(Volts));
+    public void stop(Optional<NeutralMode> neutralMode) {
+        this.motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+    }
+
+    @Override
+    public void configPID(PIDConstants pidConstants) {
+        var config = new Slot0Configs();
+        this.motor.getConfigurator().refresh(config);
+        pidConstants.update(config);
+        this.motor.getConfigurator().apply(config);
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
+    }
+    @Override
+    public void clearEncoderStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.cancoder.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleCancoderFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.cancoder);
+                }
+            }
+        }
     }
 }
 

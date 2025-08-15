@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
+import frc.util.LoggedTracer;
 import frc.util.VirtualSubsystem;
 import frc.util.geometry.GeomUtil.TransformUtil;
 import frc.util.geometry.RollingAveragePose2d;
@@ -57,6 +58,8 @@ public class QuestNav extends VirtualSubsystem {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/QuestNav/" + camMeta.hardwareName, inputs);
+        LoggedTracer.logEpoch("VirtualSubsystem Periodic/QuestNav/Process Inputs");
+
         io.cleanUp();
 
         notConnectedAlert.set(!inputs.isConnected);
