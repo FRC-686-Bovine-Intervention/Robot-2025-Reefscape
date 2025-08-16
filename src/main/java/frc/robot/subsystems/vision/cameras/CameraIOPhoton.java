@@ -2,7 +2,7 @@ package frc.robot.subsystems.vision.cameras;
 
 import org.photonvision.PhotonCamera;
 
-import frc.robot.subsystems.vision.Pipeline;
+import edu.wpi.first.math.geometry.Translation2d;
 
 public class CameraIOPhoton implements CameraIO {
     private final PhotonCamera photonCam;
@@ -12,16 +12,49 @@ public class CameraIOPhoton implements CameraIO {
     }
 
     @Override
-    public void updateInputs(CameraIOInputs inputs, Pipeline[] pipelines) {
+    public void updateInputs(CameraIOInputs inputs) {
         inputs.isConnected = this.photonCam.isConnected();
         var selectedPipeline = this.photonCam.getPipelineIndex();
-        for (int i = 0; i < pipelines.length; i++) {
-            if (i == selectedPipeline) {
-                pipelines[i].updateInputsFromPhotonResults(this.photonCam.getAllUnreadResults());
-            } else {
-                pipelines[i].clearInputs();
-            }
-        }
+        inputs.frames = this.photonCam.getAllUnreadResults().stream()
+            .map((result) -> {
+                var timestamp = result.getTimestampSeconds();
+                var targets = result.getTargets().stream()
+                    .map((target) -> {
+                        var tagID = target.getFiducialId();
+                        var yawRads = target.getYaw();
+                        var pitchRads = target.getPitch();
+                        var skewRads = target.getSkew();
+                        var bestCameraToTag = target.getBestCameraToTarget();
+                        var altCameraToTag = target.getAlternateCameraToTarget();
+                        var poseAmbiguity = target.getPoseAmbiguity();
+                        var corners = target.getDetectedCorners().stream().map((corner) -> new Translation2d(corner.x, corner.y)).toArray(Translation2d[]::new);
+                        return new CameraTarget(
+                            tagID,
+                            yawRads,
+                            pitchRads,
+                            skewRads,
+                            bestCameraToTag,
+                            altCameraToTag,
+                            poseAmbiguity,
+                            corners
+                        );
+                    })
+                    .toArray(CameraTarget[]::new)
+                ;
+                var multiTagResult = result.multitagResult
+                    .map((multi) -> new MultiTagResult(
+                        multi.fiducialIDsUsed.stream().mapToInt(Short::intValue).toArray(),
+                        multi.estimatedPose.best,
+                        multi.estimatedPose.altReprojErr,
+                        multi.estimatedPose.alt,
+                        multi.estimatedPose.altReprojErr,
+                        multi.estimatedPose.ambiguity
+                    ))
+                ;
+                return new CameraFrame(timestamp, selectedPipeline, targets, multiTagResult);
+            })
+            .toArray(CameraFrame[]::new)
+        ;
     }
 
     @Override

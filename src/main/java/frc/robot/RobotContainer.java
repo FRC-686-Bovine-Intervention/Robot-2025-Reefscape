@@ -140,11 +140,6 @@ public class RobotContainer {
     public RobotContainer() {
         System.out.println("[Init RobotContainer] Creating " + RobotType.getMode().name() + " " + RobotType.getRobot().name());
 
-        var frontLeftPipeline = new ApriltagPipeline(1);
-        var frontRightPipeline = new ApriltagPipeline(1);
-        var backLeftPipeline = new ApriltagPipeline(100);
-        var backRightPipeline = new ApriltagPipeline(100);
-
         switch (RobotType.getMode()) {
             case REAL:
                 this.drive = new Drive(
@@ -164,29 +159,25 @@ public class RobotContainer {
                     new CameraIOPhoton("Front Left"),
                     "Front Left",
                     VisionConstants.frontLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    frontLeftPipeline
+                    Optional.of(Leds.getInstance().flAprilConnection)
                 );
                 this.frontRightCamera = new Camera(
                     new CameraIOPhoton("Front Right"),
                     "Front Right",
                     VisionConstants.frontRightMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    frontRightPipeline
+                    Optional.of(Leds.getInstance().frAprilConnection)
                 );
                 this.backLeftCamera = new Camera(
                     new CameraIOPhoton("Back Left"),
                     "Back Left",
                     VisionConstants.backLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    backLeftPipeline
+                    Optional.of(Leds.getInstance().blAprilConnection)
                 );
                 this.backRightCamera = new Camera(
                     new CameraIOPhoton("Back Right"),
                     "Back Right",
                     VisionConstants.backRightMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    backRightPipeline
+                    Optional.of(Leds.getInstance().brAprilConnection)
                 );
                 this.driverCamera = new Camera(
                     new CameraIOPhoton("Driver Cam"),
@@ -216,29 +207,25 @@ public class RobotContainer {
                     new CameraIO() {},
                     "Front Left",
                     VisionConstants.frontLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    frontLeftPipeline
+                    Optional.of(Leds.getInstance().flAprilConnection)
                 );
                 this.frontRightCamera = new Camera(
                     new CameraIO() {},
                     "Front Right",
                     VisionConstants.frontRightMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    frontRightPipeline
+                    Optional.of(Leds.getInstance().frAprilConnection)
                 );
                 this.backLeftCamera = new Camera(
                     new CameraIO() {},
                     "Back Left",
                     VisionConstants.backLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    backLeftPipeline
+                    Optional.of(Leds.getInstance().blAprilConnection)
                 );
                 this.backRightCamera = new Camera(
                     new CameraIO() {},
                     "Back Right",
                     VisionConstants.backRightMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    backRightPipeline
+                    Optional.of(Leds.getInstance().brAprilConnection)
                 );
                 this.driverCamera = new Camera(
                     new CameraIO() {},
@@ -269,29 +256,25 @@ public class RobotContainer {
                     new CameraIO() {},
                     "Front Left",
                     VisionConstants.frontLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    frontLeftPipeline
+                    Optional.of(Leds.getInstance().flAprilConnection)
                 );
                 this.frontRightCamera = new Camera(
                     new CameraIO() {},
                     "Front Right",
                     VisionConstants.frontRightMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    frontRightPipeline
+                    Optional.of(Leds.getInstance().frAprilConnection)
                 );
                 this.backLeftCamera = new Camera(
                     new CameraIO() {},
                     "Back Left",
                     VisionConstants.backLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    backLeftPipeline
+                    Optional.of(Leds.getInstance().blAprilConnection)
                 );
                 this.backRightCamera = new Camera(
                     new CameraIO() {},
                     "Back Right",
                     VisionConstants.backRightMount,
-                    Optional.of(Leds.getInstance().flAprilConnection),
-                    backRightPipeline
+                    Optional.of(Leds.getInstance().brAprilConnection)
                 );
                 this.driverCamera = new Camera(
                     new CameraIO() {},
@@ -304,10 +287,10 @@ public class RobotContainer {
             break;
         }
         this.apriltagVision = new ApriltagVision(
-            frontLeftPipeline,
-            frontRightPipeline,
-            backLeftPipeline,
-            backRightPipeline
+            new ApriltagPipeline(this.frontLeftCamera, 0, 1),
+            new ApriltagPipeline(this.frontRightCamera, 0, 1),
+            new ApriltagPipeline(this.backLeftCamera, 0, 100),
+            new ApriltagPipeline(this.backRightCamera, 0, 100)
         );
         this.manualOverrides = new ManualOverrides();
         

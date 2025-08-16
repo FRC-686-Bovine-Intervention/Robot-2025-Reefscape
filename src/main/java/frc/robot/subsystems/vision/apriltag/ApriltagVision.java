@@ -35,12 +35,12 @@ public class ApriltagVision {
 
     public void periodic() {
         for (var pipeline : this.pipelines) {
-            var result = pipeline.getInputs();
+            var frames = pipeline.getFrames();
             var loggingKey = "Vision/Apriltags/Results/" + pipeline.camera;
-            var tracingKey = "VirtualSubsystem Periodic/ApriltagVision/Process Results/" + result.camMeta.hardwareName;
+            var tracingKey = "VirtualSubsystem Periodic/ApriltagVision/Process Results/" + pipeline.camera;
             var akitPose3d = new Pose3d[0];
             var akitTargetCorners = new Translation2d[0];
-            for (var frame : result.frames) {
+            for (var frame : frames) {
                 var usableTags = Arrays
                     .stream(frame.targets)
                     .map((target) -> {
@@ -63,23 +63,23 @@ public class ApriltagVision {
                 final Pose3d robotPose3d;
                 var useVisionRotation = false;
     
-                if (frame.targets.length >= 2) {
-                    // TODO: multitag
-                    // cameraPose3d = frame.estimatedCameraPose;
-                    // robotPose3d = cameraPose3d.transformBy(pipeline.cameraConstants.mount.getRobotRelative().inverse());
-                    // useVisionRotation = true;
-                    cameraPose3d = null;
-                    robotPose3d = null;
+                if (frame.multiTagResult.isPresent()) {
+                    var multiTagResult = frame.multiTagResult.get();
+                    cameraPose3d = new Pose3d(
+                        multiTagResult.bestTransform.getTranslation(),
+                        multiTagResult.bestTransform.getRotation()
+                    );
+                    robotPose3d = cameraPose3d.transformBy(pipeline.camera.mount.getRobotRelative().inverse());
                     useVisionRotation = true;
                 } else if (frame.targets.length == 1) {
                     var target = frame.targets[0];
                     var tagPose = FieldConstants.apriltagLayout.getTagPose(target.tagID).get();
                     var translationToTarget = target.bestCameraToTag.getTranslation();
-                    var cameraRotation = pipeline.cameraConstants.mount.getFieldRelative().getRotation();
+                    var cameraRotation = pipeline.camera.mount.getFieldRelative().getRotation();
                     var tagRotationRelativeToCamera = tagPose.getRotation().minus(cameraRotation);
                     var cameraToTag = new Transform3d(translationToTarget, tagRotationRelativeToCamera);
                     var cameraPose = tagPose.transformBy(cameraToTag.inverse());
-                    var robotPose = cameraPose.transformBy(pipeline.cameraConstants.mount.getRobotRelative().inverse());
+                    var robotPose = cameraPose.transformBy(pipeline.camera.mount.getRobotRelative().inverse());
 
                     cameraPose3d = cameraPose;
                     robotPose3d = robotPose;
@@ -153,14 +153,14 @@ public class ApriltagVision {
                     xyStdDevCoef.get()
                     * averageTagDistance * averageTagDistance
                     / usableTags.length
-                    * pipeline.cameraConstants.cameraStdCoef
+                    * pipeline.pipelineStdScale
                 ;
                 double thetaStdDev =
                     (useVisionRotation) ? (
                         thetaStdDevCoef.get()
                         * averageTagDistance * averageTagDistance
                         / usableTags.length
-                        * pipeline.cameraConstants.cameraStdCoef
+                        * pipeline.pipelineStdScale
                     ) : (
                         Double.POSITIVE_INFINITY
                     )
@@ -178,7 +178,7 @@ public class ApriltagVision {
             }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
-            Logger.recordOutput(loggingKey + "/Frame Count", result.frames.length);
+            Logger.recordOutput(loggingKey + "/Frame Count", frames.length);
             LoggedTracer.logEpoch(tracingKey);
         }
         LoggedTracer.logEpoch("VirtualSubsystem Periodic/ApriltagVision/Process Results");

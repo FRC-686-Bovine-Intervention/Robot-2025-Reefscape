@@ -16,6 +16,6 @@ public class LinearMech extends Mechanism3d<DistanceUnit> {
         super(base, axis);
     }
     public void set(Measure<DistanceUnit> distance) {
-        transform = new Transform3d(new Translation3d(axis.times(distance.in(Meters))), Rotation3d.kZero);
+        this.transform = new Transform3d(new Translation3d(this.axis.times(distance.in(Meters))), Rotation3d.kZero);
     }
 }

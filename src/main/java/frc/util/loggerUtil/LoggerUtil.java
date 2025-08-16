@@ -34,4 +34,22 @@ public class LoggerUtil {
         }
         return array;
     }
+
+    public static <T extends LoggableInputs> void toLogOptional(LogTable table, Optional<T> optional) {
+        if (optional.isEmpty()) {
+            table.put("length", 0);
+        } else {
+            table.put("length", 1);
+            optional.get().toLog(table.getSubtable("0"));
+        }
+    }
+    public static <T extends LoggableInputs> Optional<T> fromLogOptional(LogTable table, Supplier<T> constructor) {
+        if (table.get("length", 0) <= 0) {
+            return Optional.empty();
+        } else {
+            var ret = constructor.get();
+            ret.fromLog(table.getSubtable("0"));
+            return Optional.of(ret);
+        }
+    }
 }

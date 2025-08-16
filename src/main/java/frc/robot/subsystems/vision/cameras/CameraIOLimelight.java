@@ -1,12 +1,13 @@
 package frc.robot.subsystems.vision.cameras;
 
-import frc.robot.subsystems.vision.Pipeline;
-
 public class CameraIOLimelight implements CameraIO {
     
+    public CameraIOLimelight(String name) {
+        throw new UnsupportedOperationException("Limelights are not implemented yet");
+    }
 
     @Override
-    public void updateInputs(CameraIOInputs inputs, Pipeline[] pipelines) {
+    public void updateInputs(CameraIOInputs inputs) {
         
     }
 }
