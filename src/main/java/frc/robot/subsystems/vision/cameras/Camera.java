@@ -1,18 +1,17 @@
 package frc.robot.subsystems.vision.cameras;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.cameras.CameraIO.CameraFrame;
 import frc.robot.subsystems.vision.cameras.CameraIO.CameraIOInputs;
-import frc.util.led.animation.StatusLightAnimation;
 import frc.util.robotStructure.CameraMount;
 
 public class Camera extends SubsystemBase {
@@ -20,16 +19,16 @@ public class Camera extends SubsystemBase {
     private final CameraIOInputs inputs;
     private final String name;
     private final Alert disconnectedAlert;
-    private final Optional<StatusLightAnimation> connectionAnimation;
+    private final BooleanConsumer connectionCallback;
     public final CameraMount mount;
 
-    public Camera(CameraIO io, String name, Transform3d cameraBase, Optional<StatusLightAnimation> connectionAnimation) {
+    public Camera(CameraIO io, String name, Transform3d cameraBase, BooleanConsumer connectionCallback) {
         this.io = io;
         this.inputs = new CameraIOInputs();
         this.name = name;
         this.mount = new CameraMount(cameraBase);
         this.disconnectedAlert = new Alert("Camera \"" + this.name + "\" is not connected", AlertType.kError);
-        this.connectionAnimation = connectionAnimation;
+        this.connectionCallback = connectionCallback;
 
         this.setName("Camera \"" + this.name + "\"");
     }
@@ -40,7 +39,7 @@ public class Camera extends SubsystemBase {
         Logger.processInputs("Inputs/Cameras/" + this.name, this.inputs);
 
         this.disconnectedAlert.set(!this.inputs.isConnected);
-        this.connectionAnimation.ifPresent((animation) -> animation.setStatus(this.inputs.isConnected));
+        this.connectionCallback.accept(this.inputs.isConnected);
     }
 
     public CameraFrame[] getPipelineFrames(int pipelineIndex) {

@@ -10,7 +10,6 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -159,31 +158,31 @@ public class RobotContainer {
                     new CameraIOPhoton("Front Left"),
                     "Front Left",
                     VisionConstants.frontLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection)
+                    Leds.getInstance().flAprilConnection::setStatus
                 );
                 this.frontRightCamera = new Camera(
                     new CameraIOPhoton("Front Right"),
                     "Front Right",
                     VisionConstants.frontRightMount,
-                    Optional.of(Leds.getInstance().frAprilConnection)
+                    Leds.getInstance().frAprilConnection::setStatus
                 );
                 this.backLeftCamera = new Camera(
                     new CameraIOPhoton("Back Left"),
                     "Back Left",
                     VisionConstants.backLeftMount,
-                    Optional.of(Leds.getInstance().blAprilConnection)
+                    Leds.getInstance().blAprilConnection::setStatus
                 );
                 this.backRightCamera = new Camera(
                     new CameraIOPhoton("Back Right"),
                     "Back Right",
                     VisionConstants.backRightMount,
-                    Optional.of(Leds.getInstance().brAprilConnection)
+                    Leds.getInstance().brAprilConnection::setStatus
                 );
                 this.driverCamera = new Camera(
                     new CameraIOPhoton("Driver Cam"),
                     "Driver Cam",
                     VisionConstants.driveCamMount,
-                    Optional.empty()
+                    (connected) -> {}
                 );
                 this.questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOQuest3S(), Leds.getInstance().questNavConnection);
                 this.objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
@@ -207,31 +206,31 @@ public class RobotContainer {
                     new CameraIO() {},
                     "Front Left",
                     VisionConstants.frontLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection)
+                    Leds.getInstance().flAprilConnection::setStatus
                 );
                 this.frontRightCamera = new Camera(
                     new CameraIO() {},
                     "Front Right",
                     VisionConstants.frontRightMount,
-                    Optional.of(Leds.getInstance().frAprilConnection)
+                    Leds.getInstance().frAprilConnection::setStatus
                 );
                 this.backLeftCamera = new Camera(
                     new CameraIO() {},
                     "Back Left",
                     VisionConstants.backLeftMount,
-                    Optional.of(Leds.getInstance().blAprilConnection)
+                    Leds.getInstance().blAprilConnection::setStatus
                 );
                 this.backRightCamera = new Camera(
                     new CameraIO() {},
                     "Back Right",
                     VisionConstants.backRightMount,
-                    Optional.of(Leds.getInstance().brAprilConnection)
+                    Leds.getInstance().brAprilConnection::setStatus
                 );
                 this.driverCamera = new Camera(
                     new CameraIO() {},
                     "Driver Cam",
                     VisionConstants.driveCamMount,
-                    Optional.empty()
+                    (connected) -> {}
                 );
                 this.questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIOSim(), Leds.getInstance().questNavConnection);
                 this.objectiveTracker = new ObjectiveTracker(new ReefTrackerIOServer());
@@ -256,31 +255,31 @@ public class RobotContainer {
                     new CameraIO() {},
                     "Front Left",
                     VisionConstants.frontLeftMount,
-                    Optional.of(Leds.getInstance().flAprilConnection)
+                    Leds.getInstance().flAprilConnection::setStatus
                 );
                 this.frontRightCamera = new Camera(
                     new CameraIO() {},
                     "Front Right",
                     VisionConstants.frontRightMount,
-                    Optional.of(Leds.getInstance().frAprilConnection)
+                    Leds.getInstance().frAprilConnection::setStatus
                 );
                 this.backLeftCamera = new Camera(
                     new CameraIO() {},
                     "Back Left",
                     VisionConstants.backLeftMount,
-                    Optional.of(Leds.getInstance().blAprilConnection)
+                    Leds.getInstance().blAprilConnection::setStatus
                 );
                 this.backRightCamera = new Camera(
                     new CameraIO() {},
                     "Back Right",
                     VisionConstants.backRightMount,
-                    Optional.of(Leds.getInstance().brAprilConnection)
+                    Leds.getInstance().brAprilConnection::setStatus
                 );
                 this.driverCamera = new Camera(
                     new CameraIO() {},
                     "Driver Cam",
                     VisionConstants.driveCamMount,
-                    Optional.empty()
+                    (connected) -> {}
                 );
                 this.questNav = new QuestNav(QuestNavConstants.metaQuest3S, new QuestNavIO() {}, Leds.getInstance().questNavConnection);
                 this.objectiveTracker = new ObjectiveTracker(new ReefTrackerIO() {});
