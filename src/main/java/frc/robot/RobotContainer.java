@@ -398,6 +398,11 @@ public class RobotContainer {
         this.intake.setDefaultCommand(this.intake.idle());
         this.climber.setDefaultCommand(this.climber.idle());
 
+        this.frontLeftCamera.setDefaultCommand(this.frontLeftCamera.setPipelineIndex(0));
+        this.frontRightCamera.setDefaultCommand(this.frontRightCamera.setPipelineIndex(0));
+        this.backLeftCamera.setDefaultCommand(this.backLeftCamera.setPipelineIndex(0));
+        this.backRightCamera.setDefaultCommand(this.backRightCamera.setPipelineIndex(0));
+
         driveController.povUp().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(1)));
         driveController.povDown().onTrue(Commands.runOnce(() -> objectiveTracker.shiftLevelLock(-1)));
         driveController.povLeft().onTrue(Commands.runOnce(() -> objectiveTracker.shiftPipeLock(-1)));
