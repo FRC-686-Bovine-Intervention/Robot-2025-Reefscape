@@ -36,8 +36,8 @@ public class ApriltagVision {
     public void periodic() {
         for (var pipeline : this.pipelines) {
             var frames = pipeline.getFrames();
-            var loggingKey = "Vision/Apriltags/Results/" + pipeline.camera;
-            var tracingKey = "VirtualSubsystem Periodic/ApriltagVision/Process Results/" + pipeline.camera;
+            var loggingKey = "Vision/Apriltags/Results/" + pipeline.name;
+            var tracingKey = "CommandScheduler Periodic/ApriltagVision/Process Results/" + pipeline.name;
             var akitPose3d = new Pose3d[0];
             var akitTargetCorners = new Translation2d[0];
             for (var frame : frames) {
@@ -181,6 +181,7 @@ public class ApriltagVision {
             Logger.recordOutput(loggingKey + "/Frame Count", frames.length);
             LoggedTracer.logEpoch(tracingKey);
         }
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/ApriltagVision/Process Results");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Process Results");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision");
     }
 }

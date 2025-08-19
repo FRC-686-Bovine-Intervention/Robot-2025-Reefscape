@@ -19,6 +19,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -125,44 +126,51 @@ public class Robot extends LoggedRobot {
 
         SmartDashboard.putData("Command Scheduler", CommandScheduler.getInstance());
         Perspective.getCurrent();
+
+        final var activeButtonLoop = new EventLoop();
+        activeButtonLoop.bind(() -> {
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem");
+
+            GameState.getInstance().periodic();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/GameState Periodic");
+
+            VirtualSubsystem.periodicAll();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic");
+
+            this.robotContainer.apriltagVision.periodic();
+
+            RobotState.getInstance().log();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/RobotState Log");
+
+            Mechanism3d.logAscopeComponents();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Mechanism3d LogAscopeComponents");
+
+            Mechanism3d.logAscopeAxes();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Mechanism3d LogAscopeAxes");
+            
+            this.robotContainer.intake.coralPose.logAscopePose("Gamepiece/Coral", this.robotContainer.intake.hasCoral.getAsBoolean());
+            this.robotContainer.intake.coralPose.logAscopePose("Gamepiece/Algae", this.robotContainer.intake.hasAlgae.getAsBoolean());
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Log Intake Gamepieces");
+
+            this.robotContainer.automationsLoop.poll();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Automations");
+
+            CommandScheduler.getInstance().getDefaultButtonLoop().poll();
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Triggers");
+        });
+        CommandScheduler.getInstance().setActiveButtonLoop(activeButtonLoop);
     }
 
     @Override
     public void robotPeriodic() {
         LoggedTracer.reset();
 
-        GameState.getInstance().periodic();
-        LoggedTracer.logEpoch("GameState Periodic");
-
-        VirtualSubsystem.periodicAll();
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic");
-
-        this.robotContainer.objectiveTracker.determineGoal(this.robotContainer.drive.getPose(), this.robotContainer.intake.hasCoral.getAsBoolean(), this.robotContainer.intake.hasAlgae.getAsBoolean());
-        LoggedTracer.logEpoch("ObjectiveTracker DetermineGoal");
-
         CommandScheduler.getInstance().run();
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Commands");
         LoggedTracer.logEpoch("CommandScheduler Periodic");
-
-        this.robotContainer.drive.setTiltLimits(
-            (this.robotContainer.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
-                Drive.extendedTiltLimitTunable.get()
-            ) : (
-                Drive.normalTiltLimitTunable.get()
-            )
-        );
-        LoggedTracer.logEpoch("Set Drive Tilt Limits");
 
         VirtualSubsystem.postCommandPeriodicAll();
         LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic");
-
-        RobotState.getInstance().log();
-        LoggedTracer.logEpoch("RobotState Log");
-
-        Mechanism3d.logAscopeComponents();
-        LoggedTracer.logEpoch("Mechanism3d LogAscopeComponents");
-
-        Mechanism3d.logAscopeAxes();
-        LoggedTracer.logEpoch("Mechanism3d LogAscopeAxes");
     }
 
     @Override

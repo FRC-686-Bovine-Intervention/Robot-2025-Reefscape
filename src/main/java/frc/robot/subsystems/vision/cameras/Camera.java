@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.cameras.CameraIO.CameraFrame;
 import frc.robot.subsystems.vision.cameras.CameraIO.CameraIOInputs;
+import frc.util.LoggedTracer;
 import frc.util.robotStructure.CameraMount;
 
 public class Camera extends SubsystemBase {
@@ -37,9 +38,11 @@ public class Camera extends SubsystemBase {
     public void periodic() {
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Cameras/" + this.name, this.inputs);
-
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name + "/Process Inputs");
+        
         this.disconnectedAlert.set(!this.inputs.isConnected);
         this.connectionCallback.accept(this.inputs.isConnected);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name);
     }
 
     public CameraFrame[] getPipelineFrames(int pipelineIndex) {
@@ -61,5 +64,10 @@ public class Camera extends SubsystemBase {
                 io.setPipeline(pipelineIndex);
             }
         };
+    }
+
+    @Override
+    public String toString() {
+        return this.name;
     }
 }

@@ -81,25 +81,6 @@ public class Intake extends SubsystemBase {
 
         Logger.recordOutput("Intake/hasgamepiece", hasGamepiece);
 
-        Logger.recordOutput("Gamepiece/Coral",
-            (hasCoral.getAsBoolean()) ? (
-                new Pose3d[]{
-                    coralPose.getFieldRelative()
-                }
-            ) : (
-                new Pose3d[]{}
-            )
-        );
-        Logger.recordOutput("Gamepiece/Algae",
-            (hasAlgae.getAsBoolean()) ? (
-                new Pose3d[]{
-                    algaePose.getFieldRelative()
-                }
-            ) : (
-                new Pose3d[]{}
-            )
-        );
-
         this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
         this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);

@@ -58,7 +58,7 @@ public class QuestNav extends VirtualSubsystem {
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("Inputs/QuestNav/" + camMeta.hardwareName, inputs);
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/QuestNav/Process Inputs");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav/Process Inputs");
 
         io.cleanUp();
 
@@ -85,6 +85,7 @@ public class QuestNav extends VirtualSubsystem {
         Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
         Logger.recordOutput("QuestNav/AverageRobotPose", getAverageRobotPose());
         Logger.recordOutput("QuestNav/Calibration In Progress", calibrationInProgress);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav");
     }
 
     public void setPose(Pose2d pose) {

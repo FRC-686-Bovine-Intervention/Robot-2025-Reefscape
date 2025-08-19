@@ -171,13 +171,13 @@ public class Drive extends VirtualSubsystem {
     public void periodic() {
         this.gyroIO.updateInputs(this.gyroInputs);
         Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
 
         for (var module : modules) {
             module.periodic();
-            LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + module.config.name);
+            LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + module.config.name);
         }
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic");
 
         this.measuredStates = Arrays.stream(this.modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
         Logger.recordOutput("Drive/Swerve States/Measured", this.measuredStates);
@@ -232,7 +232,8 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Swerve States/Setpoints", emptyStates);
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", emptyStates);
 
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Clear Log Fields");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Clear Log Fields");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive");
     }
 
     public void postCommandPeriodic() {
@@ -245,6 +246,7 @@ public class Drive extends VirtualSubsystem {
         if (this.translationSubsystem.needsPostProcessing || this.rotationalSubsystem.needsPostProcessing) {
             this.runRobotSpeeds(this.desiredRobotSpeeds);
         }
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive");
     }
 
     public void runSetpoints(SwerveModuleState... states) {

@@ -128,7 +128,7 @@ public class Module {
 
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Drive/Module " + this.config.name, this.inputs);
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
 
         this.angle = this.config.moduleForwardDirection.plus(new Rotation2d(this.inputs.azimuthEncoder.position));
         this.moduleState.angle = this.angle;

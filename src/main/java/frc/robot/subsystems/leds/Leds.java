@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
+import frc.util.LoggedTracer;
 import frc.util.VirtualSubsystem;
 import frc.util.led.animation.AllianceColorAnimation;
 import frc.util.led.animation.AutonomousFinishedAnimation;
@@ -141,6 +142,7 @@ public class Leds extends VirtualSubsystem {
     public void periodic() {
         driverStationConnection.setStatus(DriverStation.isDSAttached());
         estopped.setFlag(DriverStation.isEStopped());
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Leds");
     }
 
     @Override
@@ -187,5 +189,6 @@ public class Leds extends VirtualSubsystem {
 
         //TODO: End game notification
         hardwareStrip.refresh();
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Leds");
     }
 }

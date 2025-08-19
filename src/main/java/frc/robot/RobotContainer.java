@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -99,6 +100,7 @@ import frc.robot.subsystems.vision.questnav.QuestNavIOQuest3S;
 import frc.robot.subsystems.vision.questnav.QuestNavIOSim;
 import frc.util.EdgeDetector;
 import frc.util.Environment;
+import frc.util.LoggedTracer;
 import frc.util.Perspective;
 import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
@@ -127,6 +129,9 @@ public class RobotContainer {
     public final Camera backRightCamera;
     public final Camera driverCamera;
     public final ApriltagVision apriltagVision;
+
+    // Event Loops
+    public final EventLoop automationsLoop = new EventLoop();
 
     // Controllers
     private final XboxController driveController = new XboxController(0);
@@ -630,7 +635,23 @@ public class RobotContainer {
 
         SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
 
-        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+        this.automationsLoop.bind(() -> {
+            this.objectiveTracker.determineGoal(this.drive.getPose(), this.intake.hasCoral.getAsBoolean(), this.intake.hasAlgae.getAsBoolean());
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/ObjectiveTracker DetermineGoal");
+        });
+
+        this.automationsLoop.bind(() -> {
+            this.drive.setTiltLimits(
+                (this.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
+                    Drive.extendedTiltLimitTunable.get()
+                ) : (
+                    Drive.normalTiltLimitTunable.get()
+                )
+            );
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Tilt Limits");
+        });
+
+        this.automationsLoop.bind(new Runnable() {
             private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
             private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
             private static final LoggedTunableMeasure<AngleUnit> l4WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Wrist Tolerance", Degrees.of(5));
@@ -659,7 +680,10 @@ public class RobotContainer {
             @Override
             public void run() {
                 this.coralEdgeDetector.update(intake.hasCoral.getAsBoolean());
-                if (manualOverrides.selfRecordCoralDisabled()) {return;}
+                if (manualOverrides.selfRecordCoralDisabled()) {
+                    LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Coral");
+                    return;
+                }
 
                 if (this.coralEdgeDetector.fallingEdge()) {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
@@ -711,9 +735,10 @@ public class RobotContainer {
                         objectiveTracker.placeCoral(scoreCoralObjective.getTargetBranch());
                     }
                 }
+                LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Coral");
             }
         });
-        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+        this.automationsLoop.bind(new Runnable() {
             private static final LoggedTunableMeasure<AngleUnit> lowPivotTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Pivot Tolerance", Degrees.of(5));
             private static final LoggedTunableMeasure<DistanceUnit> lowElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Elevator Tolerance", Inches.of(4));
             private static final LoggedTunableMeasure<AngleUnit> lowWristTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Wrist Tolerance", Degrees.of(15));
@@ -730,7 +755,10 @@ public class RobotContainer {
             @Override
             public void run() {
                 this.algaeEdgeDetector.update(intake.hasAlgae.getAsBoolean());
-                if (manualOverrides.selfRecordAlgaeDisabled()) {return;}
+                if (manualOverrides.selfRecordAlgaeDisabled()) {
+                    LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Algae");
+                    return;
+                }
 
                 if (this.algaeEdgeDetector.risingEdge()) {
                     var intakeAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
@@ -768,10 +796,11 @@ public class RobotContainer {
                         objectiveTracker.removeAlgae(intakeAlgaeObjective.get().getTargetAlgae());
                     }
                 }
+                LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Algae");
             }
         });
 
-        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+        this.automationsLoop.bind(new Runnable() {
             private static final LoggedTunableMeasure<AngleUnit> autoEjectPivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Pivot Tolerance", Degrees.of(2));
             private static final LoggedTunableMeasure<DistanceUnit> autoEjectElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Elevator Tolerance", Inches.of(2));
             private static final LoggedTunableMeasure<AngleUnit> autoEjectWristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/Superstructure/Wrist Tolerance", Degrees.of(5));
@@ -817,6 +846,7 @@ public class RobotContainer {
                         ejectL1.cancel();
                     }
                 }
+                LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Auto Eject Coral");
             }
         });
     }
