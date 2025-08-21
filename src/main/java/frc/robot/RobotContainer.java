@@ -591,41 +591,42 @@ public class RobotContainer {
             )
         );
 
-        var selfRightCommand = this.superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
-        // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
-        CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
-            private boolean prevSelfRight = true;
-            // private boolean prevprepare = true;
-            public void run() {
-                var selfRightButton = driveController.hid.getPOV() == 0;
-                // var prepare = driveController.hid.getPOV() == 90;
-                var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
-                Leds.getInstance().tipped.setFlag(tipped);
-                if (selfRightButton && !this.prevSelfRight) {
-                    if (selfRightCommand.isScheduled()) {
-                        selfRightCommand.cancel();
-                    } else {
-                        if (tipped) {
-                            selfRightCommand.schedule();
-                        }
-                    }
-                }
-                if (selfRightCommand.isScheduled() && !tipped) {
-                    selfRightCommand.cancel();
-                }
-                // if (prepare && !prevprepare) {
-                //     if (prepareSelfRightCommand.isScheduled()) {
-                //         prepareSelfRightCommand.cancel();
-                //     } else {
-                //         // if (tipped) {
-                //             prepareSelfRightCommand.schedule();
-                //         // }
-                //     }
-                // }
-                this.prevSelfRight = selfRightButton;
-                // prevprepare = prepare;
-            }
-        });
+        // TODO: REIMPLEMENT SELF RIGHT WITH PROPER GYRO INTERFACE
+        // var selfRightCommand = this.superstructure.goToSetpointSequenced(SuperstructureConstants.selfRightingState);
+        // // var prepareSelfRightCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.prepareSelfRightingState);
+        // CommandScheduler.getInstance().getDefaultButtonLoop().bind(new Runnable() {
+        //     private boolean prevSelfRight = true;
+        //     // private boolean prevprepare = true;
+        //     public void run() {
+        //         var selfRightButton = driveController.hid.getPOV() == 0;
+        //         // var prepare = driveController.hid.getPOV() == 90;
+        //         var tipped = !MeasureUtil.isNear(Degrees.of(0), drive.getPitch(), Degrees.of(45));
+        //         Leds.getInstance().tipped.setFlag(tipped);
+        //         if (selfRightButton && !this.prevSelfRight) {
+        //             if (selfRightCommand.isScheduled()) {
+        //                 selfRightCommand.cancel();
+        //             } else {
+        //                 if (tipped) {
+        //                     selfRightCommand.schedule();
+        //                 }
+        //             }
+        //         }
+        //         if (selfRightCommand.isScheduled() && !tipped) {
+        //             selfRightCommand.cancel();
+        //         }
+        //         // if (prepare && !prevprepare) {
+        //         //     if (prepareSelfRightCommand.isScheduled()) {
+        //         //         prepareSelfRightCommand.cancel();
+        //         //     } else {
+        //         //         // if (tipped) {
+        //         //             prepareSelfRightCommand.schedule();
+        //         //         // }
+        //         //     }
+        //         // }
+        //         this.prevSelfRight = selfRightButton;
+        //         // prevprepare = prepare;
+        //     }
+        // });
         
         driveController.leftStickButton().and(driveController.rightStickButton()).onTrue(Commands.runOnce(() -> this.setPose(Reef.reefs.getOurs().racks[0].centerRobotPose.getForward())).ignoringDisable(true));
         // new Trigger(() -> apriltagVision.getPose().xyStdDev() < .5)

@@ -51,7 +51,7 @@ public class AutoCommons {
     }
 
     public static Command setOdometryFlipped(AllianceFlipped<Pose2d> pose, Drive drive) {
-        return Commands.runOnce(() -> RobotState.getInstance().setPose(drive.getGyroRotation(), drive.getModulePositions(), pose.getOurs()));
+        return Commands.runOnce(() -> RobotState.getInstance().setPose(drive.getRotation(), drive.getModulePositions(), pose.getOurs()));
     }
 
     // public static Command followPathFlipped(PathPlannerPath path, Drive drive) {

@@ -23,6 +23,9 @@ public interface ModuleIO {
         public LoggedEncoder azimuthEncoder = new LoggedEncoder();
         public LoggedFaults driveMotorFaults = new LoggedFaults();
         public LoggedFaults azimuthMotorFaults = new LoggedFaults();
+
+        public double[] odometryDriveRads = new double[0];
+        public double[] odometryAzimuthRads = new double[0];
     }
 
     /** Updates the set of loggable inputs. */

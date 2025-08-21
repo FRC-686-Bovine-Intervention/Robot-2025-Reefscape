@@ -46,20 +46,20 @@ public class WheelRadiusCalibration extends Command {
 
     @Override
     public void initialize() {
-        totalTimer.restart();
-        prevYaw.mut_replace(drive.getYaw());
-        totalYaw.mut_replace(Radians.zero());
-        initialPositions = Arrays.stream(drive.modules).map(Module::getWheelAngularPosition).map(Angle::copy).toArray(Angle[]::new);
+        this.totalTimer.restart();
+        this.prevYaw.mut_replace(this.drive.getRotation().getMeasure());
+        this.totalYaw.mut_replace(Radians.zero());
+        initialPositions = Arrays.stream(this.drive.modules).map(Module::getWheelAngularPosition).map(Angle::copy).toArray(Angle[]::new);
     }
 
     @Override
     public void execute() {
-        var yaw = drive.getYaw();
-        var yawDiff = yaw.minus(prevYaw).in(Radians);
+        var yaw = this.drive.getRotation().getMeasure();
+        var yawDiff = yaw.minus(this.prevYaw).in(Radians);
         var wrappedDiff = MathUtil.angleModulus(yawDiff);
-        totalYaw.mut_acc(wrappedDiff);
+        this.totalYaw.mut_acc(wrappedDiff);
 
-        prevYaw.mut_replace(yaw);
+        this.prevYaw.mut_replace(yaw);
 
         var averageWheelRadians = IntStream.range(0, drive.modules.length)
             .mapToDouble((i) -> drive.modules[i].getWheelAngularPosition().minus(initialPositions[i]).in(Radians))

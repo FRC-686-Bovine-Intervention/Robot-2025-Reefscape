@@ -61,14 +61,13 @@ public class Module {
 
     // private static final LoggedTunableMeasure<DistanceUnit> wheelRadius = new LoggedTunableMeasure<>("Drive/Module/WheelRadius", DriveConstants.wheelRadius, Inches);
     
-    private Rotation2d angle = Rotation2d.kZero;
     private final MutAngle wheelAngularPosition = Radians.mutable(0);
     private final MutAngularVelocity wheelAngularVelocity = RadiansPerSecond.mutable(0);
     private final MutDistance wheelLinearPosition = Meters.mutable(0);
     private final MutLinearVelocity wheelLinearVelocity = MetersPerSecond.mutable(0);
     private final SwerveModuleState moduleState = new SwerveModuleState();
     private final SwerveModulePosition modulePosition = new SwerveModulePosition();
-    private final SwerveModulePosition prevModulePosition = new SwerveModulePosition();
+    private SwerveModulePosition[] modulePositions = new SwerveModulePosition[0];
 
     private static final LoggedTunableMeasure<CurrentUnit> currentSpikeThreshold = new LoggedTunableMeasure<>("Drive/Current Spike Threshold", Amps.of(0)); 
     private static final LoggedTunableMeasure<TimeUnit> currentSpikeTime = new LoggedTunableMeasure<>("Drive/Current Spike Time", Seconds.of(0));
@@ -123,24 +122,32 @@ public class Module {
 
     /** Updates inputs and checks tunable numbers. */
     public void periodic() {
-        this.prevModulePosition.distanceMeters = this.modulePosition.distanceMeters;
-        this.prevModulePosition.angle = this.modulePosition.angle;
-
         this.io.updateInputs(this.inputs);
         Logger.processInputs("Inputs/Drive/Module " + this.config.name, this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name + "/Process Inputs");
 
-        this.angle = this.config.moduleForwardDirection.plus(new Rotation2d(this.inputs.azimuthEncoder.position));
-        this.moduleState.angle = this.angle;
-        this.modulePosition.angle = this.angle;
+        this.modulePositions = new SwerveModulePosition[this.inputs.odometryDriveRads.length];
+        for (int i = 0; i < this.inputs.odometryDriveRads.length; i++) {
+            var angle = this.config.moduleForwardDirection.plus(Rotation2d.fromRadians(
+                DriveConstants.azimuthEncoderToCarriageRatio.applyUnsigned(this.inputs.odometryAzimuthRads[i])
+            ));
+            var distanceMeters = DriveConstants.wheel.radiansToMeters(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.odometryDriveRads[i]));
+            this.modulePositions[i] = new SwerveModulePosition(distanceMeters, angle);
+        }
 
-        this.wheelAngularPosition.mut_replace(DriveConstants.driveRatio.applyUnsigned(this.inputs.driveMotor.encoder.position));
-        this.wheelAngularVelocity.mut_replace(DriveConstants.driveRatio.applyUnsigned(this.inputs.driveMotor.encoder.velocity));
+        var angle = this.config.moduleForwardDirection.plus(new Rotation2d(
+            DriveConstants.azimuthEncoderToCarriageRatio.applyUnsigned(this.inputs.azimuthEncoder.position)
+        ));
+        this.moduleState.angle = angle;
+        this.modulePosition.angle = angle;
+
+        this.wheelAngularPosition.mut_replace(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.driveMotor.encoder.position));
+        this.wheelAngularVelocity.mut_replace(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.driveMotor.encoder.velocity));
         this.wheelLinearPosition.mut_replace(DriveConstants.wheel.angleToDistance(this.wheelAngularPosition));
         this.wheelLinearVelocity.mut_replace(DriveConstants.wheel.angularVelocityToLinearVelocity(this.wheelAngularVelocity));
 
         this.modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
-        this.moduleState.speedMetersPerSecond = wheelLinearVelocity.in(MetersPerSecond);
+        this.moduleState.speedMetersPerSecond = this.wheelLinearVelocity.in(MetersPerSecond);
 
         this.driveCurrentSpikeDetector.update(this.getDriveCurrent());
 
@@ -160,6 +167,8 @@ public class Module {
         this.azimuthMotorStickyFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.stickyFaults);
         this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
         this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
+
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + config.name);
     }
 
     /**
@@ -174,7 +183,7 @@ public class Module {
 
         setpoint.speedMetersPerSecond *= turnSetpoint.minus(this.getAngle()).getCos();
 
-        var velocityRadPerSec = DriveConstants.driveRatio.inverse().applyUnsigned(DriveConstants.wheel.rawLinearToAngular(setpoint.speedMetersPerSecond));
+        var velocityRadPerSec = DriveConstants.driveMotorToWheelRatio.inverse().applyUnsigned(DriveConstants.wheel.metersToRadians(setpoint.speedMetersPerSecond));
 
         var ffout = this.driveFeedforward.calculateWithVelocities(this.wheelLinearVelocity.in(MetersPerSecond), setpoint.speedMetersPerSecond);
 
@@ -201,7 +210,7 @@ public class Module {
 
     /** Returns the current turn angle of the module. */
     public Rotation2d getAngle() {
-        return this.angle;
+        return this.moduleState.angle;
     }
 
     /** Returns the current drive position of the module in radians. */
@@ -234,21 +243,12 @@ public class Module {
         return this.driveCurrentSpikeDetector.hasSpike();
     }
 
-    /** Returns the module position (turn angle and drive position). */
-    public SwerveModulePosition getModulePosition() {
-        return this.modulePosition;
+    public SwerveModulePosition[] getModulePositions() {
+        return this.modulePositions;
     }
 
     /** Returns the module state (turn angle and drive velocity). */
     public SwerveModuleState getModuleState() {
         return this.moduleState;
-    }
-
-    /** Returns change in module position since last tick */
-    public SwerveModulePosition getModulePositionDelta() {
-        return new SwerveModulePosition(
-            this.modulePosition.distanceMeters - this.prevModulePosition.distanceMeters,
-            this.angle
-        );
     }
 }

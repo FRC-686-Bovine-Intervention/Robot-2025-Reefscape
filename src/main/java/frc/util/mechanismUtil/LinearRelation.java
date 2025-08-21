@@ -36,22 +36,22 @@ public class LinearRelation {
         return Meters.of(this.effectiveRadiusMeters);
     }
 
-    public double rawAngularToLinear(double radians) {
+    public double radiansToMeters(double radians) {
         return radians * this.effectiveRadiusMeters;
     }
-    public double rawLinearToAngular(double meters) {
+    public double metersToRadians(double meters) {
         return meters / this.effectiveRadiusMeters;
     }
     public Distance angleToDistance(Measure<AngleUnit> angle) {
-        return Meters.of(rawAngularToLinear(angle.in(Radians)));
+        return Meters.of(this.radiansToMeters(angle.in(Radians)));
     }
     public Angle distanceToAngle(Measure<DistanceUnit> distance) {
-        return Radians.of(rawLinearToAngular(distance.in(Meters)));
+        return Radians.of(this.metersToRadians(distance.in(Meters)));
     }
     public LinearVelocity angularVelocityToLinearVelocity(Measure<AngularVelocityUnit> angularVelocity) {
-        return MetersPerSecond.of(rawAngularToLinear(angularVelocity.in(RadiansPerSecond)));
+        return MetersPerSecond.of(this.radiansToMeters(angularVelocity.in(RadiansPerSecond)));
     }
     public AngularVelocity linearVelocityToAngularVelocity(Measure<LinearVelocityUnit> linearVelocity) {
-        return RadiansPerSecond.of(rawLinearToAngular(linearVelocity.in(MetersPerSecond)));
+        return RadiansPerSecond.of(this.metersToRadians(linearVelocity.in(MetersPerSecond)));
     }
 }
