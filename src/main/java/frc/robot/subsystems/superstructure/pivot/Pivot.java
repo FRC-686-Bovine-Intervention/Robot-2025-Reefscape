@@ -86,7 +86,9 @@ public class Pivot {
     }
 
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Before");
         this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Update Inputs");
         Logger.processInputs("Inputs/Superstructure/Pivot", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Process Inputs");
 
@@ -108,15 +110,17 @@ public class Pivot {
             this.io.configPID(pidConsts.getConstants());
         }
 
-        this.leftMotorActiveFaultsAlert.updateFrom(this.inputs.leftMotorFaults.activeFaults);
-        this.leftMotorStickyFaultsAlert.updateFrom(this.inputs.leftMotorFaults.stickyFaults);
-        this.rightMotorActiveFaultsAlert.updateFrom(this.inputs.rightMotorFaults.activeFaults);
-        this.rightMotorStickyFaultsAlert.updateFrom(this.inputs.rightMotorFaults.stickyFaults);
-        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
-        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
-        this.leftMotorStickyFaultClearer.clear(this.inputs.leftMotorFaults.stickyFaults, this.io::clearLeftMotorStickyFaults, DeviceFaults.allMask);
-        this.rightMotorStickyFaultClearer.clear(this.inputs.rightMotorFaults.stickyFaults, this.io::clearRightMotorStickyFaults, DeviceFaults.allMask);
-        this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+        // this.leftMotorActiveFaultsAlert.updateFrom(this.inputs.leftMotorFaults.activeFaults);
+        // this.leftMotorStickyFaultsAlert.updateFrom(this.inputs.leftMotorFaults.stickyFaults);
+        // this.rightMotorActiveFaultsAlert.updateFrom(this.inputs.rightMotorFaults.activeFaults);
+        // this.rightMotorStickyFaultsAlert.updateFrom(this.inputs.rightMotorFaults.stickyFaults);
+        // this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        // this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
+        // this.leftMotorStickyFaultClearer.clear(this.inputs.leftMotorFaults.stickyFaults, this.io::clearLeftMotorStickyFaults, DeviceFaults.allMask);
+        // this.rightMotorStickyFaultClearer.clear(this.inputs.rightMotorFaults.stickyFaults, this.io::clearRightMotorStickyFaults, DeviceFaults.allMask);
+        // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Periodic");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot");
     }
 
     public Angle getAngle() {

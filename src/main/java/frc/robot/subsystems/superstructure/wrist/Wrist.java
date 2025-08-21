@@ -83,18 +83,20 @@ public class Wrist {
     }
 
     public void periodic() {
-        io.updateInputs(inputs);
-        Logger.processInputs("Inputs/Superstructure/Wrist", inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist/Before");
+        this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist/Update Inputs");
+        Logger.processInputs("Inputs/Superstructure/Wrist", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist/Process Inputs");
-
+        
         this.angle.mut_replace(WristConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position));
         this.velocity.mut_replace(WristConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity));
-
+        
         this.mech.set(this.getAngle());
-
+        
         Logger.recordOutput("Superstructure/Wrist/Angle/Measured", this.getAngle());
         Logger.recordOutput("Superstructure/Wrist/Velocity/Measured", this.getVelocity());
-
+        
         if (profileConsts.hasChanged(hashCode())) {
             this.motionProfile = profileConsts.getTrapezoidProfile();
         }
@@ -104,13 +106,15 @@ public class Wrist {
         if (pidConsts.hasChanged(hashCode())) {
             this.io.configPID(pidConsts.getConstants());
         }
-
-        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
-        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
-        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
-        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
-        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
-        this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+        
+        // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        // this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        // this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
+        // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist/Periodic");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist");
     }
 
     public Angle getAngle() {

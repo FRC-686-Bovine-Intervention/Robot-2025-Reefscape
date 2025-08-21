@@ -140,13 +140,16 @@ public class Leds extends VirtualSubsystem {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Leds/Before");
         driverStationConnection.setStatus(DriverStation.isDSAttached());
         estopped.setFlag(DriverStation.isEStopped());
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Leds/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Leds");
     }
 
     @Override
     public synchronized void postCommandPeriodic() {
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Leds/Before");
         if (skippedFrames < frameSkipAmount) {
             skippedFrames++;
             return;
@@ -189,6 +192,7 @@ public class Leds extends VirtualSubsystem {
 
         //TODO: End game notification
         hardwareStrip.refresh();
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Leds/Periodic");
         LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Leds");
     }
 }

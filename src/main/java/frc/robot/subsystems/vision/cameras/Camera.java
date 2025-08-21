@@ -36,12 +36,15 @@ public class Camera extends SubsystemBase {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name + "/Before");
         this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name + "/Update Inputs");
         Logger.processInputs("Inputs/Cameras/" + this.name, this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name + "/Process Inputs");
         
         this.disconnectedAlert.set(!this.inputs.isConnected);
         this.connectionCallback.accept(this.inputs.isConnected);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name + "/Connection Callback");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Cameras/" + this.name);
     }
 

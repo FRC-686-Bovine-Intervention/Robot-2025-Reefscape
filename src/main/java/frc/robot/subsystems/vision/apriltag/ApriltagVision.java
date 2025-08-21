@@ -38,6 +38,7 @@ public class ApriltagVision {
     }
 
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Before");
         List<VisionObservation> allVisionObservations = new ArrayList<>(this.pipelines.length * 3);
 
         for (var pipeline : this.pipelines) {

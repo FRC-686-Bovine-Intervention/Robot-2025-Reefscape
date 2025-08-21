@@ -686,10 +686,10 @@ public class RobotContainer {
 
         this.automationsLoop.bind(() -> {
             this.objectiveTracker.determineGoal(RobotState.getInstance().getEstimatedGlobalPose(), this.intake.hasCoral.getAsBoolean(), this.intake.hasAlgae.getAsBoolean());
-            LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/ObjectiveTracker DetermineGoal");
         });
 
         this.automationsLoop.bind(() -> {
+            LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Tilt Limits/Before");
             this.drive.setTiltLimits(
                 (this.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
                     Drive.extendedTiltLimitTunable.get()
@@ -729,6 +729,7 @@ public class RobotContainer {
             private final EdgeDetector coralEdgeDetector = new EdgeDetector();
             @Override
             public void run() {
+                LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Coral/Before");
                 this.coralEdgeDetector.update(intake.hasCoral.getAsBoolean());
                 if (manualOverrides.selfRecordCoralDisabled()) {
                     LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Coral");
@@ -805,6 +806,7 @@ public class RobotContainer {
             private final EdgeDetector algaeEdgeDetector = new EdgeDetector();
             @Override
             public void run() {
+                LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Algae/Before");
                 this.algaeEdgeDetector.update(intake.hasAlgae.getAsBoolean());
                 if (manualOverrides.selfRecordAlgaeDisabled()) {
                     LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Algae");

@@ -55,7 +55,9 @@ public class Climber extends SubsystemBase {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Before");
         this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Update Inputs");
         Logger.processInputs("Inputs/Climber", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Process Inputs");
 
@@ -68,9 +70,10 @@ public class Climber extends SubsystemBase {
 
         Leds.getInstance().climbing.setPos(getAngle().div(climbAngle.get()).baseUnitMagnitude());
 
-        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
-        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
-        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber");
     }
 

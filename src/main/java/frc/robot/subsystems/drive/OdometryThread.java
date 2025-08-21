@@ -69,6 +69,7 @@ public class OdometryThread extends Thread {
     private static record PhoenixSignal<T>(StatusSignal<T> statusSignal, Queue<T> queue) implements Signal<T> {
         @Override
         public void poll() {
+            this.statusSignal.refresh();
             this.queue.offer(this.statusSignal.getValue());
         }
 

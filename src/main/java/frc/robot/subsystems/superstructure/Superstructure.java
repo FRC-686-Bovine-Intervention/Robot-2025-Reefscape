@@ -147,15 +147,10 @@ public class Superstructure extends SubsystemBase {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Before");
         this.pivot.periodic();
-        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot");
-
         this.elevator.periodic();
-        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator");
-
         this.wrist.periodic();
-        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist");
-
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure");
     }
 

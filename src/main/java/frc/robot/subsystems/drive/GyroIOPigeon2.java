@@ -46,7 +46,6 @@ public class GyroIOPigeon2 implements GyroIO {
             this.pigeon.getQuatY(),
             this.pigeon.getQuatZ()
         );
-        this.pigeon.setYaw(0);
 
         this.quatWQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatW());
         this.quatXQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatX());
@@ -54,6 +53,7 @@ public class GyroIOPigeon2 implements GyroIO {
         this.quatZQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatZ());
     }
 
+    @Override
     public void updateInputs(GyroIOInputs inputs) {
         inputs.connected = this.pigeon.getYaw().getStatus().isOK();
 

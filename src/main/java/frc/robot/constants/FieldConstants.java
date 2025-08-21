@@ -390,9 +390,11 @@ public final class FieldConstants {
             Low(Meters.of(0.909320), Meters.of(0.679337)),
             ;
             public final Distance height;
+            public final Distance radiusFromReefCenter;
             public final Transform3d transform;
             StagedAlgaeLevel(Distance height, Distance radius) {
                 this.height = height;
+                this.radiusFromReefCenter = radius;
                 this.transform = new Transform3d(
                     new Translation3d(
                         radius.unaryMinus(),

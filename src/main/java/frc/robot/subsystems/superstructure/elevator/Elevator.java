@@ -87,12 +87,14 @@ public class Elevator {
     }
 
     public void periodic() {
-        io.updateInputs(inputs);
-        Logger.processInputs("Inputs/Superstructure/Elevator", inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Before");
+        this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Update Inputs");
+        Logger.processInputs("Inputs/Superstructure/Elevator", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Process Inputs");
 
-        this.length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
-        this.velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));
+        this.length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
+        this.velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));
 
         Logger.recordOutput("Superstructure/Elevator/Length/Measured", this.getLength());
         Logger.recordOutput("Superstructure/Elevator/Velocity/Measured", this.getVelocity());
@@ -113,12 +115,14 @@ public class Elevator {
             io.configPID(pidConsts.getConstants());
         }
 
-        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
-        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
-        this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
-        this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
-        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
-        this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+        // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        // this.encoderActiveFaultsAlert.updateFrom(this.inputs.encoderFaults.activeFaults);
+        // this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
+        // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Periodic");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator");
     }
 
     public Distance getLength() {

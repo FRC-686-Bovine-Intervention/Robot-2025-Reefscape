@@ -331,7 +331,9 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/ObjectiveTracker/Before");
         this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/ObjectiveTracker/Update Inputs");
         Logger.processInputs("Inputs/Objective Tracker", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/ObjectiveTracker/Process Inputs");
 
@@ -452,6 +454,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         
         Logger.recordOutput("Objective Tracker/Priorities/Strategy/Full", this.fullStrategy.toArray(Priority[]::new));
         Logger.recordOutput("Objective Tracker/Priorities/Strategy/Uncomplete", this.uncompletedPriorities.toArray(Priority[]::new));
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/ObjectiveTracker/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/ObjectiveTracker");
     }
 
@@ -517,6 +520,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
     }
 
     public void determineGoal(Pose2d currentPose, boolean hasCoral, boolean hasAlgae) {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/ObjectiveTracker DetermineGoal/Before");
         Comparator<Objective> closestToCurrentTranslation = (a,b) -> Double.compare(
             currentPose.getTranslation().getDistance(a.getTargetPose().getOurs().getTranslation()),
             currentPose.getTranslation().getDistance(b.getTargetPose().getOurs().getTranslation())
@@ -743,6 +747,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
             };
         }
         LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/ObjectiveTracker DetermineGoal/Determine Current Objective");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/ObjectiveTracker DetermineGoal");
     }
 
     public IntakeCoralObjective getIntakeCoralObjective() {

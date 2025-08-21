@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.LoggedTracer;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.robotStructure.GamepiecePose;
@@ -62,16 +61,18 @@ public class Intake extends SubsystemBase {
     private final Debouncer debouncer = new Debouncer(1, DebounceType.kRising);
     @Override
     public void periodic() {
-        io.updateInputs(inputs);
-        Logger.processInputs("Inputs/Intake", inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake/Before");
+        this.io.updateInputs(this.inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake/Update Inputs");
+        Logger.processInputs("Inputs/Intake", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake/Process Inputs");
 
         if (gamepieceDetectTime.hasChanged(hashCode())) {
-            debouncer.setDebounceTime(gamepieceDetectTime.get().in(Seconds));
+            this.debouncer.setDebounceTime(gamepieceDetectTime.get().in(Seconds));
         }
-        var second = debouncer.calculate(inputs.coralSensor);
-        if (inputs.coralSensor) {
-            if (inputs.motor.statorCurrent.gt(gamepieceDetectCurrent.get()) || second) {
+        var second = this.debouncer.calculate(this.inputs.coralSensor);
+        if (this.inputs.coralSensor) {
+            if (this.inputs.motor.statorCurrent.gt(gamepieceDetectCurrent.get()) || second) {
                 hasGamepiece = true;
             }
         } else {
@@ -80,9 +81,10 @@ public class Intake extends SubsystemBase {
 
         Logger.recordOutput("Intake/hasgamepiece", hasGamepiece);
 
-        this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
-        this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
-        this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
+        // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
+        // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake");
     }
 

@@ -176,14 +176,18 @@ public class Drive extends VirtualSubsystem {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Before");
         OdometryThread.getInstance().odometryLock.lock();
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Acquire Odometry Lock");
 
         this.odometryTimestamps.timestamps = this.odometryTimestampQueue.stream().mapToDouble(Double::doubleValue).toArray();
+        this.odometryTimestampQueue.clear();
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Update Timestamp Inputs");
         Logger.processInputs("Inputs/Drive/Timestamps", this.odometryTimestamps);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Timestamp Inputs");
 
         this.gyroIO.updateInputs(this.gyroInputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Update Gyro Inputs");
         Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
 
@@ -268,6 +272,7 @@ public class Drive extends VirtualSubsystem {
     }
 
     public void postCommandPeriodic() {
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive/Before");
         // if (DriverStation.isDisabled()) {
         //     // TODO: UNCOMMENT IF DRIVE MOVES WITH NO COMMAND AFTER ENABLE
         //     // for (var module : modules) {
@@ -277,6 +282,7 @@ public class Drive extends VirtualSubsystem {
         if (this.translationSubsystem.needsPostProcessing || this.rotationalSubsystem.needsPostProcessing) {
             this.runRobotSpeeds(this.desiredRobotSpeeds);
         }
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive/Periodic");
         LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive");
     }
 
