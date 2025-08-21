@@ -15,7 +15,7 @@ public class IntakeIOSim extends IntakeIOFalcon {
     public void updateInputs(IntakeIOInputs inputs) {
         // super.updateInputs(inputs);
         inputs.coralSensor = coralSim.getAsBoolean();
-        inputs.coralSensor = true;
+        // inputs.coralSensor = true;
         inputs.algaeSensor = algaeSim.getAsBoolean();
     }
 }

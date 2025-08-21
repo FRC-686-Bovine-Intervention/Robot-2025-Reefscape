@@ -10,7 +10,6 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.TimeUnit;
@@ -80,25 +79,6 @@ public class Intake extends SubsystemBase {
         }
 
         Logger.recordOutput("Intake/hasgamepiece", hasGamepiece);
-
-        Logger.recordOutput("Gamepiece/Coral",
-            (hasCoral.getAsBoolean()) ? (
-                new Pose3d[]{
-                    coralPose.getFieldRelative()
-                }
-            ) : (
-                new Pose3d[]{}
-            )
-        );
-        Logger.recordOutput("Gamepiece/Algae",
-            (hasAlgae.getAsBoolean()) ? (
-                new Pose3d[]{
-                    algaePose.getFieldRelative()
-                }
-            ) : (
-                new Pose3d[]{}
-            )
-        );
 
         this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);

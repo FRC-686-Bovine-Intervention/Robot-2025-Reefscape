@@ -15,6 +15,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -48,7 +49,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.units.LinearAccelerationUnit;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -59,6 +59,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
+import frc.robot.RobotState.OdometryObservation;
+import frc.robot.RobotType;
+import frc.robot.RobotType.Mode;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
@@ -77,12 +80,15 @@ public class Drive extends VirtualSubsystem {
     public final Set<Subsystem> subsystems;
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-    private Rotation2d gyroAngle = new Rotation2d();
+
+    private final Queue<Double> odometryTimestampQueue;
+    private final OdometryTimestampInputsAutoLogged odometryTimestamps = new OdometryTimestampInputsAutoLogged();
 
     public final Root structureRoot = new Root();
 
     public final Module[] modules = new Module[DriveConstants.moduleConstants.length];
 
+    private SwerveModulePosition[] lastMeasuredPositions = null;
     private SwerveModuleState[] measuredStates = new SwerveModuleState[] {
         new SwerveModuleState(),
         new SwerveModuleState(),
@@ -117,16 +123,15 @@ public class Drive extends VirtualSubsystem {
             this.modules[i] = module;
         }
 
-        Pose2d initialPose = new Pose2d();
-        RobotState.getInstance().initializePoseEstimator(DriveConstants.kinematics, this.getGyroRotation(), this.getModulePositions(), initialPose);
-        this.gyroAngle = getPose().getRotation();
+        this.odometryTimestampQueue = OdometryThread.getInstance().generateTimestampQueue();
+        OdometryThread.getInstance().start();
 
         this.translationSubsystem = new Translational(this);
         this.rotationalSubsystem = new Rotational(this);
         this.subsystems = Set.of(this.translationSubsystem, this.rotationalSubsystem);
         AutoBuilder.configure(
-            this::getPose,
-            this::setPose,
+            RobotState.getInstance()::getEstimatedGlobalPose,
+            RobotState.getInstance()::resetPose,
             this::getRobotMeasuredSpeeds,
             this::runRobotSpeeds,
             autoConfig(),
@@ -168,39 +173,65 @@ public class Drive extends VirtualSubsystem {
 
     private static final SwerveModuleState[] emptyStates = new SwerveModuleState[0];
     private static final ChassisSpeeds emptySpeeds = new ChassisSpeeds();
+
+    @Override
     public void periodic() {
+        OdometryThread.getInstance().odometryLock.lock();
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Acquire Odometry Lock");
+
+        this.odometryTimestamps.timestamps = this.odometryTimestampQueue.stream().mapToDouble(Double::doubleValue).toArray();
+        Logger.processInputs("Inputs/Drive/Timestamps", this.odometryTimestamps);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Timestamp Inputs");
+
         this.gyroIO.updateInputs(this.gyroInputs);
         Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
 
         for (var module : modules) {
             module.periodic();
-            LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic/" + module.config.name);
         }
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Module Periodic");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic");
+
+        OdometryThread.getInstance().odometryLock.unlock();
+
+        var sampleTimestamps = (RobotType.getMode() == Mode.SIM) ? (
+            new double[] {Timer.getTimestamp()}
+        ) : (
+            this.odometryTimestamps.timestamps
+        );
+        for (int sampleI = 0; sampleI < sampleTimestamps.length; sampleI++) {
+            var modulePositions = new SwerveModulePosition[this.modules.length];
+            for (int i = 0; i < this.modules.length; i++) {
+                modulePositions[i] = this.modules[i].getModulePositions()[sampleI];
+            }
+
+            if (this.lastMeasuredPositions != null) {
+                RobotState.getInstance().addOdometryObservation(new OdometryObservation(
+                    sampleTimestamps[sampleI],
+                    (this.gyroInputs.connected) ? (
+                        Optional.of(this.gyroInputs.odometryGyroRotation[sampleI])
+                    ) : (
+                        Optional.empty()
+                    ),
+                    this.lastMeasuredPositions,
+                    modulePositions
+                ));
+            }
+            this.lastMeasuredPositions = modulePositions;
+        }
 
         this.measuredStates = Arrays.stream(this.modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
         Logger.recordOutput("Drive/Swerve States/Measured", this.measuredStates);
 
-        // Update odometry
-        // Update field velocity
         this.robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(this.measuredStates);
         if (this.gyroInputs.connected) {
-            this.gyroAngle = this.getGyroRotation();
             this.robotMeasuredSpeeds.omegaRadiansPerSecond = this.gyroInputs.yawVelocity.in(RadiansPerSecond);
-        } else {
-            // either the gyro is disconnected or we are in a simulation
-            // accumulate a gyro estimate using module kinematics
-            var wheelDeltas = this.getModulePositionDeltas(); // get change in module positions
-            Twist2d twist = DriveConstants.kinematics.toTwist2d(wheelDeltas); // dtheta will be the estimated change in chassis angle
-            this.gyroAngle = gyroAngle.plus(Rotation2d.fromRadians(twist.dtheta));
         }
 
         Logger.recordOutput("Drive/Chassis Speeds/Measured", this.robotMeasuredSpeeds);
-        RobotState.getInstance().addDriveMeasurement(this.gyroAngle, this.getModulePositions());
+        // RobotState.getInstance().addDriveMeasurement(this.gyroAngle, this.getModulePositions());
 
-        this.structureRoot.setPose(this.getPose());
-        this.fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.robotMeasuredSpeeds, this.gyroAngle);
+        // this.fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.robotMeasuredSpeeds, this.gyroAngle);
 
         // Skid Detection
         // SwerveModuleState[] rotationalStates = new SwerveModuleState[DriveConstants.modules.length];
@@ -232,7 +263,8 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Swerve States/Setpoints", emptyStates);
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", emptyStates);
 
-        LoggedTracer.logEpoch("VirtualSubsystem Periodic/Drive/Clear Log Fields");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Clear Log Fields");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive");
     }
 
     public void postCommandPeriodic() {
@@ -245,6 +277,7 @@ public class Drive extends VirtualSubsystem {
         if (this.translationSubsystem.needsPostProcessing || this.rotationalSubsystem.needsPostProcessing) {
             this.runRobotSpeeds(this.desiredRobotSpeeds);
         }
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive");
     }
 
     public void runSetpoints(SwerveModuleState... states) {
@@ -279,7 +312,7 @@ public class Drive extends VirtualSubsystem {
         // Forward Accel Limit
         var maxMeasuredModuleSpeed = Math.hypot(this.robotMeasuredSpeeds.vxMetersPerSecond, this.robotMeasuredSpeeds.vyMetersPerSecond) + Math.abs(this.robotMeasuredSpeeds.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
         var maxDesiredModuleAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond) + Math.abs(limitedAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
-        var forwardAccelLimit = (1 - (maxMeasuredModuleSpeed / DriveConstants.maxModuleSpeed.in(MetersPerSecond))) * forwardAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var forwardAccelLimit = /* (1 - (maxMeasuredModuleSpeed / DriveConstants.maxModuleSpeed.in(MetersPerSecond))) *  */forwardAccelLimitTunable.get().in(MetersPerSecondPerSecond);
         var forwardAccelLimitingFactor = forwardAccelLimit / Math.max(maxDesiredModuleAccel, forwardAccelLimit);
         Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Measured Module Speed", maxMeasuredModuleSpeed);
         Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Desired Module Accel", maxDesiredModuleAccel);
@@ -329,7 +362,7 @@ public class Drive extends VirtualSubsystem {
         this.runSetpoints(this.setpointStates);
     }
     public void runFieldSpeeds(ChassisSpeeds fieldSpeeds) {
-        this.runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, this.getRotation()));
+        this.runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, RobotState.getInstance().getEstimatedGlobalPose().getRotation()));
     }
 
 
@@ -357,7 +390,7 @@ public class Drive extends VirtualSubsystem {
     public Command followBluePath(PathPlannerPath path) {
         return new FollowPathCommand(
             path,
-            this::getPose,
+            RobotState.getInstance()::getEstimatedGlobalPose,
             this::getRobotMeasuredSpeeds,
             this::drivePPVelocity,
             autoConfig(),
@@ -369,7 +402,7 @@ public class Drive extends VirtualSubsystem {
     public Command followExactPath(PathPlannerPath path) {
         return new FollowPathCommand(
             path,
-            this::getPose,
+            RobotState.getInstance()::getEstimatedGlobalPose,
             this::getRobotMeasuredSpeeds,
             this::drivePPVelocity,
             autoConfig(),
@@ -386,7 +419,7 @@ public class Drive extends VirtualSubsystem {
 
     public void setCenterOfRotation(Translation2d cor) {
         this.centerOfRotation = cor;
-        Logger.recordOutput("Drive/Center of Rotation", this.getPose().transformBy(new Transform2d(this.centerOfRotation, Rotation2d.kZero)));
+        Logger.recordOutput("Drive/Center of Rotation", RobotState.getInstance().getEstimatedGlobalPose().transformBy(new Transform2d(this.centerOfRotation, Rotation2d.kZero)));
     }
 
     /** Stops the drive. */
@@ -421,26 +454,6 @@ public class Drive extends VirtualSubsystem {
         return this.fieldVelocity;
     }
 
-    /** Returns the current yaw (Z rotation). */
-    public Rotation2d getGyroRotation() {
-        return this.gyroInputs.rotation.toRotation2d();
-    }
-
-    /** Returns the current yaw (Z rotation). */
-    public Angle getYaw() {
-        return this.gyroInputs.rotation.getMeasureZ();
-    }
-
-    /** Returns the current pitch (Y rotation). */
-    public Angle getPitch() {
-        return this.gyroInputs.rotation.getMeasureY();
-    }
-
-    /** Returns the current roll (X rotation). */
-    public Angle getRoll() {
-        return this.gyroInputs.rotation.getMeasureX();
-    }
-
     /** Returns the current pitch velocity (Y rotation) in radians per second. */
     public AngularVelocity getYawVelocity() {
         return this.gyroInputs.yawVelocity;
@@ -456,30 +469,9 @@ public class Drive extends VirtualSubsystem {
         return this.gyroInputs.rollVelocity;
     }
 
-    /** Returns the current odometry pose. */
-    public Pose2d getPose() {
-        return RobotState.getInstance().getPose();
-    }
-
-    /** Returns the current odometry rotation. */
-    public Rotation2d getRotation() {
-        return this.getPose().getRotation();
-    }
-
-    /** Resets the current odometry pose. */
-    public void setPose(Pose2d newPose) {
-        this.gyroIO.resetYaw(newPose.getRotation().getMeasure());
-        RobotState.getInstance().setPose(this.getGyroRotation(), this.getModulePositions(), newPose);
-    }
-
     /** Returns an array of module positions. */
     public SwerveModulePosition[] getModulePositions() {
-        return Arrays.stream(this.modules).map(Module::getModulePosition).toArray(SwerveModulePosition[]::new);
-    }
-
-    /** Returns an array of module positions. */
-    public SwerveModulePosition[] getModulePositionDeltas() {
-        return Arrays.stream(this.modules).map(Module::getModulePositionDelta).toArray(SwerveModulePosition[]::new);
+        return this.lastMeasuredPositions;
     }
 
     /** Returns the average drive distance in radians */
@@ -583,7 +575,7 @@ public class Drive extends VirtualSubsystem {
                 }
                 @Override
                 public void execute() {
-                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), drive.getRotation()));
+                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), RobotState.getInstance().getEstimatedGlobalPose().getRotation()));
                 }
                 @Override
                 public void end(boolean interrupted) {
@@ -603,8 +595,8 @@ public class Drive extends VirtualSubsystem {
                 @Override
                 public void execute() {
                     var targetPose = target.get();
-                    var distTo = drive.getPose().getTranslation().getDistance(targetPose);
-                    var vec = targetPose.minus(drive.getPose().getTranslation());
+                    var distTo = RobotState.getInstance().getEstimatedGlobalPose().getTranslation().getDistance(targetPose);
+                    var vec = targetPose.minus(RobotState.getInstance().getEstimatedGlobalPose().getTranslation());
                     var norm = vec.div(vec.getNorm());
                     var pterm = distTo * driveKP.getAsDouble();
                     var out = norm.times(pterm);
@@ -614,7 +606,7 @@ public class Drive extends VirtualSubsystem {
                             out.getY(),
                             0
                         ),
-                        drive.getRotation()
+                        RobotState.getInstance().getEstimatedGlobalPose().getRotation()
                     ));
                 }
                 @Override
@@ -671,7 +663,7 @@ public class Drive extends VirtualSubsystem {
                     // Leds.getInstance().defenseSpin.setFlag(true);
                     var joyVec = Perspective.getCurrent().toField(joystick.toVector());
                     var desiredLinear = VecBuilder.fill(drive.desiredRobotSpeeds.vxMetersPerSecond, drive.desiredRobotSpeeds.vyMetersPerSecond);
-                    var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.desiredRobotSpeeds, drive.getRotation());
+                    var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.desiredRobotSpeeds, RobotState.getInstance().getEstimatedGlobalPose().getRotation());
                     var perpendicularLinear = new Vector<N2>(perpendicularMatrix.times(
                         VecBuilder.fill(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond)
                     ));
@@ -735,15 +727,15 @@ public class Drive extends VirtualSubsystem {
                 private boolean headingSet;
                 @Override
                 public void initialize() {
-                    desiredHeading = drive.getPose().getRotation();
-                    headingPID.reset(drive.getRotation().getRadians());
+                    desiredHeading = RobotState.getInstance().getEstimatedGlobalPose().getRotation();
+                    headingPID.reset(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians());
                 }
                 @Override
                 public void execute() {
                     var heading = headingSupplier.get();
                     headingSet = heading.isPresent();
                     heading.ifPresent((r) -> desiredHeading = r);
-                    double turnInput = headingPID.calculate(drive.getRotation().getRadians(), desiredHeading.getRadians());
+                    double turnInput = headingPID.calculate(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians(), desiredHeading.getRadians());
                     turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
                     turnInput = MathUtil.clamp(
                         turnInput, 
@@ -782,12 +774,12 @@ public class Drive extends VirtualSubsystem {
                 }
                 @Override
                 public void initialize() {
-                    headingPID.reset(drive.getRotation().getRadians());
+                    headingPID.reset(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians());
                 }
                 @Override
                 public void execute() {
                     var desiredHeading = headingSupplier.get();
-                    double turnInput = headingPID.calculate(drive.getRotation().getRadians(), desiredHeading.getRadians());
+                    double turnInput = headingPID.calculate(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians(), desiredHeading.getRadians());
                     turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
                     turnInput = MathUtil.clamp(
                         turnInput, 
@@ -843,7 +835,7 @@ public class Drive extends VirtualSubsystem {
         public Command pointTo(Supplier<Optional<Translation2d>> posToPointTo, Supplier<Rotation2d> forward) {
             return pidControlledOptionalHeading(
                 () -> posToPointTo.get().map((pointTo) -> {
-                    var FORR = pointTo.minus(RobotState.getInstance().getPose().getTranslation());
+                    var FORR = pointTo.minus(RobotState.getInstance().getEstimatedGlobalPose().getTranslation());
                     return new Rotation2d(FORR.getX(), FORR.getY()).minus(forward.get());
                 })
             );

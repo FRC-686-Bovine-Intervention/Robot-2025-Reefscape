@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Radians;
 
+import java.util.Optional;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -11,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Algae;
 import frc.robot.constants.FieldConstants.Coral;
+import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
@@ -119,6 +122,19 @@ public class SuperstructureConstants {
         ElevatorConstants.minLengthPhysical,
         Degrees.of(20)
     );
+    public static SuperstructureState getStateForBranchLevel(BranchLevel branchLevel) {
+        return switch (branchLevel) {
+            case Level2 -> l2State;
+            case Level3 -> l3State;
+            case Level4 -> l4State;
+        };
+    }
+    public static SuperstructureState getStateForBranchLevel(Optional<BranchLevel> branchLevel) {
+        if (branchLevel.isEmpty()) {
+            return l1State;
+        }
+        return getStateForBranchLevel(branchLevel.get());
+    }
 
     // Algae Scoring
     public static final SuperstructureState processorState = SuperstructureState.fromParts(

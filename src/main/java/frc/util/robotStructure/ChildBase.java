@@ -24,11 +24,11 @@ public abstract class ChildBase implements Component {
 
     @Override
     public Transform3d getRobotRelative() {
-        return parent.getRobotRelative().plus(base);
+        return this.parent.getRobotRelative().plus(this.base);
     }
 
     @Override
     public Pose3d getFieldRelative() {
-        return parent.getFieldRelative().plus(base);
+        return this.parent.getFieldRelative().plus(this.base);
     }
 }

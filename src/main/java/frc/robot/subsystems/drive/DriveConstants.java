@@ -125,19 +125,18 @@ public final class DriveConstants {
     
     public static final LinearRelation wheel = LinearRelation.wheelRadius(Inches.of(1.53));
 
-    public static final GearRatio driveRatio = new GearRatio()
+    public static final GearRatio driveMotorToWheelRatio = new GearRatio()
         .gear(14).gear(22).axle()
         .gear(15).gear(45).axle()
     ;
-    public static final GearRatio azimuthRatio = new GearRatio()
+    public static final GearRatio azimuthMotorToEncoderRatio = new GearRatio()
         .gear(15).gear(32).axle()
         .gear(10).gear(60).axle()
     ;
-    // // public static final double driveWheelGearReduction = 1.0 / (1.0/4.0);
-    // public static final double driveWheelGearReduction = 5.08;
-    // public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
+    public static final GearRatio azimuthEncoderToCarriageRatio = new GearRatio();
+    public static final GearRatio azimuthMotorToCarriageRatio = azimuthMotorToEncoderRatio.then(azimuthEncoderToCarriageRatio);
 
-    public static final LinearVelocity maxModuleSpeed = wheel.angularVelocityToLinearVelocity(driveRatio.applyUnsigned(RadiansPerSecond.of(DCMotor.getFalcon500(1).freeSpeedRadPerSec)));
+    public static final LinearVelocity maxModuleSpeed = wheel.angularVelocityToLinearVelocity(driveMotorToWheelRatio.applyUnsigned(RadiansPerSecond.of(DCMotor.getFalcon500(1).freeSpeedRadPerSec)));
 
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
@@ -176,7 +175,7 @@ public final class DriveConstants {
             DriveConstants.wheel.effectiveRadius(),
             DriveConstants.maxDriveSpeed,
             1.0,
-            DCMotor.getFalcon500(1).withReduction(driveRatio.reductionUnsigned()),
+            DCMotor.getFalcon500(1).withReduction(driveMotorToWheelRatio.reductionUnsigned()),
             Amps.of(80),
             1
         ),
