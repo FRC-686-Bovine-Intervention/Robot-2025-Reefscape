@@ -31,7 +31,7 @@ public class Camera extends SubsystemBase {
         this.disconnectedAlert = new Alert("Camera \"" + this.name + "\" is not connected", AlertType.kError);
         this.connectionCallback = connectionCallback;
 
-        this.setName("Camera \"" + this.name + "\"");
+        this.setName("Camera/" + this.name);
     }
 
     @Override

@@ -18,6 +18,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.Module;
@@ -47,14 +48,14 @@ public class WheelRadiusCalibration extends Command {
     @Override
     public void initialize() {
         this.totalTimer.restart();
-        this.prevYaw.mut_replace(this.drive.getRotation().getMeasure());
+        this.prevYaw.mut_replace(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getMeasure());
         this.totalYaw.mut_replace(Radians.zero());
         initialPositions = Arrays.stream(this.drive.modules).map(Module::getWheelAngularPosition).map(Angle::copy).toArray(Angle[]::new);
     }
 
     @Override
     public void execute() {
-        var yaw = this.drive.getRotation().getMeasure();
+        var yaw = RobotState.getInstance().getEstimatedGlobalPose().getRotation().getMeasure();
         var yawDiff = yaw.minus(this.prevYaw).in(Radians);
         var wrappedDiff = MathUtil.angleModulus(yawDiff);
         this.totalYaw.mut_acc(wrappedDiff);

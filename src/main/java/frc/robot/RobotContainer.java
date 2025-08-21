@@ -389,12 +389,12 @@ public class RobotContainer {
                         robotSpeeds.omegaRadiansPerSecond
                     );
                 }
-                this.drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, this.drive.getRotation()).plus(robotSpeeds));
+                this.drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, RobotState.getInstance().getEstimatedGlobalPose().getRotation()).plus(robotSpeeds));
             })
             .withName("Driver Control Field Relative")
         );
         this.drive.rotationalSubsystem.setDefaultCommand(
-            this.drive.rotationalSubsystem.spin(this.driveController.rightStick.x().smoothDeadband(0.05).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
+            this.drive.rotationalSubsystem.spin(this.driveController.rightStick.x().smoothDeadband(0.1).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
                 .withName("Robot spin")
         );
         new Trigger(DriverStation::isDisabled).and(() -> driveJoystick.magnitude() > 0).whileTrue(drive.coast());
@@ -550,7 +550,7 @@ public class RobotContainer {
             .whileTrue(
                 this.drive.simplePIDTo(
                     () -> AutoScore.getTargetPose(
-                        drive.getPose(),
+                        RobotState.getInstance().getEstimatedGlobalPose(),
                         objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs(),
                         objectiveTracker.getCurrentObjective().get().getObjectiveType().isReefObjective
                     )
@@ -637,7 +637,7 @@ public class RobotContainer {
         SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
 
         this.automationsLoop.bind(() -> {
-            this.objectiveTracker.determineGoal(this.drive.getPose(), this.intake.hasCoral.getAsBoolean(), this.intake.hasAlgae.getAsBoolean());
+            this.objectiveTracker.determineGoal(RobotState.getInstance().getEstimatedGlobalPose(), this.intake.hasCoral.getAsBoolean(), this.intake.hasAlgae.getAsBoolean());
             LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/ObjectiveTracker DetermineGoal");
         });
 
@@ -727,10 +727,10 @@ public class RobotContainer {
                     Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance));
                     Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance));
                     Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance));
-                    Logger.recordOutput("Self Record/Coral/Robot/Linear", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), linearTolerance));
-                    Logger.recordOutput("Self Record/Coral/Robot/Angular", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), angularTolerance));
+                    Logger.recordOutput("Self Record/Coral/Robot/Linear", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance));
+                    Logger.recordOutput("Self Record/Coral/Robot/Angular", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance));
                     if (
-                        GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs(), drive.getPose(), linearTolerance, angularTolerance)
+                        GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs(), RobotState.getInstance().getEstimatedGlobalPose(), linearTolerance, angularTolerance)
                         && superstructure.getCurrentState().isNear(scoreCoralObjective.getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
                     ) {
                         objectiveTracker.placeCoral(scoreCoralObjective.getTargetBranch());
@@ -788,10 +788,10 @@ public class RobotContainer {
                     Logger.recordOutput("Self Record/Algae/Superstructure/Pivot", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance));
                     Logger.recordOutput("Self Record/Algae/Superstructure/Elevator", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance));
                     Logger.recordOutput("Self Record/Algae/Superstructure/Wrist", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance));
-                    Logger.recordOutput("Self Record/Algae/Robot/Linear", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), linearTolerance));
-                    Logger.recordOutput("Self Record/Algae/Robot/Angular", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), angularTolerance));
+                    Logger.recordOutput("Self Record/Algae/Robot/Linear", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance));
+                    Logger.recordOutput("Self Record/Algae/Robot/Angular", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance));
                     if (
-                        GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs(), drive.getPose(), linearTolerance, angularTolerance)
+                        GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs(), RobotState.getInstance().getEstimatedGlobalPose(), linearTolerance, angularTolerance)
                         && superstructure.getCurrentState().isNear(intakeAlgaeObjective.get().getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
                     ) {
                         objectiveTracker.removeAlgae(intakeAlgaeObjective.get().getTargetAlgae());
@@ -820,8 +820,8 @@ public class RobotContainer {
                     var pivotInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, autoEjectPivotTolerance.get());
                     var elevatorInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, autoEjectElevatorTolerance.get());
                     var wristInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, autoEjectWristTolerance.get());
-                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), drive.getPose().getTranslation(), autoEjectLinearTolerance.get());
-                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), drive.getPose().getRotation(), autoEjectAngularTolerance.get());
+                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), autoEjectLinearTolerance.get());
+                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), autoEjectAngularTolerance.get());
                     Logger.recordOutput("Auto Eject/Coral/Superstructure/Pivot", pivotInTolerance);
                     Logger.recordOutput("Auto Eject/Coral/Superstructure/Elevator", elevatorInTolerance);
                     Logger.recordOutput("Auto Eject/Coral/Superstructure/Wrist", wristInTolerance);
@@ -854,7 +854,7 @@ public class RobotContainer {
 
     private void setPose(Pose2d pose) {
         this.questNav.setPose(pose);
-        this.drive.setPose(pose);
+        RobotState.getInstance().resetPose(pose);
     }
 
     private void configureNotifications() {

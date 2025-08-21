@@ -51,7 +51,7 @@ public class AutoCommons {
     }
 
     public static Command setOdometryFlipped(AllianceFlipped<Pose2d> pose, Drive drive) {
-        return Commands.runOnce(() -> RobotState.getInstance().setPose(drive.getRotation(), drive.getModulePositions(), pose.getOurs()));
+        return Commands.runOnce(() -> RobotState.getInstance().resetPose(pose.getOurs()));
     }
 
     // public static Command followPathFlipped(PathPlannerPath path, Drive drive) {
@@ -80,12 +80,12 @@ public class AutoCommons {
             Commands.deadline(
                 Commands.sequence(
                     Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, RobotState.getInstance().getEstimatedGlobalPose(), Inches.of(5), Degrees.of(5))),
                     Commands.waitSeconds(0.25),
                     intake.eject().asProxy().onlyWhile(intake.hasCoral)
                 ),
                 Commands.sequence(
-                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), Feet.of(6))),
                     superstructure.goToSetpointSequenced(targetState).withName("Extend to " + branch.getName()).asProxy()
                 ),
                 Commands.sequence(
@@ -128,7 +128,7 @@ public class AutoCommons {
             Commands.deadline(
                 Commands.sequence(
                     Commands.waitUntil(() -> 
-                        GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
+                        GeomUtil.isNear(netPose, RobotState.getInstance().getEstimatedGlobalPose(), Inches.of(5), Degrees.of(5))
                         && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
                     ),
                     intake.ejectAlgae().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
@@ -144,7 +144,7 @@ public class AutoCommons {
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, RobotState.getInstance().getEstimatedGlobalPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
                     superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
                 )
             )

@@ -67,15 +67,15 @@ public class QuestNav extends VirtualSubsystem {
         connectionAnimation.setStatus(inputs.isConnected);
 
         if (!calibrationInProgress && DriverStation.isDisabled()) {
-            setPose(RobotState.getInstance().getPose());
+            setPose(RobotState.getInstance().getEstimatedGlobalPose());
         } else if (!calibrationInProgress && inputs.isConnected && !isDisabled.get()) {
-            RobotState.getInstance()
-                .addVisionMeasurement(
-                    getRobotPose(),
-                    VecBuilder.fill(xySTDevs.get(), xySTDevs.get(), Double.POSITIVE_INFINITY),
-                    inputs.timestamp
-                )
-            ;
+            // RobotState.getInstance()
+            //     .addVisionObservation(
+            //         getRobotPose(),
+            //         VecBuilder.fill(xySTDevs.get(), xySTDevs.get(), Double.POSITIVE_INFINITY),
+            //         inputs.timestamp
+            //     )
+            // ;
         }
 
         rollingAvg.addPose(getRobotPose());

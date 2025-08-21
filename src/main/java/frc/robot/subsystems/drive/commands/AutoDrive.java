@@ -9,6 +9,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.util.geometry.GeomUtil;
 
@@ -31,7 +32,7 @@ public class AutoDrive {
 
             @Override
             public void execute() {
-                var currentPose = drive.getPose();
+                var currentPose = RobotState.getInstance().getEstimatedGlobalPose();
                 var xOut = xController.calculate(currentPose.getX(), pose.getX());
                 var yOut = yController.calculate(currentPose.getY(), pose.getY());
                 var thetaOut = thetaController.calculate(currentPose.getRotation().minus(pose.getRotation()).getRadians(), 0);
@@ -50,6 +51,6 @@ public class AutoDrive {
         };
     }
     public static BooleanSupplier withinTolerance(Pose2d pose, Drive drive) {
-        return () -> GeomUtil.isNear(pose, drive.getPose(), Centimeters.of(2), Degrees.of(10));
+        return () -> GeomUtil.isNear(pose, RobotState.getInstance().getEstimatedGlobalPose(), Centimeters.of(2), Degrees.of(10));
     }
 }

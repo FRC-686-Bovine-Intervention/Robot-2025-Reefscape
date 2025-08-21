@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.AngleUnit;
 import frc.robot.RobotState;
+import frc.robot.RobotState.VisionObservation;
 import frc.robot.constants.FieldConstants;
 import frc.util.LoggedTracer;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
@@ -124,7 +125,7 @@ public class ApriltagVision {
                 // Filtering
                 var inField = ApriltagVisionConstants.acceptableFieldBox.withinBounds(robotPose2d.getTranslation());
                 var closeToFloor = robotPose3d.getTranslation().getMeasureZ().isNear(Meters.zero(), ApriltagVisionConstants.zMargin);
-                var closeToGyro = robotPose2d.getRotation().minus(RobotState.getInstance().getPose().getRotation()).getCos() > Math.cos(gyroTolerance.get().in(Radians));
+                var closeToGyro = robotPose2d.getRotation().minus(RobotState.getInstance().getEstimatedGlobalPose().getRotation()).getCos() > Math.cos(gyroTolerance.get().in(Radians));
                 var gyroFilter = closeToGyro || usableTags.length >= 2;
     
                 Logger.recordOutput(loggingKey + "/Filtering/In Field", inField);
@@ -168,11 +169,11 @@ public class ApriltagVision {
                 Logger.recordOutput(loggingKey + "/Std Devs/XY", xyStdDev);
                 Logger.recordOutput(loggingKey + "/Std Devs/Theta", thetaStdDev);
     
-                RobotState.getInstance().addVisionMeasurement(
+                RobotState.getInstance().addVisionObservation(new VisionObservation(
+                    frame.timestamp,
                     robotPose2d,
-                    VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev),
-                    frame.timestamp
-                );
+                    VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev)
+                ));
 
                 // robotPose = new AprilTagResultPose(robotPose2d, xyStdDev, thetaStdDev);
             }
