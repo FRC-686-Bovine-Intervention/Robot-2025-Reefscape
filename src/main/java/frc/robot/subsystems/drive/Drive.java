@@ -88,12 +88,7 @@ public class Drive extends VirtualSubsystem {
 
     public final Module[] modules = new Module[DriveConstants.moduleConstants.length];
 
-    private SwerveModulePosition[] lastMeasuredPositions = new SwerveModulePosition[] {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
-    };
+    private SwerveModulePosition[] lastMeasuredPositions = null;
     private SwerveModuleState[] measuredStates = new SwerveModuleState[] {
         new SwerveModuleState(),
         new SwerveModuleState(),
@@ -210,16 +205,18 @@ public class Drive extends VirtualSubsystem {
                 modulePositions[i] = this.modules[i].getModulePositions()[sampleI];
             }
 
-            RobotState.getInstance().addOdometryObservation(new OdometryObservation(
-                sampleTimestamps[sampleI],
-                (this.gyroInputs.connected) ? (
-                    Optional.of(this.gyroInputs.odometryGyroRotation[sampleI])
-                ) : (
-                    Optional.empty()
-                ),
-                this.lastMeasuredPositions,
-                modulePositions
-            ));
+            if (this.lastMeasuredPositions != null) {
+                RobotState.getInstance().addOdometryObservation(new OdometryObservation(
+                    sampleTimestamps[sampleI],
+                    (this.gyroInputs.connected) ? (
+                        Optional.of(this.gyroInputs.odometryGyroRotation[sampleI])
+                    ) : (
+                        Optional.empty()
+                    ),
+                    this.lastMeasuredPositions,
+                    modulePositions
+                ));
+            }
             this.lastMeasuredPositions = modulePositions;
         }
 
