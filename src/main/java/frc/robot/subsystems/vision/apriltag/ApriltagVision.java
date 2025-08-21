@@ -4,7 +4,10 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
@@ -35,6 +38,8 @@ public class ApriltagVision {
     }
 
     public void periodic() {
+        List<VisionObservation> allVisionObservations = new ArrayList<>(this.pipelines.length * 3);
+
         for (var pipeline : this.pipelines) {
             var frames = pipeline.getFrames();
             var loggingKey = "Vision/Apriltags/Results/" + pipeline.name;
@@ -169,13 +174,11 @@ public class ApriltagVision {
                 Logger.recordOutput(loggingKey + "/Std Devs/XY", xyStdDev);
                 Logger.recordOutput(loggingKey + "/Std Devs/Theta", thetaStdDev);
     
-                RobotState.getInstance().addVisionObservation(new VisionObservation(
+                allVisionObservations.add(new VisionObservation(
                     frame.timestamp,
                     robotPose2d,
                     VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev)
                 ));
-
-                // robotPose = new AprilTagResultPose(robotPose2d, xyStdDev, thetaStdDev);
             }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
@@ -183,6 +186,11 @@ public class ApriltagVision {
             LoggedTracer.logEpoch(tracingKey);
         }
         LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Process Results");
+        allVisionObservations.stream()
+            .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
+            .forEachOrdered(RobotState.getInstance()::addVisionObservation)
+        ;
+        LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Send Observations");
         LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision");
     }
 }
