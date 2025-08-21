@@ -3,6 +3,7 @@ package frc.robot;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.ejml.simple.SimpleMatrix;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.Matrix;
@@ -12,6 +13,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
@@ -31,11 +33,19 @@ public class RobotState {
     private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(poseBufferSizeSecs);
     private Pose2d estimatedGlobalPose = Pose2d.kZero;
 
+    private final SimpleMatrix forwardKinematics;
+
     private RobotState() {
         this.qStdDevs = new Matrix<>(Nat.N3(), Nat.N1());
         for (int i = 0; i < 3; i++) {
             this.qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
         }
+        var inverseKinematics = new SimpleMatrix(DriveConstants.moduleTranslations.length * 2, 3);
+        for (int i = 0; i < DriveConstants.moduleTranslations.length; i++) {
+            inverseKinematics.setRow(i * 2 + 0, 0, 1, 0, -DriveConstants.moduleTranslations[i].getY());
+            inverseKinematics.setRow(i * 2 + 1, 0, 0, 1, +DriveConstants.moduleTranslations[i].getX());
+        }
+        this.forwardKinematics = inverseKinematics.pseudoInverse();
     }
 
     public void log() {
@@ -58,13 +68,47 @@ public class RobotState {
     }
 
     public void addOdometryObservation(OdometryObservation observation) {
-        var twist = DriveConstants.kinematics.toTwist2d(observation.startModulePositions(), observation.endModulePositions());
+        var moduleDeltasVector = new SimpleMatrix(DriveConstants.moduleTranslations.length * 2, 1);
+        for (int i = 0; i < DriveConstants.moduleTranslations.length; i++) {
+            var dx = observation.endModulePositions()[i].distanceMeters - observation.startModulePositions()[i].distanceMeters;
+            var dTheta = observation.endModulePositions()[i].angle.minus(observation.startModulePositions()[i].angle);
+
+            double s;
+            double c;
+            if (Math.abs(dTheta.getRadians()) < 1E-9) {
+                s = 1.0 - 1.0 / 6.0 * dTheta.getRadians() * dTheta.getRadians();
+                c = 0.5 * dTheta.getRadians();
+            } else {
+                s = dTheta.getSin() / dTheta.getRadians();
+                c = (1 - dTheta.getCos()) / dTheta.getRadians();
+            }
+
+            var x = dx * s;
+            var y = dx * c;
+
+            var moduleDisplacementX = x * observation.startModulePositions()[i].angle.getCos() - y * observation.startModulePositions()[i].angle.getSin();
+            var moduleDisplacementY = x * observation.startModulePositions()[i].angle.getSin() + y * observation.startModulePositions()[i].angle.getCos();
+
+            moduleDeltasVector.set(i * 2 + 0, 0, moduleDisplacementX);
+            moduleDeltasVector.set(i * 2 + 1, 0, moduleDisplacementY);
+        }
+
+        var chassisDeltaVector = this.forwardKinematics.mult(moduleDeltasVector);
+        var twist = new Twist2d(
+            chassisDeltaVector.get(0, 0),
+            chassisDeltaVector.get(1, 0),
+            chassisDeltaVector.get(2, 0)
+        );
+
         var lastOdometryPose = this.odometryPose;
         this.odometryPose = this.odometryPose.exp(twist);
+
         if (observation.gyroRotation.isPresent()) {
             this.odometryPose = new Pose2d(this.odometryPose.getTranslation(), observation.gyroRotation.get().plus(this.gyroOffset).toRotation2d());
         }
+
         this.poseBuffer.addSample(observation.timestamp(), this.odometryPose);
+
         var finalTwist = lastOdometryPose.log(this.odometryPose);
         this.estimatedGlobalPose = this.estimatedGlobalPose.exp(finalTwist);
     }
