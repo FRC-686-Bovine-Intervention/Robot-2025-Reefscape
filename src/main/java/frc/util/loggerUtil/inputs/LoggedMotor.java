@@ -8,13 +8,16 @@ import java.nio.ByteBuffer;
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.spark.SparkMax;
 
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.MutCurrent;
 import edu.wpi.first.units.measure.MutTemperature;
 import edu.wpi.first.units.measure.MutVoltage;
+import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
@@ -27,30 +30,33 @@ public class LoggedMotor implements StructSerializable {
     public final MutCurrent statorCurrent = Amps.mutable(0);
     public final MutTemperature deviceTemperature = Celsius.mutable(0);
 
-    public void updateFrom(TalonFX talonFX) {
-        this.appliedVoltage.mut_replace(talonFX.getMotorVoltage().getValue());
-        this.statorCurrent.mut_replace(talonFX.getStatorCurrent().getValue());
-        this.deviceTemperature.mut_replace(talonFX.getDeviceTemp().getValue());
+    public static record MotorStatusSignalCache(
+        StatusSignal<Voltage> appliedVoltage,
+        StatusSignal<Current> statorCurrent,
+        StatusSignal<Temperature> deviceTemperature
+    ) {
+        public static MotorStatusSignalCache from(TalonFX talonFX) {
+            return new MotorStatusSignalCache(talonFX.getMotorVoltage(), talonFX.getStatorCurrent(), talonFX.getDeviceTemp());
+        }
+        public static MotorStatusSignalCache from(TalonFXS talonFXS) {
+            return new MotorStatusSignalCache(talonFXS.getMotorVoltage(), talonFXS.getStatorCurrent(), talonFXS.getDeviceTemp());
+        }
+
+        public BaseStatusSignal[] getStatusSignals() {
+            return new BaseStatusSignal[] {
+                this.appliedVoltage(),
+                this.statorCurrent(),
+                this.deviceTemperature(),
+            };
+        }
     }
-    public static BaseStatusSignal[] getStatusSignals(TalonFX talonFX) {
-        return new BaseStatusSignal[] {
-            talonFX.getMotorVoltage(),
-            talonFX.getStatorCurrent(),
-            talonFX.getDeviceTemp(),
-        };
+
+    public void updateFrom(MotorStatusSignalCache statusSignals) {
+        this.appliedVoltage.mut_replace(statusSignals.appliedVoltage().getValue());
+        this.statorCurrent.mut_replace(statusSignals.statorCurrent().getValue());
+        this.deviceTemperature.mut_replace(statusSignals.deviceTemperature().getValue());
     }
-    public void updateFrom(TalonFXS talonFXS) {
-        this.appliedVoltage.mut_replace(talonFXS.getMotorVoltage().getValue());
-        this.statorCurrent.mut_replace(talonFXS.getStatorCurrent().getValue());
-        this.deviceTemperature.mut_replace(talonFXS.getDeviceTemp().getValue());
-    }
-    public static BaseStatusSignal[] getStatusSignals(TalonFXS talonFXS) {
-        return new BaseStatusSignal[] {
-            talonFXS.getMotorVoltage(),
-            talonFXS.getStatorCurrent(),
-            talonFXS.getDeviceTemp(),
-        };
-    }
+    
     public void updateFrom(TalonSRX talonSRX) {
         this.appliedVoltage.mut_replace(talonSRX.getMotorOutputVoltage(), Volts);
         this.statorCurrent.mut_replace(talonSRX.getStatorCurrent(), Amps);

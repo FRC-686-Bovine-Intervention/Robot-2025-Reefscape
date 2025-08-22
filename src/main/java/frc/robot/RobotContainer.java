@@ -26,8 +26,8 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -52,6 +52,9 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOFalcon550;
 import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.OdometryTimestampIO;
+import frc.robot.subsystems.drive.OdometryTimestampIO.OdometryTimestampIOOdometryThread;
+import frc.robot.subsystems.drive.OdometryTimestampIO.OdometryTimestampIOSim;
 import frc.robot.subsystems.drive.commands.AutoScore;
 import frc.robot.subsystems.drive.commands.WheelRadiusCalibration;
 import frc.robot.subsystems.intake.Intake;
@@ -138,6 +141,7 @@ public class RobotContainer {
         switch (RobotType.getMode()) {
             case REAL:
                 this.drive = new Drive(
+                    new OdometryTimestampIOOdometryThread(),
                     new GyroIOPigeon2(),
                     Arrays.stream(DriveConstants.moduleConstants)
                         .map(ModuleIOFalcon550::new)
@@ -185,6 +189,7 @@ public class RobotContainer {
             break;
             case SIM:
                 this.drive = new Drive(
+                    new OdometryTimestampIOSim(),
                     new GyroIO() {},
                     Arrays.stream(DriveConstants.moduleConstants)
                         .map(ModuleIOSim::new)
@@ -234,6 +239,7 @@ public class RobotContainer {
             default:
             case REPLAY:
                 this.drive = new Drive(
+                    new OdometryTimestampIO() {},
                     new GyroIO() {},
                     new ModuleIO(){},
                     new ModuleIO(){},

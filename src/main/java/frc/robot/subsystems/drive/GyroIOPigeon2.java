@@ -9,9 +9,8 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Degrees;
 
-import java.util.Queue;
-
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 
@@ -19,16 +18,24 @@ import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.constants.HardwareDevices;
+import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.drive.OdometryThread.Buffer;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOPigeon2 implements GyroIO {
     private final Pigeon2 pigeon = HardwareDevices.pigeonID.pigeon2();
 
-    private final Queue<Double> quatWQueue;
-    private final Queue<Double> quatXQueue;
-    private final Queue<Double> quatYQueue;
-    private final Queue<Double> quatZQueue;
+    private final StatusSignal<Double> quatWSignal;
+    private final StatusSignal<Double> quatXSignal;
+    private final StatusSignal<Double> quatYSignal;
+    private final StatusSignal<Double> quatZSignal;
+    private final StatusSignal<AngularVelocity> yawVelocitySignal;
+    private final StatusSignal<AngularVelocity> pitchVelocitySignal;
+    private final StatusSignal<AngularVelocity> rollVelocitySignal;
+
+    private final Buffer<Rotation3d> quatBuffer;
 
     public GyroIOPigeon2() {
         var config = new Pigeon2Configuration();
@@ -39,38 +46,54 @@ public class GyroIOPigeon2 implements GyroIO {
         ;
         this.pigeon.getConfigurator().apply(config);
 
+        this.quatWSignal = this.pigeon.getQuatW();
+        this.quatXSignal = this.pigeon.getQuatX();
+        this.quatYSignal = this.pigeon.getQuatY();
+        this.quatZSignal = this.pigeon.getQuatZ();
+        this.yawVelocitySignal = this.pigeon.getAngularVelocityZWorld();
+        this.pitchVelocitySignal = this.pigeon.getAngularVelocityYWorld();
+        this.rollVelocitySignal = this.pigeon.getAngularVelocityXWorld();
+
         BaseStatusSignal.setUpdateFrequencyForAll(
             DriveConstants.odometryLoopFrequency,
-            this.pigeon.getQuatW(),
-            this.pigeon.getQuatX(),
-            this.pigeon.getQuatY(),
-            this.pigeon.getQuatZ()
+            this.quatWSignal,
+            this.quatXSignal,
+            this.quatYSignal,
+            this.quatZSignal
+        );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            RobotConstants.rioUpdateFrequency,
+            this.yawVelocitySignal,
+            this.pitchVelocitySignal,
+            this.rollVelocitySignal
         );
 
-        this.quatWQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatW());
-        this.quatXQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatX());
-        this.quatYQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatY());
-        this.quatZQueue = OdometryThread.getInstance().registerPhoenixSignal(this.pigeon.getQuatZ());
+        this.quatBuffer = OdometryThread.getInstance().registerPhoenixComboSignal(
+            (array) -> new Rotation3d(
+                new Quaternion(
+                    array[0],
+                    array[0],
+                    array[0],
+                    array[0]
+                )
+            ),
+            Rotation3d[]::new,
+            this.quatWSignal,
+            this.quatXSignal,
+            this.quatYSignal,
+            this.quatZSignal
+        );
     }
 
     @Override
     public void updateInputs(GyroIOInputs inputs) {
         inputs.connected = this.pigeon.getYaw().getStatus().isOK();
 
-        var rotation3ds = new Rotation3d[this.quatWQueue.size()];
-        for (int i = 0; i < rotation3ds.length; i++) {
-            rotation3ds[i] = new Rotation3d(new Quaternion(
-                this.quatWQueue.poll(),
-                this.quatXQueue.poll(),
-                this.quatYQueue.poll(),
-                this.quatZQueue.poll()
-            ));
-        }
-        inputs.odometryGyroRotation = rotation3ds;
+        inputs.odometryGyroRotation = this.quatBuffer.popAll();
 
-        inputs.yawVelocity = this.pigeon.getAngularVelocityZWorld().getValue();   // ccw+
-        inputs.pitchVelocity = this.pigeon.getAngularVelocityYWorld().getValue().unaryMinus();   // up+
-        inputs.rollVelocity = this.pigeon.getAngularVelocityXWorld().getValue().unaryMinus();   // ccw+
+        inputs.yawVelocity = this.yawVelocitySignal.getValue();   // ccw+
+        inputs.pitchVelocity = this.pitchVelocitySignal.getValue().unaryMinus();   // up+
+        inputs.rollVelocity = this.rollVelocitySignal.getValue().unaryMinus();   // ccw+
     }
 
     @Override

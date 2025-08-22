@@ -25,17 +25,21 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.util.loggerUtil.inputs.LoggedEncoder;
-import frc.util.loggerUtil.inputs.LoggedMotor;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
+import frc.util.loggerUtil.inputs.LoggedEncoder.EncoderStatusSignalCache;
 
 public class PivotIOFalcon implements PivotIO {
     protected final TalonFX leftMotor = HardwareDevices.pivotLeftMotorID.talonFX();
     protected final TalonFX rightMotor = HardwareDevices.pivotRightMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.pivotEncoderID.cancoder();
+
+    private final EncodedMotorStatusSignalCache leftMotorStatusSignalCache;
+    private final EncodedMotorStatusSignalCache rightMotorStatusSignalCache;
+    private final EncoderStatusSignalCache encoderStatusSignalCache;
 
     private final PositionVoltage positionRequest = new PositionVoltage(0);
     private final StrictFollower followerRequest;
@@ -76,11 +80,15 @@ public class PivotIOFalcon implements PivotIO {
         this.followerRequest = new StrictFollower(this.leftMotor.getDeviceID());
         this.rightMotor.setControl(this.followerRequest);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.leftMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.rightMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.leftMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.rightMotor));
+        this.leftMotorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.leftMotor);
+        this.rightMotorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.rightMotor);
+        this.encoderStatusSignalCache = EncoderStatusSignalCache.from(this.cancoder);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.leftMotorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.rightMotorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.encoderStatusSignalCache.getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.leftMotorStatusSignalCache.motor().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.rightMotorStatusSignalCache.motor().getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.leftMotor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.leftMotor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.rightMotor));
@@ -94,9 +102,23 @@ public class PivotIOFalcon implements PivotIO {
 
     @Override
     public void updateInputs(PivotIOInputs inputs) {
-        inputs.encoder.updateFrom(this.cancoder);
-        inputs.leftMotor.updateFrom(this.leftMotor);
-        inputs.rightMotor.updateFrom(this.rightMotor);
+        BaseStatusSignal.refreshAll(
+            this.leftMotorStatusSignalCache.encoder().position(),
+            this.leftMotorStatusSignalCache.encoder().velocity(),
+            this.leftMotorStatusSignalCache.motor().appliedVoltage(),
+            this.leftMotorStatusSignalCache.motor().statorCurrent(),
+            this.leftMotorStatusSignalCache.motor().deviceTemperature(),
+            this.rightMotorStatusSignalCache.encoder().position(),
+            this.rightMotorStatusSignalCache.encoder().velocity(),
+            this.rightMotorStatusSignalCache.motor().appliedVoltage(),
+            this.rightMotorStatusSignalCache.motor().statorCurrent(),
+            this.rightMotorStatusSignalCache.motor().deviceTemperature(),
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity()
+        );
+        inputs.encoder.updateFrom(this.encoderStatusSignalCache);
+        inputs.leftMotor.updateFrom(this.leftMotorStatusSignalCache);
+        inputs.rightMotor.updateFrom(this.rightMotorStatusSignalCache);
         // inputs.encoderFaults.updateFrom(this.cancoder);
         // inputs.leftMotorFaults.updateFrom(this.leftMotor);
         // inputs.rightMotorFaults.updateFrom(this.rightMotor);

@@ -1,7 +1,6 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Milliseconds;
-import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
@@ -9,7 +8,6 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.Optional;
-import java.util.Queue;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -28,28 +26,30 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Angle;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
+import frc.robot.subsystems.drive.OdometryThread.DoubleBuffer;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.inputs.LoggedEncoder;
-import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
 
 public class ModuleIOFalcon550 implements ModuleIO {
     protected final TalonFX driveMotor;
     protected final SparkMax azimuthMotor;
     protected final AbsoluteEncoder azimuthAbsoluteEncoder;
 
-    private final Queue<Angle> drivePositionQueue;
-    private final Queue<Angle> azimuthPositionQueue;
+    private final EncodedMotorStatusSignalCache driveMotorStatusSignalCache;
+
+    private final DoubleBuffer drivePositionBuffer;
+    private final DoubleBuffer azimuthPositionBuffer;
 
     private final VoltageOut driveVolts = new VoltageOut(0);
     private final VelocityVoltage driveVelocity = new VelocityVoltage(0);
@@ -101,27 +101,34 @@ public class ModuleIOFalcon550 implements ModuleIO {
             1
         );
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.driveMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.driveMotor));
+        this.driveMotorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.driveMotor);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.driveMotorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.driveMotorStatusSignalCache.motor().getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.driveMotor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.driveMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.odometryLoopFrequency, this.driveMotor.getRotorPosition());
+        BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.odometryLoopFrequency, this.driveMotorStatusSignalCache.encoder().position());
         this.driveMotor.optimizeBusUtilization();
 
-        this.drivePositionQueue = OdometryThread.getInstance().registerPhoenixSignal(this.driveMotor.getRotorPosition());
-        this.azimuthPositionQueue = OdometryThread.getInstance().registerGenericSignal(() -> Rotations.of(this.azimuthAbsoluteEncoder.getPosition()));
+        this.drivePositionBuffer = OdometryThread.getInstance().registerPhoenixDoubleSignal(this.driveMotorStatusSignalCache.encoder().position(), Units::rotationsToRadians);
+        this.azimuthPositionBuffer = OdometryThread.getInstance().registerGenericDoubleSignal(this.azimuthAbsoluteEncoder::getPosition, Units::rotationsToRadians);
     }
 
     @Override
     public void updateInputs(ModuleIOInputs inputs) {
-        inputs.driveMotor.updateFrom(this.driveMotor);
+        BaseStatusSignal.refreshAll(
+            this.driveMotorStatusSignalCache.encoder().position(),
+            this.driveMotorStatusSignalCache.encoder().velocity(),
+            this.driveMotorStatusSignalCache.motor().appliedVoltage(),
+            this.driveMotorStatusSignalCache.motor().statorCurrent(),
+            this.driveMotorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.driveMotor.updateFrom(this.driveMotorStatusSignalCache);
         inputs.azimuthMotor.updateFrom(this.azimuthMotor);
         inputs.azimuthEncoder.updateFrom(this.azimuthAbsoluteEncoder);
 
-        inputs.odometryDriveRads = this.drivePositionQueue.stream().mapToDouble((angle) -> angle.in(Radians)).toArray();
-        inputs.odometryAzimuthRads = this.azimuthPositionQueue.stream().mapToDouble((angle) -> angle.in(Radians)).toArray();
-        this.drivePositionQueue.clear();
-        this.azimuthPositionQueue.clear();
+        inputs.odometryDriveRads = this.drivePositionBuffer.popAll();
+        inputs.odometryAzimuthRads = this.azimuthPositionBuffer.popAll();
         // inputs.driveMotorFaults.updateFrom(this.driveMotor);
         // inputs.azimuthMotorFaults.updateFrom(this.azimuthMotor);
     }

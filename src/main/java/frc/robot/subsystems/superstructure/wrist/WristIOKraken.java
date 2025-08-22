@@ -28,12 +28,15 @@ import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.inputs.LoggedEncoder;
-import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
+import frc.util.loggerUtil.inputs.LoggedEncoder.EncoderStatusSignalCache;
 
 public class WristIOKraken implements WristIO {
     protected final TalonFX motor = HardwareDevices.wristMotorID.talonFX(); 
     protected final CANcoder cancoder = HardwareDevices.wristEncoderID.cancoder();
+
+    private final EncodedMotorStatusSignalCache motorStatusSignalCache;
+    private final EncoderStatusSignalCache encoderStatusSignalCache;
 
     private final PositionVoltage positionRequest = new PositionVoltage(0);
     
@@ -66,21 +69,33 @@ public class WristIOKraken implements WristIO {
 
         this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        this.motorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.motor);
+        this.encoderStatusSignalCache = EncoderStatusSignalCache.from(this.cancoder);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.encoderStatusSignalCache.getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.motorStatusSignalCache.motor().getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.cancoder));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.cancoder));
-        motor.optimizeBusUtilization();
-        cancoder.optimizeBusUtilization();
+        this.motor.optimizeBusUtilization();
+        this.cancoder.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(WristIOInputs inputs) {
-        inputs.encoder.updateFrom(this.cancoder);
-        inputs.motor.updateFrom(this.motor);
+        BaseStatusSignal.refreshAll(
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity(),
+            this.motorStatusSignalCache.encoder().position(),
+            this.motorStatusSignalCache.encoder().velocity(),
+            this.motorStatusSignalCache.motor().appliedVoltage(),
+            this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.encoder.updateFrom(this.encoderStatusSignalCache);
+        inputs.motor.updateFrom(this.motorStatusSignalCache);
         // inputs.encoderFaults.updateFrom(this.cancoder);
         // inputs.motorFaults.updateFrom(this.motor);
     }

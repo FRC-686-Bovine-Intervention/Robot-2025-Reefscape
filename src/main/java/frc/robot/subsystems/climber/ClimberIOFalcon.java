@@ -28,8 +28,7 @@ import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.inputs.LoggedEncoder;
-import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunablePID;
@@ -38,6 +37,8 @@ public class ClimberIOFalcon implements ClimberIO {
     protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
     protected final Servo servo = HardwareDevices.climberServoPort.servo();
     protected final DigitalInput sensor = HardwareDevices.climberSensor.input();
+
+    private final EncodedMotorStatusSignalCache motorStatusSignalCache;
 
     private final VoltageOut voltageRequest = new VoltageOut(0);
 
@@ -116,8 +117,10 @@ public class ClimberIOFalcon implements ClimberIO {
 
         this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        this.motorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.motor);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.motorStatusSignalCache.motor().getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
         this.motor.optimizeBusUtilization();
@@ -125,7 +128,14 @@ public class ClimberIOFalcon implements ClimberIO {
 
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
-        inputs.motor.updateFrom(this.motor);
+        BaseStatusSignal.refreshAll(
+            this.motorStatusSignalCache.encoder().position(),
+            this.motorStatusSignalCache.encoder().velocity(),
+            this.motorStatusSignalCache.motor().appliedVoltage(),
+            this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.motor.updateFrom(this.motorStatusSignalCache);
         // inputs.motorFaults.updateFrom(this.motor);
 
         inputs.sensor = this.sensor.get() ^ ClimberConstants.climberSensorInverted;

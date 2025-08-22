@@ -3,6 +3,7 @@ package frc.util.loggerUtil.inputs;
 import java.nio.ByteBuffer;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.units.measure.Voltage;
@@ -11,10 +12,24 @@ import edu.wpi.first.util.struct.StructSerializable;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import frc.util.loggerUtil.inputs.LoggedEncoder.EncoderStatusSignalCache;
+import frc.util.loggerUtil.inputs.LoggedMotor.MotorStatusSignalCache;
 
 public class LoggedEncodedMotor implements StructSerializable {
     public final LoggedEncoder encoder;
     public final LoggedMotor motor;
+
+    public static record EncodedMotorStatusSignalCache(
+        EncoderStatusSignalCache encoder,
+        MotorStatusSignalCache motor
+    ) {
+        public static EncodedMotorStatusSignalCache from(TalonFX talonFX) {
+            return new EncodedMotorStatusSignalCache(EncoderStatusSignalCache.from(talonFX), MotorStatusSignalCache.from(talonFX));
+        }
+        public static EncodedMotorStatusSignalCache from(TalonFXS talonFXS) {
+            return new EncodedMotorStatusSignalCache(EncoderStatusSignalCache.from(talonFXS), MotorStatusSignalCache.from(talonFXS));
+        }
+    }
 
     public LoggedEncodedMotor() {
         this(new LoggedEncoder(), new LoggedMotor());
@@ -24,9 +39,9 @@ public class LoggedEncodedMotor implements StructSerializable {
         this.motor = motor;
     }
 
-    public void updateFrom(TalonFX talon) {
-        encoder.updateFrom(talon);
-        motor.updateFrom(talon);
+    public void updateFrom(EncodedMotorStatusSignalCache statusSignals) {
+        this.encoder.updateFrom(statusSignals.encoder());
+        this.motor.updateFrom(statusSignals.motor());
     }
 
     public void updateFrom(SparkMax spark) {

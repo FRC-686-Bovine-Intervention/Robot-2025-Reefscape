@@ -8,12 +8,15 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import java.nio.ByteBuffer;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.util.struct.Struct;
@@ -27,35 +30,31 @@ public class LoggedEncoder implements StructSerializable {
     public final MutAngle position = Radians.mutable(0);
     public final MutAngularVelocity velocity = RadiansPerSecond.mutable(0);
 
-    public void updateFrom(TalonFX talonFX) {
-        this.position.mut_replace(talonFX.getRotorPosition().getValue());
-        this.velocity.mut_replace(talonFX.getRotorVelocity().getValue());
+    public static record EncoderStatusSignalCache(
+        StatusSignal<Angle> position,
+        StatusSignal<AngularVelocity> velocity
+    ) {
+        public static EncoderStatusSignalCache from(TalonFX talonFX) {
+            return new EncoderStatusSignalCache(talonFX.getRotorPosition(), talonFX.getRotorVelocity());
+        }
+        public static EncoderStatusSignalCache from(TalonFXS talonFXS) {
+            return new EncoderStatusSignalCache(talonFXS.getRotorPosition(), talonFXS.getRotorVelocity());
+        }
+        public static EncoderStatusSignalCache from(CANcoder cancoder) {
+            return new EncoderStatusSignalCache(cancoder.getPosition(), cancoder.getVelocity());
+        }
+
+        public BaseStatusSignal[] getStatusSignals() {
+            return new BaseStatusSignal[] {
+                this.position(),
+                this.velocity(),
+            };
+        }
     }
-    public static BaseStatusSignal[] getStatusSignals(TalonFX talonFX) {
-        return new BaseStatusSignal[] {
-            talonFX.getRotorPosition(),
-            talonFX.getRotorVelocity(),
-        };
-    }
-    public void updateFrom(TalonFXS talonFXS) {
-        this.position.mut_replace(talonFXS.getRotorPosition().getValue());
-        this.velocity.mut_replace(talonFXS.getRotorVelocity().getValue());
-    }
-    public static BaseStatusSignal[] getStatusSignals(TalonFXS talonFXS) {
-        return new BaseStatusSignal[] {
-            talonFXS.getRotorPosition(),
-            talonFXS.getRotorVelocity(),
-        };
-    }
-    public void updateFrom(CANcoder canCoder) {
-        this.position.mut_replace(canCoder.getPosition().getValue());
-        this.velocity.mut_replace(canCoder.getVelocity().getValue());
-    }
-    public static BaseStatusSignal[] getStatusSignals(CANcoder cancoder) {
-        return new BaseStatusSignal[] {
-            cancoder.getPosition(),
-            cancoder.getVelocity(),
-        };
+
+    public void updateFrom(EncoderStatusSignalCache statusSignals) {
+        this.position.mut_replace(statusSignals.position().getValue());
+        this.velocity.mut_replace(statusSignals.velocity().getValue());
     }
 
     public void updateFrom(RelativeEncoder encoder) {

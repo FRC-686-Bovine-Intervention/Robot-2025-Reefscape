@@ -8,14 +8,12 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -60,8 +58,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
 import frc.robot.RobotState.OdometryObservation;
-import frc.robot.RobotType;
-import frc.robot.RobotType.Mode;
 import frc.robot.constants.RobotConstants;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
@@ -78,11 +74,12 @@ import frc.util.robotStructure.Root;
 
 public class Drive extends VirtualSubsystem {
     public final Set<Subsystem> subsystems;
+
+    private final OdometryTimestampIO odometryTimestampIO;
+    private final OdometryTimestampIOInputsAutoLogged odometryTimestamps = new OdometryTimestampIOInputsAutoLogged();
+
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-
-    private final Queue<Double> odometryTimestampQueue;
-    private final OdometryTimestampInputsAutoLogged odometryTimestamps = new OdometryTimestampInputsAutoLogged();
 
     public final Root structureRoot = new Root();
 
@@ -111,8 +108,9 @@ public class Drive extends VirtualSubsystem {
 
     private Twist2d fieldVelocity = new Twist2d();
 
-    public Drive(GyroIO gyroIO, ModuleIO... moduleIOs) {
+    public Drive(OdometryTimestampIO odometryTimestampIO, GyroIO gyroIO, ModuleIO... moduleIOs) {
         System.out.println("[Init Drive] Instantiating Drive");
+        this.odometryTimestampIO = odometryTimestampIO;
         this.gyroIO = gyroIO;
         System.out.println("[Init Drive] Gyro IO: " + this.gyroIO.getClass().getSimpleName());
         for(int i = 0; i < DriveConstants.moduleConstants.length; i++) {
@@ -123,7 +121,6 @@ public class Drive extends VirtualSubsystem {
             this.modules[i] = module;
         }
 
-        this.odometryTimestampQueue = OdometryThread.getInstance().generateTimestampQueue();
         OdometryThread.getInstance().start();
 
         this.translationSubsystem = new Translational(this);
@@ -180,8 +177,7 @@ public class Drive extends VirtualSubsystem {
         OdometryThread.getInstance().odometryLock.lock();
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Acquire Odometry Lock");
 
-        this.odometryTimestamps.timestamps = this.odometryTimestampQueue.stream().mapToDouble(Double::doubleValue).toArray();
-        this.odometryTimestampQueue.clear();
+        this.odometryTimestampIO.updateInputs(this.odometryTimestamps);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Update Timestamp Inputs");
         Logger.processInputs("Inputs/Drive/Timestamps", this.odometryTimestamps);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Timestamp Inputs");
@@ -198,11 +194,7 @@ public class Drive extends VirtualSubsystem {
 
         OdometryThread.getInstance().odometryLock.unlock();
 
-        var sampleTimestamps = (RobotType.getMode() == Mode.SIM) ? (
-            new double[] {Timer.getTimestamp()}
-        ) : (
-            this.odometryTimestamps.timestamps
-        );
+        var sampleTimestamps = this.odometryTimestamps.timestamps;
         for (int sampleI = 0; sampleI < sampleTimestamps.length; sampleI++) {
             var modulePositions = new SwerveModulePosition[this.modules.length];
             for (int i = 0; i < this.modules.length; i++) {

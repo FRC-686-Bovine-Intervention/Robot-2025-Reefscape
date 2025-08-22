@@ -16,13 +16,15 @@ import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.loggerUtil.inputs.LoggedMotor.MotorStatusSignalCache;
 
 
 public class IntakeIOFalcon implements IntakeIO {
     protected final TalonFX motor = HardwareDevices.intakeMotorID.talonFX();
     protected final DigitalInput coralSensor = HardwareDevices.coralSensor.input();
     protected final DigitalInput algaeSensor = HardwareDevices.algaeSensor.input();
+
+    private final MotorStatusSignalCache motorStatusSignalCache;
 
     public IntakeIOFalcon(){
         var motorConfig = new TalonFXConfiguration();
@@ -37,16 +39,22 @@ public class IntakeIOFalcon implements IntakeIO {
 
         this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motor.getStatorCurrent());
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        this.motorStatusSignalCache = MotorStatusSignalCache.from(this.motor);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motorStatusSignalCache.getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
         this.motor.optimizeBusUtilization();
     }
 
     @Override
-    public void updateInputs(IntakeIOInputs inputs){
-        inputs.motor.updateFrom(this.motor);
+    public void updateInputs(IntakeIOInputs inputs) {
+        BaseStatusSignal.refreshAll(
+            this.motorStatusSignalCache.appliedVoltage(),
+            this.motorStatusSignalCache.statorCurrent(),
+            this.motorStatusSignalCache.deviceTemperature()
+        );
+        inputs.motor.updateFrom(this.motorStatusSignalCache);
         // inputs.motorFaults.updateFrom(this.motor);
 
         inputs.coralSensor = this.coralSensor.get() ^ IntakeConstants.coralSensorInverted;
