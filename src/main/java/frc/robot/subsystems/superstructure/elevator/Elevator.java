@@ -22,7 +22,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
@@ -30,7 +29,6 @@ import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
 import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
@@ -93,8 +91,8 @@ public class Elevator {
         Logger.processInputs("Inputs/Superstructure/Elevator", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Process Inputs");
 
-        this.length.mut_replace(ElevatorConstants.stage1LinearRelation.angleToDistance(ElevatorConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position)).times(ElevatorConstants.movingStageCount));
-        this.velocity.mut_replace(ElevatorConstants.stage1LinearRelation.angularVelocityToLinearVelocity(ElevatorConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity)).times(ElevatorConstants.movingStageCount));
+        this.length.mut_replace(ElevatorConstants.stage1LinearRelation.radiansToMeters(ElevatorConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.getPositionRads())) * ElevatorConstants.movingStageCount, Meters);
+        this.velocity.mut_replace(ElevatorConstants.stage1LinearRelation.radiansToMeters(ElevatorConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.getVelocityRadsPerSec())) * ElevatorConstants.movingStageCount, MetersPerSecond);
 
         Logger.recordOutput("Superstructure/Elevator/Length/Measured", this.getLength());
         Logger.recordOutput("Superstructure/Elevator/Velocity/Measured", this.getVelocity());
@@ -131,8 +129,8 @@ public class Elevator {
     public LinearVelocity getVelocity() {
         return velocity;
     }
-    public Voltage getVoltage() {
-        return inputs.motor.motor.appliedVoltage;
+    public double getAppliedVolts() {
+        return inputs.motor.motor.getAppliedVolts();
     }
 
     public void setVoltage(Measure<VoltageUnit> voltage) {

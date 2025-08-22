@@ -72,7 +72,7 @@ public class Intake extends SubsystemBase {
         }
         var second = this.debouncer.calculate(this.inputs.coralSensor);
         if (this.inputs.coralSensor) {
-            if (this.inputs.motor.statorCurrent.gt(gamepieceDetectCurrent.get()) || second) {
+            if (second || this.inputs.motor.getStatorCurrentAmps() > gamepieceDetectCurrent.get().in(Amps)) {
                 hasGamepiece = true;
             }
         } else {

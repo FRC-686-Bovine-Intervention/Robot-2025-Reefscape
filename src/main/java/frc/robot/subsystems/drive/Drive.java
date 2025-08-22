@@ -155,7 +155,7 @@ public class Drive extends VirtualSubsystem {
                     Arrays.stream(this.modules).forEach((module) -> {
                         Logger.recordOutput("SysID/Drive/" + module.config.name + "/Position", module.getWheelAngularPosition());
                         Logger.recordOutput("SysID/Drive/" + module.config.name + "/Velocity", module.getWheelAngularVelocity());
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getAppliedVoltage());
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getAppliedVolts());
                     });
                 },
                 this.translationSubsystem

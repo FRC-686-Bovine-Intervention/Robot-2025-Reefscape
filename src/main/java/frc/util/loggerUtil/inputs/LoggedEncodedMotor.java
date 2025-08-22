@@ -6,18 +6,22 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.spark.SparkMax;
 
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.util.loggerUtil.inputs.LoggedEncoder.EncoderStatusSignalCache;
 import frc.util.loggerUtil.inputs.LoggedMotor.MotorStatusSignalCache;
 
 public class LoggedEncodedMotor implements StructSerializable {
     public final LoggedEncoder encoder;
     public final LoggedMotor motor;
+
+    public LoggedEncodedMotor() {
+        this(new LoggedEncoder(), new LoggedMotor());
+    }
+    public LoggedEncodedMotor(LoggedEncoder encoder, LoggedMotor motor) {
+        this.encoder = encoder;
+        this.motor = motor;
+    }
 
     public static record EncodedMotorStatusSignalCache(
         EncoderStatusSignalCache encoder,
@@ -31,53 +35,17 @@ public class LoggedEncodedMotor implements StructSerializable {
         }
     }
 
-    public LoggedEncodedMotor() {
-        this(new LoggedEncoder(), new LoggedMotor());
-    }
-    public LoggedEncodedMotor(LoggedEncoder encoder, LoggedMotor motor) {
-        this.encoder = encoder;
-        this.motor = motor;
-    }
-
     public void updateFrom(EncodedMotorStatusSignalCache statusSignals) {
         this.encoder.updateFrom(statusSignals.encoder());
         this.motor.updateFrom(statusSignals.motor());
     }
 
     public void updateFrom(SparkMax spark) {
-        encoder.updateFrom(spark.getEncoder());
-        motor.updateFrom(spark);
-    }
-
-    public void updateFrom(DCMotorSim sim) {
-        encoder.updateFrom(sim);
-        motor.updateFrom(sim);
-    }
-    public void updateFrom(DCMotorSim sim, Voltage appliedVolts) {
-        encoder.updateFrom(sim);
-        motor.updateFrom(sim, appliedVolts);
-    }
-
-    public void updateFrom(FlywheelSim sim) {
-        encoder.updateFrom(sim);
-        motor.updateFrom(sim);
-    }
-    public void updateFrom(FlywheelSim sim, Voltage appliedVolts) {
-        encoder.updateFrom(sim);
-        motor.updateFrom(sim, appliedVolts);
-    }
-
-    public void updateFrom(SingleJointedArmSim sim) {
-        encoder.updateFrom(sim);
-        motor.updateFrom(sim);
-    }
-    public void updateFrom(SingleJointedArmSim sim, Voltage appliedVolts) {
-        encoder.updateFrom(sim);
-        motor.updateFrom(sim, appliedVolts);
+        this.encoder.updateFrom(spark.getEncoder());
+        this.motor.updateFrom(spark);
     }
 
     public static final LoggedEncodedMotorStruct struct = new LoggedEncodedMotorStruct();
-
     public static class LoggedEncodedMotorStruct implements Struct<LoggedEncodedMotor> {
         @Override
         public Class<LoggedEncodedMotor> getTypeClass() {
@@ -109,6 +77,12 @@ public class LoggedEncodedMotor implements StructSerializable {
             var encoder = LoggedEncoder.struct.unpack(bb);
             var motor = LoggedMotor.struct.unpack(bb);
             return new LoggedEncodedMotor(encoder, motor);
+        }
+
+        @Override
+        public void unpackInto(LoggedEncodedMotor out, ByteBuffer bb) {
+            LoggedEncoder.struct.unpackInto(out.encoder, bb);
+            LoggedMotor.struct.unpackInto(out.motor, bb);
         }
 
         @Override

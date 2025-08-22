@@ -75,7 +75,7 @@ public class Superstructure extends SubsystemBase {
                     this.wrist.setAngleGoal(Degrees.zero());
                 },
                 (log) -> {
-                    Logger.recordOutput("Superstructure/Pivot/SysID/Voltage", this.pivot.getVoltage());
+                    Logger.recordOutput("Superstructure/Pivot/SysID/Voltage", this.pivot.getAppliedVolts());
                     Logger.recordOutput("Superstructure/Pivot/SysID/Position", this.pivot.getAngle());
                     Logger.recordOutput("Superstructure/Pivot/SysID/Velocity", this.pivot.getVelocity());
                 },
@@ -103,7 +103,7 @@ public class Superstructure extends SubsystemBase {
                     this.wrist.setAngleGoal(Degrees.zero());
                 },
                 (log) -> {
-                    Logger.recordOutput("Superstructure/Elevator/SysID/Voltage", this.pivot.getVoltage());
+                    Logger.recordOutput("Superstructure/Elevator/SysID/Voltage", this.pivot.getAppliedVolts());
                     Logger.recordOutput("Superstructure/Elevator/SysID/Position", this.pivot.getAngle());
                     Logger.recordOutput("Superstructure/Elevator/SysID/Velocity", this.pivot.getVelocity());
                 },
@@ -131,7 +131,7 @@ public class Superstructure extends SubsystemBase {
                     this.wrist.setVoltage(voltage);
                 },
                 (log) -> {
-                    Logger.recordOutput("Superstructure/Wrist/SysID/Voltage", this.wrist.getVoltage());
+                    Logger.recordOutput("Superstructure/Wrist/SysID/Voltage", this.wrist.getAppliedVolts());
                     Logger.recordOutput("Superstructure/Wrist/SysID/Position", this.wrist.getAngle());
                     Logger.recordOutput("Superstructure/Wrist/SysID/Velocity", this.wrist.getVelocity());
                 },

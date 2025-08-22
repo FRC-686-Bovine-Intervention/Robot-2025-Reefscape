@@ -7,14 +7,12 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.Optional;
@@ -25,25 +23,20 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutDistance;
 import edu.wpi.first.units.measure.MutLinearVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
-import frc.util.CurrentSpikeDetector;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
@@ -68,10 +61,6 @@ public class Module {
     private final SwerveModulePosition modulePosition = new SwerveModulePosition();
     private SwerveModulePosition[] modulePositions = new SwerveModulePosition[0];
 
-    private static final LoggedTunableMeasure<CurrentUnit> currentSpikeThreshold = new LoggedTunableMeasure<>("Drive/Current Spike Threshold", Amps.of(0)); 
-    private static final LoggedTunableMeasure<TimeUnit> currentSpikeTime = new LoggedTunableMeasure<>("Drive/Current Spike Time", Seconds.of(0));
-    private final CurrentSpikeDetector driveCurrentSpikeDetector = new CurrentSpikeDetector(currentSpikeThreshold, currentSpikeTime);
-    
     private static final LoggedTunableMeasure<LinearVelocityUnit> brakeModeThreshold = new LoggedTunableMeasure<>("Drive/Brake Mode Threshold", InchesPerSecond.of(1)); 
     
     private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
@@ -136,21 +125,21 @@ public class Module {
             this.modulePositions[i] = new SwerveModulePosition(distanceMeters, angle);
         }
 
-        var angle = this.config.moduleForwardDirection.plus(new Rotation2d(
-            DriveConstants.azimuthEncoderToCarriageRatio.applyUnsigned(this.inputs.azimuthEncoder.position)
-        ));
+        var angle = this.config.moduleForwardDirection.plus(
+            Rotation2d.fromRadians(
+                DriveConstants.azimuthEncoderToCarriageRatio.applyUnsigned(this.inputs.azimuthEncoder.getPositionRads())
+            )
+        );
         this.moduleState.angle = angle;
         this.modulePosition.angle = angle;
 
-        this.wheelAngularPosition.mut_replace(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.driveMotor.encoder.position));
-        this.wheelAngularVelocity.mut_replace(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.driveMotor.encoder.velocity));
+        this.wheelAngularPosition.mut_replace(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.driveMotor.encoder.getPositionRads()), Radians);
+        this.wheelAngularVelocity.mut_replace(DriveConstants.driveMotorToWheelRatio.applyUnsigned(this.inputs.driveMotor.encoder.getVelocityRadsPerSec()), RadiansPerSecond);
         this.wheelLinearPosition.mut_replace(DriveConstants.wheel.angleToDistance(this.wheelAngularPosition));
         this.wheelLinearVelocity.mut_replace(DriveConstants.wheel.angularVelocityToLinearVelocity(this.wheelAngularVelocity));
 
         this.modulePosition.distanceMeters = wheelLinearPosition.in(Meters);
         this.moduleState.speedMetersPerSecond = this.wheelLinearVelocity.in(MetersPerSecond);
-
-        this.driveCurrentSpikeDetector.update(this.getDriveCurrent());
 
         if (driveFFConsts.hasChanged(hashCode())) {
             driveFFConsts.update(this.driveFeedforward);
@@ -233,16 +222,12 @@ public class Module {
     }
 
     /** Returns the drive velocity in radians/sec. */
-    public Voltage getAppliedVoltage() {
-        return this.inputs.driveMotor.motor.appliedVoltage;
+    public double getAppliedVolts() {
+        return this.inputs.driveMotor.motor.getAppliedVolts();
     }
 
-    public Current getDriveCurrent() {
-        return this.inputs.driveMotor.motor.statorCurrent;
-    }
-
-    public boolean currentSpiking() {
-        return this.driveCurrentSpikeDetector.hasSpike();
+    public double getDriveStatorCurrentAmps() {
+        return this.inputs.driveMotor.motor.getStatorCurrentAmps();
     }
 
     public SwerveModulePosition[] getModulePositions() {

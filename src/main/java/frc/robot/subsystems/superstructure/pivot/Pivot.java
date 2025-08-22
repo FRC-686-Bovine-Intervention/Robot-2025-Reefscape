@@ -20,7 +20,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
@@ -28,7 +27,6 @@ import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
 import frc.util.loggerUtil.tunables.LoggedTunableFF;
@@ -92,8 +90,8 @@ public class Pivot {
         Logger.processInputs("Inputs/Superstructure/Pivot", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Process Inputs");
 
-        this.angle.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.position));
-        this.velocity.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.velocity));
+        this.angle.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.getPositionRads()), Radians);
+        this.velocity.mut_replace(PivotConstants.sensorToMechanism.applyUnsigned(this.inputs.encoder.getVelocityRadsPerSec()), RadiansPerSecond);
 
         this.mech.set(this.getAngle());
 
@@ -129,8 +127,8 @@ public class Pivot {
     public AngularVelocity getVelocity() {
         return this.velocity;
     }
-    public Voltage getVoltage() {
-        return this.inputs.leftMotor.motor.appliedVoltage;
+    public double getAppliedVolts() {
+        return this.inputs.leftMotor.motor.getAppliedVolts();
     }
 
     public void setVoltage(Measure<VoltageUnit> voltage) {

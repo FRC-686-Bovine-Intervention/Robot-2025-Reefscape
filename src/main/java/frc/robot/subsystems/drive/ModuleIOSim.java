@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -19,11 +20,11 @@ public class ModuleIOSim extends ModuleIOFalcon550 {
     private final DCMotor driveMotorModel = DCMotor.getFalcon500(1);
     private final DCMotor azimuthMotorModel = DCMotor.getNeo550(1);
 
-    private final DCMotorSim driveSims = new DCMotorSim(
+    private final DCMotorSim driveSim = new DCMotorSim(
         LinearSystemId.createDCMotorSystem(this.driveMotorModel, 0.025, DriveConstants.driveMotorToWheelRatio.reductionUnsigned()),
         this.azimuthMotorModel
     );
-    private final DCMotorSim azimuthSims = new DCMotorSim(
+    private final DCMotorSim azimuthSim = new DCMotorSim(
         LinearSystemId.createDCMotorSystem(this.azimuthMotorModel, 0.004, DriveConstants.azimuthMotorToCarriageRatio.reductionUnsigned()),
         this.azimuthMotorModel
     );
@@ -39,29 +40,30 @@ public class ModuleIOSim extends ModuleIOFalcon550 {
         if (DriverStation.isDisabled()) {
             this.azimuthAppliedVolts.mut_setBaseUnitMagnitude(0);
         }
-        this.driveSims.setInputVoltage(driveSimState.getMotorVoltage());
-        this.azimuthSims.setInputVoltage(this.azimuthAppliedVolts.in(Volts));
+        this.driveSim.setInputVoltage(driveSimState.getMotorVoltage());
+        this.azimuthSim.setInputVoltage(this.azimuthAppliedVolts.in(Volts));
         
-        this.driveSims.update(RobotConstants.rioUpdatePeriodSecs);
-        this.azimuthSims.update(RobotConstants.rioUpdatePeriodSecs);
+        this.driveSim.update(RobotConstants.rioUpdatePeriodSecs);
+        this.azimuthSim.update(RobotConstants.rioUpdatePeriodSecs);
 
-        var wheelAngle = this.driveSims.getAngularPosition();
-        var wheelVelocity = this.driveSims.getAngularVelocity();
+        var wheelAngle = this.driveSim.getAngularPosition();
+        var wheelVelocity = this.driveSim.getAngularVelocity();
         driveSimState.setRawRotorPosition(DriveConstants.driveMotorToWheelRatio.inverse().applyUnsigned(wheelAngle));
         driveSimState.setRotorVelocity(DriveConstants.driveMotorToWheelRatio.inverse().applyUnsigned(wheelVelocity));
         driveSimState.setSupplyVoltage(12 - driveSimState.getSupplyCurrent() * 0.002);
 
         super.updateInputs(inputs);
 
-        var carriageAngle = this.azimuthSims.getAngularPosition();
-        var carriageVelocity = this.azimuthSims.getAngularVelocity();
-        inputs.azimuthEncoder.position.mut_replace(DriveConstants.azimuthEncoderToCarriageRatio.inverse().applyUnsigned(carriageAngle));
-        inputs.azimuthEncoder.velocity.mut_replace(DriveConstants.azimuthEncoderToCarriageRatio.inverse().applyUnsigned(carriageVelocity));
-        inputs.azimuthMotor.encoder.position.mut_replace(DriveConstants.azimuthMotorToCarriageRatio.inverse().applyUnsigned(carriageAngle));
-        inputs.azimuthMotor.encoder.velocity.mut_replace(DriveConstants.azimuthMotorToCarriageRatio.inverse().applyUnsigned(carriageVelocity));
+        var carriageAngle = this.azimuthSim.getAngularPosition();
+        var carriageVelocity = this.azimuthSim.getAngularVelocity();
+        inputs.azimuthEncoder.setPositionRads(DriveConstants.azimuthEncoderToCarriageRatio.inverse().applyUnsigned(carriageAngle).in(Radians));
+        inputs.azimuthEncoder.setVelocityRadsPerSec(DriveConstants.azimuthEncoderToCarriageRatio.inverse().applyUnsigned(carriageVelocity).in(RadiansPerSecond));
+        inputs.azimuthMotor.encoder.setPositionRads(DriveConstants.azimuthMotorToCarriageRatio.inverse().applyUnsigned(carriageAngle).in(Radians));
+        inputs.azimuthMotor.encoder.setVelocityRadsPerSec(DriveConstants.azimuthMotorToCarriageRatio.inverse().applyUnsigned(carriageVelocity).in(RadiansPerSecond));
+        inputs.azimuthMotor.motor.updateFrom(this.azimuthSim);
 
-        inputs.odometryDriveRads = new double[] {inputs.driveMotor.encoder.position.in(Radians)};
-        inputs.odometryAzimuthRads = new double[] {inputs.azimuthEncoder.position.in(Radians)};
+        inputs.odometryDriveRads = new double[] {inputs.driveMotor.encoder.getPositionRads()};
+        inputs.odometryAzimuthRads = new double[] {inputs.azimuthEncoder.getPositionRads()};
     }
     
     @Override
@@ -72,7 +74,7 @@ public class ModuleIOSim extends ModuleIOFalcon550 {
     public void setAzimuthAngle(Measure<AngleUnit> angle) {
         this.setAzimuthVolts(
             this.azimuthPID.calculate(
-                this.azimuthSims.getAngularPosition().in(Rotations),
+                this.azimuthSim.getAngularPosition().in(Rotations),
                 angle.in(Rotations)
             )
         );

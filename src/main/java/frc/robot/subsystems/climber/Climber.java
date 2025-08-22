@@ -1,6 +1,7 @@
 package frc.robot.subsystems.climber;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
@@ -12,6 +13,7 @@ import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
@@ -21,7 +23,6 @@ import frc.robot.subsystems.leds.Leds;
 import frc.util.LoggedTracer;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 import frc.util.misc.MeasureUtil;
@@ -39,6 +40,8 @@ public class Climber extends SubsystemBase {
     private static final LoggedTunableMeasure<AngleUnit> climbTolerance = new LoggedTunableMeasure<>("Climber/Climb Tolerance", Rotations.of(0.05));
     private static final LoggedTunableMeasure<TimeUnit> climbTime = new LoggedTunableMeasure<>("Climber/Climb Time", Seconds.of(1));
     private static final LoggedTunableMeasure<TimeUnit> ratchetTime = new LoggedTunableMeasure<>("Climber/Ratchet Time", Seconds.of(0.25));
+
+    private final MutAngle angle = Radians.mutable(0);
 
     public final AngularMech mech = new AngularMech(ClimberConstants.climberBase, VecBuilder.fill(0,1,0));
 
@@ -61,14 +64,15 @@ public class Climber extends SubsystemBase {
         Logger.processInputs("Inputs/Climber", this.inputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Process Inputs");
 
-        var angle = getAngle();
-        Logger.recordOutput("Climber/Position", angle);
+        this.angle.mut_replace(ClimberConstants.sensorToMechanismRatio.applyUnsigned(inputs.motor.encoder.getPositionRads()), Radians);
+
+        Logger.recordOutput("Climber/Position", this.getAngle());
         Logger.recordOutput("Climber/Ratchet Engaged", ratchetEngaged);
 
-        var percentToDeploy = angle.div(deployAngle.get()).baseUnitMagnitude();
-        mech.set(ClimberConstants.climberMaxAngle.times(percentToDeploy));
+        var percentToDeploy = this.angle.baseUnitMagnitude() / deployAngle.get().baseUnitMagnitude();
+        this.mech.set(ClimberConstants.climberMaxAngle.times(percentToDeploy));
 
-        Leds.getInstance().climbing.setPos(getAngle().div(climbAngle.get()).baseUnitMagnitude());
+        Leds.getInstance().climbing.setPos(this.angle.baseUnitMagnitude() / climbAngle.get().baseUnitMagnitude());
 
         // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
@@ -78,7 +82,7 @@ public class Climber extends SubsystemBase {
     }
 
     public Angle getAngle() {
-        return ClimberConstants.sensorToMechanismRatio.applyUnsigned(inputs.motor.encoder.position).unaryMinus();
+        return this.angle;
     }
 
     public Command idle() {
