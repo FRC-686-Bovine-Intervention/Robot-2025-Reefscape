@@ -69,7 +69,7 @@ public class Module {
         )
     );
     private static final LoggedTunable<PIDConstants> azimuthPIDConsts = LoggedTunable.from(
-        "Drive/Module/Drive/PID",
+        "Drive/Module/Azimuth/PID",
         new PIDConstants(
             5*2*Math.PI,
             0*2*Math.PI,

@@ -29,11 +29,15 @@ public class Wrist {
     private final WristIO io;
     private final WristIOInputsAutoLogged inputs = new WristIOInputsAutoLogged();
 
-    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
         "Superstructure/Wrist/Profile",
+        DegreesPerSecond,
+        DegreesPerSecondPerSecond,
+        RadiansPerSecond,
+        RadiansPerSecondPerSecond,
         new TrapezoidProfile.Constraints(
-            RadiansPerSecond.convertFrom(1080, DegreesPerSecond),
-            RadiansPerSecondPerSecond.convertFrom(2160, DegreesPerSecondPerSecond)
+            1080,
+            2160
         )
     );
     private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(

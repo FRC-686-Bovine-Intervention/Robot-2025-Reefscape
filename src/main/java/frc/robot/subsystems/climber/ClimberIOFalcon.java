@@ -2,6 +2,8 @@ package frc.robot.subsystems.climber;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -50,8 +52,12 @@ public class ClimberIOFalcon implements ClimberIO {
         .withLimitForwardMotion(true)
     ;
 
-    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
         "Climber/Profile",
+        RotationsPerSecond,
+        RotationsPerSecondPerSecond,
+        RotationsPerSecond,
+        RotationsPerSecondPerSecond,
         new TrapezoidProfile.Constraints(
             6,
             12
@@ -115,7 +121,7 @@ public class ClimberIOFalcon implements ClimberIO {
         var profileConstraints = profileConsts.get();
         motorConfig.MotionMagic
             .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
-            .withMotionMagicCruiseVelocity(profileConstraints.maxAcceleration)
+            .withMotionMagicAcceleration(profileConstraints.maxAcceleration)
         ;
         nonClimbingFFConsts.get().update(motorConfig.Slot0);
         nonClimbingPIDConsts.get().update(motorConfig.Slot0);
@@ -163,7 +169,7 @@ public class ClimberIOFalcon implements ClimberIO {
             var profileConstraints = profileConsts.get();
             config
                 .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
-                .withMotionMagicCruiseVelocity(profileConstraints.maxAcceleration)
+                .withMotionMagicAcceleration(profileConstraints.maxAcceleration)
             ;
             motor.getConfigurator().apply(config);
         }

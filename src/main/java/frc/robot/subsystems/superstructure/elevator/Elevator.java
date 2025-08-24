@@ -29,11 +29,15 @@ public class Elevator {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
-    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
         "Superstructure/Elevator/Profile",
+        InchesPerSecond,
+        InchesPerSecond.per(Second),
+        MetersPerSecond,
+        MetersPerSecondPerSecond,
         new TrapezoidProfile.Constraints(
-            MetersPerSecond.convertFrom(80, InchesPerSecond),
-            MetersPerSecondPerSecond.convertFrom(240, InchesPerSecond.per(Second))
+            80,
+            240
         )
     );
     private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(

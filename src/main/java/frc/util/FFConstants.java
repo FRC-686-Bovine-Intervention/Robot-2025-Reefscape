@@ -17,10 +17,10 @@ public record FFConstants(double kS, double kG, double kV, double kA) implements
     public LoggedTunable<FFConstants> makeTunable(String key) {
         final var defaultValue = this;
         return new LoggedTunable<>() {
-            private final LoggedTunableNumber kS = LoggedTunable.from(key + "kS", defaultValue.kS());
-            private final LoggedTunableNumber kG = LoggedTunable.from(key + "kG", defaultValue.kG());
-            private final LoggedTunableNumber kV = LoggedTunable.from(key + "kV", defaultValue.kV());
-            private final LoggedTunableNumber kA = LoggedTunable.from(key + "kA", defaultValue.kA());
+            private final LoggedTunableNumber kS = LoggedTunable.from(key + "/kS", defaultValue.kS());
+            private final LoggedTunableNumber kG = LoggedTunable.from(key + "/kG", defaultValue.kG());
+            private final LoggedTunableNumber kV = LoggedTunable.from(key + "/kV", defaultValue.kV());
+            private final LoggedTunableNumber kA = LoggedTunable.from(key + "/kA", defaultValue.kA());
 
             private FFConstants cache = defaultValue;
 

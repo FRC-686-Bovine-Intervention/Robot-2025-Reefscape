@@ -29,11 +29,15 @@ public class Pivot {
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
         "Superstructure/Pivot/Profile",
+        DegreesPerSecond,
+        DegreesPerSecondPerSecond,
+        RadiansPerSecond,
+        RadiansPerSecondPerSecond,
         new TrapezoidProfile.Constraints(
-            RadiansPerSecond.convertFrom(225, DegreesPerSecond),
-            RadiansPerSecondPerSecond.convertFrom(450, DegreesPerSecondPerSecond)
+            225,
+            450
         )
     );
     private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
