@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -77,8 +78,8 @@ public class AutoCommons {
         return 
             Commands.deadline(
                 Commands.sequence(
-                    Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, RobotState.getInstance().getEstimatedGlobalPose(), Inches.of(5), Degrees.of(5))),
+                    Commands.waitUntil(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(1), Units.degreesToRadians(5))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, RobotState.getInstance().getEstimatedGlobalPose(), Units.inchesToMeters(5), Units.degreesToRadians(5))),
                     Commands.waitSeconds(0.25),
                     intake.eject().asProxy().onlyWhile(intake.hasCoral)
                 ),
@@ -129,8 +130,8 @@ public class AutoCommons {
             Commands.deadline(
                 Commands.sequence(
                     Commands.waitUntil(() -> 
-                        GeomUtil.isNear(netPose, RobotState.getInstance().getEstimatedGlobalPose(), Inches.of(5), Degrees.of(5))
-                        && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
+                        GeomUtil.isNear(netPose, RobotState.getInstance().getEstimatedGlobalPose(), Units.inchesToMeters(5), Units.degreesToRadians(5))
+                        && superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(6), Units.degreesToRadians(5))
                     ),
                     intake.ejectAlgae().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
                 ),
@@ -138,7 +139,7 @@ public class AutoCommons {
                     Commands.sequence(
                         drive.followBluePath(pathToExtend).withName("Follow Path to Extend").asProxy(),
                         drive.simplePIDTo(() -> extendPose).withName("PID to Extend").asProxy()
-                    ).until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(60))),
+                    ).until(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(6), Units.degreesToRadians(60))),
                     Commands.sequence(
                         drive.followBluePath(pathToNet).withName("Follow Path to Net").asProxy(),
                         drive.simplePIDTo(() -> netPose).withName("PID to Net").asProxy()
@@ -242,7 +243,7 @@ public class AutoCommons {
                         Commands.waitSeconds(0.125)
                     ),
                     Commands.sequence(
-                        drive.simplePIDTo(() -> backupPose).withName("Backup").asProxy().until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(5), Inches.of(5), Degrees.of(5))),
+                        drive.simplePIDTo(() -> backupPose).withName("Backup").asProxy().until(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(5), Units.inchesToMeters(5), Units.degreesToRadians(5))),
                         drive.simplePIDTo(() -> intakePose).withName("Intake").asProxy()
                         // drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         // drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()

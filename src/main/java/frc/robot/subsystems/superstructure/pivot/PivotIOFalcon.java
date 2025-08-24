@@ -1,28 +1,24 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
-
 import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.StrictFollower;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.AngularVelocityUnit;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.math.util.Units;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.NeutralMode;
@@ -41,7 +37,11 @@ public class PivotIOFalcon implements PivotIO {
     private final EncodedMotorStatusSignalCache rightMotorStatusSignalCache;
     private final EncoderStatusSignalCache encoderStatusSignalCache;
 
+    private final VoltageOut voltageRequest = new VoltageOut(0);
     private final PositionVoltage positionRequest = new PositionVoltage(0);
+    private final NeutralOut neutralOutRequest = new NeutralOut();
+    private final CoastOut coastOutRequest = new CoastOut();
+    private final StaticBrake staticBrakeRequest = new StaticBrake();
     private final StrictFollower followerRequest;
 
     public PivotIOFalcon() {
@@ -125,25 +125,28 @@ public class PivotIOFalcon implements PivotIO {
     }
 
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage) {
-        this.leftMotor.setVoltage(voltage.in(Volts));
+    public void setVolts(double volts) {
+        this.leftMotor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
         this.rightMotor.setControl(this.followerRequest);
     }
 
     @Override
-    public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
+    public void setPosition(double positionRads, double velocityRadsPerSec, double feedforwardVolts) {
         this.leftMotor.setControl(this.positionRequest
-            .withPosition(position.in(Rotations))
-            .withVelocity(velocity.in(RotationsPerSecond))
-            .withFeedForward(feedforward.in(Volts))
+            .withPosition(Units.radiansToRotations(positionRads))
+            .withVelocity(Units.radiansToRotations(velocityRadsPerSec))
+            .withFeedForward(feedforwardVolts)
         );
         this.rightMotor.setControl(this.followerRequest);
     }
     
     @Override
     public void stop(Optional<NeutralMode> neutralMode) {
-        this.leftMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
-        this.rightMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        var controlRequest = NeutralMode.selectControlRequest(neutralMode, this.neutralOutRequest, this.coastOutRequest, this.staticBrakeRequest);
+        this.leftMotor.setControl(controlRequest);
+        this.rightMotor.setControl(controlRequest);
     }
 
     @Override

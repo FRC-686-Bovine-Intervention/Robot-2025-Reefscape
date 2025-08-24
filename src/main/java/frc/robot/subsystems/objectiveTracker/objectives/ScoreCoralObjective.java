@@ -5,8 +5,8 @@ import java.util.Optional;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.util.flipping.AllianceFlipped;
 
 public class ScoreCoralObjective implements Objective {
@@ -27,7 +27,7 @@ public class ScoreCoralObjective implements Objective {
 
     @Override
     public SuperstructureState getTargetState() {
-        return SuperstructureConstants.getStateForBranchLevel(targetBranch.map((branch) -> branch.level));
+        return SuperstructureConstants.getStateForBranchLevel(this.targetBranch.map((branch) -> branch.level));
     }
 
     @Override

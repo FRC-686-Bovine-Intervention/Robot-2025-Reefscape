@@ -4,10 +4,6 @@ import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.AngularVelocityUnit;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
@@ -27,9 +23,9 @@ public interface PivotIO {
 
     public default void updateInputs(PivotIOInputs inputs) {}
 
-    public default void setVoltage(Measure<VoltageUnit> voltage) {}
+    public default void setVolts(double volts) {}
 
-    public default void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {}
+    public default void setPosition(double positionRads, double velocityRadsPerSec, double feedforwardVolts) {}
     
     public default void stop(Optional<NeutralMode> neutralMode) {}
 

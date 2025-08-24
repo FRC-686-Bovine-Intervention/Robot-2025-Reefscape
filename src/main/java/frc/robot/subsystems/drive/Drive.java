@@ -14,7 +14,6 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -39,7 +38,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -52,14 +50,12 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
 import frc.robot.RobotState.OdometryObservation;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
@@ -73,8 +69,6 @@ import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.robotStructure.Root;
 
 public class Drive extends VirtualSubsystem {
-    public final Set<Subsystem> subsystems;
-
     private final OdometryTimestampIO odometryTimestampIO;
     private final OdometryTimestampIOInputsAutoLogged odometryTimestamps = new OdometryTimestampIOInputsAutoLogged();
 
@@ -106,15 +100,13 @@ public class Drive extends VirtualSubsystem {
         new SwerveModuleState()
     };
 
-    private Twist2d fieldVelocity = new Twist2d();
-
     public Drive(OdometryTimestampIO odometryTimestampIO, GyroIO gyroIO, ModuleIO... moduleIOs) {
         System.out.println("[Init Drive] Instantiating Drive");
         this.odometryTimestampIO = odometryTimestampIO;
         this.gyroIO = gyroIO;
         System.out.println("[Init Drive] Gyro IO: " + this.gyroIO.getClass().getSimpleName());
         for(int i = 0; i < DriveConstants.moduleConstants.length; i++) {
-            ModuleConstants config = DriveConstants.moduleConstants[i];
+            var config = DriveConstants.moduleConstants[i];
             System.out.println("[Init Drive] Instantiating Module " + config.name + " with Module IO: " + moduleIOs[i].getClass().getSimpleName());
             var module = new Module(moduleIOs[i], config);
             module.periodic();
@@ -125,7 +117,6 @@ public class Drive extends VirtualSubsystem {
 
         this.translationSubsystem = new Translational(this);
         this.rotationalSubsystem = new Rotational(this);
-        this.subsystems = Set.of(this.translationSubsystem, this.rotationalSubsystem);
         AutoBuilder.configure(
             RobotState.getInstance()::getEstimatedGlobalPose,
             RobotState.getInstance()::resetPose,
@@ -153,9 +144,9 @@ public class Drive extends VirtualSubsystem {
                 },
                 (log) -> {
                     Arrays.stream(this.modules).forEach((module) -> {
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Position", module.getWheelAngularPosition());
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Velocity", module.getWheelAngularVelocity());
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getAppliedVolts());
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Position", module.getWheelAngularPositionRads());
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Velocity", module.getWheelAngularVelocityRadsPerSec());
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getDriveAppliedVolts());
                     });
                 },
                 this.translationSubsystem
@@ -187,7 +178,7 @@ public class Drive extends VirtualSubsystem {
         Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
 
-        for (var module : modules) {
+        for (var module : this.modules) {
             module.periodic();
         }
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic");
@@ -195,10 +186,10 @@ public class Drive extends VirtualSubsystem {
         OdometryThread.getInstance().odometryLock.unlock();
 
         var sampleTimestamps = this.odometryTimestamps.timestamps;
+        var modulePositions = new SwerveModulePosition[this.modules.length];
         for (int sampleI = 0; sampleI < sampleTimestamps.length; sampleI++) {
-            var modulePositions = new SwerveModulePosition[this.modules.length];
             for (int i = 0; i < this.modules.length; i++) {
-                modulePositions[i] = this.modules[i].getModulePositions()[sampleI];
+                modulePositions[i] = this.modules[i].getModulePositionSamples()[sampleI];
             }
 
             if (this.lastMeasuredPositions != null) {
@@ -212,11 +203,20 @@ public class Drive extends VirtualSubsystem {
                     this.lastMeasuredPositions,
                     modulePositions
                 ));
+            } else {
+                this.lastMeasuredPositions = new SwerveModulePosition[modulePositions.length];
             }
-            this.lastMeasuredPositions = modulePositions;
+            for (int i = 0; i < modulePositions.length; i++) {
+                this.lastMeasuredPositions[i] = new SwerveModulePosition(
+                    modulePositions[i].distanceMeters,
+                    modulePositions[i].angle
+                );
+            }
         }
 
-        this.measuredStates = Arrays.stream(this.modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
+        for (int i = 0; i < this.modules.length; i++) {
+            this.measuredStates[i] = this.modules[i].getModuleState();
+        }
         Logger.recordOutput("Drive/Swerve States/Measured", this.measuredStates);
 
         this.robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(this.measuredStates);
@@ -367,7 +367,7 @@ public class Drive extends VirtualSubsystem {
     public Command coast() {
         return new Command() {
             {
-                addRequirements(subsystems);
+                addRequirements(translationSubsystem, rotationalSubsystem);
                 setName("Coast");
             }
             @Override
@@ -443,15 +443,6 @@ public class Drive extends VirtualSubsystem {
         });
     }
 
-    /**
-     * Returns the measured X, Y, and theta field velocities in meters per sec. The
-     * components of the
-     * twist are velocities and NOT changes in position.
-     */
-    public Twist2d getFieldVelocity() {
-        return this.fieldVelocity;
-    }
-
     /** Returns the current pitch velocity (Y rotation) in radians per second. */
     public AngularVelocity getYawVelocity() {
         return this.gyroInputs.yawVelocity;
@@ -472,15 +463,6 @@ public class Drive extends VirtualSubsystem {
         return this.lastMeasuredPositions;
     }
 
-    /** Returns the average drive distance in radians */
-    public double getAverageModuleDistance() {
-        double avgDist = 0.0;
-        for (int i = 0; i < DriveConstants.moduleConstants.length; i++) {
-            avgDist += Math.abs(this.modules[i].getWheelAngularPosition().in(Radians));
-        }
-        return avgDist / DriveConstants.moduleConstants.length;
-    }
-
     public ChassisSpeeds getRobotMeasuredSpeeds() {
         return this.robotMeasuredSpeeds;
     }
@@ -488,15 +470,6 @@ public class Drive extends VirtualSubsystem {
     public ChassisSpeeds getFieldMeasuredSpeeds() {
         return this.fieldMeasuredSpeeds;
     }
-
-    /** Returns the average drive velocity in radians/sec. */
-    public double getCharacterizationVelocity() {
-        return Arrays.stream(this.modules).map(Module::getWheelAngularVelocity).mapToDouble(AngularVelocity::baseUnitMagnitude).average().orElse(0);
-    }
-
-    // public boolean collisionDetected() {
-    //     return currentSpikeTimer.hasElapsed(currentSpikeTime.in(Seconds));
-    // }
 
     private static final LoggedTunableNumber tP = new LoggedTunableNumber("AutoDrive/tP", 1);
     private static final LoggedTunableNumber tI = new LoggedTunableNumber("AutoDrive/tI", 0);

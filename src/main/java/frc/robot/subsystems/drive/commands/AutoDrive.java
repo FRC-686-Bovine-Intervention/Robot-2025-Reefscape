@@ -17,7 +17,7 @@ public class AutoDrive {
     public static Command preciseToPose(Pose2d pose, Drive drive) {
         return new Command() {
             {
-                addRequirements(drive.subsystems);
+                addRequirements(drive.translationSubsystem, drive.rotationalSubsystem);
             }
             private final PIDController xController = new PIDController(2, 0, 0);
             private final PIDController yController = new PIDController(15, 0, 0);

@@ -16,7 +16,6 @@ import frc.robot.constants.FieldConstants.Algae;
 import frc.robot.constants.FieldConstants.Coral;
 import frc.robot.constants.FieldConstants.Reef.BranchLevel;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
 import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 
@@ -160,7 +159,7 @@ public class SuperstructureConstants {
     );
 
     public static final SuperstructureState idleState = SuperstructureState.fromParts(
-        l4State.pivotAngle,
+        Radians.of(l4State.getPivotAngleRads()),
         ElevatorConstants.minLengthPhysical,
         Degrees.of(90)
     );

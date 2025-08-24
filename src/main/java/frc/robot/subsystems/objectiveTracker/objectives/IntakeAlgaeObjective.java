@@ -2,9 +2,9 @@ package frc.robot.subsystems.objectiveTracker.objectives;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
-import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.util.flipping.AllianceFlipped;
 
 public class IntakeAlgaeObjective implements Objective {

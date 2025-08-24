@@ -19,6 +19,8 @@ public class OdometryThread extends Thread {
     private static OdometryThread instance;
     public static OdometryThread getInstance() {if (instance == null) {instance = new OdometryThread();} return instance;}
 
+    public static final int MAX_BUFFER_SIZE = 20;
+
     private OdometryThread() {
         this.setName("OdometryThread");
         this.setDaemon(true);
@@ -31,7 +33,7 @@ public class OdometryThread extends Thread {
     private final List<DoubleBuffer> timestampBuffers = new ArrayList<>(1);
 
     public DoubleBuffer registerPhoenixDoubleSignal(BaseStatusSignal statusSignal, DoubleUnaryOperator converter) {
-        var buffer = new DoubleBuffer(20);
+        var buffer = new DoubleBuffer(MAX_BUFFER_SIZE);
         this.signalsLock.lock();
         this.odometryLock.lock();
         try {
@@ -48,7 +50,7 @@ public class OdometryThread extends Thread {
         return buffer;
     }
     public <T> Buffer<T> registerPhoenixSignal(StatusSignal<T> statusSignal, IntFunction<T[]> arrayConstructor) {
-        var buffer = new Buffer<T>(20, arrayConstructor);
+        var buffer = new Buffer<T>(MAX_BUFFER_SIZE, arrayConstructor);
         this.signalsLock.lock();
         this.odometryLock.lock();
         try {
@@ -65,7 +67,7 @@ public class OdometryThread extends Thread {
         return buffer;
     }
     public <T> Buffer<T> registerPhoenixComboSignal(Function<double[], T> generator, IntFunction<T[]> arrayConstructor, BaseStatusSignal... statusSignals) {
-        var buffer = new Buffer<T>(20, arrayConstructor);
+        var buffer = new Buffer<T>(MAX_BUFFER_SIZE, arrayConstructor);
         this.signalsLock.lock();
         this.odometryLock.lock();
         try {
@@ -82,7 +84,7 @@ public class OdometryThread extends Thread {
         return buffer;
     }
     public <T> Buffer<T> registerGenericSignal(Supplier<T> supplier, IntFunction<T[]> arrayConstructor) {
-        var buffer = new Buffer<T>(20, arrayConstructor);
+        var buffer = new Buffer<T>(MAX_BUFFER_SIZE, arrayConstructor);
         this.signalsLock.lock();
         this.odometryLock.lock();
         try {
@@ -94,7 +96,7 @@ public class OdometryThread extends Thread {
         return buffer;
     }
     public DoubleBuffer registerGenericDoubleSignal(DoubleSupplier supplier, DoubleUnaryOperator converter) {
-        var buffer = new DoubleBuffer(20);
+        var buffer = new DoubleBuffer(MAX_BUFFER_SIZE);
         this.signalsLock.lock();
         this.odometryLock.lock();
         try {
@@ -109,7 +111,7 @@ public class OdometryThread extends Thread {
         return buffer;
     }
     public DoubleBuffer generateTimestampBuffer() {
-        var buffer = new DoubleBuffer(20);
+        var buffer = new DoubleBuffer(MAX_BUFFER_SIZE);
         this.odometryLock.lock();
         try {
             this.timestampBuffers.add(buffer);

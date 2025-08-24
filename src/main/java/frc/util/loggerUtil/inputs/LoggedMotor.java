@@ -148,7 +148,7 @@ public class LoggedMotor implements StructSerializable {
 
         @Override
         public int getSize() {
-            return kSizeDouble * 3;
+            return kSizeDouble * 4;
         }
 
         @Override

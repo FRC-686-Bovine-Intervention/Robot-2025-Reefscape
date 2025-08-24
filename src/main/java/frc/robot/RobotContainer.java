@@ -6,7 +6,9 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
@@ -15,10 +17,12 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
@@ -101,7 +105,6 @@ import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
 import frc.util.geometry.GeomUtil;
 import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
-import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
@@ -697,7 +700,7 @@ public class RobotContainer {
         this.automationsLoop.bind(() -> {
             LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Tilt Limits/Before");
             this.drive.setTiltLimits(
-                (this.superstructure.elevator.getLength().gt(Inches.of(40))) ? (
+                (this.superstructure.elevator.getLengthMeters() > Units.inchesToMeters(40)) ? (
                     Drive.extendedTiltLimitTunable.get()
                 ) : (
                     Drive.normalTiltLimitTunable.get()
@@ -780,14 +783,22 @@ public class RobotContainer {
                         linearTolerance = l1LinearTolerance.get();
                         angularTolerance = l1AngularTolerance.get();
                     }
-                    Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance));
-                    Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance));
-                    Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance));
-                    Logger.recordOutput("Self Record/Coral/Robot/Linear", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance));
-                    Logger.recordOutput("Self Record/Coral/Robot/Angular", GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance));
+                    var pivotInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getPivotAngleRads(), superstructure.getCurrentMeasuredState().getPivotAngleRads(), pivotTolerance.in(Radians));
+                    var elevatorInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getElevatorLengthMeters(), superstructure.getCurrentMeasuredState().getElevatorLengthMeters(), elevatorTolerance.in(Meters));
+                    var wristInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getWristAngleRads(), superstructure.getCurrentMeasuredState().getWristAngleRads(), wristTolerance.in(Radians));
+                    var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance);
+                    var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", pivotInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", elevatorInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", wristInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Robot/Linear", linearInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Robot/Angular", angularInTolerance);
                     if (
-                        GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs(), RobotState.getInstance().getEstimatedGlobalPose(), linearTolerance, angularTolerance)
-                        && superstructure.getCurrentState().isNear(scoreCoralObjective.getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
+                        pivotInTolerance
+                        && elevatorInTolerance
+                        && wristInTolerance
+                        && linearInTolerance
+                        && angularInTolerance
                     ) {
                         objectiveTracker.placeCoral(scoreCoralObjective.getTargetBranch());
                     }
@@ -843,14 +854,22 @@ public class RobotContainer {
                             angularTolerance = highAngularTolerance.get();
                         break;
                     }
-                    Logger.recordOutput("Self Record/Algae/Superstructure/Pivot", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance));
-                    Logger.recordOutput("Self Record/Algae/Superstructure/Elevator", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance));
-                    Logger.recordOutput("Self Record/Algae/Superstructure/Wrist", MeasureUtil.isNear(intakeAlgaeObjective.get().getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance));
-                    Logger.recordOutput("Self Record/Algae/Robot/Linear", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance));
-                    Logger.recordOutput("Self Record/Algae/Robot/Angular", GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance));
+                    var pivotInTolerance = MathUtil.isNear(intakeAlgaeObjective.get().getTargetState().getPivotAngleRads(), superstructure.getCurrentMeasuredState().getPivotAngleRads(), pivotTolerance.in(Radians));
+                    var elevatorInTolerance = MathUtil.isNear(intakeAlgaeObjective.get().getTargetState().getElevatorLengthMeters(), superstructure.getCurrentMeasuredState().getElevatorLengthMeters(), elevatorTolerance.in(Meters));
+                    var wristInTolerance = MathUtil.isNear(intakeAlgaeObjective.get().getTargetState().getWristAngleRads(), superstructure.getCurrentMeasuredState().getWristAngleRads(), wristTolerance.in(Radians));
+                    var linearInTolerance = GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance);
+                    var angularInTolerance = GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", pivotInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", elevatorInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", wristInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Robot/Linear", linearInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Robot/Angular", angularInTolerance);
                     if (
-                        GeomUtil.isNear(intakeAlgaeObjective.get().getTargetPose().getOurs(), RobotState.getInstance().getEstimatedGlobalPose(), linearTolerance, angularTolerance)
-                        && superstructure.getCurrentState().isNear(intakeAlgaeObjective.get().getTargetState(), pivotTolerance, elevatorTolerance, wristTolerance)
+                        pivotInTolerance
+                        && elevatorInTolerance
+                        && wristInTolerance
+                        && linearInTolerance
+                        && angularInTolerance
                     ) {
                         objectiveTracker.removeAlgae(intakeAlgaeObjective.get().getTargetAlgae());
                     }
@@ -930,16 +949,16 @@ public class RobotContainer {
                         linearTolerance = l1LinearTolerance.get();
                         angularTolerance = l1AngularTolerance.get();
                     }
-                    var pivotInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().pivotAngle, superstructure.getCurrentState().pivotAngle, pivotTolerance);
-                    var elevatorInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().elevatorLength, superstructure.getCurrentState().elevatorLength, elevatorTolerance);
-                    var wristInTolerance = MeasureUtil.isNear(scoreCoralObjective.getTargetState().wristAngle, superstructure.getCurrentState().wristAngle, wristTolerance);
+                    var pivotInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getPivotAngleRads(), superstructure.getCurrentMeasuredState().getPivotAngleRads(), pivotTolerance.in(Radians));
+                    var elevatorInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getElevatorLengthMeters(), superstructure.getCurrentMeasuredState().getElevatorLengthMeters(), elevatorTolerance.in(Meters));
+                    var wristInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getWristAngleRads(), superstructure.getCurrentMeasuredState().getWristAngleRads(), wristTolerance.in(Radians));
                     var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance);
                     var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance);
-                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Pivot", pivotInTolerance);
-                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Elevator", elevatorInTolerance);
-                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Wrist", wristInTolerance);
-                    Logger.recordOutput("Auto Eject/Coral/Robot/Linear", linearInTolerance);
-                    Logger.recordOutput("Auto Eject/Coral/Robot/Angular", angularInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", pivotInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", elevatorInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", wristInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Robot/Linear", linearInTolerance);
+                    Logger.recordOutput("Self Record/Coral/Robot/Angular", angularInTolerance);
 
                     if (this.debouncer.calculate(pivotInTolerance && elevatorInTolerance && wristInTolerance && linearInTolerance && angularInTolerance)) {
                         if (scoreCoralObjective.getTargetBranch().isPresent()) {
