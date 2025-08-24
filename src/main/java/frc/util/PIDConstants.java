@@ -19,7 +19,7 @@ public record PIDConstants(double kP, double kI, double kD) implements Tunable<P
             private final LoggedTunableNumber kI = LoggedTunable.from(key + "/kI", defaultValue.kI());
             private final LoggedTunableNumber kD = LoggedTunable.from(key + "/kD", defaultValue.kD());
 
-            private PIDConstants cache;
+            private PIDConstants cache = defaultValue;
 
             @Override
             public PIDConstants get() {
