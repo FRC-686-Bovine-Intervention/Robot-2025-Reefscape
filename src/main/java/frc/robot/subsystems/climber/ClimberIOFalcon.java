@@ -2,8 +2,6 @@ package frc.robot.subsystems.climber;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -19,6 +17,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
@@ -26,12 +25,12 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
+import frc.util.FFConstants;
+import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class ClimberIOFalcon implements ClimberIO {
     protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
@@ -51,36 +50,46 @@ public class ClimberIOFalcon implements ClimberIO {
         .withLimitForwardMotion(true)
     ;
 
-    private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
         "Climber/Profile",
-        RotationsPerSecond.of(6),
-        RotationsPerSecondPerSecond.of(12)
+        new TrapezoidProfile.Constraints(
+            6,
+            12
+        )
     );
-    private static final LoggedTunableFF nonClimbingFFConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> nonClimbingFFConsts = LoggedTunable.from(
         "Climber/Nonclimbing/FF",
-        0,
-        0,
-        0,
-        0
+        new FFConstants(
+            0,
+            0,
+            0,
+            0
+        )
     );
-    private static final LoggedTunablePID nonClimbingPIDConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> nonClimbingPIDConsts = LoggedTunable.from(
         "Climber/Nonclimbing/PID",
-        8,
-        0,
-        0
+        new PIDConstants(
+            8,
+            0,
+            0
+        )
     );
-    private static final LoggedTunableFF climbingFFConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> climbingFFConsts = LoggedTunable.from(
         "Climber/Climbing/FF",
-        0,
-        0,
-        0,
-        0
+        new FFConstants(
+            0,
+            0,
+            0,
+            0
+        )
     );
-    private static final LoggedTunablePID climbingPIDConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> climbingPIDConsts = LoggedTunable.from(
         "Climber/Climbing/PID",
-        16,
-        0,
-        0
+        new PIDConstants(
+            16,
+            0,
+            0
+        )
     );
 
 
@@ -103,11 +112,15 @@ public class ClimberIOFalcon implements ClimberIO {
             .withSensorToMechanismRatio(ClimberConstants.sensorToMechanismRatio.reductionUnsigned())
         ;
 
-        profileConsts.update(motorConfig.MotionMagic);
-        nonClimbingFFConsts.update(motorConfig.Slot0);
-        nonClimbingPIDConsts.update(motorConfig.Slot0);
-        climbingFFConsts.update(motorConfig.Slot1);
-        climbingPIDConsts.update(motorConfig.Slot1);
+        var profileConstraints = profileConsts.get();
+        motorConfig.MotionMagic
+            .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
+            .withMotionMagicCruiseVelocity(profileConstraints.maxAcceleration)
+        ;
+        nonClimbingFFConsts.get().update(motorConfig.Slot0);
+        nonClimbingPIDConsts.get().update(motorConfig.Slot0);
+        climbingFFConsts.get().update(motorConfig.Slot1);
+        climbingPIDConsts.get().update(motorConfig.Slot1);
 
         profileConsts.hasChanged(hashCode());
         nonClimbingFFConsts.hasChanged(hashCode());
@@ -147,23 +160,27 @@ public class ClimberIOFalcon implements ClimberIO {
         if (profileConsts.hasChanged(hashCode())) {
             var config = new MotionMagicConfigs();
             motor.getConfigurator().refresh(config);
-            profileConsts.update(config);
+            var profileConstraints = profileConsts.get();
+            config
+                .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
+                .withMotionMagicCruiseVelocity(profileConstraints.maxAcceleration)
+            ;
             motor.getConfigurator().apply(config);
         }
 
         if (nonClimbingFFConsts.hasChanged(hashCode()) | nonClimbingPIDConsts.hasChanged(hashCode())) {
             var config = new Slot0Configs();
             motor.getConfigurator().refresh(config);
-            nonClimbingFFConsts.update(config);
-            nonClimbingPIDConsts.update(config);
+            nonClimbingFFConsts.get().update(config);
+            nonClimbingPIDConsts.get().update(config);
             motor.getConfigurator().apply(config);
         }
 
         if (climbingFFConsts.hasChanged(hashCode()) | climbingPIDConsts.hasChanged(hashCode())) {
             var config = new Slot1Configs();
             motor.getConfigurator().refresh(config);
-            climbingFFConsts.update(config);
-            climbingPIDConsts.update(config);
+            climbingFFConsts.get().update(config);
+            climbingPIDConsts.get().update(config);
             motor.getConfigurator().apply(config);
         }
 

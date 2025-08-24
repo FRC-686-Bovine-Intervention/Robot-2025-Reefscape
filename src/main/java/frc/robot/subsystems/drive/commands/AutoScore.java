@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class AutoScore {
@@ -13,8 +14,8 @@ public class AutoScore {
     }
 
     //abs(y) 
-    public static final LoggedTunableNumber xScalar = new LoggedTunableNumber("Auto Score/xScalar", -2);
-    public static final LoggedTunableNumber yScalar = new LoggedTunableNumber("Auto Score/yScalar", -0.5);
+    public static final LoggedTunableNumber xScalar = LoggedTunable.from("Auto Score/xScalar", -2);
+    public static final LoggedTunableNumber yScalar = LoggedTunable.from("Auto Score/yScalar", -0.5);
 
     public static Pose2d getTargetPose(Pose2d currentPose, Pose2d target) {
         var relativePose = currentPose.relativeTo(target);

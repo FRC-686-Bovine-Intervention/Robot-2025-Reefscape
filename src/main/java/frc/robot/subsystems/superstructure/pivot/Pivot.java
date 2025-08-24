@@ -2,6 +2,8 @@ package frc.robot.subsystems.superstructure.pivot;
 
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 
 import java.util.Optional;
 
@@ -13,40 +15,46 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.angle.ArmMech;
 
 public class Pivot {
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
         "Superstructure/Pivot/Profile",
-        DegreesPerSecond.of(225),
-        DegreesPerSecondPerSecond.of(450)
+        new TrapezoidProfile.Constraints(
+            RadiansPerSecond.convertFrom(225, DegreesPerSecond),
+            RadiansPerSecondPerSecond.convertFrom(450, DegreesPerSecondPerSecond)
+        )
     );
-    private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
         "Superstructure/Pivot/FF",
-        0,
-        0,
-        17 /2/Math.PI,
-        0
+        new FFConstants(
+            0,
+            0,
+            17 /2/Math.PI,
+            0
+        )
     );
-    private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> pidConsts = LoggedTunable.from(
         "Superstructure/Pivot/PID",
-        150,
-        0,
-        0
+        new PIDConstants(
+            150,
+            0,
+            0
+        )
     );
 
-    private TrapezoidProfile motionProfile = profileConsts.getTrapezoidProfile();
+    private TrapezoidProfile motionProfile = new TrapezoidProfile(profileConsts.get());
     private final State measuredState = new State();
     private final State setpointState = new State();
     private final State goalState = new State();
@@ -72,8 +80,8 @@ public class Pivot {
         System.out.println("[Init Pivot] Instantiating Pivot with " + io.getClass().getSimpleName());
         this.io = io;
 
-        ffConsts.update(this.feedforward);
-        this.io.configPID(pidConsts.getConstants());
+        ffConsts.get().update(this.feedforward);
+        this.io.configPID(pidConsts.get());
     }
 
     public void periodic() {
@@ -95,13 +103,13 @@ public class Pivot {
         Logger.recordOutput("Superstructure/Pivot/Velocity/Measured", this.getVelocityRadsPerSec());
 
         if (profileConsts.hasChanged(hashCode())) {
-            this.motionProfile = profileConsts.getTrapezoidProfile();
+            this.motionProfile = new TrapezoidProfile(profileConsts.get());
         }
         if (ffConsts.hasChanged(hashCode())) {
-            ffConsts.update(this.feedforward);
+            ffConsts.get().update(this.feedforward);
         }
         if (pidConsts.hasChanged(hashCode())) {
-            this.io.configPID(pidConsts.getConstants());
+            this.io.configPID(pidConsts.get());
         }
 
         // this.leftMotorActiveFaultsAlert.updateFrom(this.inputs.leftMotorFaults.activeFaults);

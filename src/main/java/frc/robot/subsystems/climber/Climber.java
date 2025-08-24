@@ -9,11 +9,10 @@ import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.TimeUnit;
-import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
@@ -24,7 +23,7 @@ import frc.util.LoggedTracer;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.angle.AngularMech;
 
@@ -32,14 +31,14 @@ public class Climber extends SubsystemBase {
     private final ClimberIO io;
     private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
 
-    private static final LoggedTunableMeasure<VoltageUnit> idleVoltage = new LoggedTunableMeasure<>("Climber/Idle Voltage", Volts.of(-1));
-    private static final LoggedTunableMeasure<AngleUnit> ratchetEngageAngle = new LoggedTunableMeasure<>("Climber/Ratchet/Engage Angle", Degrees.of(55));
-    private static final LoggedTunableMeasure<AngleUnit> ratchetDisengageAngle = new LoggedTunableMeasure<>("Climber/Ratchet/Disengage Angle", Degrees.of(100));
-    private static final LoggedTunableMeasure<AngleUnit> deployAngle = new LoggedTunableMeasure<>("Climber/Deploy Angle", Rotations.of(5.5));
-    private static final LoggedTunableMeasure<AngleUnit> climbAngle = new LoggedTunableMeasure<>("Climber/Climb Angle", Rotations.of(2.65));
-    private static final LoggedTunableMeasure<AngleUnit> climbTolerance = new LoggedTunableMeasure<>("Climber/Climb Tolerance", Rotations.of(0.05));
-    private static final LoggedTunableMeasure<TimeUnit> climbTime = new LoggedTunableMeasure<>("Climber/Climb Time", Seconds.of(1));
-    private static final LoggedTunableMeasure<TimeUnit> ratchetTime = new LoggedTunableMeasure<>("Climber/Ratchet Time", Seconds.of(0.25));
+    private static final LoggedTunable<Voltage> idleVoltage = LoggedTunable.from("Climber/Idle Voltage", Volts::of, -1);
+    private static final LoggedTunable<Angle> ratchetEngageAngle = LoggedTunable.from("Climber/Ratchet/Engage Angle", Degrees::of, 55);
+    private static final LoggedTunable<Angle> ratchetDisengageAngle = LoggedTunable.from("Climber/Ratchet/Disengage Angle", Degrees::of, 100);
+    private static final LoggedTunable<Angle> deployAngle = LoggedTunable.from("Climber/Deploy Angle", Rotations::of, 5.5);
+    private static final LoggedTunable<Angle> climbAngle = LoggedTunable.from("Climber/Climb Angle", Rotations::of, 2.65);
+    private static final LoggedTunable<Angle> climbTolerance = LoggedTunable.from("Climber/Climb Tolerance", Rotations::of, 0.05);
+    private static final LoggedTunable<Time> climbTime = LoggedTunable.from("Climber/Climb Time", Seconds::of, 1);
+    private static final LoggedTunable<Time> ratchetTime = LoggedTunable.from("Climber/Ratchet Time", Seconds::of, 0.25);
 
     private final MutAngle angle = Radians.mutable(0);
 

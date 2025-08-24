@@ -15,6 +15,8 @@ import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotState;
@@ -22,7 +24,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.Module;
 import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class WheelRadiusCalibration extends Command {
     private final Drive drive;
@@ -33,8 +35,8 @@ public class WheelRadiusCalibration extends Command {
     private final Measure<VelocityUnit<VoltageUnit>> voltageRampRate;
     private double[] initialPositionRads = new double[0];
 
-    public static final LoggedTunableMeasure<VelocityUnit<VoltageUnit>> VOLTAGE_RAMP_RATE = new LoggedTunableMeasure<>("Drive/Wheel Calibration/Voltage Ramp Rate", Volts.per(Second).of(2));
-    public static final LoggedTunableMeasure<VoltageUnit> MAX_VOLTAGE = new LoggedTunableMeasure<>("Drive/Wheel Calibration/Max Voltage", Volts.of(6));
+    public static final LoggedTunable<Velocity<VoltageUnit>> VOLTAGE_RAMP_RATE = LoggedTunable.from("Drive/Wheel Calibration/Voltage Ramp Rate", Volts.per(Second)::of, 2);
+    public static final LoggedTunable<Voltage> MAX_VOLTAGE = LoggedTunable.from("Drive/Wheel Calibration/Max Voltage", Volts::of, 6);
 
     public WheelRadiusCalibration(Drive drive, Measure<VelocityUnit<VoltageUnit>> voltageRampRate, Measure<VoltageUnit> maxVoltage) {
         this.drive = drive;

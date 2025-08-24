@@ -1,6 +1,8 @@
 package frc.robot.subsystems.superstructure.elevator;
 
 import static edu.wpi.first.units.Units.InchesPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
 
 import java.util.Optional;
@@ -13,40 +15,46 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunableLinearProfile;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.linear.ExtenderMech;
 
 public class Elevator {
     private final ElevatorIO io;
     private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
-    private final LoggedTunableLinearProfile profileConsts = new LoggedTunableLinearProfile(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
         "Superstructure/Elevator/Profile",
-        InchesPerSecond.of(80),
-        InchesPerSecond.per(Second).of(240)
+        new TrapezoidProfile.Constraints(
+            MetersPerSecond.convertFrom(80, InchesPerSecond),
+            MetersPerSecondPerSecond.convertFrom(240, InchesPerSecond.per(Second))
+        )
     );
-    private final LoggedTunableFF ffConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
         "Superstructure/Elevator/FF",
-        0.2,
-        0.3,
-        2,
-        0
+        new FFConstants(
+            0.2,
+            0.3,
+            2,
+            0
+        )
     );
-    private final LoggedTunablePID pidConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> pidConsts = LoggedTunable.from(
         "Superstructure/Elevator/PID",
-        50,
-        0,
-        0
+        new PIDConstants(
+            50,
+            0,
+            0
+        )
     );
 
-    private TrapezoidProfile motionProfile = profileConsts.getTrapezoidProfile();
+    private TrapezoidProfile motionProfile = new TrapezoidProfile(profileConsts.get());
     private final State measuredState = new State();
     private final State setpointState = new State();
     private final State goalState = new State();
@@ -71,8 +79,8 @@ public class Elevator {
         System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
         this.io = io;
 
-        ffConsts.update(this.feedforward);
-        this.io.configPID(pidConsts.getConstants());
+        ffConsts.get().update(this.feedforward);
+        this.io.configPID(pidConsts.get());
     }
 
     public void periodic() {
@@ -98,13 +106,13 @@ public class Elevator {
         this.stage4Mech.setMeters(stageDistMeters);
 
         if (profileConsts.hasChanged(hashCode())) {
-            this.motionProfile = profileConsts.getTrapezoidProfile();
+            this.motionProfile = new TrapezoidProfile(profileConsts.get());
         }
         if (ffConsts.hasChanged(hashCode())) {
-            ffConsts.update(this.feedforward);
+            ffConsts.get().update(this.feedforward);
         }
         if (pidConsts.hasChanged(hashCode())) {
-            this.io.configPID(pidConsts.getConstants());
+            this.io.configPID(pidConsts.get());
         }
 
         // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);

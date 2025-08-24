@@ -6,22 +6,22 @@ import static edu.wpi.first.units.Units.Meters;
 import java.util.Arrays;
 
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.DistanceUnit;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import edu.wpi.first.units.measure.Distance;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class ObjectVision {
     private final ObjectPipeline[] pipelines;
 
-    private static final LoggedTunableMeasure<DistanceUnit> updateDistanceThreshold = new LoggedTunableMeasure<>("Vision/Bucket/Updating/Update Distance Threshold", Meters.of(5), Inches);
-    private static final LoggedTunableNumber posUpdatingFilteringFactor = new LoggedTunableNumber("Vision/Bucket/Updating/Pos Updating Filtering Factor", 0.8);
-    private static final LoggedTunableNumber confUpdatingFilteringFactor = new LoggedTunableNumber("Vision/Bucket/Confidence/Updating Filtering Factor", 0.5);
-    private static final LoggedTunableNumber confidencePerAreaPercent = new LoggedTunableNumber("Vision/Bucket/Confidence/Per Area Percent", 1);
-    private static final LoggedTunableNumber confidenceDecayPerSecond = new LoggedTunableNumber("Vision/Bucket/Confidence/Decay Per Second", 3);
-    private static final LoggedTunableNumber priorityPerConfidence = new LoggedTunableNumber("Vision/Bucket/Priority/Priority Per Confidence", 4);
-    private static final LoggedTunableNumber priorityPerDistance = new LoggedTunableNumber("Vision/Bucket/Priority/Priority Per Distance", -2);
-    private static final LoggedTunableNumber acquireConfidenceThreshold = new LoggedTunableNumber("Vision/Bucket/Target Threshold/Acquire", -2);
-    private static final LoggedTunableNumber detargetConfidenceThreshold = new LoggedTunableNumber("Vision/Bucket/Target Threshold/Detarget", -3);
+    private static final LoggedTunable<Distance> updateDistanceThreshold = LoggedTunable.from("Vision/Bucket/Updating/Update Distance Threshold", Inches::of, Inches.convertFrom(5, Meters));
+    private static final LoggedTunableNumber posUpdatingFilteringFactor = LoggedTunable.from("Vision/Bucket/Updating/Pos Updating Filtering Factor", 0.8);
+    private static final LoggedTunableNumber confUpdatingFilteringFactor = LoggedTunable.from("Vision/Bucket/Confidence/Updating Filtering Factor", 0.5);
+    private static final LoggedTunableNumber confidencePerAreaPercent = LoggedTunable.from("Vision/Bucket/Confidence/Per Area Percent", 1);
+    private static final LoggedTunableNumber confidenceDecayPerSecond = LoggedTunable.from("Vision/Bucket/Confidence/Decay Per Second", 3);
+    private static final LoggedTunableNumber priorityPerConfidence = LoggedTunable.from("Vision/Bucket/Priority/Priority Per Confidence", 4);
+    private static final LoggedTunableNumber priorityPerDistance = LoggedTunable.from("Vision/Bucket/Priority/Priority Per Distance", -2);
+    private static final LoggedTunableNumber acquireConfidenceThreshold = LoggedTunable.from("Vision/Bucket/Target Threshold/Acquire", -2);
+    private static final LoggedTunableNumber detargetConfidenceThreshold = LoggedTunable.from("Vision/Bucket/Target Threshold/Detarget", -3);
 
     public ObjectVision(ObjectPipeline... pipelines) {
         System.out.println("[Init ObjectVision] Instantiating ObjectVision");

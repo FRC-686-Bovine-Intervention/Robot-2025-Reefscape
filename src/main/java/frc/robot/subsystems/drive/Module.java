@@ -21,20 +21,20 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
+import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class Module {
     private final ModuleIO io;
@@ -49,26 +49,32 @@ public class Module {
     private final SwerveModulePosition[] modulePositionSampleBuffer = new SwerveModulePosition[OdometryThread.MAX_BUFFER_SIZE];
     private SwerveModulePosition[] modulePositionSamples = new SwerveModulePosition[0];
 
-    private static final LoggedTunableMeasure<LinearVelocityUnit> brakeModeThreshold = new LoggedTunableMeasure<>("Drive/Brake Mode Threshold", InchesPerSecond.of(1)); 
+    private static final LoggedTunable<LinearVelocity> brakeModeThreshold = LoggedTunable.from("Drive/Brake Mode Threshold", InchesPerSecond::of, 1); 
     
-    private static final LoggedTunablePID drivePIDConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> drivePIDConsts = LoggedTunable.from(
         "Drive/Module/Drive/PID",
-        0.1,
-        0,
-        0
+        new PIDConstants(
+            0.1,
+            0,
+            0
+        )
     );
-    private static final LoggedTunableFF driveFFConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> driveFFConsts = LoggedTunable.from(
         "Drive/Module/Drive/FF",
-        0,
-        0,
-        2.2,
-        0
+        new FFConstants(
+            0,
+            0,
+            2.2,
+            0
+        )
     );
-    private static final LoggedTunablePID azimuthPIDConsts = new LoggedTunablePID(
-        "Drive/Module/Azimuth/PID",
-        5*2*Math.PI,
-        0*2*Math.PI,
-        0*2*Math.PI
+    private static final LoggedTunable<PIDConstants> azimuthPIDConsts = LoggedTunable.from(
+        "Drive/Module/Drive/PID",
+        new PIDConstants(
+            5*2*Math.PI,
+            0*2*Math.PI,
+            0*2*Math.PI
+        )
     );
 
     private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0,0,0);
@@ -84,9 +90,9 @@ public class Module {
         this.io = io;
         this.config = config;
 
-        driveFFConsts.update(this.driveFeedforward);
-        this.io.configDrivePID(drivePIDConsts.getConstants());
-        this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
+        driveFFConsts.get().update(this.driveFeedforward);
+        this.io.configDrivePID(drivePIDConsts.get());
+        this.io.configAzimuthPID(azimuthPIDConsts.get());
 
         for (int i = 0; i < this.modulePositionSampleBuffer.length; i++) {
             this.modulePositionSampleBuffer[i] = new SwerveModulePosition();
@@ -138,13 +144,13 @@ public class Module {
         this.moduleState.speedMetersPerSecond = DriveConstants.wheel.radiansToMeters(this.wheelAngularVelocityRadsPerSec);
 
         if (driveFFConsts.hasChanged(hashCode())) {
-            driveFFConsts.update(this.driveFeedforward);
+            driveFFConsts.get().update(this.driveFeedforward);
         }
         if (drivePIDConsts.hasChanged(hashCode())) {
-            this.io.configDrivePID(drivePIDConsts.getConstants());
+            this.io.configDrivePID(drivePIDConsts.get());
         }
         if (azimuthPIDConsts.hasChanged(hashCode())) {
-            this.io.configAzimuthPID(azimuthPIDConsts.getConstants());
+            this.io.configAzimuthPID(azimuthPIDConsts.get());
         }
 
         // this.driveMotorActiveFaultsAlert.updateFrom(this.inputs.driveMotorFaults.activeFaults);

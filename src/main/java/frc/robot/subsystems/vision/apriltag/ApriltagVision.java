@@ -17,20 +17,20 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.measure.Angle;
 import frc.robot.RobotState;
 import frc.robot.RobotState.VisionObservation;
 import frc.robot.constants.FieldConstants;
 import frc.util.LoggedTracer;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class ApriltagVision {
     private final ApriltagPipeline pipelines[];
 
-    private static final LoggedTunableMeasure<AngleUnit> gyroTolerance = new LoggedTunableMeasure<>("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees.of(10));
-    private static final LoggedTunableNumber xyStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/XY Coef", 0.4);
-    private static final LoggedTunableNumber thetaStdDevCoef = new LoggedTunableNumber("Vision/Apriltags/Std Devs/Theta Coef", Double.POSITIVE_INFINITY);
+    private static final LoggedTunable<Angle> gyroTolerance = LoggedTunable.from("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees::of, 10);
+    private static final LoggedTunableNumber xyStdDevCoef = LoggedTunable.from("Vision/Apriltags/Std Devs/XY Coef", 0.4);
+    private static final LoggedTunableNumber thetaStdDevCoef = LoggedTunable.from("Vision/Apriltags/Std Devs/Theta Coef", Double.POSITIVE_INFINITY);
 
     public ApriltagVision(ApriltagPipeline... pipelines) {
         System.out.println("[Init ApriltagVision] Instantiating ApriltagVision");

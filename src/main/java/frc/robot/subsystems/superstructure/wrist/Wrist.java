@@ -2,6 +2,8 @@ package frc.robot.subsystems.superstructure.wrist;
 
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 
 import java.util.Optional;
 
@@ -13,40 +15,46 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
+import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.angle.ArmMech;
 
 public class Wrist {
     private final WristIO io;
     private final WristIOInputsAutoLogged inputs = new WristIOInputsAutoLogged();
 
-    private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.from(
         "Superstructure/Wrist/Profile",
-        DegreesPerSecond.of(720),
-        DegreesPerSecondPerSecond.of(1080)
+        new TrapezoidProfile.Constraints(
+            RadiansPerSecond.convertFrom(1080, DegreesPerSecond),
+            RadiansPerSecondPerSecond.convertFrom(2160, DegreesPerSecondPerSecond)
+        )
     );
-    private static final LoggedTunableFF ffConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
         "Superstructure/Wrist/FF",
-        0,
-        0,
-        5 /2/Math.PI,
-        0
+        new FFConstants(
+            0,
+            0,
+            5 /2/Math.PI,
+            0
+        )
     );
-    private static final LoggedTunablePID pidConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> pidConsts = LoggedTunable.from(
         "Superstructure/Wrist/PID",
-        50,
-        0,
-        0
+        new PIDConstants(
+            50,
+            0,
+            0
+        )
     );
 
-    private TrapezoidProfile motionProfile = profileConsts.getTrapezoidProfile();
+    private TrapezoidProfile motionProfile = new TrapezoidProfile(profileConsts.get());
     private final State measuredState = new State();
     private final State setpointState = new State();
     private final State goalState = new State();
@@ -69,8 +77,8 @@ public class Wrist {
         System.out.println("[Init Wrist] Instantiating Wrist with " + io.getClass().getSimpleName());
         this.io = io;
         
-        ffConsts.update(this.feedforward);
-        this.io.configPID(pidConsts.getConstants());
+        ffConsts.get().update(this.feedforward);
+        this.io.configPID(pidConsts.get());
     }
 
     public void periodic() {
@@ -92,13 +100,13 @@ public class Wrist {
         this.mech.setRads(this.getAngleRads());
         
         if (profileConsts.hasChanged(hashCode())) {
-            this.motionProfile = profileConsts.getTrapezoidProfile();
+            this.motionProfile = new TrapezoidProfile(profileConsts.get());
         }
         if (ffConsts.hasChanged(hashCode())) {
-            ffConsts.update(this.feedforward);
+            ffConsts.get().update(this.feedforward);
         }
         if (pidConsts.hasChanged(hashCode())) {
-            this.io.configPID(pidConsts.getConstants());
+            this.io.configPID(pidConsts.get());
         }
         
         // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);

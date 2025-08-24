@@ -44,8 +44,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
-import edu.wpi.first.units.LinearAccelerationUnit;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -64,7 +64,7 @@ import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.robotStructure.Root;
 
@@ -89,7 +89,7 @@ public class Drive extends VirtualSubsystem {
     private ChassisSpeeds robotMeasuredSpeeds = new ChassisSpeeds();
     private ChassisSpeeds fieldMeasuredSpeeds = new ChassisSpeeds();
 
-    private static final LoggedTunableNumber rotationCorrection = new LoggedTunableNumber("Drive/Rotation Correction", 0.125);
+    private static final LoggedTunableNumber rotationCorrection = LoggedTunable.from("Drive/Rotation Correction", 0.125);
 
     private ChassisSpeeds desiredRobotSpeeds = new ChassisSpeeds();
     private Translation2d centerOfRotation = new Translation2d();
@@ -287,11 +287,11 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", this.setpointStates);
     }
 
-    private static final LoggedTunableMeasure<LinearAccelerationUnit> forwardAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Accel Limits/Forward Accel Limit", MetersPerSecondPerSecond.of(5000));
-    private static final LoggedTunableMeasure<LinearAccelerationUnit> skidAccelLimitTunable = new LoggedTunableMeasure<>("Drive/Accel Limits/Skid Accel Limit", MetersPerSecondPerSecond.of(60));
+    private static final LoggedTunable<LinearAcceleration> forwardAccelLimitTunable = LoggedTunable.from("Drive/Accel Limits/Forward Accel Limit", MetersPerSecondPerSecond::of, 5000);
+    private static final LoggedTunable<LinearAcceleration> skidAccelLimitTunable = LoggedTunable.from("Drive/Accel Limits/Skid Accel Limit", MetersPerSecondPerSecond::of, 60);
 
-    public static final Supplier<TiltAccelerationLimits> normalTiltLimitTunable = TiltAccelerationLimits.getTunable("Drive/Accel Limits/Tilt Limits/Normal", new TiltAccelerationLimits(500, 500, 500, 500));
-    public static final Supplier<TiltAccelerationLimits> extendedTiltLimitTunable = TiltAccelerationLimits.getTunable("Drive/Accel Limits/Tilt Limits/Extended", new TiltAccelerationLimits(10, 12, 20, 20));
+    public static final LoggedTunable<TiltAccelerationLimits> normalTiltLimitTunable = LoggedTunable.from("Drive/Accel Limits/Tilt Limits/Normal", new TiltAccelerationLimits(500, 500, 500, 500));
+    public static final LoggedTunable<TiltAccelerationLimits> extendedTiltLimitTunable = LoggedTunable.from("Drive/Accel Limits/Tilt Limits/Extended", new TiltAccelerationLimits(10, 12, 20, 20));
     private TiltAccelerationLimits tiltLimits = new TiltAccelerationLimits(10, 10, 10, 10);
     public void setTiltLimits(TiltAccelerationLimits tiltLimits) {
         this.tiltLimits = tiltLimits;
@@ -471,12 +471,12 @@ public class Drive extends VirtualSubsystem {
         return this.fieldMeasuredSpeeds;
     }
 
-    private static final LoggedTunableNumber tP = new LoggedTunableNumber("AutoDrive/tP", 1);
-    private static final LoggedTunableNumber tI = new LoggedTunableNumber("AutoDrive/tI", 0);
-    private static final LoggedTunableNumber tD = new LoggedTunableNumber("AutoDrive/tD", 0);
-    private static final LoggedTunableNumber rP = new LoggedTunableNumber("AutoDrive/rP", 1.5);
-    private static final LoggedTunableNumber rI = new LoggedTunableNumber("AutoDrive/rI", 0);
-    private static final LoggedTunableNumber rD = new LoggedTunableNumber("AutoDrive/rD", 0);
+    private static final LoggedTunableNumber tP = LoggedTunable.from("AutoDrive/tP", 1);
+    private static final LoggedTunableNumber tI = LoggedTunable.from("AutoDrive/tI", 0);
+    private static final LoggedTunableNumber tD = LoggedTunable.from("AutoDrive/tD", 0);
+    private static final LoggedTunableNumber rP = LoggedTunable.from("AutoDrive/rP", 1.5);
+    private static final LoggedTunableNumber rI = LoggedTunable.from("AutoDrive/rI", 0);
+    private static final LoggedTunableNumber rD = LoggedTunable.from("AutoDrive/rD", 0);
     public static PPHolonomicDriveController autoConfig() {
         return new PPHolonomicDriveController(
             new PIDConstants(
@@ -558,7 +558,7 @@ public class Drive extends VirtualSubsystem {
         public Command simplePIDTo(Supplier<Translation2d> target) {
             var subsystem = this;
             return new Command() {
-                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 3);
+                private static final LoggedTunableNumber driveKP = LoggedTunable.from("Drivetest/P", 3);
                 {
                     addRequirements(subsystem);
                     setName("Simple PID To");
@@ -621,7 +621,7 @@ public class Drive extends VirtualSubsystem {
                     addRequirements(subsystem);
                     setName("Defense Spin");
                 }
-                private static final LoggedTunableNumber defenseSpinLinearThreshold = new LoggedTunableNumber("Drive/Defense Spin Linear Threshold", 0.125);
+                private static final LoggedTunableNumber defenseSpinLinearThreshold = LoggedTunable.from("Drive/Defense Spin Linear Threshold", 0.125);
                 private static final Matrix<N2, N2> perpendicularMatrix = 
                     MatBuilder.fill(
                         Nat.N2(), Nat.N2(), 

@@ -12,13 +12,13 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class Perspective {
 	private Matrix<N2,N2> spectatorToField;
@@ -35,8 +35,8 @@ public class Perspective {
 	private static final Perspective negY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCW_90deg).times(joystickToRobot));
 	private static final Perspective posX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kZero).times(joystickToRobot));
 	private static final Perspective negX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.k180deg).times(joystickToRobot));
-	private static final LoggedTunableMeasure<AngleUnit> customTunable = new LoggedTunableMeasure<>("Perspective/Custom", Degrees.zero());
-	private static final Perspective custom = new Perspective(GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot));
+	private static final LoggedTunable<Angle> customTunable = LoggedTunable.from("Perspective/Custom", Degrees::of, 0);
+	private static final Perspective custom = new Perspective(GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.get().in(Radians))).times(joystickToRobot));
 
 	private static final MappedSwitchableChooser<Perspective> chooser;
 	static {
@@ -63,7 +63,7 @@ public class Perspective {
 					chooser.setSelected(getAlliance());
 				}
 				if (chooser.getSelected() == custom) {
-					custom.spectatorToField = GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot);
+					custom.spectatorToField = GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.get().in(Radians))).times(joystickToRobot);
 				}
 				chooser.setActive(chooser.getSelected());
 				comp_wrong_perspective_alert.set(Environment.isCompetition() && getCurrent() != getAlliance());

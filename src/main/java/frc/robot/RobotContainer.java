@@ -26,6 +26,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -104,7 +106,7 @@ import frc.util.commands.ContinuouslySwappingCommand;
 import frc.util.controllers.ButtonBoard3x3;
 import frc.util.controllers.XboxController;
 import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.Mechanism3d;
 
 public class RobotContainer {
@@ -711,29 +713,29 @@ public class RobotContainer {
 
         // Self Record Coral
         this.automationsLoop.bind(new Runnable() {
-            private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l4WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l4LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l4AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L4/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l4PivotTolerance = LoggedTunable.from("Self Record/Coral/L4/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l4ElevatorTolerance = LoggedTunable.from("Self Record/Coral/L4/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l4WristTolerance = LoggedTunable.from("Self Record/Coral/L4/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l4LinearTolerance = LoggedTunable.from("Self Record/Coral/L4/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l4AngularTolerance = LoggedTunable.from("Self Record/Coral/L4/Robot/Angular Tolerance", Degrees::of, 5);
             
-            private static final LoggedTunableMeasure<AngleUnit> l3PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l3ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l3WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l3LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l3AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L3/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l3PivotTolerance = LoggedTunable.from("Self Record/Coral/L3/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l3ElevatorTolerance = LoggedTunable.from("Self Record/Coral/L3/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l3WristTolerance = LoggedTunable.from("Self Record/Coral/L3/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l3LinearTolerance = LoggedTunable.from("Self Record/Coral/L3/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l3AngularTolerance = LoggedTunable.from("Self Record/Coral/L3/Robot/Angular Tolerance", Degrees::of, 5);
             
-            private static final LoggedTunableMeasure<AngleUnit> l2PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l2ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l2WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l2LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l2AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L2/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l2PivotTolerance = LoggedTunable.from("Self Record/Coral/L2/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l2ElevatorTolerance = LoggedTunable.from("Self Record/Coral/L2/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l2WristTolerance = LoggedTunable.from("Self Record/Coral/L2/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l2LinearTolerance = LoggedTunable.from("Self Record/Coral/L2/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l2AngularTolerance = LoggedTunable.from("Self Record/Coral/L2/Robot/Angular Tolerance", Degrees::of, 5);
             
-            private static final LoggedTunableMeasure<AngleUnit> l1PivotTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Superstructure/Pivot Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l1ElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l1WristTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l1LinearTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Robot/Linear Tolerance", Inches.of(6));
-            private static final LoggedTunableMeasure<AngleUnit> l1AngularTolerance = new LoggedTunableMeasure<>("Self Record/Coral/L1/Robot/Angular Tolerance", Degrees.of(10));
+            private static final LoggedTunable<Angle> l1PivotTolerance = LoggedTunable.from("Self Record/Coral/L1/Superstructure/Pivot Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l1ElevatorTolerance = LoggedTunable.from("Self Record/Coral/L1/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l1WristTolerance = LoggedTunable.from("Self Record/Coral/L1/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l1LinearTolerance = LoggedTunable.from("Self Record/Coral/L1/Robot/Linear Tolerance", Inches::of, 6);
+            private static final LoggedTunable<Angle> l1AngularTolerance = LoggedTunable.from("Self Record/Coral/L1/Robot/Angular Tolerance", Degrees::of, 10);
             
             private final EdgeDetector coralEdgeDetector = new EdgeDetector();
             @Override
@@ -808,17 +810,17 @@ public class RobotContainer {
         });
         // Self Record Algae
         this.automationsLoop.bind(new Runnable() {
-            private static final LoggedTunableMeasure<AngleUnit> lowPivotTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Pivot Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> lowElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Elevator Tolerance", Inches.of(4));
-            private static final LoggedTunableMeasure<AngleUnit> lowWristTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Superstructure/Wrist Tolerance", Degrees.of(15));
-            private static final LoggedTunableMeasure<DistanceUnit> lowLinearTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Robot/Linear Tolerance", Inches.of(12));
-            private static final LoggedTunableMeasure<AngleUnit> lowAngularTolerance = new LoggedTunableMeasure<>("Self Record/Algae/Low/Robot/Angular Tolerance", Degrees.of(30));
+            private static final LoggedTunable<Angle> lowPivotTolerance = LoggedTunable.from("Self Record/Algae/Low/Superstructure/Pivot Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> lowElevatorTolerance = LoggedTunable.from("Self Record/Algae/Low/Superstructure/Elevator Tolerance", Inches::of, 4);
+            private static final LoggedTunable<Angle> lowWristTolerance = LoggedTunable.from("Self Record/Algae/Low/Superstructure/Wrist Tolerance", Degrees::of, 15);
+            private static final LoggedTunable<Distance> lowLinearTolerance = LoggedTunable.from("Self Record/Algae/Low/Robot/Linear Tolerance", Inches::of, 12);
+            private static final LoggedTunable<Angle> lowAngularTolerance = LoggedTunable.from("Self Record/Algae/Low/Robot/Angular Tolerance", Degrees::of, 30);
             
-            private static final LoggedTunableMeasure<AngleUnit> highPivotTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Superstructure/Pivot Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> highElevatorTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Superstructure/Elevator Tolerance", Inches.of(4));
-            private static final LoggedTunableMeasure<AngleUnit> highWristTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Superstructure/Wrist Tolerance", Degrees.of(15));
-            private static final LoggedTunableMeasure<DistanceUnit> highLinearTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Robot/Linear Tolerance", Inches.of(12));
-            private static final LoggedTunableMeasure<AngleUnit> highAngularTolerance = new LoggedTunableMeasure<>("Self Record/Algae/High/Robot/Angular Tolerance", Degrees.of(30));
+            private static final LoggedTunable<Angle> highPivotTolerance = LoggedTunable.from("Self Record/Algae/High/Superstructure/Pivot Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> highElevatorTolerance = LoggedTunable.from("Self Record/Algae/High/Superstructure/Elevator Tolerance", Inches::of, 4);
+            private static final LoggedTunable<Angle> highWristTolerance = LoggedTunable.from("Self Record/Algae/High/Superstructure/Wrist Tolerance", Degrees::of, 15);
+            private static final LoggedTunable<Distance> highLinearTolerance = LoggedTunable.from("Self Record/Algae/High/Robot/Linear Tolerance", Inches::of, 12);
+            private static final LoggedTunable<Angle> highAngularTolerance = LoggedTunable.from("Self Record/Algae/High/Robot/Angular Tolerance", Degrees::of, 30);
 
             private final EdgeDetector algaeEdgeDetector = new EdgeDetector();
             @Override
@@ -880,29 +882,29 @@ public class RobotContainer {
 
         // Auto Eject Coral
         this.automationsLoop.bind(new Runnable() {
-            private static final LoggedTunableMeasure<AngleUnit> l4PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l4ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l4WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l4LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l4AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L4/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l4PivotTolerance = LoggedTunable.from("Auto Eject/Coral/L4/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l4ElevatorTolerance = LoggedTunable.from("Auto Eject/Coral/L4/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l4WristTolerance = LoggedTunable.from("Auto Eject/Coral/L4/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l4LinearTolerance = LoggedTunable.from("Auto Eject/Coral/L4/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l4AngularTolerance = LoggedTunable.from("Auto Eject/Coral/L4/Robot/Angular Tolerance", Degrees::of, 5);
             
-            private static final LoggedTunableMeasure<AngleUnit> l3PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l3ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l3WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l3LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l3AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L3/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l3PivotTolerance = LoggedTunable.from("Auto Eject/Coral/L3/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l3ElevatorTolerance = LoggedTunable.from("Auto Eject/Coral/L3/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l3WristTolerance = LoggedTunable.from("Auto Eject/Coral/L3/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l3LinearTolerance = LoggedTunable.from("Auto Eject/Coral/L3/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l3AngularTolerance = LoggedTunable.from("Auto Eject/Coral/L3/Robot/Angular Tolerance", Degrees::of, 5);
 
-            private static final LoggedTunableMeasure<AngleUnit> l2PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l2ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l2WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l2LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l2AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L2/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l2PivotTolerance = LoggedTunable.from("Auto Eject/Coral/L2/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l2ElevatorTolerance = LoggedTunable.from("Auto Eject/Coral/L2/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l2WristTolerance = LoggedTunable.from("Auto Eject/Coral/L2/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l2LinearTolerance = LoggedTunable.from("Auto Eject/Coral/L2/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l2AngularTolerance = LoggedTunable.from("Auto Eject/Coral/L2/Robot/Angular Tolerance", Degrees::of, 5);
 
-            private static final LoggedTunableMeasure<AngleUnit> l1PivotTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Superstructure/Pivot Tolerance", Degrees.of(2));
-            private static final LoggedTunableMeasure<DistanceUnit> l1ElevatorTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Superstructure/Elevator Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l1WristTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Superstructure/Wrist Tolerance", Degrees.of(5));
-            private static final LoggedTunableMeasure<DistanceUnit> l1LinearTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Robot/Linear Tolerance", Inches.of(2));
-            private static final LoggedTunableMeasure<AngleUnit> l1AngularTolerance = new LoggedTunableMeasure<>("Auto Eject/Coral/L1/Robot/Angular Tolerance", Degrees.of(5));
+            private static final LoggedTunable<Angle> l1PivotTolerance = LoggedTunable.from("Auto Eject/Coral/L1/Superstructure/Pivot Tolerance", Degrees::of, 2);
+            private static final LoggedTunable<Distance> l1ElevatorTolerance = LoggedTunable.from("Auto Eject/Coral/L1/Superstructure/Elevator Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l1WristTolerance = LoggedTunable.from("Auto Eject/Coral/L1/Superstructure/Wrist Tolerance", Degrees::of, 5);
+            private static final LoggedTunable<Distance> l1LinearTolerance = LoggedTunable.from("Auto Eject/Coral/L1/Robot/Linear Tolerance", Inches::of, 2);
+            private static final LoggedTunable<Angle> l1AngularTolerance = LoggedTunable.from("Auto Eject/Coral/L1/Robot/Angular Tolerance", Degrees::of, 5);
 
             private final Command ejectBranch = intake.eject();
             private final Command ejectL1 = intake.ejectLevel1();

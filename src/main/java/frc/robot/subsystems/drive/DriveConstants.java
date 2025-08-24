@@ -35,7 +35,7 @@ import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
 import frc.util.geometry.GeomUtil;
 import frc.util.hardwareID.can.CANDevice;
-import frc.util.loggerUtil.tunables.LoggedTunableNumber;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.mechanismUtil.GearRatio;
 import frc.util.mechanismUtil.LinearRelation;
 
@@ -143,11 +143,11 @@ public final class DriveConstants {
     public static final AngularVelocity maxTurnRate = RadiansPerSecond.of(maxDriveSpeed.in(MetersPerSecond) / driveBaseRadius.in(Meters));
     public static final DoubleSupplier maxDriveSpeedEnvCoef = Environment.switchVar(
         () -> 1,
-        new LoggedTunableNumber("Demo Constraints/Max Translational Percentage", 0.25)
+        LoggedTunable.from("Demo Constraints/Max Translational Percentage", 0.25)::getAsDouble
     );
     public static final DoubleSupplier maxTurnRateEnvCoef = Environment.switchVar(
         () -> 1,
-        new LoggedTunableNumber("Demo Constraints/Max Rotational Percentage", 0.25)
+        LoggedTunable.from("Demo Constraints/Max Rotational Percentage", 0.25)::getAsDouble
     );
     public static final double driveJoystickDeadbandPercent = 0.2;
     public static final double driveMaxJerk = 200.0;

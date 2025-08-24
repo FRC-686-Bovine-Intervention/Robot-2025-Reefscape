@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -23,6 +22,7 @@ import frc.util.VirtualSubsystem;
 import frc.util.geometry.GeomUtil.TransformUtil;
 import frc.util.geometry.RollingAveragePose2d;
 import frc.util.led.animation.StatusLightAnimation;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class QuestNav extends VirtualSubsystem {
@@ -41,7 +41,7 @@ public class QuestNav extends VirtualSubsystem {
     private final RollingAveragePose2d rollingAvg;
 
     public final LoggedNetworkBoolean isDisabled = new LoggedNetworkBoolean("QuestNav/Quest Disabled");
-    public static final LoggedTunableNumber xySTDevs = new LoggedTunableNumber("QuestNav/XY STDevs", 0.1);
+    public static final LoggedTunableNumber xySTDevs = LoggedTunable.from("QuestNav/XY STDevs", 0.1);
 
     public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io, StatusLightAnimation connectionAnimation) {
         this.camMeta = camMeta;

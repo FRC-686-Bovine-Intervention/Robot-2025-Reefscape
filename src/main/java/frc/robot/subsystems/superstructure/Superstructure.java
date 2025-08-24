@@ -15,7 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -31,7 +31,7 @@ import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlippable;
 import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class Superstructure extends SubsystemBase {
     public final Pivot pivot;
@@ -151,9 +151,9 @@ public class Superstructure extends SubsystemBase {
     public Command throttle(DoubleSupplier pivotThrottle, DoubleSupplier elevatorThrottle, DoubleSupplier wristThrottle) {
         final var superstructure = this;
         return new Command() {
-            private static final LoggedTunableMeasure<VoltageUnit> pivotVoltage = new LoggedTunableMeasure<>("Superstructure/Pivot Voltage", Volts.of(2));
-            private static final LoggedTunableMeasure<VoltageUnit> elevatorVoltage = new LoggedTunableMeasure<>("Superstructure/Elevator Voltage", Volts.of(2));
-            private static final LoggedTunableMeasure<VoltageUnit> wristVoltage = new LoggedTunableMeasure<>("Superstructure/Wrist Voltage", Volts.of(2));
+            private static final LoggedTunable<Voltage> pivotVoltage = LoggedTunable.from("Superstructure/Pivot Voltage", Volts::of, 2);
+            private static final LoggedTunable<Voltage> elevatorVoltage = LoggedTunable.from("Superstructure/Elevator Voltage", Volts::of, 2);
+            private static final LoggedTunable<Voltage> wristVoltage = LoggedTunable.from("Superstructure/Wrist Voltage", Volts::of, 2);
             {
                 this.addRequirements(superstructure);
                 this.setName("Throttle");

@@ -10,10 +10,11 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.units.CurrentUnit;
 import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.TimeUnit;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,21 +25,21 @@ import frc.util.LoggedTracer;
 import frc.util.faults.DeviceFaultAlerts;
 import frc.util.faults.DeviceFaultClearer;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.GamepiecePose;
 
 public class Intake extends SubsystemBase {
     private final IntakeIO io;
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
-    public static final LoggedTunableMeasure<VoltageUnit> intakeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Intake", Volts.of(6));
-    public static final LoggedTunableMeasure<VoltageUnit> ejectVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject", Volts.of(4).unaryMinus());
-    public static final LoggedTunableMeasure<VoltageUnit> ejectLevel1Voltage = new LoggedTunableMeasure<>("Intake/Voltages/Eject Level 1", Volts.of(2).unaryMinus());
-    public static final LoggedTunableMeasure<VoltageUnit> ejectAlgaeVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Algae", Volts.of(12).unaryMinus());
-    public static final LoggedTunableMeasure<VoltageUnit> coralHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Coral", Volts.of(0.3));
-    public static final LoggedTunableMeasure<VoltageUnit> algaeHoldVoltage = new LoggedTunableMeasure<>("Intake/Voltages/Hold Algae", Volts.of(1));
-    public static final LoggedTunableMeasure<CurrentUnit> gamepieceDetectCurrent = new LoggedTunableMeasure<>("Intake/Gamepiece Detect Current", Amps.of(50));
-    public static final LoggedTunableMeasure<TimeUnit> gamepieceDetectTime = new LoggedTunableMeasure<>("Intake/Gamepiece Detect Time", Seconds.of(2));
+    public static final LoggedTunable<Voltage> intakeVoltage = LoggedTunable.from("Intake/Voltages/Intake", Volts::of, 6);
+    public static final LoggedTunable<Voltage> ejectVoltage = LoggedTunable.from("Intake/Voltages/Eject", Volts::of, -4);
+    public static final LoggedTunable<Voltage> ejectLevel1Voltage = LoggedTunable.from("Intake/Voltages/Eject Level 1", Volts::of, -2);
+    public static final LoggedTunable<Voltage> ejectAlgaeVoltage = LoggedTunable.from("Intake/Voltages/Algae", Volts::of, -12);
+    public static final LoggedTunable<Voltage> coralHoldVoltage = LoggedTunable.from("Intake/Voltages/Hold Coral", Volts::of, 0.3);
+    public static final LoggedTunable<Voltage> algaeHoldVoltage = LoggedTunable.from("Intake/Voltages/Hold Algae", Volts::of, 1);
+    public static final LoggedTunable<Current> gamepieceDetectCurrent = LoggedTunable.from("Intake/Gamepiece Detect Current", Amps::of, 35);
+    public static final LoggedTunable<Time> gamepieceDetectTime = LoggedTunable.from("Intake/Gamepiece Detect Time", Seconds::of, 2);
 
     public final GamepiecePose coralPose = new GamepiecePose(IntakeConstants.coralPose);
     public final GamepiecePose algaePose = new GamepiecePose(IntakeConstants.algaePose);
@@ -141,19 +142,19 @@ public class Intake extends SubsystemBase {
     public Command eject() {
         return genCommand(
             "Eject",
-            ejectVoltage
+            ejectVoltage::get
         );
     }
     public Command ejectLevel1() {
         return genCommand(
             "Eject Level 1",
-            ejectLevel1Voltage
+            ejectLevel1Voltage::get
         );
     }
     public Command ejectAlgae() {
         return genCommand(
             "Eject Algae",
-            ejectAlgaeVoltage
+            ejectAlgaeVoltage::get
         );
     }
 
