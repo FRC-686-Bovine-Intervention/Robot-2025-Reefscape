@@ -31,9 +31,6 @@ import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
-import frc.util.faults.DeviceFaultAlerts;
-import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class Module {
@@ -79,12 +76,19 @@ public class Module {
 
     private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0,0,0);
 
-    private final DeviceFaultAlerts driveMotorActiveFaultsAlert;
-    private final DeviceFaultAlerts driveMotorStickyFaultsAlert;
-    private final DeviceFaultAlerts azimuthMotorActiveFaultsAlert;
-    private final DeviceFaultAlerts azimuthMotorStickyFaultsAlert;
-    private final DeviceFaultClearer driveMotorStickyFaultClearer;
-    private final DeviceFaultClearer azimuthMotorStickyFaultClearer;
+    // private final DeviceFaultAlerts driveMotorActiveFaultsAlert;
+    // private final DeviceFaultAlerts driveMotorStickyFaultsAlert;
+    // private final DeviceFaultAlerts azimuthMotorActiveFaultsAlert;
+    // private final DeviceFaultAlerts azimuthMotorStickyFaultsAlert;
+    // private final DeviceFaultClearer driveMotorStickyFaultClearer;
+    // private final DeviceFaultClearer azimuthMotorStickyFaultClearer;
+
+    private final Alert driveMotorDisconnectedAlert;
+    private final Alert azimuthMotorDisconnectedAlert;
+    private final Alert azimuthEncoderDisconnectedAlert;
+    private final Alert driveMotorDisconnectedGlobalAlert;
+    private final Alert azimuthMotorDisconnectedGlobalAlert;
+    private final Alert azimuthEncoderDisconnectedGlobalAlert;
 
     public Module(ModuleIO io, ModuleConstants config) {
         this.io = io;
@@ -98,12 +102,21 @@ public class Module {
             this.modulePositionSampleBuffer[i] = new SwerveModulePosition();
         }
 
-        this.driveMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has active faults: ", AlertType.kError));
-        this.driveMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Drive Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-        this.azimuthMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has active faults: ", AlertType.kError));
-        this.azimuthMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Drive/Module " + this.config.name + "/Alerts", "Azimuth Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-        this.driveMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Drive Motor Sticky Faults");
-        this.azimuthMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Azimuth Motor Sticky Faults");
+        final var alertGroup = "Drive/Module " + this.config.name + "/Alerts";
+
+        // this.driveMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert(alertGroup, "Drive Motor has active faults: ", AlertType.kError));
+        // this.driveMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert(alertGroup, "Drive Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        // this.azimuthMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert(alertGroup, "Azimuth Motor has active faults: ", AlertType.kError));
+        // this.azimuthMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert(alertGroup, "Azimuth Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+        // this.driveMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Drive Motor Sticky Faults");
+        // this.azimuthMotorStickyFaultClearer = new DeviceFaultClearer("Drive/Module " + this.config.name + "/Azimuth Motor Sticky Faults");
+
+        this.driveMotorDisconnectedAlert = new Alert(alertGroup, "Drive Motor Disconnected", AlertType.kError);
+        this.azimuthMotorDisconnectedAlert = new Alert(alertGroup, "Azimuth Motor Disconnected", AlertType.kError);
+        this.azimuthEncoderDisconnectedAlert = new Alert(alertGroup, "Azimuth Encoder Disconnected", AlertType.kError);
+        this.driveMotorDisconnectedGlobalAlert = new Alert("Module " + this.config.name + " Drive Motor Disconnected!", AlertType.kError);
+        this.azimuthMotorDisconnectedGlobalAlert = new Alert("Module " + this.config.name + " Azimuth Motor Disconnected!", AlertType.kError);
+        this.azimuthEncoderDisconnectedGlobalAlert = new Alert("Module " + this.config.name + " Azimuth Encoder Disconnected!", AlertType.kError);
     }
 
     /** Updates inputs and checks tunable numbers. */
@@ -126,8 +139,6 @@ public class Module {
             this.modulePositionSampleBuffer[i].angle = angle;
         }
         System.arraycopy(this.modulePositionSampleBuffer, 0, this.modulePositionSamples, 0, this.modulePositionSamples.length);
-        Logger.recordOutput("DEBUG/" + this.config.name + "/samples", this.modulePositionSamples);
-        Logger.recordOutput("DEBUG/" + this.config.name + "/buffer", this.modulePositionSampleBuffer);
 
         var angle = this.config.moduleForwardDirection.plus(
             Rotation2d.fromRadians(
@@ -159,6 +170,13 @@ public class Module {
         // this.azimuthMotorStickyFaultsAlert.updateFrom(this.inputs.azimuthMotorFaults.stickyFaults);
         // this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
         // this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
+
+        this.driveMotorDisconnectedAlert.set(this.inputs.driveMotorConnected);
+        this.azimuthMotorDisconnectedAlert.set(this.inputs.azimuthMotorConnected);
+        this.azimuthEncoderDisconnectedAlert.set(this.inputs.azimuthEncoderConnected);
+        this.driveMotorDisconnectedGlobalAlert.set(this.inputs.driveMotorConnected);
+        this.azimuthMotorDisconnectedGlobalAlert.set(this.inputs.azimuthMotorConnected);
+        this.azimuthEncoderDisconnectedGlobalAlert.set(this.inputs.azimuthEncoderConnected);
 
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + this.config.name + "/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + this.config.name);

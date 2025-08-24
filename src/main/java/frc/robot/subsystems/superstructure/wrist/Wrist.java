@@ -19,9 +19,6 @@ import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
-import frc.util.faults.DeviceFaultAlerts;
-import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.angle.ArmMech;
 
@@ -70,12 +67,17 @@ public class Wrist {
 
     public final ArmMech mech = new ArmMech(WristConstants.wristBase);
 
-    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Encoder has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
-    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Wrist/Motor Sticky Faults");
-    private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Wrist/Encoder Sticky Faults");
+    // private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Motor has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    // private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Encoder has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Wrist/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+    // private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Wrist/Motor Sticky Faults");
+    // private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Wrist/Encoder Sticky Faults");
+
+    private final Alert motorDisconnectedAlert = new Alert("Superstructure/Wrist/Alerts", "Motor Disconnected", AlertType.kError);
+    private final Alert encoderDisconnectedAlert = new Alert("Superstructure/Wrist/Alerts", "Encoder Disconnected", AlertType.kError);
+    private final Alert motorDisconnectedGlobalAlert = new Alert("Wrist Motor Disconnected!", AlertType.kError);
+    private final Alert encoderDisconnectedGlobalAlert = new Alert("Wrist Encoder Disconnected!", AlertType.kError);
 
     public Wrist(WristIO io) {
         System.out.println("[Init Wrist] Instantiating Wrist with " + io.getClass().getSimpleName());
@@ -119,6 +121,12 @@ public class Wrist {
         // this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
         // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
         // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+
+        this.motorDisconnectedAlert.set(this.inputs.motorConnected);
+        this.encoderDisconnectedAlert.set(this.inputs.encoderConnected);
+        this.motorDisconnectedGlobalAlert.set(this.inputs.motorConnected);
+        this.encoderDisconnectedGlobalAlert.set(this.inputs.encoderConnected);
+
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Wrist");
     }

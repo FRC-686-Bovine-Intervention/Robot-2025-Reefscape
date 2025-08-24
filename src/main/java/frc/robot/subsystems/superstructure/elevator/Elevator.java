@@ -19,9 +19,6 @@ import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
-import frc.util.faults.DeviceFaultAlerts;
-import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.linear.ExtenderMech;
 
@@ -72,12 +69,17 @@ public class Elevator {
     public final ExtenderMech stage3Mech = new ExtenderMech(ElevatorConstants.stage3Base);
     public final ExtenderMech stage4Mech = new ExtenderMech(ElevatorConstants.stage4Base);
 
-    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
-    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Elevator/Motor Sticky Faults");
-    private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Elevator/Encoder Sticky Faults");
+    // private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    // private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Elevator/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+    // private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Elevator/Motor Sticky Faults");
+    // private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Elevator/Encoder Sticky Faults");
+
+    private final Alert motorDisconnectedAlert = new Alert("Superstructure/Elevator/Alerts", "Motor Disconnected", AlertType.kError);
+    private final Alert encoderDisconnectedAlert = new Alert("Superstructure/Elevator/Alerts", "Encoder Disconnected", AlertType.kError);
+    private final Alert motorDisconnectedGlobalAlert = new Alert("Elevator Motor Disconnected!", AlertType.kError);
+    private final Alert encoderDisconnectedGlobalAlert = new Alert("Elevator Encoder Disconnected!", AlertType.kError);
 
     public Elevator(ElevatorIO io) {
         System.out.println("[Init Elevator] Instantiating Elevator with " + io.getClass().getSimpleName());
@@ -125,6 +127,12 @@ public class Elevator {
         // this.encoderStickyFaultsAlert.updateFrom(this.inputs.encoderFaults.stickyFaults);
         // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
         // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+
+        this.motorDisconnectedAlert.set(this.inputs.motorConnected);
+        this.encoderDisconnectedAlert.set(this.inputs.encoderConnected);
+        this.motorDisconnectedGlobalAlert.set(this.inputs.motorConnected);
+        this.encoderDisconnectedGlobalAlert.set(this.inputs.encoderConnected);
+
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator");
     }

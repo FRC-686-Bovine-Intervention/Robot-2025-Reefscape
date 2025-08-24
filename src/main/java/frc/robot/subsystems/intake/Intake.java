@@ -22,9 +22,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.LoggedTracer;
-import frc.util.faults.DeviceFaultAlerts;
-import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.GamepiecePose;
 
@@ -49,9 +46,12 @@ public class Intake extends SubsystemBase {
     public final Trigger hasCoral = new Trigger(() -> hasGamepiece && grabbingCoral);
     public final Trigger hasAlgae = new Trigger(() -> hasGamepiece && !grabbingCoral);
 
-    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Intake/Motor Sticky Faults");
+    // private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Intake/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    // private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Intake/Motor Sticky Faults");
+
+    private final Alert motorDisconnectedAlert = new Alert("Intake/Alerts", "Motor Disconnected", AlertType.kError);
+    private final Alert motorDisconnectedGlobalAlert = new Alert("Intake Motor Disconnected!", AlertType.kError);
 
     public Intake(IntakeIO io) {
         System.out.println("[Init Intake] Instantiated Intake with " + io.getClass().getSimpleName());
@@ -85,6 +85,10 @@ public class Intake extends SubsystemBase {
         // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
         // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+
+        this.motorDisconnectedAlert.set(this.inputs.motorConnected);
+        this.motorDisconnectedGlobalAlert.set(this.inputs.motorConnected);
+        
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Intake");
     }

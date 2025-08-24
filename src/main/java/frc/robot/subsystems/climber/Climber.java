@@ -20,9 +20,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.leds.Leds;
 import frc.util.LoggedTracer;
-import frc.util.faults.DeviceFaultAlerts;
-import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.misc.MeasureUtil;
 import frc.util.robotStructure.angle.AngularMech;
@@ -44,9 +41,12 @@ public class Climber extends SubsystemBase {
 
     public final AngularMech mech = new AngularMech(ClimberConstants.climberBase, VecBuilder.fill(0,1,0));
 
-    private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Climber/Alerts", "Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Climber/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-    private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Climber/Motor Sticky Faults");
+    // private final DeviceFaultAlerts motorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Climber/Alerts", "Motor has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts motorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Climber/Alerts", "Motor has sticky faults: ", AlertType.kWarning), FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    // private final DeviceFaultClearer motorStickyFaultClearer = new DeviceFaultClearer("Climber/Motor Sticky Faults");
+
+    private final Alert motorDisconnectedAlert = new Alert("Climber/Alerts", "Motor Disconnected", AlertType.kError);
+    private final Alert motorDisconnectedGlobalAlert = new Alert("Climber Motor Disconnected!", AlertType.kError);
 
     private boolean ratchetEngaged = true;
 
@@ -76,6 +76,10 @@ public class Climber extends SubsystemBase {
         // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
         // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
+
+        this.motorDisconnectedAlert.set(this.inputs.motorConnected);
+        this.motorDisconnectedGlobalAlert.set(this.inputs.motorConnected);
+
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber");
     }

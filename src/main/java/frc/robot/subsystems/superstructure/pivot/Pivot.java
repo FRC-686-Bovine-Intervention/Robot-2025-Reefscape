@@ -19,9 +19,6 @@ import frc.util.FFConstants;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
-import frc.util.faults.DeviceFaultAlerts;
-import frc.util.faults.DeviceFaultClearer;
-import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.robotStructure.angle.ArmMech;
 
@@ -70,15 +67,22 @@ public class Pivot {
 
     public final ArmMech mech = new ArmMech(PivotConstants.pivotBase);
 
-    private final DeviceFaultAlerts leftMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts leftMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-    private final DeviceFaultAlerts rightMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts rightMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
-    private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has active faults: ", AlertType.kError));
-    private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
-    private final DeviceFaultClearer leftMotorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Left Motor Sticky Faults");
-    private final DeviceFaultClearer rightMotorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Right Motor Sticky Faults");
-    private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Encoder Sticky Faults");
+    // private final DeviceFaultAlerts leftMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts leftMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Left Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    // private final DeviceFaultAlerts rightMotorActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts rightMotorStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Right Motor has sticky faults: ", AlertType.kWarning), FaultType.ForwardSoftLimit, FaultType.ReverseSoftLimit, FaultType.StatorCurrentLimit, FaultType.SupplyCurrentLimit);
+    // private final DeviceFaultAlerts encoderActiveFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has active faults: ", AlertType.kError));
+    // private final DeviceFaultAlerts encoderStickyFaultsAlert = new DeviceFaultAlerts(new Alert("Superstructure/Pivot/Alerts", "Encoder has sticky faults: ", AlertType.kWarning));
+    // private final DeviceFaultClearer leftMotorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Left Motor Sticky Faults");
+    // private final DeviceFaultClearer rightMotorStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Right Motor Sticky Faults");
+    // private final DeviceFaultClearer encoderStickyFaultClearer = new DeviceFaultClearer("Superstructure/Pivot/Encoder Sticky Faults");
+
+    private final Alert leftMotorDisconnectedAlert = new Alert("Superstructure/Pivot/Alerts", "Left Motor Disconnected", AlertType.kError);
+    private final Alert rightMotorDisconnectedAlert = new Alert("Superstructure/Pivot/Alerts", "Right Motor Disconnected", AlertType.kError);
+    private final Alert encoderDisconnectedAlert = new Alert("Superstructure/Pivot/Alerts", "Encoder Disconnected", AlertType.kError);
+    private final Alert leftMotorDisconnectedGlobalAlert = new Alert("Pivot Left Motor Disconnected!", AlertType.kError);
+    private final Alert rightMotorDisconnectedGlobalAlert = new Alert("Pivot Right Motor Disconnected!", AlertType.kError);
+    private final Alert encoderDisconnectedGlobalAlert = new Alert("Pivot Encoder Disconnected!", AlertType.kError);
 
     public Pivot(PivotIO io) {
         System.out.println("[Init Pivot] Instantiating Pivot with " + io.getClass().getSimpleName());
@@ -125,6 +129,14 @@ public class Pivot {
         // this.leftMotorStickyFaultClearer.clear(this.inputs.leftMotorFaults.stickyFaults, this.io::clearLeftMotorStickyFaults, DeviceFaults.allMask);
         // this.rightMotorStickyFaultClearer.clear(this.inputs.rightMotorFaults.stickyFaults, this.io::clearRightMotorStickyFaults, DeviceFaults.allMask);
         // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
+
+        this.leftMotorDisconnectedAlert.set(this.inputs.leftMotorConnected);
+        this.rightMotorDisconnectedAlert.set(this.inputs.rightMotorConnected);
+        this.encoderDisconnectedAlert.set(this.inputs.encoderConnected);
+        this.leftMotorDisconnectedGlobalAlert.set(this.inputs.leftMotorConnected);
+        this.rightMotorDisconnectedGlobalAlert.set(this.inputs.rightMotorConnected);
+        this.encoderDisconnectedGlobalAlert.set(this.inputs.encoderConnected);
+
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot");
     }
