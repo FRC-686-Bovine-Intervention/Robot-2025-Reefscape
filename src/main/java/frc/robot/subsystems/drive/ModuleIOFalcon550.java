@@ -123,6 +123,15 @@ public class ModuleIOFalcon550 implements ModuleIO {
             this.driveMotorStatusSignalCache.motor().statorCurrent(),
             this.driveMotorStatusSignalCache.motor().deviceTemperature()
         );
+        inputs.driveMotorConnected = BaseStatusSignal.isAllGood(
+            this.driveMotorStatusSignalCache.encoder().position(),
+            this.driveMotorStatusSignalCache.encoder().velocity(),
+            this.driveMotorStatusSignalCache.motor().appliedVoltage(),
+            this.driveMotorStatusSignalCache.motor().statorCurrent(),
+            this.driveMotorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.azimuthMotorConnected = true;
+        inputs.azimuthEncoderConnected = true;
         inputs.driveMotor.updateFrom(this.driveMotorStatusSignalCache);
         inputs.azimuthMotor.updateFrom(this.azimuthMotor);
         inputs.azimuthEncoder.updateFrom(this.azimuthAbsoluteEncoder);

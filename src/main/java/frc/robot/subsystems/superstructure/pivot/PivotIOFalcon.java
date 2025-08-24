@@ -116,6 +116,24 @@ public class PivotIOFalcon implements PivotIO {
             this.encoderStatusSignalCache.position(),
             this.encoderStatusSignalCache.velocity()
         );
+        inputs.encoderConnected = BaseStatusSignal.isAllGood(
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity()
+        );
+        inputs.leftMotorConnected = BaseStatusSignal.isAllGood(
+            this.leftMotorStatusSignalCache.encoder().position(),
+            this.leftMotorStatusSignalCache.encoder().velocity(),
+            this.leftMotorStatusSignalCache.motor().appliedVoltage(),
+            this.leftMotorStatusSignalCache.motor().statorCurrent(),
+            this.leftMotorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.rightMotorConnected = BaseStatusSignal.isAllGood(
+            this.rightMotorStatusSignalCache.encoder().position(),
+            this.rightMotorStatusSignalCache.encoder().velocity(),
+            this.rightMotorStatusSignalCache.motor().appliedVoltage(),
+            this.rightMotorStatusSignalCache.motor().statorCurrent(),
+            this.rightMotorStatusSignalCache.motor().deviceTemperature()
+        );
         inputs.encoder.updateFrom(this.encoderStatusSignalCache);
         inputs.leftMotor.updateFrom(this.leftMotorStatusSignalCache);
         inputs.rightMotor.updateFrom(this.rightMotorStatusSignalCache);

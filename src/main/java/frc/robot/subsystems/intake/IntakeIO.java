@@ -10,11 +10,12 @@ import frc.util.loggerUtil.inputs.LoggedMotor;
 public interface IntakeIO {
     @AutoLog
     public static class IntakeIOInputs {
-        public LoggedMotor motor = new LoggedMotor();
-        public LoggedFaults motorFaults = new LoggedFaults();
+        boolean motorConnected = false;
+        LoggedMotor motor = new LoggedMotor();
+        LoggedFaults motorFaults = new LoggedFaults();
 
-        public boolean coralSensor = false;
-        public boolean algaeSensor = false;
+        boolean coralSensor = false;
+        boolean algaeSensor = false;
     }
 
     public default void updateInputs(IntakeIOInputs inputs) {}

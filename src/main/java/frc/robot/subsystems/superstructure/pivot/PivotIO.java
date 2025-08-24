@@ -13,6 +13,9 @@ import frc.util.loggerUtil.inputs.LoggedFaults;
 public interface PivotIO {
     @AutoLog
     public static class PivotIOInputs {
+        boolean encoderConnected = false;
+        boolean leftMotorConnected = false;
+        boolean rightMotorConnected = false;
         LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor leftMotor = new LoggedEncodedMotor();
         LoggedEncodedMotor rightMotor = new LoggedEncodedMotor();

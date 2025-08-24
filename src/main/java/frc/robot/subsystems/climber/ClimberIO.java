@@ -9,9 +9,9 @@ import frc.util.loggerUtil.inputs.LoggedEncodedMotor;
 import frc.util.loggerUtil.inputs.LoggedFaults;
 
 public interface ClimberIO {
-    
     @AutoLog
     public class ClimberIOInputs {
+        boolean motorConnected = false;
         public LoggedEncodedMotor motor = new LoggedEncodedMotor();
         public LoggedFaults motorFaults = new LoggedFaults();
 

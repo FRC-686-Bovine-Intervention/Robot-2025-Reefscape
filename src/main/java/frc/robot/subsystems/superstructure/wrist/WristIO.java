@@ -13,6 +13,8 @@ import frc.util.loggerUtil.inputs.LoggedFaults;
 public interface WristIO {
     @AutoLog
     public static class WristIOInputs {
+        boolean encoderConnected = false;
+        boolean motorConnected = false;
         LoggedEncoder encoder = new LoggedEncoder();
         LoggedEncodedMotor motor = new LoggedEncodedMotor();
         LoggedFaults encoderFaults = new LoggedFaults();

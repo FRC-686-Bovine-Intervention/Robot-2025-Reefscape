@@ -18,7 +18,6 @@ import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
 import frc.util.loggerUtil.inputs.LoggedMotor.MotorStatusSignalCache;
 
-
 public class IntakeIOFalcon implements IntakeIO {
     protected final TalonFX motor = HardwareDevices.intakeMotorID.talonFX();
     protected final DigitalInput coralSensor = HardwareDevices.coralSensor.input();
@@ -50,6 +49,11 @@ public class IntakeIOFalcon implements IntakeIO {
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
         BaseStatusSignal.refreshAll(
+            this.motorStatusSignalCache.appliedVoltage(),
+            this.motorStatusSignalCache.statorCurrent(),
+            this.motorStatusSignalCache.deviceTemperature()
+        );
+        inputs.motorConnected = BaseStatusSignal.isAllGood(
             this.motorStatusSignalCache.appliedVoltage(),
             this.motorStatusSignalCache.statorCurrent(),
             this.motorStatusSignalCache.deviceTemperature()
