@@ -1,17 +1,19 @@
 package frc.robot.subsystems.climber;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Volts;
+
+import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -20,14 +22,13 @@ import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.FFConstants;
+import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
@@ -42,7 +43,6 @@ public class ClimberIOFalcon implements ClimberIO {
     private final EncodedMotorStatusSignalCache motorStatusSignalCache;
 
     private final VoltageOut voltageRequest = new VoltageOut(0);
-
     private final MotionMagicVoltage nonClimbingPositionRequest = new MotionMagicVoltage(0)
         .withSlot(0)
     ;
@@ -51,6 +51,9 @@ public class ClimberIOFalcon implements ClimberIO {
         .withOverrideBrakeDurNeutral(true)
         .withLimitForwardMotion(true)
     ;
+    private final NeutralOut neutralOutRequest = new NeutralOut();
+    private final CoastOut coastOutRequest = new CoastOut();
+    private final StaticBrake staticBrakeRequest = new StaticBrake();
 
     private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
         "Climber/Profile",
@@ -170,59 +173,66 @@ public class ClimberIOFalcon implements ClimberIO {
         this.nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
         this.climbingPositionRequest.withLimitReverseMotion(inputs.sensor);
 
-        if (profileConsts.hasChanged(hashCode())) {
+        if (profileConsts.hasChanged(this.hashCode())) {
             var config = new MotionMagicConfigs();
-            motor.getConfigurator().refresh(config);
+            this.motor.getConfigurator().refresh(config);
             var profileConstraints = profileConsts.get();
             config
                 .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
                 .withMotionMagicAcceleration(profileConstraints.maxAcceleration)
             ;
-            motor.getConfigurator().apply(config);
+            this.motor.getConfigurator().apply(config);
         }
 
-        if (nonClimbingFFConsts.hasChanged(hashCode()) | nonClimbingPIDConsts.hasChanged(hashCode())) {
+        if (LoggedTunable.hasChanged(this.hashCode(), nonClimbingFFConsts, nonClimbingPIDConsts)) {
             var config = new Slot0Configs();
-            motor.getConfigurator().refresh(config);
+            this.motor.getConfigurator().refresh(config);
             nonClimbingFFConsts.get().update(config);
             nonClimbingPIDConsts.get().update(config);
-            motor.getConfigurator().apply(config);
+            this.motor.getConfigurator().apply(config);
         }
 
-        if (climbingFFConsts.hasChanged(hashCode()) | climbingPIDConsts.hasChanged(hashCode())) {
+        if (LoggedTunable.hasChanged(this.hashCode(), climbingFFConsts, climbingPIDConsts)) {
             var config = new Slot1Configs();
-            motor.getConfigurator().refresh(config);
+            this.motor.getConfigurator().refresh(config);
             climbingFFConsts.get().update(config);
             climbingPIDConsts.get().update(config);
-            motor.getConfigurator().apply(config);
+            this.motor.getConfigurator().apply(config);
         }
-
-        // Logger.recordOutput("Climber/Motor/posiion", motor.getPosition().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
     }
 
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage, boolean brakeMode) {
-        this.motor.setControl(this.voltageRequest.withOutput(voltage.in(Volts)).withOverrideBrakeDurNeutral(brakeMode));
+    public void setVolts(double volts) {
+        this.motor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
     }
 
     @Override
-    public void setRatchetServoAngle(Measure<AngleUnit> angle) {
-        this.servo.setAngle(angle.in(Degrees));
+    public void setRatchetServoAngle(double angleRads) {
+        this.servo.setAngle(
+            Units.radiansToDegrees(angleRads)
+        );
     }
 
     @Override
-    public void setNonClimbingAngle(Measure<AngleUnit> angle) {
-        this.motor.setControl(this.nonClimbingPositionRequest.withPosition(angle.in(Rotations)));
+    public void setNonClimbingAngle(double angleRads) {
+        this.motor.setControl(this.nonClimbingPositionRequest
+            .withPosition(Units.radiansToRotations(angleRads))
+        );
     }
 
     @Override
-    public void setClimbingAngle(Measure<AngleUnit> angle) {
-        this.motor.setControl(this.climbingPositionRequest.withPosition(angle.in(Rotations)));
+    public void setClimbingAngle(double angleRads) {
+        this.motor.setControl(this.climbingPositionRequest
+            .withPosition(Units.radiansToRotations(angleRads))
+        );
+    }
+
+    @Override
+    public void stop(Optional<NeutralMode> neutralMode) {
+        var controlRequest = NeutralMode.selectControlRequest(neutralMode, this.neutralOutRequest, this.coastOutRequest, this.staticBrakeRequest);
+        this.motor.setControl(controlRequest);
     }
 
     @Override
