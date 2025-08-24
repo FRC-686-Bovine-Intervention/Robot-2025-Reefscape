@@ -674,7 +674,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
         if (FieldConstants.onAllianceSide.getOurs().test(currentPose.getTranslation())) {
             this.scoreNetObjective = this.ourSideNetScoreAlgaeObjectives
                 .stream()
-                .sorted(closestToCurrentTranslation)
+                .sorted((a,b) -> {
+                    var comparison = closestToCurrentRotation.compare(a, b);
+                    if (comparison != 0) {
+                        return comparison;
+                    }
+                    return closestToCurrentTranslation.compare(a, b);
+                })
                 .findFirst()
                 .get()
             ;
@@ -682,7 +688,13 @@ public class ObjectiveTracker extends VirtualSubsystem {
         } else {
             this.scoreNetObjective = this.opponentSideNetScoreAlgaeObjectives
                 .stream()
-                .sorted(closestToCurrentTranslation)
+                .sorted((a,b) -> {
+                    var comparison = closestToCurrentRotation.compare(a, b);
+                    if (comparison != 0) {
+                        return comparison;
+                    }
+                    return closestToCurrentTranslation.compare(a, b);
+                })
                 .findFirst()
                 .get()
             ;
