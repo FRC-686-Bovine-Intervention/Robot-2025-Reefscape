@@ -146,8 +146,8 @@ public class Robot extends LoggedRobot {
             LoggedTracer.logEpoch("CommandScheduler Periodic/Mechanism3d LogAscopeAxes");
             
             this.robotContainer.drive.structureRoot.setPose(RobotState.getInstance().getEstimatedGlobalPose());
-            this.robotContainer.intake.coralPose.logAscopePose("Gamepiece/Coral", this.robotContainer.intake.hasCoral.getAsBoolean());
-            this.robotContainer.intake.coralPose.logAscopePose("Gamepiece/Algae", this.robotContainer.intake.hasAlgae.getAsBoolean());
+            this.robotContainer.intake.coralPose.logAscopePose("Gamepiece/Coral", this.robotContainer.intake.hasCoral());
+            this.robotContainer.intake.coralPose.logAscopePose("Gamepiece/Algae", this.robotContainer.intake.hasAlgae());
             LoggedTracer.logEpoch("CommandScheduler Periodic/Log Intake Gamepieces");
 
             this.robotContainer.automationsLoop.poll();

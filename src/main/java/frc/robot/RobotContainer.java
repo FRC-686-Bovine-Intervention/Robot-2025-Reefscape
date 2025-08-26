@@ -415,13 +415,13 @@ public class RobotContainer {
         
         // Eject
         final Command ejectNormal = this.intake.eject();
-        final Command ejectL1 = this.intake.ejectLevel1();
+        final Command ejectL1 = this.intake.ejectL1();
         final Command ejectAlgae = this.intake.ejectAlgae();
         CommandScheduler.getInstance().getDefaultButtonLoop().bind(() -> {
             if (driveController.hid.getAButtonPressed()) {
-                if (intake.hasAlgae.getAsBoolean()) {
+                if (intake.hasAlgae()) {
                     ejectAlgae.schedule();
-                } else if (intake.hasCoral.getAsBoolean() && objectiveTracker.getScoreCoralObjective().getTargetBranch().isEmpty()) {
+                } else if (intake.hasCoral() && objectiveTracker.getScoreCoralObjective().getTargetBranch().isEmpty()) {
                     ejectL1.schedule();
                 } else {
                     ejectNormal.schedule();
@@ -440,8 +440,8 @@ public class RobotContainer {
         // Coral Intake
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command forwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationForwardState).raceWith(intake.intakeCoral().until(intake.hasCoral));
-                private final Command backwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationBackwardState).raceWith(intake.intakeCoral().until(intake.hasCoral));
+                private final Command forwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationForwardState).raceWith(intake.intakeCoral().until(intake::hasCoral));
+                private final Command backwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationBackwardState).raceWith(intake.intakeCoral().until(intake::hasCoral));
                 public Command get() {
                     return switch (objectiveTracker.getIntakeCoralObjective().getTargetDirection()) {
                         case Forward -> this.forwardCommand;
@@ -481,7 +481,7 @@ public class RobotContainer {
                     stagedAlgaeIntakeCommand.cancel();
                 } else if (groundAlgaeIntakeCommand.isScheduled()) {
                     groundAlgaeIntakeCommand.cancel();
-                } else if (!intake.hasCoral.getAsBoolean() && !intake.hasAlgae.getAsBoolean()) {
+                } else if (!intake.hasCoral() && !intake.hasAlgae()) {
                     algaeIntakeButtonTimer.start();
                 }
             } else if (driveController.hid.getYButtonReleased()) {
@@ -548,9 +548,9 @@ public class RobotContainer {
                     netCommand.cancel();
                 } else if (processorCommand.isScheduled()) {
                     processorCommand.cancel();
-                } else if (intake.hasCoral.getAsBoolean()) {
+                } else if (intake.hasCoral()) {
                     coralScoreCommand.schedule();
-                } else if (intake.hasAlgae.getAsBoolean()) {
+                } else if (intake.hasAlgae()) {
                     netCommand.schedule();
                 }
             }
@@ -559,9 +559,9 @@ public class RobotContainer {
                     coralIntakeCommand.cancel();
                 } else if (processorCommand.isScheduled()) {
                     processorCommand.cancel();
-                } else if (intake.hasAlgae.getAsBoolean()) {
+                } else if (intake.hasAlgae()) {
                     processorCommand.schedule();
-                } else if (!intake.hasCoral.getAsBoolean()) {
+                } else if (!intake.hasCoral()) {
                     coralIntakeCommand.schedule();
                 }
             }
@@ -696,7 +696,11 @@ public class RobotContainer {
         SmartDashboard.putData("Superstructure/Coast", this.superstructure.coast());
 
         this.automationsLoop.bind(() -> {
-            this.objectiveTracker.determineGoal(RobotState.getInstance().getEstimatedGlobalPose(), this.intake.hasCoral.getAsBoolean(), this.intake.hasAlgae.getAsBoolean());
+            this.objectiveTracker.determineGoal(
+                RobotState.getInstance().getEstimatedGlobalPose(),
+                this.intake.hasCoral(),
+                this.intake.hasAlgae()
+            );
         });
 
         this.automationsLoop.bind(() -> {
@@ -741,7 +745,7 @@ public class RobotContainer {
             @Override
             public void run() {
                 LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Coral/Before");
-                this.coralEdgeDetector.update(intake.hasCoral.getAsBoolean());
+                this.coralEdgeDetector.update(intake.hasCoral());
                 if (manualOverrides.selfRecordCoralDisabled()) {
                     LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Coral");
                     return;
@@ -826,7 +830,7 @@ public class RobotContainer {
             @Override
             public void run() {
                 LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Algae/Before");
-                this.algaeEdgeDetector.update(intake.hasAlgae.getAsBoolean());
+                this.algaeEdgeDetector.update(intake.hasAlgae());
                 if (manualOverrides.selfRecordAlgaeDisabled()) {
                     LoggedTracer.logEpoch("CommandScheduler Periodic/Automations/Self Record Algae");
                     return;
@@ -907,13 +911,13 @@ public class RobotContainer {
             private static final LoggedTunable<Angle> l1AngularTolerance = LoggedTunable.from("Auto Eject/Coral/L1/Robot/Angular Tolerance", Degrees::of, 5);
 
             private final Command ejectBranch = intake.eject();
-            private final Command ejectL1 = intake.ejectLevel1();
+            private final Command ejectL1 = intake.ejectL1();
 
             private final Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising);
 
             @Override
             public void run() {
-                if (intake.hasCoral.getAsBoolean() && !manualOverrides.autoEjectCoralDisabled()) {
+                if (intake.hasCoral() && !manualOverrides.autoEjectCoralDisabled()) {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
                     final Measure<AngleUnit> pivotTolerance;
                     final Measure<DistanceUnit> elevatorTolerance;
@@ -992,7 +996,7 @@ public class RobotContainer {
     }
 
     private void configureNotifications() {
-        this.intake.hasCoral
+        new Trigger(this.intake::hasCoral)
             .onTrue(
                 Leds.getInstance().coralAcquired.setFlagCommand().withTimeout(1).alongWith(driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(1))
             )
@@ -1000,7 +1004,7 @@ public class RobotContainer {
                 Leds.getInstance().coralSecured.setFlagCommand().ignoringDisable(true)
             )
         ;
-        this.intake.hasAlgae
+        new Trigger(this.intake::hasAlgae)
             .onTrue(
                 Leds.getInstance().algaeAcquired.setFlagCommand().withTimeout(1).alongWith(driveController.rumble(RumbleType.kBothRumble, 0.3).withTimeout(1))
             )

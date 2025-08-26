@@ -1,16 +1,14 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
@@ -22,6 +20,8 @@ public class IntakeIOFalcon implements IntakeIO {
     protected final TalonFX motor = HardwareDevices.intakeMotorID.talonFX();
     protected final DigitalInput coralSensor = HardwareDevices.coralSensor.input();
     protected final DigitalInput algaeSensor = HardwareDevices.algaeSensor.input();
+
+    private final VoltageOut voltageRequest = new VoltageOut(0);
 
     private final MotorStatusSignalCache motorStatusSignalCache;
 
@@ -66,8 +66,10 @@ public class IntakeIOFalcon implements IntakeIO {
     }
 
     @Override
-    public void setMotorVoltage(Measure<VoltageUnit> voltage) {
-        this.motor.setVoltage(voltage.in(Volts));
+    public void setVolts(double volts) {
+        this.motor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
     }
 
     @Override

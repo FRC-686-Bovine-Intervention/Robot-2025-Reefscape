@@ -16,6 +16,7 @@ import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -36,6 +37,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.util.commands.DebounceCommand;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipped;
 import frc.util.geometry.GeomUtil;
@@ -81,7 +83,7 @@ public class AutoCommons {
                     Commands.waitUntil(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(1), Units.degreesToRadians(5))),
                     Commands.waitUntil(() -> GeomUtil.isNear(end, RobotState.getInstance().getEstimatedGlobalPose(), Units.inchesToMeters(5), Units.degreesToRadians(5))),
                     Commands.waitSeconds(0.25),
-                    intake.eject().asProxy().onlyWhile(intake.hasCoral)
+                    intake.eject().asProxy().onlyWhile(intake::hasCoral)
                 ),
                 Commands.sequence(
                     Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), Feet.of(6))),
@@ -133,7 +135,7 @@ public class AutoCommons {
                         GeomUtil.isNear(netPose, RobotState.getInstance().getEstimatedGlobalPose(), Units.inchesToMeters(5), Units.degreesToRadians(5))
                         && superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(6), Units.degreesToRadians(5))
                     ),
-                    intake.ejectAlgae().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
+                    intake.ejectAlgae().asProxy().raceWith(new DebounceCommand(intake::hasAlgae, new Debouncer(0.75, DebounceType.kFalling)))
                 ),
                 Commands.sequence(
                     Commands.sequence(
@@ -168,7 +170,7 @@ public class AutoCommons {
         if (RobotBase.isReal()) {
             return 
                 Commands.deadline(
-                    intake.intakeCoral().asProxy().until(intake.hasCoral),
+                    intake.intakeCoral().asProxy().until(intake::hasCoral),
                     Commands.sequence(
                         drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
@@ -179,7 +181,7 @@ public class AutoCommons {
         } else {
             return 
                 Commands.deadline(
-                    intake.intakeCoral().asProxy().withTimeout(4).until(intake.hasCoral),
+                    intake.intakeCoral().asProxy().withTimeout(4).until(intake::hasCoral),
                     Commands.sequence(
                         drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
@@ -202,7 +204,7 @@ public class AutoCommons {
             return 
                 Commands.deadline(
                     Commands.sequence(
-                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        intake.intakeAlgae().asProxy().until(intake::hasAlgae),
                         Commands.waitSeconds(0.5)
                     ),
                     Commands.sequence(
@@ -215,7 +217,7 @@ public class AutoCommons {
         } else {
             return 
                 Commands.deadline(
-                    intake.intakeAlgae().asProxy().withTimeout(2).until(intake.hasAlgae),
+                    intake.intakeAlgae().asProxy().withTimeout(2).until(intake::hasAlgae),
                     Commands.sequence(
                         drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
@@ -239,7 +241,7 @@ public class AutoCommons {
             return 
                 Commands.deadline(
                     Commands.sequence(
-                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        intake.intakeAlgae().asProxy().until(intake::hasAlgae),
                         Commands.waitSeconds(0.125)
                     ),
                     Commands.sequence(
