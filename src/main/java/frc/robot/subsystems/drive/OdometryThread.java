@@ -218,7 +218,7 @@ public class OdometryThread extends Thread {
                 this.tail += 1;
             } else {
                 System.arraycopy(this.buffer, 1, this.buffer, 0, this.buffer.length - 1);
-                this.buffer[this.tail] = value;
+                this.buffer[this.buffer.length - 1] = value;
             }
         }
 
@@ -245,7 +245,7 @@ public class OdometryThread extends Thread {
                 this.tail += 1;
             } else {
                 System.arraycopy(this.buffer, 1, this.buffer, 0, this.buffer.length - 1);
-                this.buffer[this.tail] = value;
+                this.buffer[this.buffer.length - 1] = value;
             }
         }
 

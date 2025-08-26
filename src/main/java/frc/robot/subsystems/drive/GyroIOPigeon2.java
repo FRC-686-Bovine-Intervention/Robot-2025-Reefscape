@@ -72,9 +72,9 @@ public class GyroIOPigeon2 implements GyroIO {
             (array) -> new Rotation3d(
                 new Quaternion(
                     array[0],
-                    array[0],
-                    array[0],
-                    array[0]
+                    array[1],
+                    array[2],
+                    array[3]
                 )
             ),
             Rotation3d[]::new,
@@ -87,7 +87,20 @@ public class GyroIOPigeon2 implements GyroIO {
 
     @Override
     public void updateInputs(GyroIOInputs inputs) {
-        inputs.connected = this.pigeon.getYaw().getStatus().isOK();
+        BaseStatusSignal.refreshAll(
+            this.yawVelocitySignal,
+            this.pitchVelocitySignal,
+            this.rollVelocitySignal
+        );
+        inputs.connected = BaseStatusSignal.isAllGood(
+            this.quatWSignal,
+            this.quatXSignal,
+            this.quatYSignal,
+            this.quatZSignal,
+            this.yawVelocitySignal,
+            this.pitchVelocitySignal,
+            this.rollVelocitySignal
+        );
 
         inputs.odometryGyroRotation = this.quatBuffer.popAll();
 
