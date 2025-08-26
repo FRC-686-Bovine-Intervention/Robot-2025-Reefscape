@@ -519,8 +519,7 @@ public class Drive extends VirtualSubsystem {
         
         private Translational(Drive drive) {
             this.drive = drive;
-            setName("Drive/Translational");
-            SmartDashboard.putData("Subsystems/Drive/Translational", this);
+            this.setName("Drive/Translational");
         }
 
         public void driveVelocity(double vx, double vy) {
@@ -541,8 +540,8 @@ public class Drive extends VirtualSubsystem {
             var subsystem = this;
             return new Command() {
                 {
-                    addRequirements(subsystem);
-                    setName("Field Relative");
+                    this.addRequirements(subsystem);
+                    this.setName("Field Relative");
                 }
                 @Override
                 public void execute() {
@@ -560,8 +559,8 @@ public class Drive extends VirtualSubsystem {
             return new Command() {
                 private static final LoggedTunableNumber driveKP = LoggedTunable.from("Drivetest/P", 3);
                 {
-                    addRequirements(subsystem);
-                    setName("Simple PID To");
+                    this.addRequirements(subsystem);
+                    this.setName("Simple PID To");
                 }
                 @Override
                 public void execute() {
@@ -594,8 +593,7 @@ public class Drive extends VirtualSubsystem {
         
         private Rotational(Drive drive) {
             this.drive = drive;
-            setName("Drive/Rotational");
-            SmartDashboard.putData("Subsystems/Drive/Rotational", this);
+            this.setName("Drive/Rotational");
         }
 
         public void driveVelocity(double omega) {
@@ -618,8 +616,8 @@ public class Drive extends VirtualSubsystem {
             var subsystem = this;
             return new Command() {
                 {
-                    addRequirements(subsystem);
-                    setName("Defense Spin");
+                    this.addRequirements(subsystem);
+                    this.setName("Defense Spin");
                 }
                 private static final LoggedTunableNumber defenseSpinLinearThreshold = LoggedTunable.from("Drive/Defense Spin Linear Threshold", 0.125);
                 private static final Matrix<N2, N2> perpendicularMatrix = 
@@ -689,10 +687,10 @@ public class Drive extends VirtualSubsystem {
                     )
                 );
                 {
-                    addRequirements(subsystem);
-                    setName("PID Controlled Heading");
-                    headingPID.enableContinuousInput(-Math.PI, Math.PI);
-                    headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
+                    this.addRequirements(subsystem);
+                    this.setName("PID Controlled Heading");
+                    this.headingPID.enableContinuousInput(-Math.PI, Math.PI);
+                    this.headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
                 }
                 private Rotation2d desiredHeading;
                 private boolean headingSet;
@@ -738,10 +736,10 @@ public class Drive extends VirtualSubsystem {
                     )
                 );
                 {
-                    addRequirements(subsystem);
-                    setName("PID Controlled Heading");
-                    headingPID.enableContinuousInput(-Math.PI, Math.PI);
-                    headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
+                    this.addRequirements(subsystem);
+                    this.setName("PID Controlled Heading");
+                    this.headingPID.enableContinuousInput(-Math.PI, Math.PI);
+                    this.headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
                 }
                 @Override
                 public void initialize() {

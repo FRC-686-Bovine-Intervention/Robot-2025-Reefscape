@@ -79,8 +79,8 @@ public class Climber extends SubsystemBase {
         // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);
         // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
 
-        this.motorDisconnectedAlert.set(this.inputs.motorConnected);
-        this.motorDisconnectedGlobalAlert.set(this.inputs.motorConnected);
+        this.motorDisconnectedAlert.set(!this.inputs.motorConnected);
+        this.motorDisconnectedGlobalAlert.set(!this.inputs.motorConnected);
 
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Climber");

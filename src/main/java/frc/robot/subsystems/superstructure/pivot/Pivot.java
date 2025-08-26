@@ -130,12 +130,12 @@ public class Pivot {
         // this.rightMotorStickyFaultClearer.clear(this.inputs.rightMotorFaults.stickyFaults, this.io::clearRightMotorStickyFaults, DeviceFaults.allMask);
         // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
 
-        this.leftMotorDisconnectedAlert.set(this.inputs.leftMotorConnected);
-        this.rightMotorDisconnectedAlert.set(this.inputs.rightMotorConnected);
-        this.encoderDisconnectedAlert.set(this.inputs.encoderConnected);
-        this.leftMotorDisconnectedGlobalAlert.set(this.inputs.leftMotorConnected);
-        this.rightMotorDisconnectedGlobalAlert.set(this.inputs.rightMotorConnected);
-        this.encoderDisconnectedGlobalAlert.set(this.inputs.encoderConnected);
+        this.leftMotorDisconnectedAlert.set(!this.inputs.leftMotorConnected);
+        this.rightMotorDisconnectedAlert.set(!this.inputs.rightMotorConnected);
+        this.encoderDisconnectedAlert.set(!this.inputs.encoderConnected);
+        this.leftMotorDisconnectedGlobalAlert.set(!this.inputs.leftMotorConnected);
+        this.rightMotorDisconnectedGlobalAlert.set(!this.inputs.rightMotorConnected);
+        this.encoderDisconnectedGlobalAlert.set(!this.inputs.encoderConnected);
 
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Pivot");

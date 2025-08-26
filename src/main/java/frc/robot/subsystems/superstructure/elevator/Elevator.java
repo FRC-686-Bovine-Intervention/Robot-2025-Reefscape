@@ -128,10 +128,10 @@ public class Elevator {
         // this.motorStickyFaultClearer.clear(this.inputs.motorFaults.stickyFaults, this.io::clearMotorStickyFaults, DeviceFaults.allMask);
         // this.encoderStickyFaultClearer.clear(this.inputs.encoderFaults.stickyFaults, this.io::clearEncoderStickyFaults, DeviceFaults.allMask);
 
-        this.motorDisconnectedAlert.set(this.inputs.motorConnected);
-        this.encoderDisconnectedAlert.set(this.inputs.encoderConnected);
-        this.motorDisconnectedGlobalAlert.set(this.inputs.motorConnected);
-        this.encoderDisconnectedGlobalAlert.set(this.inputs.encoderConnected);
+        this.motorDisconnectedAlert.set(!this.inputs.motorConnected);
+        this.encoderDisconnectedAlert.set(!this.inputs.encoderConnected);
+        this.motorDisconnectedGlobalAlert.set(!this.inputs.motorConnected);
+        this.encoderDisconnectedGlobalAlert.set(!this.inputs.encoderConnected);
 
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/Subsystem/Superstructure/Elevator");

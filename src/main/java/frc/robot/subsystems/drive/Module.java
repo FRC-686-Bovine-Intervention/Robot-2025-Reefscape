@@ -171,12 +171,12 @@ public class Module {
         // this.driveMotorStickyFaultClearer.clear(this.inputs.driveMotorFaults.stickyFaults, this.io::clearDriveStickyFaults, DeviceFaults.allMask);
         // this.azimuthMotorStickyFaultClearer.clear(this.inputs.azimuthMotorFaults.stickyFaults, this.io::clearAzimuthStickyFaults, DeviceFaults.allMask);
 
-        this.driveMotorDisconnectedAlert.set(this.inputs.driveMotorConnected);
-        this.azimuthMotorDisconnectedAlert.set(this.inputs.azimuthMotorConnected);
-        this.azimuthEncoderDisconnectedAlert.set(this.inputs.azimuthEncoderConnected);
-        this.driveMotorDisconnectedGlobalAlert.set(this.inputs.driveMotorConnected);
-        this.azimuthMotorDisconnectedGlobalAlert.set(this.inputs.azimuthMotorConnected);
-        this.azimuthEncoderDisconnectedGlobalAlert.set(this.inputs.azimuthEncoderConnected);
+        this.driveMotorDisconnectedAlert.set(!this.inputs.driveMotorConnected);
+        this.azimuthMotorDisconnectedAlert.set(!this.inputs.azimuthMotorConnected);
+        this.azimuthEncoderDisconnectedAlert.set(!this.inputs.azimuthEncoderConnected);
+        this.driveMotorDisconnectedGlobalAlert.set(!this.inputs.driveMotorConnected);
+        this.azimuthMotorDisconnectedGlobalAlert.set(!this.inputs.azimuthMotorConnected);
+        this.azimuthEncoderDisconnectedGlobalAlert.set(!this.inputs.azimuthEncoderConnected);
 
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + this.config.name + "/Periodic");
         LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic/" + this.config.name);
