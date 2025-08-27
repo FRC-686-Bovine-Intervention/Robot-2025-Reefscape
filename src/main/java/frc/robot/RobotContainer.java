@@ -355,43 +355,58 @@ public class RobotContainer {
         ;
 
         this.drive.translationSubsystem.setDefaultCommand(
-            this.drive.translationSubsystem.run(() -> {
-                var fieldVec = Perspective.getCurrent().toField(
-                    driveJoystick.toVector()
-                    .times(
-                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
-                    )
-                );
-                var fieldSpeeds = new ChassisSpeeds(
-                    fieldVec.get(0),
-                    fieldVec.get(1),
-                    0
-                );
-                ChassisSpeeds robotSpeeds;
-                if (this.driveController.leftTrigger.getAsDouble() > 0.1 && this.driveController.rightTrigger.getAsDouble() > 0.1) {
-                    robotSpeeds = new ChassisSpeeds(
-                        Math.min(this.driveController.leftTrigger.getAsDouble(), this.driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                        0,
-                        0
-                    );
-                } else {
-                    robotSpeeds = new ChassisSpeeds(
-                        0,
-                        (this.driveController.leftTrigger.getAsDouble() - this.driveController.rightTrigger.getAsDouble()) * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond),
-                        0
+            new Command() {
+                {
+                    this.addRequirements(drive.translationSubsystem);
+                    this.setName("Driver Control Field Relative");
+                }
+
+                @Override
+                public void execute() {
+                    // Rotate joystick such that up is positive X and left is positive Y
+                    var perspectiveX = +driveJoystick.y().getAsDouble();
+                    var perspectiveY = -driveJoystick.x().getAsDouble();
+
+                    // Get field relative from perspective relative
+                    var perspectiveForwardDirection = Perspective.getCurrent().getForwardDirection();
+                    var fieldX = perspectiveX * +perspectiveForwardDirection.getCos() + perspectiveY * -perspectiveForwardDirection.getSin();
+                    var fieldY = perspectiveX * +perspectiveForwardDirection.getSin() + perspectiveY * +perspectiveForwardDirection.getCos();
+
+                    var fieldXMetersPerSecond = fieldX * DriveConstants.maxDriveSpeed.in(MetersPerSecond) * DriveConstants.maxDriveSpeedEnvCoef.getAsDouble();
+                    var fieldYMetersPerSecond = fieldY * DriveConstants.maxDriveSpeed.in(MetersPerSecond) * DriveConstants.maxDriveSpeedEnvCoef.getAsDouble();
+
+                    // Get robot relative from robot relative
+                    var robotRotation = RobotState.getInstance().getEstimatedGlobalPose().getRotation();
+                    var robotXMetersPerSecond = fieldXMetersPerSecond * +robotRotation.getCos() + fieldYMetersPerSecond * +robotRotation.getSin();
+                    var robotYMetersPerSecond = fieldXMetersPerSecond * -robotRotation.getSin() + fieldYMetersPerSecond * +robotRotation.getCos();
+
+                    // Robot relative adjustments
+                    double adjustX;
+                    double adjustY;
+                    if (driveController.leftTrigger.getAsDouble() > 0.1 && driveController.rightTrigger.getAsDouble() > 0.1) {
+                        adjustX = Math.min(driveController.leftTrigger.getAsDouble(), driveController.rightTrigger.getAsDouble());
+                        adjustY = 0.0;
+                    } else {
+                        adjustX = 0.0;
+                        adjustY = driveController.leftTrigger.getAsDouble() - driveController.rightTrigger.getAsDouble();
+                    }
+                    if (objectiveTracker.getCurrentObjective().isPresent() && objectiveTracker.getCurrentObjective().get().getTargetDirection().isBackward()) {
+                        adjustX *= -1.0;
+                    }
+                    var adjustXMetersPerSecond = adjustX * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond);
+                    var adjustYMetersPerSecond = adjustY * DriveConstants.maxAdjustmentSpeed.in(MetersPerSecond);
+
+                    drive.translationSubsystem.driveVelocity(
+                        robotXMetersPerSecond + adjustXMetersPerSecond,
+                        robotYMetersPerSecond + adjustYMetersPerSecond
                     );
                 }
-                if (this.objectiveTracker.getCurrentObjective().filter((objective) -> objective.getTargetDirection().isForward()).isEmpty()) {
-                    robotSpeeds = new ChassisSpeeds(
-                        -robotSpeeds.vxMetersPerSecond,
-                        robotSpeeds.vyMetersPerSecond,
-                        robotSpeeds.omegaRadiansPerSecond
-                    );
+
+                @Override
+                public void end(boolean interrupted) {
+                    drive.translationSubsystem.stop();
                 }
-                this.drive.translationSubsystem.driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, RobotState.getInstance().getEstimatedGlobalPose().getRotation()).plus(robotSpeeds));
-            })
-            .withName("Driver Control Field Relative")
+            }
         );
         this.drive.rotationalSubsystem.setDefaultCommand(
             this.drive.rotationalSubsystem.spin(this.driveController.rightStick.x().smoothDeadband(0.1).multiply(DriveConstants.maxTurnRate.in(RadiansPerSecond)).multiply(0.5))
