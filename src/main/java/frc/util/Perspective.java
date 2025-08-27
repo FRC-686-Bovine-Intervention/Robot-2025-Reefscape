@@ -1,81 +1,87 @@
 package frc.util;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
-import java.util.LinkedHashMap;
-
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkInput;
-
+import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.math.util.Units;
 import frc.util.flipping.AllianceFlipUtil;
-import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class Perspective {
-	private Matrix<N2,N2> spectatorToField;
-	private Perspective(Matrix<N2,N2> spectatorToField) {
-		this.spectatorToField = spectatorToField;
-	}
-	
-	public Vector<N2> toField(Vector<N2> vec) {
-		return new Vector<N2>(spectatorToField.times(vec));
-	}
-	
-	private static final Matrix<N2,N2> joystickToRobot = GeomUtil.rotationMatrix(Rotation2d.kCW_90deg);
-	private static final Perspective posY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCCW_90deg).times(joystickToRobot));
-	private static final Perspective negY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCW_90deg).times(joystickToRobot));
-	private static final Perspective posX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kZero).times(joystickToRobot));
-	private static final Perspective negX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.k180deg).times(joystickToRobot));
-	private static final LoggedTunable<Angle> customTunable = LoggedTunable.from("Perspective/Custom", Degrees::of, 0);
-	private static final Perspective custom = new Perspective(GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.get().in(Radians))).times(joystickToRobot));
+    protected Matrix<N2, N2> perspectiveToField;
+    protected Matrix<N2, N2> fieldToPerspective;
 
-	private static final MappedSwitchableChooser<Perspective> chooser;
-	static {
-		var map = new LinkedHashMap<String, Perspective>();
-		map.put("Blue Left (+Y)", posY);
-		map.put("Blue Right (-Y)", negY);
-		map.put("Blue Alliance (+X)", posX);
-		map.put("Red Alliance (-X)", negX);
-		map.put("Custom", custom);
-		chooser = new MappedSwitchableChooser<>(
-			"Perspective",
-			map,
-			posY
-		);
-	}
-	
-    static {
-        Logger.registerDashboardInput(new LoggedNetworkInput() {
-			private static final SuppliedEdgeDetector FMS_edge_detector = new SuppliedEdgeDetector(DriverStation::isFMSAttached);
-			private static final Alert comp_wrong_perspective_alert = new Alert("Competition Environment detected, but selected Perspective does not match the Alliance", AlertType.kWarning);
-            public void periodic() {
-                FMS_edge_detector.update();
-				if (FMS_edge_detector.risingEdge()) {
-					chooser.setSelected(getAlliance());
-				}
-				if (chooser.getSelected() == custom) {
-					custom.spectatorToField = GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.get().in(Radians))).times(joystickToRobot);
-				}
-				chooser.setActive(chooser.getSelected());
-				comp_wrong_perspective_alert.set(Environment.isCompetition() && getCurrent() != getAlliance());
-            }
-        });
+    private Perspective(Matrix<N2, N2> perspectiveToField) {
+        this.perspectiveToField = perspectiveToField;
+        this.fieldToPerspective = this.perspectiveToField.inv();
     }
 
-	public static Perspective getAlliance() {
-		return AllianceFlipUtil.shouldFlip() ? negX : posX;
-	}
+    public Vector<N2> toField(Vector<N2> perspectiveVector) {
+        return (Vector<N2>) this.perspectiveToField.times(perspectiveVector);
+    }
 
-	public static Perspective getCurrent() {
-		return chooser.getActive();
-	}
+    public Vector<N2> toPerspective(Vector<N2> fieldVector) {
+        return (Vector<N2>) this.fieldToPerspective.times(fieldVector);
+    }
+
+    private static final Perspective posX = new Perspective(Rotation2d.kZero.toMatrix());
+    private static final Perspective negX = new Perspective(Rotation2d.k180deg.toMatrix());
+    private static final Perspective posY = new Perspective(Rotation2d.kCCW_90deg.toMatrix());
+    private static final Perspective negY = new Perspective(Rotation2d.kCW_90deg.toMatrix());
+    private static final Perspective custom = new Perspective(Rotation2d.kZero.toMatrix()) {
+        private final LoggedNetworkNumber customDegrees = new LoggedNetworkNumber("Perspective/Custom", 0.0);
+        private double lastDegrees = this.customDegrees.get();
+
+        private boolean hasChanged() {
+            return this.customDegrees.get() != this.lastDegrees;
+        }
+
+        private void setPerspectiveDegs(double degrees) {
+            var rads = Units.degreesToRadians(this.customDegrees.get());
+            var cos = Math.cos(rads);
+            var sin = Math.sin(rads);
+            this.perspectiveToField = MatBuilder.fill(Nat.N2(), Nat.N2(),
+                +cos, -sin,
+                +sin, +cos
+            );
+            this.fieldToPerspective = this.perspectiveToField.inv();
+            this.lastDegrees = degrees;
+        }
+
+        private void updateIfChanged() {
+            if (this.hasChanged()) {
+                this.setPerspectiveDegs(lastDegrees);
+            }
+        }
+
+        @Override
+        public Vector<N2> toField(Vector<N2> vector) {
+            this.updateIfChanged();
+            return super.toField(vector);
+        }
+    };
+
+    private static final LoggedDashboardChooser<Perspective> chooser;
+
+    static {
+        chooser = new LoggedDashboardChooser<>("Perspective/Chooser");
+        chooser.addDefaultOption("Blue Alliance (+X)", posX);
+        chooser.addOption("Blue Alliance (+X)", negX);
+        chooser.addOption("Blue Alliance (+X)", posY);
+        chooser.addOption("Blue Alliance (+X)", negY);
+        chooser.addOption("Custom", custom);
+    }
+
+    public static Perspective getAlliance() {
+        return AllianceFlipUtil.shouldFlip() ? negX : posX;
+    }
+
+    public static Perspective getCurrent() {
+        return chooser.get();
+    }
 }

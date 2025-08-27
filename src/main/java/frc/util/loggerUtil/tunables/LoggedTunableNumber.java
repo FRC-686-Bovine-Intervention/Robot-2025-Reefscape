@@ -51,7 +51,7 @@ public class LoggedTunableNumber implements LoggedTunable<Double> {
         if (!RobotConstants.tuningMode) {
             return false;
         }
-        double currentValue = this.get();
+        double currentValue = this.getAsDouble();
         Double lastValue = this.lastHasChangedValues.get(id);
         if (lastValue == null || currentValue != lastValue) {
             this.lastHasChangedValues.put(id, currentValue);

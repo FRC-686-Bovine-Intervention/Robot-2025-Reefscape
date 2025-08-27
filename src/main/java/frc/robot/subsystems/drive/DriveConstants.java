@@ -15,6 +15,8 @@ import static edu.wpi.first.units.Units.Rotations;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.pathplanner.lib.config.RobotConfig;
 
@@ -35,7 +37,6 @@ import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
 import frc.util.geometry.GeomUtil;
 import frc.util.hardwareID.can.CANDevice;
-import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.mechanismUtil.GearRatio;
 import frc.util.mechanismUtil.LinearRelation;
 
@@ -142,12 +143,12 @@ public final class DriveConstants {
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
     public static final AngularVelocity maxTurnRate = RadiansPerSecond.of(maxDriveSpeed.in(MetersPerSecond) / driveBaseRadius.in(Meters));
     public static final DoubleSupplier maxDriveSpeedEnvCoef = Environment.switchVar(
-        () -> 1,
-        LoggedTunable.from("Demo Constraints/Max Translational Percentage", 0.25)::getAsDouble
+        () -> 1.0,
+        new LoggedNetworkNumber("Demo Constraints/Max Translational Percentage", 0.25)::get
     );
     public static final DoubleSupplier maxTurnRateEnvCoef = Environment.switchVar(
-        () -> 1,
-        LoggedTunable.from("Demo Constraints/Max Rotational Percentage", 0.25)::getAsDouble
+        () -> 1.0,
+        new LoggedNetworkNumber("Demo Constraints/Max Rotational Percentage", 0.5)::get
     );
     public static final double driveJoystickDeadbandPercent = 0.2;
     public static final double driveMaxJerk = 200.0;
