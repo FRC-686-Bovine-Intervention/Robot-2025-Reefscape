@@ -37,7 +37,7 @@ public class Perspective {
     private static final Perspective posY = new Perspective(Rotation2d.kCCW_90deg);
     private static final Perspective negY = new Perspective(Rotation2d.kCW_90deg);
     private static final Perspective custom = new Perspective(Rotation2d.kZero) {
-        private final LoggedNetworkNumber customDegrees = new LoggedNetworkNumber("Perspective/Custom", 0.0);
+        private final LoggedNetworkNumber customDegrees = new LoggedNetworkNumber("SmartDashboard/Perspective/Custom", 0.0);
 
         private boolean hasChanged() {
             return this.customDegrees.get() != this.forwardDirection.getDegrees();
@@ -56,9 +56,21 @@ public class Perspective {
         }
 
         @Override
+        public Rotation2d getForwardDirection() {
+            this.updateIfChanged();
+            return super.getForwardDirection();
+        }
+
+        @Override
         public Vector<N2> toField(Vector<N2> vector) {
             this.updateIfChanged();
             return super.toField(vector);
+        }
+
+        @Override
+        public Vector<N2> toPerspective(Vector<N2> fieldVector) {
+            this.updateIfChanged();
+            return super.toPerspective(fieldVector);
         }
     };
 
@@ -66,10 +78,10 @@ public class Perspective {
 
     static {
         chooser = new LoggedDashboardChooser<>("Perspective/Chooser");
-        chooser.addDefaultOption("Blue Alliance (+X)", posX);
-        chooser.addOption("Blue Alliance (+X)", negX);
-        chooser.addOption("Blue Alliance (+X)", posY);
-        chooser.addOption("Blue Alliance (+X)", negY);
+        chooser.addOption("Blue Alliance (+X)", posX);
+        chooser.addOption("Red Alliance (-X)", negX);
+        chooser.addDefaultOption("Blue Left (+Y)", posY);
+        chooser.addOption("Red Left (-Y)", negY);
         chooser.addOption("Custom", custom);
     }
 
