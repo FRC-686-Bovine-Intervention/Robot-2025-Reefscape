@@ -1,14 +1,11 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 
@@ -31,7 +28,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.units.measure.Mass;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
@@ -121,9 +117,6 @@ public final class DriveConstants {
 
     public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(moduleTranslations);
 
-    /** Weight with battery and bumpers */
-    public static final Mass weightKg = Pounds.of(58.0);
-    
     public static final LinearRelation wheel = LinearRelation.wheelRadius(Inches.of(1.53));
 
     public static final GearRatio driveMotorToWheelRatio = new GearRatio()
@@ -150,22 +143,6 @@ public final class DriveConstants {
         () -> 1.0,
         new LoggedNetworkNumber("Demo Constraints/Max Rotational Percentage", 0.5)::get
     );
-    public static final double driveJoystickDeadbandPercent = 0.2;
-    public static final double driveMaxJerk = 200.0;
-
-    public static final double poseMoveTranslationkP = 1;
-    public static final double poseMoveTranslationMaxVel = 3;
-    public static final double poseMoveTranslationMaxAccel = 3;
-
-    public static final double poseMoveRotationkP = 0.05;
-    public static final double poseMoveRotationMaxVel = Math.PI;
-    public static final double poseMoveRotationMaxAccel = Math.PI;
-
-    public static final double headingKp = 0.2;
-    public static final double headingKi = 0;
-    public static final double headingKd = 0;
-    public static final Angle headingTolerance = Degrees.of(1);
-    public static final AngularVelocity omegaTolerance = DegreesPerSecond.of(1);
 
     public static final LinearVelocity maxAdjustmentSpeed = InchesPerSecond.of(12);
 

@@ -349,7 +349,7 @@ public class RobotContainer {
 
     private void configureCommands() {
         var driveJoystick = this.driveController.leftStick
-            .smoothRadialDeadband(DriveConstants.driveJoystickDeadbandPercent)
+            .smoothRadialDeadband(0.1)
             .radialSensitivity(0.75)
             // .radialSlewRateLimit(DriveConstants.joystickSlewRateLimit)
         ;

@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.loggerUtil.tunables.Tunable;
@@ -41,6 +42,13 @@ public record PIDConstants(double kP, double kI, double kD) implements Tunable<P
     }
 
     public void update(PIDController pid) {
+        pid.setPID(
+            this.kP(),
+            this.kI(),
+            this.kD()
+        );
+    }
+    public void update(ProfiledPIDController pid) {
         pid.setPID(
             this.kP(),
             this.kI(),
