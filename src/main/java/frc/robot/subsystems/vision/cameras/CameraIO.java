@@ -38,12 +38,19 @@ public interface CameraIO {
     }
 
     public static class CameraFrame implements LoggableInputs {
-        public double timestamp = 0;
-        public int pipelineIndex = 0;
-        public CameraTarget[] targets = new CameraTarget[0];
-        public Optional<MultiTagResult> multiTagResult = Optional.empty();
+        public double timestamp;
+        public int pipelineIndex;
+        public CameraTarget[] targets;
+        public Optional<MultiTagResult> multiTagResult;
 
-        public CameraFrame() {}
+        public CameraFrame() {
+            this(
+                0.0,
+                0,
+                new CameraTarget[0],
+                Optional.empty()
+            );
+        }
 
         public CameraFrame(double timestamp, int pipelineIndex, CameraTarget[] targets, Optional<MultiTagResult> multiTagResult) {
             this.timestamp = timestamp;
@@ -79,7 +86,18 @@ public interface CameraIO {
         public double poseAmbiguity;
         public Translation2d[] corners;
 
-        public CameraTarget() {}
+        public CameraTarget() {
+            this(
+                -1,
+                0.0,
+                0.0,
+                0.0,
+                Transform3d.kZero,
+                Transform3d.kZero,
+                0.0,
+                new Translation2d[0]
+            );
+        }
 
         public CameraTarget(
             int tagID,
@@ -133,7 +151,16 @@ public interface CameraIO {
         public double altReprojectionError;
         public double ambiguity;
 
-        public MultiTagResult() {}
+        public MultiTagResult() {
+            this(
+                new int[0],
+                Transform3d.kZero,
+                0.0,
+                Transform3d.kZero,
+                0.0,
+                0.0
+            );
+        }
 
         public MultiTagResult(int[] tagIDs, Transform3d bestTransform, double bestReprojectionError, Transform3d altTransform, double altReprojectionError, double ambiguity) {
             this.tagIDs = tagIDs;
