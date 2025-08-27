@@ -158,15 +158,15 @@ public class ApriltagVision {
     
                 double xyStdDev =
                     xyStdDevCoef.get()
-                    * averageTagDistance * averageTagDistance
-                    / usableTags.length
+                    * Math.pow(averageTagDistance, 1.2)
+                    / Math.pow(usableTags.length, 2.0)
                     * pipeline.pipelineStdScale
                 ;
                 double thetaStdDev =
                     (useVisionRotation) ? (
                         thetaStdDevCoef.get()
-                        * averageTagDistance * averageTagDistance
-                        / usableTags.length
+                        * Math.pow(averageTagDistance, 1.2)
+                        / Math.pow(usableTags.length, 2.0)
                         * pipeline.pipelineStdScale
                     ) : (
                         Double.POSITIVE_INFINITY
