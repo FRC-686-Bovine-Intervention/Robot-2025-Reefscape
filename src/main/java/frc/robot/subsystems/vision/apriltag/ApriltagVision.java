@@ -7,7 +7,9 @@ import static edu.wpi.first.units.Units.Radians;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
@@ -19,6 +21,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.RobotState;
+import frc.robot.RobotState.TxTyObservation;
 import frc.robot.RobotState.VisionObservation;
 import frc.robot.constants.FieldConstants;
 import frc.util.LoggedTracer;
@@ -40,6 +43,7 @@ public class ApriltagVision {
     public void periodic() {
         LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Before");
         List<VisionObservation> allVisionObservations = new ArrayList<>(this.pipelines.length * 3);
+        Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>(this.pipelines.length * 3);
 
         for (var pipeline : this.pipelines) {
             var frames = pipeline.getFrames();
@@ -63,13 +67,35 @@ public class ApriltagVision {
                 Logger.recordOutput(loggingKey + "/Targets/Tag Poses", Arrays.stream(usableTags).map((tag) -> tag.pose).toArray(Pose3d[]::new));
                 akitTargetCorners = Arrays.stream(frame.targets).flatMap((target) -> Arrays.stream(target.corners)).toArray(Translation2d[]::new);
 
-                if (frame.targets.length == 0) continue;
+                if (frame.targets.length == 0) {continue;}
+
+                for (var target : frame.targets) {
+                    var tagID = target.tagID;
+                    if (tagID == -1) {continue;}
+                    var previousObservation = allTxTyObservations.get(tagID);
+                    if (previousObservation == null || frame.timestamp > previousObservation.timestamp()) {
+                        var tagPose = FieldConstants.apriltagLayout.getTagPose(target.tagID).get();
+                        var translationToTarget = target.bestCameraToTag.getTranslation();
+                        var cameraRotation = pipeline.camera.mount.getFieldRelative().getRotation();
+                        var tagRotationRelativeToCamera = tagPose.getRotation().minus(cameraRotation);
+                        var cameraToTag = new Transform3d(translationToTarget, tagRotationRelativeToCamera);
+                        var cameraPose = tagPose.transformBy(cameraToTag.inverse());
+                        var robotPose = cameraPose.transformBy(pipeline.camera.mount.getRobotRelative().inverse());
+                        
+                        allTxTyObservations.put(
+                            tagID,
+                            new TxTyObservation(
+                                frame.timestamp,
+                                tagID,
+                                robotPose.toPose2d()
+                            )
+                        );
+                    }
+                }
     
                 // final because averageTagDist mapToDouble needs it
                 final Pose3d cameraPose3d;
                 final Pose3d robotPose3d;
-                final Pose3d robotPose3dReefObjective;
-                final Pose3d cameraPose3dReefObjective;
                 var useVisionRotation = false;
     
                 if (frame.multiTagResult.isPresent()) {
@@ -183,22 +209,23 @@ public class ApriltagVision {
                     VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev)
                 ));
             }
-            for (var observation : txTyObservations.values()) {
-                if (!allTxTyObservations.containsKey(observation.tagId())
-                    || observation.distance().in(Meters) < allTxTyObservations.get(observation.tagId()).distance().in(Meters)) {
-                  allTxTyObservations.put(observation.tagId(), observation);
-                }
-            }
             Logger.recordOutput(loggingKey + "/Poses/Robot3d", akitPose3d);
             Logger.recordOutput(loggingKey + "/Targets/Target Corners", akitTargetCorners);
             Logger.recordOutput(loggingKey + "/Frame Count", frames.length);
+
             LoggedTracer.logEpoch(tracingKey);
         }
+
         LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Process Results");
+
         allVisionObservations.stream()
             .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
             .forEachOrdered(RobotState.getInstance()::addVisionObservation)
         ;
+        allTxTyObservations.values().stream()
+            .forEachOrdered(RobotState.getInstance()::addTxTyObservation)
+        ;
+
         LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision/Send Observations");
         LoggedTracer.logEpoch("CommandScheduler Periodic/ApriltagVision");
     }
