@@ -585,10 +585,23 @@ public class RobotContainer {
         // Auto Drive
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
         final Command autoDriveScoreCoral = this.drive.simplePIDTo(
-            () -> AutoScore.getTargetPose(
-                RobotState.getInstance().getEstimatedGlobalPose(),
-                this.objectiveTracker.getScoreCoralObjective().getTargetPose().getOurs()
-            )
+            () -> {
+                var objective = this.objectiveTracker.getScoreCoralObjective();
+                var targetPose = objective.getTargetPose().getOurs();
+                var measuredPose = RobotState.getInstance().getEstimatedGlobalPose();
+                if (objective.getTargetBranch().isPresent()) {
+                    var specialPose = RobotState.getInstance().getRobotPoseFromTag(objective.getTargetBranch().get().pipe.rack.getOurs().apriltagID);
+                    if (specialPose.isPresent()) {
+                        var distanceToTarget = RobotState.getInstance().getEstimatedGlobalPose().getTranslation().getDistance(targetPose.getTranslation());
+                        var t = 1.0 - MathUtil.inverseInterpolate(Units.inchesToMeters(24.0), Units.inchesToMeters(36.0), distanceToTarget);
+                        measuredPose = RobotState.getInstance().getEstimatedGlobalPose().interpolate(specialPose.get(), t);
+                    }
+                }
+                return AutoScore.getTargetPose(
+                    measuredPose,
+                    targetPose
+                );
+            }
         ).deadlineFor(
             Commands.startEnd(
                 () -> {
