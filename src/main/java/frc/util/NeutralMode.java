@@ -1,5 +1,9 @@
 package frc.util;
 
+import java.util.Optional;
+
+import com.ctre.phoenix6.controls.ControlRequest;
+
 public enum NeutralMode {
     Coast(
         com.ctre.phoenix6.signals.NeutralModeValue.Coast,
@@ -43,5 +47,17 @@ public enum NeutralMode {
 
     public com.ctre.phoenix6.controls.ControlRequest getPhoenix6ControlRequest() {
         return this.phoenix6ControlRequest;
+    }
+
+    public static final Optional<NeutralMode> DEFAULT = Optional.empty();
+    public static final Optional<NeutralMode> COAST = Optional.of(NeutralMode.Coast);
+    public static final Optional<NeutralMode> BRAKE = Optional.of(NeutralMode.Brake);
+
+    public static ControlRequest selectControlRequest(Optional<NeutralMode> neutralMode, ControlRequest defaultRequest, ControlRequest coastRequest, ControlRequest brakeRequest) {
+        if (neutralMode.isEmpty()) {return defaultRequest;}
+        return switch (neutralMode.get()) {
+            case Coast -> coastRequest;
+            case Brake -> brakeRequest;
+        };
     }
 }

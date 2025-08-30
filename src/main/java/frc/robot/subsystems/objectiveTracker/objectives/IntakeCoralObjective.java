@@ -1,9 +1,9 @@
 package frc.robot.subsystems.objectiveTracker.objectives;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.util.flipping.AllianceFlipped;
 
 public class IntakeCoralObjective implements Objective {
@@ -22,7 +22,10 @@ public class IntakeCoralObjective implements Objective {
 
     @Override
     public SuperstructureState getTargetState() {
-        return FieldConstants.CoralStation.intakePosition.get(this.getTargetDirection());
+        return switch (this.getTargetDirection()) {
+            case Forward -> SuperstructureConstants.coralStationForwardState;
+            case Backward -> SuperstructureConstants.coralStationBackwardState;
+        };
     }
 
     @Override

@@ -36,14 +36,14 @@ public abstract class Mechanism3d<U extends Unit> extends ChildBase {
 
     @Override
     public Transform3d getRobotRelative() {
-        return super.getRobotRelative().plus(transform);
+        return super.getRobotRelative().plus(this.transform);
     }
     @Override
     public Pose3d getFieldRelative() {
-        return super.getFieldRelative().plus(transform);
+        return super.getFieldRelative().plus(this.transform);
     }
 
     public void log(String key) {
-        Logger.recordOutput(key, getRobotRelative());
+        Logger.recordOutput(key, this.getRobotRelative());
     }
 }

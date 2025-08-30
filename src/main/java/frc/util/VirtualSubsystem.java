@@ -10,15 +10,11 @@ package frc.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.wpi.first.wpilibj.Watchdog;
-import frc.robot.Robot;
-
 /**
  * Represents a subsystem unit that requires a periodic callback but not require a hardware mutex.
  */
 public abstract class VirtualSubsystem {
     private static List<VirtualSubsystem> subsystems = new ArrayList<>();
-    private static final Watchdog watchdog = new Watchdog(Robot.defaultPeriodSecs, () -> {});
 
     public VirtualSubsystem() {
         subsystems.add(this);
@@ -26,27 +22,13 @@ public abstract class VirtualSubsystem {
 
     /** Calls {@link #periodic()} on all virtual subsystems. */
     public static void periodicAll() {
-        watchdog.reset();
         for (var subsystem : subsystems) {
             subsystem.periodic();
-            LoggedTracer.logEpoch("VirtualSubsystem Periodic/" + subsystem.getClass().getSimpleName());
-            watchdog.addEpoch(subsystem.getClass().getSimpleName());
-        }
-        if (watchdog.isExpired()) {
-            System.out.println("VirtualSubsystem loop overrun");
-            watchdog.printEpochs();
         }
     }
     public static void postCommandPeriodicAll() {
-        watchdog.reset();
         for (var subsystem : subsystems) {
             subsystem.postCommandPeriodic();
-            LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/" + subsystem.getClass().getSimpleName());
-            watchdog.addEpoch(subsystem.getClass().getSimpleName());
-        }
-        if (watchdog.isExpired()) {
-            System.out.println("VirtualSubsystem loop overrun");
-            watchdog.printEpochs();
         }
     }
 

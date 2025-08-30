@@ -2,7 +2,7 @@ package frc.robot.subsystems.objectiveTracker.objectives;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.util.flipping.AllianceFlipped;
 
 public interface Objective {
@@ -10,7 +10,8 @@ public interface Objective {
         IntakeCoral(false),
         IntakeAlgae(true),
         ScoreCoral(true),
-        ScoreAlgae(false),
+        ScoreNet(false),
+        ScoreProcessor(false),
         Climb(false),
         ;
         public final boolean isReefObjective;

@@ -1,19 +1,18 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
+
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.pathplanner.lib.config.RobotConfig;
@@ -29,13 +28,11 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.units.measure.Mass;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.Environment;
 import frc.util.geometry.GeomUtil;
 import frc.util.hardwareID.can.CANDevice;
-import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.mechanismUtil.GearRatio;
 import frc.util.mechanismUtil.LinearRelation;
 
@@ -120,52 +117,32 @@ public final class DriveConstants {
 
     public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(moduleTranslations);
 
-    /** Weight with battery and bumpers */
-    public static final Mass weightKg = Pounds.of(58.0);
-    
     public static final LinearRelation wheel = LinearRelation.wheelRadius(Inches.of(1.53));
 
-    public static final GearRatio driveRatio = new GearRatio()
+    public static final GearRatio driveMotorToWheelRatio = new GearRatio()
         .gear(14).gear(22).axle()
         .gear(15).gear(45).axle()
     ;
-    public static final GearRatio azimuthRatio = new GearRatio()
+    public static final GearRatio azimuthMotorToEncoderRatio = new GearRatio()
         .gear(15).gear(32).axle()
         .gear(10).gear(60).axle()
     ;
-    // // public static final double driveWheelGearReduction = 1.0 / (1.0/4.0);
-    // public static final double driveWheelGearReduction = 5.08;
-    // public static final double turnWheelGearReduction = 1.0 / ((15.0/32.0)*(10.0/60.0));
+    public static final GearRatio azimuthEncoderToCarriageRatio = new GearRatio();
+    public static final GearRatio azimuthMotorToCarriageRatio = azimuthMotorToEncoderRatio.then(azimuthEncoderToCarriageRatio);
 
-    public static final LinearVelocity maxModuleSpeed = wheel.angularVelocityToLinearVelocity(driveRatio.applyUnsigned(RadiansPerSecond.of(DCMotor.getFalcon500(1).freeSpeedRadPerSec)));
+    public static final LinearVelocity maxModuleSpeed = wheel.angularVelocityToLinearVelocity(driveMotorToWheelRatio.applyUnsigned(RadiansPerSecond.of(DCMotor.getFalcon500(1).freeSpeedRadPerSec)));
 
     public static final LinearVelocity maxDriveSpeed = MetersPerSecond.of(6);
     /**Tangential speed (m/s) = radial speed (rad/s) * radius (m)*/
     public static final AngularVelocity maxTurnRate = RadiansPerSecond.of(maxDriveSpeed.in(MetersPerSecond) / driveBaseRadius.in(Meters));
     public static final DoubleSupplier maxDriveSpeedEnvCoef = Environment.switchVar(
-        () -> 1,
-        new LoggedTunableNumber("Demo Constraints/Max Translational Percentage", 0.25)
+        () -> 1.0,
+        new LoggedNetworkNumber("Demo Constraints/Max Translational Percentage", 0.25)::get
     );
     public static final DoubleSupplier maxTurnRateEnvCoef = Environment.switchVar(
-        () -> 1,
-        new LoggedTunableNumber("Demo Constraints/Max Rotational Percentage", 0.25)
+        () -> 1.0,
+        new LoggedNetworkNumber("Demo Constraints/Max Rotational Percentage", 0.5)::get
     );
-    public static final double driveJoystickDeadbandPercent = 0.2;
-    public static final double driveMaxJerk = 200.0;
-
-    public static final double poseMoveTranslationkP = 1;
-    public static final double poseMoveTranslationMaxVel = 3;
-    public static final double poseMoveTranslationMaxAccel = 3;
-
-    public static final double poseMoveRotationkP = 0.05;
-    public static final double poseMoveRotationMaxVel = Math.PI;
-    public static final double poseMoveRotationMaxAccel = Math.PI;
-
-    public static final double headingKp = 0.2;
-    public static final double headingKi = 0;
-    public static final double headingKd = 0;
-    public static final Angle headingTolerance = Degrees.of(1);
-    public static final AngularVelocity omegaTolerance = DegreesPerSecond.of(1);
 
     public static final LinearVelocity maxAdjustmentSpeed = InchesPerSecond.of(12);
 
@@ -176,7 +153,7 @@ public final class DriveConstants {
             DriveConstants.wheel.effectiveRadius(),
             DriveConstants.maxDriveSpeed,
             1.0,
-            DCMotor.getFalcon500(1).withReduction(driveRatio.reductionUnsigned()),
+            DCMotor.getFalcon500(1).withReduction(driveMotorToWheelRatio.reductionUnsigned()),
             Amps.of(80),
             1
         ),

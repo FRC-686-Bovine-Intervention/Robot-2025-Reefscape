@@ -16,18 +16,18 @@ import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
 import frc.robot.auto.AutoRoutine.AutoQuestion.Settings;
-import frc.robot.constants.FieldConstants.Barge;
-import frc.robot.constants.FieldConstants.CoralStation;
 import frc.robot.constants.FieldConstants.Reef;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.constants.FieldConstants.Reef.PipeConcept;
@@ -35,8 +35,9 @@ import frc.robot.constants.FieldConstants.Reef.StagedAlgaeConcept;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.superstructure.Superstructure;
-import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.util.commands.DebounceCommand;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipped;
 import frc.util.geometry.GeomUtil;
@@ -51,7 +52,7 @@ public class AutoCommons {
     }
 
     public static Command setOdometryFlipped(AllianceFlipped<Pose2d> pose, Drive drive) {
-        return Commands.runOnce(() -> RobotState.getInstance().setPose(drive.getGyroRotation(), drive.getModulePositions(), pose.getOurs()));
+        return Commands.runOnce(() -> RobotState.getInstance().resetPose(pose.getOurs()));
     }
 
     // public static Command followPathFlipped(PathPlannerPath path, Drive drive) {
@@ -72,20 +73,20 @@ public class AutoCommons {
     // }
 
     public static Command scoreOnReef(PathPlannerPath pathToReef, BranchConcept branch, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        var targetState = branch.level.scoringSuperstructureStates.get(direction);
+        var targetState = SuperstructureConstants.getStateForBranchLevel(branch.level);
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
         var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
         return 
             Commands.deadline(
                 Commands.sequence(
-                    Commands.waitUntil(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(1), Degrees.of(5))),
-                    Commands.waitUntil(() -> GeomUtil.isNear(end, drive.getPose(), Inches.of(5), Degrees.of(5))),
+                    Commands.waitUntil(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(1), Units.degreesToRadians(5))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(end, RobotState.getInstance().getEstimatedGlobalPose(), Units.inchesToMeters(5), Units.degreesToRadians(5))),
                     Commands.waitSeconds(0.25),
-                    intake.eject().asProxy().onlyWhile(intake.hasCoral)
+                    intake.eject().asProxy().onlyWhile(intake::hasCoral)
                 ),
                 Commands.sequence(
-                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, drive.getPose().getTranslation(), Feet.of(6))),
+                    Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), Feet.of(6))),
                     superstructure.goToSetpointSequenced(targetState).withName("Extend to " + branch.getName()).asProxy()
                 ),
                 Commands.sequence(
@@ -121,30 +122,33 @@ public class AutoCommons {
     //     ;
     // }
     public static Command scoreInNet(PathPlannerPath pathToExtend, PathPlannerPath pathToNet, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
-        var targetState = Barge.superstructureState.get(direction);
+        var targetState = switch (direction) {
+            case Forward -> SuperstructureConstants.netForwardState;
+            case Backward -> SuperstructureConstants.netBackwardState;
+        };
         var extendPose = new Pose2d(AllianceFlipUtil.apply(getLastPoint(pathToExtend)), AllianceFlipUtil.apply(pathToExtend.getGoalEndState().rotation()));
         var netPose = new Pose2d(AllianceFlipUtil.apply(getLastPoint(pathToNet)), AllianceFlipUtil.apply(pathToNet.getGoalEndState().rotation()));
         return
             Commands.deadline(
                 Commands.sequence(
                     Commands.waitUntil(() -> 
-                        GeomUtil.isNear(netPose, drive.getPose(), Inches.of(5), Degrees.of(5))
-                        && superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(5))
+                        GeomUtil.isNear(netPose, RobotState.getInstance().getEstimatedGlobalPose(), Units.inchesToMeters(5), Units.degreesToRadians(5))
+                        && superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(6), Units.degreesToRadians(5))
                     ),
-                    intake.ejectAlgae().asProxy().onlyWhile(intake.hasAlgae.debounce(0.75, DebounceType.kFalling))
+                    intake.ejectAlgae().asProxy().raceWith(new DebounceCommand(intake::hasAlgae, new Debouncer(0.75, DebounceType.kFalling)))
                 ),
                 Commands.sequence(
                     Commands.sequence(
                         drive.followBluePath(pathToExtend).withName("Follow Path to Extend").asProxy(),
                         drive.simplePIDTo(() -> extendPose).withName("PID to Extend").asProxy()
-                    ).until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(2), Inches.of(6), Degrees.of(60))),
+                    ).until(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(2), Units.inchesToMeters(6), Units.degreesToRadians(60))),
                     Commands.sequence(
                         drive.followBluePath(pathToNet).withName("Follow Path to Net").asProxy(),
                         drive.simplePIDTo(() -> netPose).withName("PID to Net").asProxy()
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netPrepareState).until(() -> GeomUtil.isNear(extendPose, drive.getPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
+                    superstructure.goToSetpointSequenced(SuperstructureConstants.netAutoPrepareState).until(() -> GeomUtil.isNear(extendPose, RobotState.getInstance().getEstimatedGlobalPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
                     superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
                 )
             )
@@ -156,35 +160,43 @@ public class AutoCommons {
     }
 
     public static Command pickupCoralFromStation(PathPlannerPath pathToStation, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var targetState = switch (direction) {
+            case Forward -> SuperstructureConstants.coralStationForwardState;
+            case Backward -> SuperstructureConstants.coralStationBackwardState;
+        };
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToStation));
         var endRotation = AllianceFlipUtil.apply(pathToStation.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
         if (RobotBase.isReal()) {
             return 
                 Commands.deadline(
-                    intake.intakeCoral().asProxy().until(intake.hasCoral),
+                    intake.intakeCoral().asProxy().until(intake::hasCoral),
                     Commands.sequence(
                         drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Coral Station").asProxy()
                 )
             ;
         } else {
             return 
                 Commands.deadline(
-                    intake.intakeCoral().asProxy().withTimeout(4).until(intake.hasCoral),
+                    intake.intakeCoral().asProxy().withTimeout(4).until(intake::hasCoral),
                     Commands.sequence(
                         drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(CoralStation.intakePosition.get(direction)).withName("Extend to Coral Station").asProxy()
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Coral Station").asProxy()
                 )
             ;
         }
     }
 
     public static Command pickupAlgaeFromReef(PathPlannerPath pathToReef, StagedAlgaeConcept stagedAlgae, Direction direction, Drive drive, Superstructure superstructure, Intake intake) {
+        var targetState = switch (stagedAlgae.level) {
+            case High -> SuperstructureConstants.highAlgaeState;
+            case Low -> SuperstructureConstants.lowAlgaeState;
+        };
         var endTranslation = AllianceFlipUtil.apply(getLastPoint(pathToReef));
         var endRotation = AllianceFlipUtil.apply(pathToReef.getGoalEndState().rotation());
         var end = new Pose2d(endTranslation, endRotation);
@@ -192,25 +204,25 @@ public class AutoCommons {
             return 
                 Commands.deadline(
                     Commands.sequence(
-                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        intake.intakeAlgae().asProxy().until(intake::hasAlgae),
                         Commands.waitSeconds(0.5)
                     ),
                     Commands.sequence(
                         drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
                 )
             ;
         } else {
             return 
                 Commands.deadline(
-                    intake.intakeAlgae().asProxy().withTimeout(2).until(intake.hasAlgae),
+                    intake.intakeAlgae().asProxy().withTimeout(2).until(intake::hasAlgae),
                     Commands.sequence(
                         drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
                 )
             ;
         }
@@ -221,21 +233,24 @@ public class AutoCommons {
         var intakePose = stagedAlgae.rack.getOurs().centerRobotPose.get(direction);
         var backupPose = intakePose.transformBy(backupTransform);
 
-        var targetState = stagedAlgae.level.intakeSuperstructureStates.get(direction);
+        var targetState = switch (stagedAlgae.level) {
+            case High -> SuperstructureConstants.highAlgaeState;
+            case Low -> SuperstructureConstants.lowAlgaeState;
+        };
         if (RobotBase.isReal()) {
             return 
                 Commands.deadline(
                     Commands.sequence(
-                        intake.intakeAlgae().asProxy().until(intake.hasAlgae),
+                        intake.intakeAlgae().asProxy().until(intake::hasAlgae),
                         Commands.waitSeconds(0.125)
                     ),
                     Commands.sequence(
-                        drive.simplePIDTo(() -> backupPose).withName("Backup").asProxy().until(() -> superstructure.getCurrentState().isNear(targetState, Degrees.of(5), Inches.of(5), Degrees.of(5))),
+                        drive.simplePIDTo(() -> backupPose).withName("Backup").asProxy().until(() -> superstructure.getCurrentMeasuredState().isNear(targetState, Units.degreesToRadians(5), Units.inchesToMeters(5), Units.degreesToRadians(5))),
                         drive.simplePIDTo(() -> intakePose).withName("Intake").asProxy()
                         // drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         // drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(stagedAlgae.level.intakeSuperstructureStates.get(direction)).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
                 )
             ;
         } else {

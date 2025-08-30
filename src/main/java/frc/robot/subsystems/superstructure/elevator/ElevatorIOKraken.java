@@ -1,41 +1,44 @@
 package frc.robot.subsystems.superstructure.elevator;
 
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
-
 import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.StaticBrake;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.AngularVelocityUnit;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.math.util.Units;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
-import frc.util.loggerUtil.inputs.LoggedEncoder;
-import frc.util.loggerUtil.inputs.LoggedMotor;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
+import frc.util.loggerUtil.inputs.LoggedEncoder.EncoderStatusSignalCache;
 
 public class ElevatorIOKraken implements ElevatorIO {
     protected final TalonFX motor = HardwareDevices.elevatorMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.elevatorEncoderID.cancoder();
 
+    private final EncodedMotorStatusSignalCache motorStatusSignalCache;
+    private final EncoderStatusSignalCache encoderStatusSignalCache;
+
+    private final VoltageOut voltageRequest = new VoltageOut(0);
     private final PositionVoltage positionRequest = new PositionVoltage(0);
+    private final NeutralOut neutralOutRequest = new NeutralOut();
+    private final CoastOut coastOutRequest = new CoastOut();
+    private final StaticBrake staticBrakeRequest = new StaticBrake();
 
     public ElevatorIOKraken() {
         var encoderConfig = new CANcoderConfiguration();
@@ -65,9 +68,12 @@ public class ElevatorIOKraken implements ElevatorIO {
 
         this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.motor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.motor));
+        this.motorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.motor);
+        this.encoderStatusSignalCache = EncoderStatusSignalCache.from(this.cancoder);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.encoderStatusSignalCache.getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.motorStatusSignalCache.motor().getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.cancoder));
@@ -78,29 +84,52 @@ public class ElevatorIOKraken implements ElevatorIO {
     
     @Override
     public void updateInputs(ElevatorIOInputs inputs) {
-        inputs.encoder.updateFrom(this.cancoder);
-        inputs.motor.updateFrom(this.motor);
+        BaseStatusSignal.refreshAll(
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity(),
+            this.motorStatusSignalCache.encoder().position(),
+            this.motorStatusSignalCache.encoder().velocity(),
+            this.motorStatusSignalCache.motor().appliedVoltage(),
+            this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.encoderConnected = BaseStatusSignal.isAllGood(
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity()
+        );
+        inputs.motorConnected = BaseStatusSignal.isAllGood(
+            this.motorStatusSignalCache.encoder().position(),
+            this.motorStatusSignalCache.encoder().velocity(),
+            this.motorStatusSignalCache.motor().appliedVoltage(),
+            this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.encoder.updateFrom(this.encoderStatusSignalCache);
+        inputs.motor.updateFrom(this.motorStatusSignalCache);
         // inputs.encoderFaults.updateFrom(this.cancoder);
         // inputs.motorFaults.updateFrom(this.motor);
     }
 
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage) {
-        this.motor.setVoltage(voltage.in(Volts));
+    public void setVolts(double volts) {
+        this.motor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
     }
 
     @Override
-    public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
+    public void setPosition(double positionRads, double velocityRadsPerSec, double feedforwardVolts) {
         this.motor.setControl(this.positionRequest
-            .withPosition(position.in(Rotations))
-            .withVelocity(velocity.in(RotationsPerSecond))
-            .withFeedForward(feedforward.in(Volts))
+            .withPosition(Units.radiansToRotations(positionRads))
+            .withVelocity(Units.radiansToRotations(velocityRadsPerSec))
+            .withFeedForward(feedforwardVolts)
         );
     }
 
     @Override
     public void stop(Optional<NeutralMode> neutralMode) {
-        this.motor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        var controlRequest = NeutralMode.selectControlRequest(neutralMode, this.neutralOutRequest, this.coastOutRequest, this.staticBrakeRequest);
+        this.motor.setControl(controlRequest);
     }
 
     @Override

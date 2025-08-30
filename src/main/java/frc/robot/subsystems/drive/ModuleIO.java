@@ -18,11 +18,17 @@ import frc.util.loggerUtil.inputs.LoggedFaults;
 public interface ModuleIO {
     @AutoLog
     public static class ModuleIOInputs {
-        public LoggedEncodedMotor driveMotor = new LoggedEncodedMotor();
-        public LoggedEncodedMotor azimuthMotor = new LoggedEncodedMotor();
-        public LoggedEncoder azimuthEncoder = new LoggedEncoder();
-        public LoggedFaults driveMotorFaults = new LoggedFaults();
-        public LoggedFaults azimuthMotorFaults = new LoggedFaults();
+        boolean driveMotorConnected = false;
+        boolean azimuthMotorConnected = false;
+        boolean azimuthEncoderConnected = false;
+        LoggedEncodedMotor driveMotor = new LoggedEncodedMotor();
+        LoggedEncodedMotor azimuthMotor = new LoggedEncodedMotor();
+        LoggedEncoder azimuthEncoder = new LoggedEncoder();
+        LoggedFaults driveMotorFaults = new LoggedFaults();
+        LoggedFaults azimuthMotorFaults = new LoggedFaults();
+
+        double[] odometryDriveRads = new double[0];
+        double[] odometryAzimuthRads = new double[0];
     }
 
     /** Updates the set of loggable inputs. */

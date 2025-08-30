@@ -23,6 +23,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.measure.Angle;
 
 public class GeomUtil {
     public static final Transform2d rotate180Transform2d = new Transform2d(Translation2d.kZero, Rotation2d.k180deg);
@@ -95,6 +96,44 @@ public class GeomUtil {
     public static class TransformUtil {
         public static Transform2d toTransform2d(Transform3d a) {
             return new Transform2d(a.getTranslation().toTranslation2d(), a.getRotation().toRotation2d());
+        }
+    }
+
+    public static Rotation3dBuilder rotation3dBuilder() {
+        return new Rotation3dBuilder();
+    }
+
+    public static class Rotation3dBuilder {
+        private Rotation3d inner = new Rotation3d();
+
+        private Rotation3dBuilder() {}
+
+        public Rotation3d build() {
+            return this.inner;
+        }
+
+        public Rotation3dBuilder roll(double rollRads) {
+            this.inner = this.inner.plus(new Rotation3d(rollRads, 0, 0));
+            return this;
+        }
+        public Rotation3dBuilder roll(Angle roll) {
+            return this.roll(roll.in(Radians));
+        }
+
+        public Rotation3dBuilder pitch(double pitchRads) {
+            this.inner = this.inner.plus(new Rotation3d(0, pitchRads, 0));
+            return this;
+        }
+        public Rotation3dBuilder pitch(Angle pitch) {
+            return this.pitch(pitch.in(Radians));
+        }
+
+        public Rotation3dBuilder yaw(double yawRads) {
+            this.inner = this.inner.plus(new Rotation3d(0, 0, yawRads));
+            return this;
+        }
+        public Rotation3dBuilder yaw(Angle yaw) {
+            return this.yaw(yaw.in(Radians));
         }
     }
 }

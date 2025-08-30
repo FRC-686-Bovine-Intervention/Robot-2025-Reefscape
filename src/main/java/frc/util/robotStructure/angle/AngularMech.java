@@ -15,7 +15,13 @@ public class AngularMech extends Mechanism3d<AngleUnit> {
     public AngularMech(Transform3d base, Vector<N3> axis) {
         super(base, axis);
     }
+    
+    @Override
     public void set(Measure<AngleUnit> angle) {
-        transform = new Transform3d(Translation3d.kZero, new Rotation3d(axis, angle.in(Radians)));
+        this.setRads(angle.in(Radians));
+    }
+    
+    public void setRads(double angleRads) {
+        this.transform = new Transform3d(Translation3d.kZero, new Rotation3d(axis, angleRads));
     }
 }

@@ -11,14 +11,14 @@ import frc.robot.constants.RobotConstants;
 
 public class WristIOSim extends WristIOKraken {
     private final SingleJointedArmSim wristSim = new SingleJointedArmSim(
-        LinearSystemId.identifyPositionSystem(5, 5),
+        LinearSystemId.identifyPositionSystem(3, 3),
         DCMotor.getKrakenX60(1),
         WristConstants.motorToMechanism.reductionUnsigned(),
         0.2,
         WristConstants.minAngle.in(Radians),
         WristConstants.maxAngle.in(Radians),
         false,
-        1
+        0
     );
 
     @Override

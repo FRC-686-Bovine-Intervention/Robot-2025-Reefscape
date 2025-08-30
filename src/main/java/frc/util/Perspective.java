@@ -1,81 +1,95 @@
 package frc.util;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
-
-import java.util.LinkedHashMap;
-
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkInput;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.util.flipping.AllianceFlipUtil;
-import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
 
 public class Perspective {
-	private Matrix<N2,N2> spectatorToField;
-	private Perspective(Matrix<N2,N2> spectatorToField) {
-		this.spectatorToField = spectatorToField;
-	}
-	
-	public Vector<N2> toField(Vector<N2> vec) {
-		return new Vector<N2>(spectatorToField.times(vec));
-	}
-	
-	private static final Matrix<N2,N2> joystickToRobot = GeomUtil.rotationMatrix(Rotation2d.kCW_90deg);
-	private static final Perspective posY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCCW_90deg).times(joystickToRobot));
-	private static final Perspective negY = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kCW_90deg).times(joystickToRobot));
-	private static final Perspective posX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.kZero).times(joystickToRobot));
-	private static final Perspective negX = new Perspective(GeomUtil.rotationMatrix(Rotation2d.k180deg).times(joystickToRobot));
-	private static final LoggedTunableMeasure<AngleUnit> customTunable = new LoggedTunableMeasure<>("Perspective/Custom", Degrees.zero());
-	private static final Perspective custom = new Perspective(GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot));
+    protected Rotation2d forwardDirection;
+    protected Matrix<N2, N2> perspectiveToField;
+    protected Matrix<N2, N2> fieldToPerspective;
 
-	private static final MappedSwitchableChooser<Perspective> chooser;
-	static {
-		var map = new LinkedHashMap<String, Perspective>();
-		map.put("Blue Left (+Y)", posY);
-		map.put("Blue Right (-Y)", negY);
-		map.put("Blue Alliance (+X)", posX);
-		map.put("Red Alliance (-X)", negX);
-		map.put("Custom", custom);
-		chooser = new MappedSwitchableChooser<>(
-			"Perspective",
-			map,
-			posY
-		);
-	}
-	
-    static {
-        Logger.registerDashboardInput(new LoggedNetworkInput() {
-			private static final SuppliedEdgeDetector FMS_edge_detector = new SuppliedEdgeDetector(DriverStation::isFMSAttached);
-			private static final Alert comp_wrong_perspective_alert = new Alert("Competition Environment detected, but selected Perspective does not match the Alliance", AlertType.kWarning);
-            public void periodic() {
-                FMS_edge_detector.update();
-				if (FMS_edge_detector.risingEdge()) {
-					chooser.setSelected(getAlliance());
-				}
-				if (chooser.getSelected() == custom) {
-					custom.spectatorToField = GeomUtil.rotationMatrix(Rotation2d.fromRadians(customTunable.in(Radians))).times(joystickToRobot);
-				}
-				chooser.setActive(chooser.getSelected());
-				comp_wrong_perspective_alert.set(Environment.isCompetition() && getCurrent() != getAlliance());
-            }
-        });
+    private Perspective(Rotation2d forwardDirection) {
+        this.forwardDirection = forwardDirection;
+        this.perspectiveToField = this.forwardDirection.toMatrix();
+        this.fieldToPerspective = this.perspectiveToField.inv();
     }
 
-	public static Perspective getAlliance() {
-		return AllianceFlipUtil.shouldFlip() ? negX : posX;
-	}
+    public Rotation2d getForwardDirection() {
+        return this.forwardDirection;
+    }
 
-	public static Perspective getCurrent() {
-		return chooser.getActive();
-	}
+    public Vector<N2> toField(Vector<N2> perspectiveVector) {
+        return (Vector<N2>) this.perspectiveToField.times(perspectiveVector);
+    }
+
+    public Vector<N2> toPerspective(Vector<N2> fieldVector) {
+        return (Vector<N2>) this.fieldToPerspective.times(fieldVector);
+    }
+
+    private static final Perspective posX = new Perspective(Rotation2d.kZero);
+    private static final Perspective negX = new Perspective(Rotation2d.k180deg);
+    private static final Perspective posY = new Perspective(Rotation2d.kCCW_90deg);
+    private static final Perspective negY = new Perspective(Rotation2d.kCW_90deg);
+    private static final Perspective custom = new Perspective(Rotation2d.kZero) {
+        private final LoggedNetworkNumber customDegrees = new LoggedNetworkNumber("SmartDashboard/Perspective/Custom", 0.0);
+
+        private boolean hasChanged() {
+            return this.customDegrees.get() != this.forwardDirection.getDegrees();
+        }
+
+        private void setPerspectiveDegs(double degrees) {
+            this.forwardDirection = Rotation2d.fromDegrees(degrees);
+            this.perspectiveToField = this.forwardDirection.toMatrix();
+            this.fieldToPerspective = this.perspectiveToField.inv();
+        }
+
+        private void updateIfChanged() {
+            if (this.hasChanged()) {
+                this.setPerspectiveDegs(this.customDegrees.get());
+            }
+        }
+
+        @Override
+        public Rotation2d getForwardDirection() {
+            this.updateIfChanged();
+            return super.getForwardDirection();
+        }
+
+        @Override
+        public Vector<N2> toField(Vector<N2> vector) {
+            this.updateIfChanged();
+            return super.toField(vector);
+        }
+
+        @Override
+        public Vector<N2> toPerspective(Vector<N2> fieldVector) {
+            this.updateIfChanged();
+            return super.toPerspective(fieldVector);
+        }
+    };
+
+    private static final LoggedDashboardChooser<Perspective> chooser;
+
+    static {
+        chooser = new LoggedDashboardChooser<>("Perspective/Chooser");
+        chooser.addOption("Blue Alliance (+X)", posX);
+        chooser.addOption("Red Alliance (-X)", negX);
+        chooser.addDefaultOption("Blue Left (+Y)", posY);
+        chooser.addOption("Red Left (-Y)", negY);
+        chooser.addOption("Custom", custom);
+    }
+
+    public static Perspective getAlliance() {
+        return AllianceFlipUtil.shouldFlip() ? negX : posX;
+    }
+
+    public static Perspective getCurrent() {
+        return chooser.get();
+    }
 }

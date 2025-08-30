@@ -9,47 +9,108 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Degrees;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 
+import edu.wpi.first.math.geometry.Quaternion;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
+import frc.robot.subsystems.drive.OdometryThread.Buffer;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOPigeon2 implements GyroIO {
     private final Pigeon2 pigeon = HardwareDevices.pigeonID.pigeon2();
 
+    private final StatusSignal<Double> quatWSignal;
+    private final StatusSignal<Double> quatXSignal;
+    private final StatusSignal<Double> quatYSignal;
+    private final StatusSignal<Double> quatZSignal;
+    private final StatusSignal<AngularVelocity> yawVelocitySignal;
+    private final StatusSignal<AngularVelocity> pitchVelocitySignal;
+    private final StatusSignal<AngularVelocity> rollVelocitySignal;
+
+    private final Buffer<Rotation3d> quatBuffer;
+
     public GyroIOPigeon2() {
         var config = new Pigeon2Configuration();
-        // change factory defaults here
         config.MountPose
             .withMountPoseYaw(Degrees.of(-179.59326171875))
             .withMountPosePitch(Degrees.of(-0.29825273156166077))
             .withMountPoseRoll(Degrees.of(-0.2136882245540619))
         ;
+        this.pigeon.getConfigurator().apply(config);
 
-        pigeon.getConfigurator().apply(config);
+        this.quatWSignal = this.pigeon.getQuatW();
+        this.quatXSignal = this.pigeon.getQuatX();
+        this.quatYSignal = this.pigeon.getQuatY();
+        this.quatZSignal = this.pigeon.getQuatZ();
+        this.yawVelocitySignal = this.pigeon.getAngularVelocityZWorld();
+        this.pitchVelocitySignal = this.pigeon.getAngularVelocityYWorld();
+        this.rollVelocitySignal = this.pigeon.getAngularVelocityXWorld();
 
-        // set signals to an appropriate rate
-        pigeon.getYaw().setUpdateFrequency(RobotConstants.rioUpdateFrequency);
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            DriveConstants.odometryLoopFrequency,
+            this.quatWSignal,
+            this.quatXSignal,
+            this.quatYSignal,
+            this.quatZSignal
+        );
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            RobotConstants.rioUpdateFrequency,
+            this.yawVelocitySignal,
+            this.pitchVelocitySignal,
+            this.rollVelocitySignal
+        );
 
-        pigeon.setYaw(0);
+        this.quatBuffer = OdometryThread.getInstance().registerPhoenixComboSignal(
+            (array) -> new Rotation3d(
+                new Quaternion(
+                    array[0],
+                    array[1],
+                    array[2],
+                    array[3]
+                )
+            ),
+            Rotation3d[]::new,
+            this.quatWSignal,
+            this.quatXSignal,
+            this.quatYSignal,
+            this.quatZSignal
+        );
     }
 
+    @Override
     public void updateInputs(GyroIOInputs inputs) {
-        inputs.connected = pigeon.getYaw().getStatus().isOK();
+        BaseStatusSignal.refreshAll(
+            this.yawVelocitySignal,
+            this.pitchVelocitySignal,
+            this.rollVelocitySignal
+        );
+        inputs.connected = BaseStatusSignal.isAllGood(
+            this.quatWSignal,
+            this.quatXSignal,
+            this.quatYSignal,
+            this.quatZSignal,
+            this.yawVelocitySignal,
+            this.pitchVelocitySignal,
+            this.rollVelocitySignal
+        );
 
-        inputs.rotation = pigeon.getRotation3d();
+        inputs.odometryGyroRotation = this.quatBuffer.popAll();
 
-        inputs.yawVelocity = pigeon.getAngularVelocityZWorld().getValue();   // ccw+
-        inputs.pitchVelocity = pigeon.getAngularVelocityYWorld().getValue().unaryMinus();   // up+
-        inputs.rollVelocity = pigeon.getAngularVelocityXWorld().getValue().unaryMinus();   // ccw+
+        inputs.yawVelocity = this.yawVelocitySignal.getValue();   // ccw+
+        inputs.pitchVelocity = this.pitchVelocitySignal.getValue().unaryMinus();   // up+
+        inputs.rollVelocity = this.rollVelocitySignal.getValue().unaryMinus();   // ccw+
     }
 
     @Override
     public void resetYaw(Measure<AngleUnit> yaw) {
-        pigeon.setYaw(yaw.in(Degrees));
+        this.pigeon.setYaw(yaw.in(Degrees));
     }
 }

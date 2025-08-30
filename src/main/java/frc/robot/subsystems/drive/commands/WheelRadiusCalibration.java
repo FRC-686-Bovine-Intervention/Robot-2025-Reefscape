@@ -14,15 +14,17 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.VelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.Module;
 import frc.util.geometry.GeomUtil;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class WheelRadiusCalibration extends Command {
     private final Drive drive;
@@ -31,10 +33,10 @@ public class WheelRadiusCalibration extends Command {
     private final Timer totalTimer = new Timer();
     private final Measure<VoltageUnit> maxVoltage;
     private final Measure<VelocityUnit<VoltageUnit>> voltageRampRate;
-    private Angle[] initialPositions = new Angle[0];
+    private double[] initialPositionRads = new double[0];
 
-    public static final LoggedTunableMeasure<VelocityUnit<VoltageUnit>> VOLTAGE_RAMP_RATE = new LoggedTunableMeasure<>("Drive/Wheel Calibration/Voltage Ramp Rate", Volts.per(Second).of(2));
-    public static final LoggedTunableMeasure<VoltageUnit> MAX_VOLTAGE = new LoggedTunableMeasure<>("Drive/Wheel Calibration/Max Voltage", Volts.of(6));
+    public static final LoggedTunable<Velocity<VoltageUnit>> VOLTAGE_RAMP_RATE = LoggedTunable.from("Drive/Wheel Calibration/Voltage Ramp Rate", Volts.per(Second)::of, 2);
+    public static final LoggedTunable<Voltage> MAX_VOLTAGE = LoggedTunable.from("Drive/Wheel Calibration/Max Voltage", Volts::of, 6);
 
     public WheelRadiusCalibration(Drive drive, Measure<VelocityUnit<VoltageUnit>> voltageRampRate, Measure<VoltageUnit> maxVoltage) {
         this.drive = drive;
@@ -46,23 +48,23 @@ public class WheelRadiusCalibration extends Command {
 
     @Override
     public void initialize() {
-        totalTimer.restart();
-        prevYaw.mut_replace(drive.getYaw());
-        totalYaw.mut_replace(Radians.zero());
-        initialPositions = Arrays.stream(drive.modules).map(Module::getWheelAngularPosition).map(Angle::copy).toArray(Angle[]::new);
+        this.totalTimer.restart();
+        this.prevYaw.mut_replace(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getMeasure());
+        this.totalYaw.mut_replace(Radians.zero());
+        this.initialPositionRads = Arrays.stream(this.drive.modules).mapToDouble(Module::getWheelAngularPositionRads).toArray();
     }
 
     @Override
     public void execute() {
-        var yaw = drive.getYaw();
-        var yawDiff = yaw.minus(prevYaw).in(Radians);
+        var yaw = RobotState.getInstance().getEstimatedGlobalPose().getRotation().getMeasure();
+        var yawDiff = yaw.minus(this.prevYaw).in(Radians);
         var wrappedDiff = MathUtil.angleModulus(yawDiff);
-        totalYaw.mut_acc(wrappedDiff);
+        this.totalYaw.mut_acc(wrappedDiff);
 
-        prevYaw.mut_replace(yaw);
+        this.prevYaw.mut_replace(yaw);
 
         var averageWheelRadians = IntStream.range(0, drive.modules.length)
-            .mapToDouble((i) -> drive.modules[i].getWheelAngularPosition().minus(initialPositions[i]).in(Radians))
+            .mapToDouble((i) -> drive.modules[i].getWheelAngularPositionRads() - this.initialPositionRads[i])
             .average().orElse(0)
         ;
 

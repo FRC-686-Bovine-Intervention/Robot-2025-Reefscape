@@ -1,43 +1,47 @@
 package frc.robot.subsystems.superstructure.pivot;
 
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
-
 import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.StrictFollower;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.AngularVelocityUnit;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.math.util.Units;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.util.loggerUtil.inputs.LoggedEncoder;
-import frc.util.loggerUtil.inputs.LoggedMotor;
 import frc.util.NeutralMode;
 import frc.util.PIDConstants;
 import frc.util.faults.DeviceFaults;
 import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
+import frc.util.loggerUtil.inputs.LoggedEncoder.EncoderStatusSignalCache;
 
 public class PivotIOFalcon implements PivotIO {
     protected final TalonFX leftMotor = HardwareDevices.pivotLeftMotorID.talonFX();
     protected final TalonFX rightMotor = HardwareDevices.pivotRightMotorID.talonFX();
     protected final CANcoder cancoder = HardwareDevices.pivotEncoderID.cancoder();
 
+    private final EncodedMotorStatusSignalCache leftMotorStatusSignalCache;
+    private final EncodedMotorStatusSignalCache rightMotorStatusSignalCache;
+    private final EncoderStatusSignalCache encoderStatusSignalCache;
+
+    private final VoltageOut voltageRequest = new VoltageOut(0);
     private final PositionVoltage positionRequest = new PositionVoltage(0);
+    private final NeutralOut neutralOutRequest = new NeutralOut();
+    private final CoastOut coastOutRequest = new CoastOut();
+    private final StaticBrake staticBrakeRequest = new StaticBrake();
     private final StrictFollower followerRequest;
 
     public PivotIOFalcon() {
@@ -76,11 +80,15 @@ public class PivotIOFalcon implements PivotIO {
         this.followerRequest = new StrictFollower(this.leftMotor.getDeviceID());
         this.rightMotor.setControl(this.followerRequest);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.leftMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.rightMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, LoggedEncoder.getStatusSignals(this.cancoder));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.leftMotor));
-        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), LoggedMotor.getStatusSignals(this.rightMotor));
+        this.leftMotorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.leftMotor);
+        this.rightMotorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.rightMotor);
+        this.encoderStatusSignalCache = EncoderStatusSignalCache.from(this.cancoder);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.leftMotorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.rightMotorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.encoderStatusSignalCache.getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.leftMotorStatusSignalCache.motor().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.rightMotorStatusSignalCache.motor().getStatusSignals());
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.leftMotor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.leftMotor));
         BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.rightMotor));
@@ -94,34 +102,69 @@ public class PivotIOFalcon implements PivotIO {
 
     @Override
     public void updateInputs(PivotIOInputs inputs) {
-        inputs.encoder.updateFrom(this.cancoder);
-        inputs.leftMotor.updateFrom(this.leftMotor);
-        inputs.rightMotor.updateFrom(this.rightMotor);
+        BaseStatusSignal.refreshAll(
+            this.leftMotorStatusSignalCache.encoder().position(),
+            this.leftMotorStatusSignalCache.encoder().velocity(),
+            this.leftMotorStatusSignalCache.motor().appliedVoltage(),
+            this.leftMotorStatusSignalCache.motor().statorCurrent(),
+            this.leftMotorStatusSignalCache.motor().deviceTemperature(),
+            this.rightMotorStatusSignalCache.encoder().position(),
+            this.rightMotorStatusSignalCache.encoder().velocity(),
+            this.rightMotorStatusSignalCache.motor().appliedVoltage(),
+            this.rightMotorStatusSignalCache.motor().statorCurrent(),
+            this.rightMotorStatusSignalCache.motor().deviceTemperature(),
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity()
+        );
+        inputs.encoderConnected = BaseStatusSignal.isAllGood(
+            this.encoderStatusSignalCache.position(),
+            this.encoderStatusSignalCache.velocity()
+        );
+        inputs.leftMotorConnected = BaseStatusSignal.isAllGood(
+            this.leftMotorStatusSignalCache.encoder().position(),
+            this.leftMotorStatusSignalCache.encoder().velocity(),
+            this.leftMotorStatusSignalCache.motor().appliedVoltage(),
+            this.leftMotorStatusSignalCache.motor().statorCurrent(),
+            this.leftMotorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.rightMotorConnected = BaseStatusSignal.isAllGood(
+            this.rightMotorStatusSignalCache.encoder().position(),
+            this.rightMotorStatusSignalCache.encoder().velocity(),
+            this.rightMotorStatusSignalCache.motor().appliedVoltage(),
+            this.rightMotorStatusSignalCache.motor().statorCurrent(),
+            this.rightMotorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.encoder.updateFrom(this.encoderStatusSignalCache);
+        inputs.leftMotor.updateFrom(this.leftMotorStatusSignalCache);
+        inputs.rightMotor.updateFrom(this.rightMotorStatusSignalCache);
         // inputs.encoderFaults.updateFrom(this.cancoder);
         // inputs.leftMotorFaults.updateFrom(this.leftMotor);
         // inputs.rightMotorFaults.updateFrom(this.rightMotor);
     }
 
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage) {
-        this.leftMotor.setVoltage(voltage.in(Volts));
+    public void setVolts(double volts) {
+        this.leftMotor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
         this.rightMotor.setControl(this.followerRequest);
     }
 
     @Override
-    public void setPosition(Measure<AngleUnit> position, Measure<AngularVelocityUnit> velocity, Measure<VoltageUnit> feedforward) {
+    public void setPosition(double positionRads, double velocityRadsPerSec, double feedforwardVolts) {
         this.leftMotor.setControl(this.positionRequest
-            .withPosition(position.in(Rotations))
-            .withVelocity(velocity.in(RotationsPerSecond))
-            .withFeedForward(feedforward.in(Volts))
+            .withPosition(Units.radiansToRotations(positionRads))
+            .withVelocity(Units.radiansToRotations(velocityRadsPerSec))
+            .withFeedForward(feedforwardVolts)
         );
         this.rightMotor.setControl(this.followerRequest);
     }
     
     @Override
     public void stop(Optional<NeutralMode> neutralMode) {
-        this.leftMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
-        this.rightMotor.setControl(neutralMode.map(NeutralMode::getPhoenix6ControlRequest).orElseGet(NeutralOut::new));
+        var controlRequest = NeutralMode.selectControlRequest(neutralMode, this.neutralOutRequest, this.coastOutRequest, this.staticBrakeRequest);
+        this.leftMotor.setControl(controlRequest);
+        this.rightMotor.setControl(controlRequest);
     }
 
     @Override

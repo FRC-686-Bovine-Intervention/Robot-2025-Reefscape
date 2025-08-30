@@ -3,10 +3,10 @@ package frc.robot.subsystems.objectiveTracker.objectives;
 import java.util.Optional;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.constants.FieldConstants;
 import frc.robot.constants.FieldConstants.Reef.BranchConcept;
 import frc.robot.subsystems.superstructure.Superstructure.Direction;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.superstructure.SuperstructureState;
 import frc.util.flipping.AllianceFlipped;
 
 public class ScoreCoralObjective implements Objective {
@@ -27,10 +27,7 @@ public class ScoreCoralObjective implements Objective {
 
     @Override
     public SuperstructureState getTargetState() {
-        return this.targetBranch
-            .map((branch) -> branch.level.scoringSuperstructureStates.get(this.getTargetDirection()))
-            .orElseGet(() -> FieldConstants.Reef.level1SuperstructureStates.get(this.getTargetDirection()))
-        ;
+        return SuperstructureConstants.getStateForBranchLevel(this.targetBranch.map((branch) -> branch.level));
     }
 
     @Override
