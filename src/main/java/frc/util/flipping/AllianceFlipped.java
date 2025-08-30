@@ -53,6 +53,9 @@ public class AllianceFlipped<T> {
     public <U> AllianceFlipped<U> map(Function<T, U> mappingFunction) {
         return new AllianceFlipped<U>(mappingFunction.apply(this.blue), mappingFunction.apply(this.red));
     }
+    public AllianceFlipped<T> invert() {
+        return new AllianceFlipped<>(this.red, this.blue);
+    }
 
     public static <T> AllianceFlipped<T> fromFunction(Function<Alliance, T> generator) {
         return new AllianceFlipped<T>(generator.apply(Alliance.Blue), generator.apply(Alliance.Red));

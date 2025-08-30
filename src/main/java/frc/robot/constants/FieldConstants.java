@@ -4,9 +4,9 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -24,12 +24,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.subsystems.climber.ClimberConstants;
 import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedRobotPose;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedSuperstructureState;
-import frc.robot.subsystems.superstructure.Superstructure.RobotFlippedTotalState;
-import frc.robot.subsystems.superstructure.Superstructure.SuperstructureState;
-import frc.robot.subsystems.superstructure.SuperstructureConstants;
-import frc.robot.subsystems.superstructure.elevator.ElevatorConstants;
-import frc.robot.subsystems.superstructure.pivot.PivotConstants;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.flipping.AllianceFlipUtil.FieldFlipType;
 import frc.util.flipping.AllianceFlipped;
@@ -37,6 +31,23 @@ import frc.util.flipping.AllianceFlipped;
 public final class FieldConstants {
     public static final Distance fieldLength = Inches.of(57*12 + 6 + 7.0/8.0);
     public static final Distance fieldWidth =  Inches.of(26*12 + 5);
+
+    public static final AllianceFlipped<Predicate<Translation2d>> onAllianceSide = new AllianceFlipped<>(
+        new Predicate<>() {
+            private final double halfline = fieldLength.div(2).in(Meters);
+            @Override
+            public boolean test(Translation2d t) {
+                return t.getX() <= this.halfline;
+            }
+        },
+        new Predicate<>() {
+            private final double halfline = fieldLength.div(2).in(Meters);
+            @Override
+            public boolean test(Translation2d t) {
+                return t.getX() >= this.halfline;
+            }
+        }
+    );
 
     public static final AprilTagFieldLayout apriltagLayout;
     static {
@@ -121,83 +132,19 @@ public final class FieldConstants {
 
         public static final Angle chuteAngle = Degrees.of(35);
         public static final Distance chuteBottomHeight = Inches.of(37.440179);
-
-        public static final RobotFlippedSuperstructureState intakePosition = new RobotFlippedSuperstructureState(
-            SuperstructureState.fromWristAxisRobotSpace(
-                new Pose2d(
-                    new Translation2d(
-                        RobotConstants.centerToFrontBumper.minus(Inches.of(3)),//.plus(Coral.radius.times(2)),
-                        chuteBottomHeight.plus(Coral.radius.times(Math.cos(chuteAngle.in(Radians)))).plus(Inches.of(-2.75))
-                    ),
-                    new Rotation2d(chuteAngle)
-                )
-                .transformBy(SuperstructureConstants.coralIntakeForwardTransform)
-            ),
-            SuperstructureState.fromParts(
-                Degrees.of(85),
-                ElevatorConstants.minLengthPhysical,
-                Degrees.of(148)
-            )
-        );
     }
 
     public static final class Reef {
-        public static final RobotFlippedSuperstructureState level1SuperstructureStates = RobotFlippedSuperstructureState.fromForwardOnly(
-            SuperstructureState.fromCoralTipRobotSpace(
-                new Pose2d(
-                    new Translation2d(
-                        RobotConstants.centerToFrontBumper.plus(Coral.length),
-                        Inches.of(18).plus(Inches.of(7))
-                    ),
-                    Rotation2d.fromDegrees(20)
-                )
-            )
-        );
         public static enum BranchLevel {
-            Level2(Meters.of(0.792953), Meters.of(0.252504), Degrees.of(35),
-                RobotFlippedSuperstructureState.fromForwardOnly(
-                    SuperstructureState.fromCoralTipRobotSpace(
-                        new Pose2d(
-                            new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
-                                Meters.of(0.792953).plus(Inches.of(4))
-                            ),
-                            Rotation2d.fromDegrees(-15)
-                        )
-                    )
-                )
-            ),
-            Level3(Meters.of(1.196053), Meters.of(0.252504), Degrees.of(35),
-                RobotFlippedSuperstructureState.fromForwardOnly(
-                    SuperstructureState.fromCoralTipRobotSpace(
-                        new Pose2d(
-                            new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
-                                Meters.of(1.196053).plus(Inches.of(4))
-                            ),
-                            Rotation2d.fromDegrees(-15)
-                        )
-                    )
-                )
-            ),
-            Level4(Meters.of(1.828663), Meters.of(0.254000), Degrees.of(90),
-                RobotFlippedSuperstructureState.fromForwardOnly(
-                    SuperstructureState.fromCoralTipRobotSpace(
-                        new Pose2d(
-                            new Translation2d(
-                                RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
-                                Meters.of(1.828663).plus(Inches.of(4))
-                            ),
-                            Rotation2d.fromDegrees(-30)
-                        )
-                    )
-                )
-            ),
+            Level2(Meters.of(0.792953), Meters.of(0.252504), Degrees.of(35)),
+            Level3(Meters.of(1.196053), Meters.of(0.252504), Degrees.of(35)),
+            Level4(Meters.of(1.828663), Meters.of(0.254000), Degrees.of(90)),
             ;
             private final Transform3d branchTipTransform;
 
-            public final RobotFlippedSuperstructureState scoringSuperstructureStates;
-            BranchLevel(Distance branchTipHeight, Distance branchTipHorizontalLength, Angle branchTipAngle, RobotFlippedSuperstructureState scoringSuperstructureStates) {
+            public final Distance branchTipHeight;
+            BranchLevel(Distance branchTipHeight, Distance branchTipHorizontalLength, Angle branchTipAngle) {
+                this.branchTipHeight = branchTipHeight;
                 this.branchTipTransform = new Transform3d(
                     new Translation3d(
                         branchTipHorizontalLength.unaryMinus(),
@@ -210,7 +157,6 @@ public final class FieldConstants {
                         Degrees.zero()
                     )
                 );
-                this.scoringSuperstructureStates = scoringSuperstructureStates;
             }
         }
 
@@ -276,7 +222,6 @@ public final class FieldConstants {
 
             public final Pose2d intersectionPose;
             public final RobotFlippedRobotPose centerRobotPose;
-            public final RobotFlippedTotalState level1ScoringTotalState;
 
             public final PipeObject[] pipes;
             public final StagedAlgaeObject stagedAlgae;
@@ -285,7 +230,6 @@ public final class FieldConstants {
                 this.id = id;
                 this.intersectionPose = intersectionPose;
                 this.centerRobotPose = RobotFlippedRobotPose.fromForwardRobotFlipped(this.intersectionPose.transformBy(robotTransform));
-                this.level1ScoringTotalState = RobotFlippedTotalState.combine(this.centerRobotPose, level1SuperstructureStates);
 
                 this.apriltagID = switch (this.id) {
                     default -> alliance == Alliance.Red ? 7 : 18;
@@ -414,14 +358,12 @@ public final class FieldConstants {
             public final int id;
             
             public final Pose3d branchTip;
-            public final RobotFlippedTotalState scoreTotalState;
 
             private BranchObject(PipeObject pipe, BranchLevel level) {
                 this.pipe = pipe;
                 this.level = level;
                 this.id = this.level.ordinal() * 12 + this.pipe.id;
                 this.branchTip = new Pose3d(this.pipe.pipeCenterPose).transformBy(this.level.branchTipTransform);
-                this.scoreTotalState = RobotFlippedTotalState.combine(this.pipe.robotPose, this.level.scoringSuperstructureStates);
             }
 
             public String getName() {
@@ -454,32 +396,15 @@ public final class FieldConstants {
         }
 
         public static enum StagedAlgaeLevel {
-            High(Meters.of(1.313180), Meters.of(0.679337), RobotFlippedSuperstructureState.fromForwardOnly(
-                SuperstructureState.fromAlgaeCenterRobotSpace(
-                    new Pose2d(
-                        new Translation2d(
-                            Meters.of(0.679337),
-                            Meters.of(1.313180).plus(Inches.of(3))
-                        ),
-                        Rotation2d.fromDegrees(-15)
-                    )
-                )
-            )),
-            Low(Meters.of(0.909320), Meters.of(0.679337), RobotFlippedSuperstructureState.fromForwardOnly(
-                SuperstructureState.fromAlgaeCenterRobotSpace(
-                    new Pose2d(
-                        new Translation2d(
-                            Meters.of(0.679337),
-                            Meters.of(0.909320).plus(Inches.of(3))
-                        ),
-                        Rotation2d.fromDegrees(-15)
-                    )
-                )
-            )),
+            High(Meters.of(1.313180), Meters.of(0.679337)),
+            Low(Meters.of(0.909320), Meters.of(0.679337)),
             ;
+            public final Distance height;
+            public final Distance radiusFromReefCenter;
             public final Transform3d transform;
-            public final RobotFlippedSuperstructureState intakeSuperstructureStates;
-            StagedAlgaeLevel(Distance height, Distance radius, RobotFlippedSuperstructureState intakeSuperstructureStates) {
+            StagedAlgaeLevel(Distance height, Distance radius) {
+                this.height = height;
+                this.radiusFromReefCenter = radius;
                 this.transform = new Transform3d(
                     new Translation3d(
                         radius.unaryMinus(),
@@ -488,7 +413,6 @@ public final class FieldConstants {
                     ),
                     Rotation3d.kZero
                 );
-                this.intakeSuperstructureStates = intakeSuperstructureStates;
             }
         }
 
@@ -497,14 +421,12 @@ public final class FieldConstants {
             public final StagedAlgaeLevel level;
 
             public final Pose3d centerPose;
-            public final RobotFlippedTotalState intakeTotalState;
 
             private StagedAlgaeObject(RackObject rack, StagedAlgaeLevel level) {
                 this.rack = rack;
                 this.level = level;
 
                 this.centerPose = new Pose3d(this.rack.intersectionPose).transformBy(this.level.transform);
-                this.intakeTotalState = RobotFlippedTotalState.combine(this.rack.centerRobotPose, this.level.intakeSuperstructureStates);
             }
         }
         public static final class StagedAlgaeConcept extends AllianceFlipped<StagedAlgaeObject> {
@@ -559,12 +481,6 @@ public final class FieldConstants {
             ),
             Rotation2d.kCW_90deg
         )));
-
-        public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardOnly(SuperstructureState.fromParts(
-            PivotConstants.minAngle,
-            ElevatorConstants.minLengthPhysical,
-            Degrees.of(10)
-        ));
     }
 
     public static final class Barge {
@@ -596,14 +512,6 @@ public final class FieldConstants {
         public static final AllianceFlipped<RobotFlippedRobotPose> backLeftBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeLeftMidpoint.get(alliance), netBackwardRotation.get(alliance)).transformBy(netScoringTransform)));
         public static final AllianceFlipped<RobotFlippedRobotPose> backCenterBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeCenterMidpoint.get(alliance), netBackwardRotation.get(alliance)).transformBy(netScoringTransform)));
         public static final AllianceFlipped<RobotFlippedRobotPose> backRightBargePose = AllianceFlipped.fromFunction((alliance) -> RobotFlippedRobotPose.fromForwardPivotFlipped(new Pose2d(bargeRightMidpoint.get(alliance), netBackwardRotation.get(alliance)).transformBy(netScoringTransform)));
-
-        public static final RobotFlippedSuperstructureState superstructureState = RobotFlippedSuperstructureState.fromForwardPivotFlipped(
-            SuperstructureState.fromParts(
-                Degrees.of(90),
-                ElevatorConstants.maxLengthSoftware,
-                Degrees.of(60)
-            )
-        );
 
         private static final Distance autoCageDistance = Feet.of(4);
 

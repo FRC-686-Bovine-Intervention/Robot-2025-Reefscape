@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -18,10 +17,12 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.questnav.QuestNavConstants.QuestNavCameraConstants;
+import frc.util.LoggedTracer;
 import frc.util.VirtualSubsystem;
 import frc.util.geometry.GeomUtil.TransformUtil;
 import frc.util.geometry.RollingAveragePose2d;
 import frc.util.led.animation.StatusLightAnimation;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 
 public class QuestNav extends VirtualSubsystem {
@@ -40,7 +41,7 @@ public class QuestNav extends VirtualSubsystem {
     private final RollingAveragePose2d rollingAvg;
 
     public final LoggedNetworkBoolean isDisabled = new LoggedNetworkBoolean("QuestNav/Quest Disabled");
-    public static final LoggedTunableNumber xySTDevs = new LoggedTunableNumber("QuestNav/XY STDevs", 0.1);
+    public static final LoggedTunableNumber xySTDevs = LoggedTunable.from("QuestNav/XY STDevs", 0.1);
 
     public QuestNav(QuestNavCameraConstants camMeta, QuestNavIO io, StatusLightAnimation connectionAnimation) {
         this.camMeta = camMeta;
@@ -55,8 +56,12 @@ public class QuestNav extends VirtualSubsystem {
 
     @Override
     public void periodic() {
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav/Before");
         io.updateInputs(inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav/Update Inputs");
         Logger.processInputs("Inputs/QuestNav/" + camMeta.hardwareName, inputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav/Process Inputs");
+
         io.cleanUp();
 
         notConnectedAlert.set(!inputs.isConnected);
@@ -64,15 +69,15 @@ public class QuestNav extends VirtualSubsystem {
         connectionAnimation.setStatus(inputs.isConnected);
 
         if (!calibrationInProgress && DriverStation.isDisabled()) {
-            setPose(RobotState.getInstance().getPose());
+            setPose(RobotState.getInstance().getEstimatedGlobalPose());
         } else if (!calibrationInProgress && inputs.isConnected && !isDisabled.get()) {
-            RobotState.getInstance()
-                .addVisionMeasurement(
-                    getRobotPose(),
-                    VecBuilder.fill(xySTDevs.get(), xySTDevs.get(), Double.POSITIVE_INFINITY),
-                    inputs.timestamp
-                )
-            ;
+            // RobotState.getInstance()
+            //     .addVisionObservation(
+            //         getRobotPose(),
+            //         VecBuilder.fill(xySTDevs.get(), xySTDevs.get(), Double.POSITIVE_INFINITY),
+            //         inputs.timestamp
+            //     )
+            // ;
         }
 
         rollingAvg.addPose(getRobotPose());
@@ -82,6 +87,8 @@ public class QuestNav extends VirtualSubsystem {
         Logger.recordOutput("QuestNav/RobotPose", getRobotPose());
         Logger.recordOutput("QuestNav/AverageRobotPose", getAverageRobotPose());
         Logger.recordOutput("QuestNav/Calibration In Progress", calibrationInProgress);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav/Periodic");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/QuestNav");
     }
 
     public void setPose(Pose2d pose) {

@@ -1,78 +1,140 @@
 package frc.util.loggerUtil.inputs;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Celsius;
-import static edu.wpi.first.units.Units.Volts;
-
 import java.nio.ByteBuffer;
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.revrobotics.spark.SparkMax;
 
-import edu.wpi.first.units.measure.MutCurrent;
-import edu.wpi.first.units.measure.MutTemperature;
-import edu.wpi.first.units.measure.MutVoltage;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.util.struct.Struct;
 import edu.wpi.first.util.struct.StructSerializable;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 public class LoggedMotor implements StructSerializable {
-    public final MutVoltage appliedVoltage = Volts.mutable(0);
-    public final MutCurrent current = Amps.mutable(0);
-    public final MutTemperature temperature = Celsius.mutable(0);
+    private double appliedVolts = 0.0;
+    private double statorCurrentAmps = 0.0;
+    private double supplyCurrentAmps = 0.0;
+    private double deviceTempCel = 0.0;
 
-    public void updateFrom(TalonFX talon) {
-        this.appliedVoltage.mut_replace(talon.getMotorVoltage().getValue());
-        this.current.mut_replace(talon.getStatorCurrent().getValue());
-        this.temperature.mut_replace(talon.getDeviceTemp().getValue());
+    public LoggedMotor() {}
+
+    private LoggedMotor(double appliedVolts, double statorCurrentAmps, double supplyCurrentAmps, double deviceTempCel) {
+        this.appliedVolts = appliedVolts;
+        this.statorCurrentAmps = statorCurrentAmps;
+        this.supplyCurrentAmps = supplyCurrentAmps;
+        this.deviceTempCel = deviceTempCel;
     }
-    public void updateFrom(TalonSRX talon) {
-        this.appliedVoltage.mut_replace(talon.getMotorOutputVoltage(), Volts);
-        this.current.mut_replace(talon.getStatorCurrent(), Amps);
-        this.temperature.mut_replace(talon.getTemperature(), Celsius);
+
+    /**
+     * @return The applied voltage of the motor in {@link #edu.wpi.first.units.Units.Volts volts}
+     */
+    public double getAppliedVolts() {
+        return this.appliedVolts;
     }
-    public void updateFrom(TalonFXS talon) {
-        this.appliedVoltage.mut_replace(talon.getMotorVoltage().getValue());
-        this.current.mut_replace(talon.getStatorCurrent().getValue());
-        this.temperature.mut_replace(talon.getDeviceTemp().getValue());
+    /**
+     * @return The stator current of the motor in {@link #edu.wpi.first.units.Units.Amps amps}
+     */
+    public double getStatorCurrentAmps() {
+        return this.statorCurrentAmps;
+    }
+    /**
+     * @return The applied voltage of the motor in {@link #edu.wpi.first.units.Units.Volts volts}
+     */
+    public double getSupplyCurrentAmps() {
+        return this.supplyCurrentAmps;
+    }
+    /**
+     * @return The temperature of the motor in {@link #edu.wpi.first.units.Units.Celsius celsius}
+     */
+    public double getDeviceTempCel() {
+        return this.deviceTempCel;
+    }
+
+    public void setAppliedVolts(double appliedVolts) {
+        this.appliedVolts = appliedVolts;
+    }
+
+    public void setStatorCurrentAmps(double statorCurrentAmps) {
+        this.statorCurrentAmps = statorCurrentAmps;
+    }
+
+    public void setSupplyCurrentAmps(double supplyCurrentAmps) {
+        this.supplyCurrentAmps = supplyCurrentAmps;
+    }
+
+    public void setDeviceTempCel(double deviceTempCel) {
+        this.deviceTempCel = deviceTempCel;
+    }
+
+    public static record MotorStatusSignalCache(
+        StatusSignal<Voltage> appliedVoltage,
+        StatusSignal<Current> statorCurrent,
+        StatusSignal<Current> supplyCurrent,
+        StatusSignal<Temperature> deviceTemperature
+    ) {
+        public static MotorStatusSignalCache from(TalonFX talonFX) {
+            return new MotorStatusSignalCache(talonFX.getMotorVoltage(), talonFX.getStatorCurrent(), talonFX.getSupplyCurrent(), talonFX.getDeviceTemp());
+        }
+        public static MotorStatusSignalCache from(TalonFXS talonFXS) {
+            return new MotorStatusSignalCache(talonFXS.getMotorVoltage(), talonFXS.getStatorCurrent(), talonFXS.getSupplyCurrent(), talonFXS.getDeviceTemp());
+        }
+
+        public BaseStatusSignal[] getStatusSignals() {
+            return new BaseStatusSignal[] {
+                this.appliedVoltage(),
+                this.statorCurrent(),
+                this.supplyCurrent(),
+                this.deviceTemperature(),
+            };
+        }
+    }
+
+    public void updateFrom(MotorStatusSignalCache statusSignals) {
+        this.setAppliedVolts(statusSignals.appliedVoltage().getValueAsDouble());
+        this.setStatorCurrentAmps(statusSignals.statorCurrent().getValueAsDouble());
+        this.setSupplyCurrentAmps(statusSignals.supplyCurrent().getValueAsDouble());
+        this.setDeviceTempCel(statusSignals.deviceTemperature().getValueAsDouble());
+    }
+    
+    public void updateFrom(TalonSRX talonSRX) {
+        this.setAppliedVolts(talonSRX.getMotorOutputVoltage());
+        this.setStatorCurrentAmps(talonSRX.getStatorCurrent());
+        this.setSupplyCurrentAmps(talonSRX.getSupplyCurrent());
+        this.setDeviceTempCel(talonSRX.getTemperature());
     }
 
     public void updateFrom(SparkMax spark) {
-        this.appliedVoltage.mut_replace(spark.getAppliedOutput() * 12, Volts);
-        this.current.mut_replace(spark.getOutputCurrent(), Amps);
+        this.setAppliedVolts(spark.getAppliedOutput() * RobotController.getBatteryVoltage());
+        this.setStatorCurrentAmps(spark.getOutputCurrent());
+        this.setSupplyCurrentAmps(0.0);
+        this.setDeviceTempCel(spark.getMotorTemperature());
     }
 
     public void updateFrom(DCMotorSim sim) {
-        this.current.mut_replace(sim.getCurrentDrawAmps(), Amps);
-    }
-    public void updateFrom(DCMotorSim sim, Voltage appliedVolts) {
-        updateFrom(sim);
-        this.appliedVoltage.mut_replace(appliedVolts);
+        this.setAppliedVolts(sim.getInputVoltage());
+        this.setStatorCurrentAmps(sim.getCurrentDrawAmps());
     }
 
     public void updateFrom(FlywheelSim sim) {
-        this.current.mut_replace(sim.getCurrentDrawAmps(), Amps);
-    }
-    public void updateFrom(FlywheelSim sim, Voltage appliedVolts) {
-        updateFrom(sim);
-        this.appliedVoltage.mut_replace(appliedVolts);
+        this.setAppliedVolts(sim.getInputVoltage());
+        this.setStatorCurrentAmps(sim.getCurrentDrawAmps());
     }
 
     public void updateFrom(SingleJointedArmSim sim) {
-        this.current.mut_replace(sim.getCurrentDrawAmps(), Amps);
-    }
-    public void updateFrom(SingleJointedArmSim sim, Voltage appliedVolts) {
-        updateFrom(sim);
-        this.appliedVoltage.mut_replace(appliedVolts);
+        this.setAppliedVolts(sim.getInput(0));
+        this.setStatorCurrentAmps(sim.getCurrentDrawAmps());
     }
 
     public static final LoggedMotorStruct struct = new LoggedMotorStruct();
-
     public static class LoggedMotorStruct implements Struct<LoggedMotor> {
         @Override
         public Class<LoggedMotor> getTypeClass() {
@@ -86,28 +148,37 @@ public class LoggedMotor implements StructSerializable {
 
         @Override
         public int getSize() {
-            return kSizeDouble * 3;
+            return kSizeDouble * 4;
         }
 
         @Override
         public String getSchema() {
-            return "double AppliedVolts;double CurrentAmps;double TempKelvin";
+            return "double AppliedVolts;double StatorCurrentAmps;double SupplyCurrentAmps;double DeviceTempCelsius";
         }
 
         @Override
         public LoggedMotor unpack(ByteBuffer bb) {
-            var motor = new LoggedMotor();
-            motor.appliedVoltage.mut_setBaseUnitMagnitude(bb.getDouble());
-            motor.current.mut_setBaseUnitMagnitude(bb.getDouble());
-            motor.temperature.mut_setBaseUnitMagnitude(bb.getDouble());
-            return motor;
+            var appliedVolts = bb.getDouble();
+            var statorCurrentAmps = bb.getDouble();
+            var supplyCurrentAmps = bb.getDouble();
+            var deviceTempCel = bb.getDouble();
+            return new LoggedMotor(appliedVolts, statorCurrentAmps, supplyCurrentAmps, deviceTempCel);
+        }
+
+        @Override
+        public void unpackInto(LoggedMotor out, ByteBuffer bb) {
+            out.setAppliedVolts(bb.getDouble());
+            out.setStatorCurrentAmps(bb.getDouble());
+            out.setSupplyCurrentAmps(bb.getDouble());
+            out.setDeviceTempCel(bb.getDouble());
         }
 
         @Override
         public void pack(ByteBuffer bb, LoggedMotor value) {
-            bb.putDouble(value.appliedVoltage.baseUnitMagnitude());
-            bb.putDouble(value.current.baseUnitMagnitude());
-            bb.putDouble(value.temperature.baseUnitMagnitude());
+            bb.putDouble(value.getAppliedVolts());
+            bb.putDouble(value.getStatorCurrentAmps());
+            bb.putDouble(value.getSupplyCurrentAmps());
+            bb.putDouble(value.getDeviceTempCel());
         }
     }
 }

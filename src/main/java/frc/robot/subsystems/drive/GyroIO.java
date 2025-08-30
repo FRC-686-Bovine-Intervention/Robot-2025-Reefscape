@@ -20,7 +20,9 @@ public interface GyroIO {
   @AutoLog
   public static class GyroIOInputs {
     public boolean connected = false;
-    public Rotation3d rotation = new Rotation3d();
+
+    public Rotation3d[] odometryGyroRotation = new Rotation3d[0];
+
     public AngularVelocity yawVelocity = RadiansPerSecond.zero();
     public AngularVelocity pitchVelocity = RadiansPerSecond.zero();
     public AngularVelocity rollVelocity = RadiansPerSecond.zero();

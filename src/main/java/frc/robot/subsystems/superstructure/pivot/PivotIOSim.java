@@ -13,7 +13,7 @@ public class PivotIOSim extends PivotIOFalcon {
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(
         LinearSystemId.identifyPositionSystem(5, 2),
         DCMotor.getFalcon500(2),
-        PivotConstants.motorToMechanism.inverse().ratio(),
+        PivotConstants.motorToMechanism.reductionUnsigned(),
         1,
         PivotConstants.minAngle.in(Radians),
         PivotConstants.maxAngle.in(Radians),
@@ -24,20 +24,20 @@ public class PivotIOSim extends PivotIOFalcon {
     @Override
     public void updateInputs(PivotIOInputs inputs) {
         var leftSimState = leftMotor.getSimState();
-        // var rightSimState = rightMotor.getSimState();
+        var rightSimState = rightMotor.getSimState();
         var cancoderSimState = cancoder.getSimState();
 
-        pivotSim.setInputVoltage(-leftSimState.getMotorVoltage());
+        pivotSim.setInputVoltage(-leftSimState.getMotorVoltage()+rightSimState.getMotorVoltage());
         pivotSim.update(RobotConstants.rioUpdatePeriodSecs);
 
         var position = Radians.of(pivotSim.getAngleRads());
         var velocity = RadiansPerSecond.of(pivotSim.getVelocityRadPerSec());
 
-        cancoderSimState.setRawPosition(position.unaryMinus());
-        cancoderSimState.setVelocity(velocity.unaryMinus());
+        cancoderSimState.setRawPosition(PivotConstants.sensorToMechanism.inverse().applyUnsigned(position.unaryMinus()));
+        cancoderSimState.setVelocity(PivotConstants.sensorToMechanism.inverse().applyUnsigned(velocity.unaryMinus()));
 
         leftSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-        // rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        rightSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
         super.updateInputs(inputs);
     }

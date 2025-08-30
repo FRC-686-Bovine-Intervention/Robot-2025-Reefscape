@@ -5,10 +5,13 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 
 public class Root implements Component {
-    private Pose3d pose = new Pose3d();
+    private Pose3d pose = Pose3d.kZero;
 
     public void setPose(Pose2d pose) {
-        this.pose = new Pose3d(pose);
+        this.setPose(new Pose3d(pose));
+    }
+    public void setPose(Pose3d pose) {
+        this.pose = pose;
     }
 
     @Override
@@ -18,6 +21,6 @@ public class Root implements Component {
 
     @Override
     public Pose3d getFieldRelative() {
-        return pose;
+        return this.pose;
     }
 }

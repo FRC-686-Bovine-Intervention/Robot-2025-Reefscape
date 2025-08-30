@@ -1,17 +1,19 @@
 package frc.robot.subsystems.climber;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Volts;
+
+import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -19,25 +21,28 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 
-import edu.wpi.first.units.AngleUnit;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Servo;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
-import frc.util.loggerUtil.tunables.LoggedTunableAngularProfile;
-import frc.util.loggerUtil.tunables.LoggedTunableFF;
-import frc.util.loggerUtil.tunables.LoggedTunablePID;
+import frc.util.FFConstants;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedEncodedMotor.EncodedMotorStatusSignalCache;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class ClimberIOFalcon implements ClimberIO {
     protected final TalonFX motor = HardwareDevices.climberMotorID.talonFX();
     protected final Servo servo = HardwareDevices.climberServoPort.servo();
     protected final DigitalInput sensor = HardwareDevices.climberSensor.input();
 
-    private final VoltageOut voltageRequest = new VoltageOut(0);
+    private final EncodedMotorStatusSignalCache motorStatusSignalCache;
 
+    private final VoltageOut voltageRequest = new VoltageOut(0);
     private final MotionMagicVoltage nonClimbingPositionRequest = new MotionMagicVoltage(0)
         .withSlot(0)
     ;
@@ -46,37 +51,54 @@ public class ClimberIOFalcon implements ClimberIO {
         .withOverrideBrakeDurNeutral(true)
         .withLimitForwardMotion(true)
     ;
+    private final NeutralOut neutralOutRequest = new NeutralOut();
+    private final CoastOut coastOutRequest = new CoastOut();
+    private final StaticBrake staticBrakeRequest = new StaticBrake();
 
-    private static final LoggedTunableAngularProfile profileConsts = new LoggedTunableAngularProfile(
+    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
         "Climber/Profile",
-        RotationsPerSecond.of(6),
-        RotationsPerSecondPerSecond.of(12)
+        RotationsPerSecond,
+        RotationsPerSecondPerSecond,
+        RotationsPerSecond,
+        RotationsPerSecondPerSecond,
+        new TrapezoidProfile.Constraints(
+            6,
+            12
+        )
     );
-    private static final LoggedTunableFF nonClimbingFFConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> nonClimbingFFConsts = LoggedTunable.from(
         "Climber/Nonclimbing/FF",
-        0,
-        0,
-        0,
-        0
+        new FFConstants(
+            0,
+            0,
+            0,
+            0
+        )
     );
-    private static final LoggedTunablePID nonClimbingPIDConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> nonClimbingPIDConsts = LoggedTunable.from(
         "Climber/Nonclimbing/PID",
-        8,
-        0,
-        0
+        new PIDConstants(
+            8,
+            0,
+            0
+        )
     );
-    private static final LoggedTunableFF climbingFFConsts = new LoggedTunableFF(
+    private static final LoggedTunable<FFConstants> climbingFFConsts = LoggedTunable.from(
         "Climber/Climbing/FF",
-        0,
-        0,
-        0,
-        0
+        new FFConstants(
+            0,
+            0,
+            0,
+            0
+        )
     );
-    private static final LoggedTunablePID climbingPIDConsts = new LoggedTunablePID(
+    private static final LoggedTunable<PIDConstants> climbingPIDConsts = LoggedTunable.from(
         "Climber/Climbing/PID",
-        16,
-        0,
-        0
+        new PIDConstants(
+            16,
+            0,
+            0
+        )
     );
 
 
@@ -96,14 +118,18 @@ public class ClimberIOFalcon implements ClimberIO {
         ;
 
         motorConfig.Feedback
-            .withSensorToMechanismRatio(-1.0/ClimberConstants.sensorToMechanismRatio.ratio())
+            .withSensorToMechanismRatio(ClimberConstants.sensorToMechanismRatio.reductionUnsigned())
         ;
 
-        profileConsts.update(motorConfig.MotionMagic);
-        nonClimbingFFConsts.update(motorConfig.Slot0);
-        nonClimbingPIDConsts.update(motorConfig.Slot0);
-        climbingFFConsts.update(motorConfig.Slot1);
-        climbingPIDConsts.update(motorConfig.Slot1);
+        var profileConstraints = profileConsts.get();
+        motorConfig.MotionMagic
+            .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
+            .withMotionMagicAcceleration(profileConstraints.maxAcceleration)
+        ;
+        nonClimbingFFConsts.get().update(motorConfig.Slot0);
+        nonClimbingPIDConsts.get().update(motorConfig.Slot0);
+        climbingFFConsts.get().update(motorConfig.Slot1);
+        climbingPIDConsts.get().update(motorConfig.Slot1);
 
         profileConsts.hasChanged(hashCode());
         nonClimbingFFConsts.hasChanged(hashCode());
@@ -111,89 +137,115 @@ public class ClimberIOFalcon implements ClimberIO {
         climbingFFConsts.hasChanged(hashCode());
         climbingPIDConsts.hasChanged(hashCode());
 
-        motor.getConfigurator().apply(motorConfig);
+        this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getRotorPosition(),
-            motor.getRotorVelocity()
-        );
-        // BaseStatusSignal.setUpdateFrequencyForAll(
-        //     RobotConstants.rioUpdateFrequency,
-        //     motor.getPosition(),
-        //     motor.getVelocity(),
-        //     motor.getClosedLoopReference(),
-        //     motor.getClosedLoopReferenceSlope(),
-        //     motor.getClosedLoopError(),
-        //     motor.getClosedLoopOutput()
-        // );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
-        );
-        motor.optimizeBusUtilization();
+        this.motorStatusSignalCache = EncodedMotorStatusSignalCache.from(this.motor);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motorStatusSignalCache.encoder().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency.div(2), this.motorStatusSignalCache.motor().getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        this.motor.optimizeBusUtilization();
     }
 
     @Override
     public void updateInputs(ClimberIOInputs inputs) {
-        inputs.motor.updateFrom(motor);
+        BaseStatusSignal.refreshAll(
+            this.motorStatusSignalCache.encoder().position(),
+            this.motorStatusSignalCache.encoder().velocity(),
+            this.motorStatusSignalCache.motor().appliedVoltage(),
+            this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.motorConnected = BaseStatusSignal.isAllGood(
+            this.motorStatusSignalCache.encoder().position(),
+            this.motorStatusSignalCache.encoder().velocity(),
+            this.motorStatusSignalCache.motor().appliedVoltage(),
+            this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().deviceTemperature()
+        );
+        inputs.motor.updateFrom(this.motorStatusSignalCache);
+        // inputs.motorFaults.updateFrom(this.motor);
 
-        inputs.sensor = sensor.get() ^ ClimberConstants.climberSensorInverted;
+        inputs.sensor = this.sensor.get() ^ ClimberConstants.climberSensorInverted;
 
-        voltageRequest.withLimitReverseMotion(inputs.sensor);
-        nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
-        climbingPositionRequest.withLimitReverseMotion(inputs.sensor);
+        this.voltageRequest.withLimitReverseMotion(inputs.sensor);
+        this.nonClimbingPositionRequest.withLimitReverseMotion(inputs.sensor);
+        this.climbingPositionRequest.withLimitReverseMotion(inputs.sensor);
 
-        if (profileConsts.hasChanged(hashCode())) {
+        if (profileConsts.hasChanged(this.hashCode())) {
             var config = new MotionMagicConfigs();
-            motor.getConfigurator().refresh(config);
-            profileConsts.update(config);
-            motor.getConfigurator().apply(config);
+            this.motor.getConfigurator().refresh(config);
+            var profileConstraints = profileConsts.get();
+            config
+                .withMotionMagicCruiseVelocity(profileConstraints.maxVelocity)
+                .withMotionMagicAcceleration(profileConstraints.maxAcceleration)
+            ;
+            this.motor.getConfigurator().apply(config);
         }
 
-        if (nonClimbingFFConsts.hasChanged(hashCode()) | nonClimbingPIDConsts.hasChanged(hashCode())) {
+        if (LoggedTunable.hasChanged(this.hashCode(), nonClimbingFFConsts, nonClimbingPIDConsts)) {
             var config = new Slot0Configs();
-            motor.getConfigurator().refresh(config);
-            nonClimbingFFConsts.update(config);
-            nonClimbingPIDConsts.update(config);
-            motor.getConfigurator().apply(config);
+            this.motor.getConfigurator().refresh(config);
+            nonClimbingFFConsts.get().update(config);
+            nonClimbingPIDConsts.get().update(config);
+            this.motor.getConfigurator().apply(config);
         }
 
-        if (climbingFFConsts.hasChanged(hashCode()) | climbingPIDConsts.hasChanged(hashCode())) {
+        if (LoggedTunable.hasChanged(this.hashCode(), climbingFFConsts, climbingPIDConsts)) {
             var config = new Slot1Configs();
-            motor.getConfigurator().refresh(config);
-            climbingFFConsts.update(config);
-            climbingPIDConsts.update(config);
-            motor.getConfigurator().apply(config);
+            this.motor.getConfigurator().refresh(config);
+            climbingFFConsts.get().update(config);
+            climbingPIDConsts.get().update(config);
+            this.motor.getConfigurator().apply(config);
         }
-
-        // Logger.recordOutput("Climber/Motor/posiion", motor.getPosition().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/veloctiy", motor.getVelocity().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/Profile/Position", motor.getClosedLoopReference().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/Profile/Velocity", motor.getClosedLoopReferenceSlope().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/PID error", motor.getClosedLoopError().getValueAsDouble());
-        // Logger.recordOutput("Climber/Motor/Out", motor.getClosedLoopOutput().getValueAsDouble());
     }
 
     @Override
-    public void setVoltage(Measure<VoltageUnit> voltage, boolean brakeMode) {
-        motor.setControl(voltageRequest.withOutput(voltage.in(Volts)).withOverrideBrakeDurNeutral(brakeMode));
+    public void setVolts(double volts) {
+        this.motor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
     }
 
     @Override
-    public void setRatchetServoAngle(Measure<AngleUnit> angle) {
-        servo.setAngle(angle.in(Degrees));
+    public void setRatchetServoAngle(double angleRads) {
+        this.servo.setAngle(
+            Units.radiansToDegrees(angleRads)
+        );
     }
 
     @Override
-    public void setNonClimbingAngle(Measure<AngleUnit> angle) {
-        motor.setControl(nonClimbingPositionRequest.withPosition(angle.in(Rotations)));
+    public void setNonClimbingAngle(double angleRads) {
+        this.motor.setControl(this.nonClimbingPositionRequest
+            .withPosition(Units.radiansToRotations(angleRads))
+        );
     }
 
     @Override
-    public void setClimbingAngle(Measure<AngleUnit> angle) {
-        motor.setControl(climbingPositionRequest.withPosition(angle.in(Rotations)));
+    public void setClimbingAngle(double angleRads) {
+        this.motor.setControl(this.climbingPositionRequest
+            .withPosition(Units.radiansToRotations(angleRads))
+        );
+    }
+
+    @Override
+    public void stop(Optional<NeutralMode> neutralMode) {
+        var controlRequest = NeutralMode.selectControlRequest(neutralMode, this.neutralOutRequest, this.coastOutRequest, this.staticBrakeRequest);
+        this.motor.setControl(controlRequest);
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
     }
 }

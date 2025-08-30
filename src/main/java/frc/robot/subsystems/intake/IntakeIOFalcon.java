@@ -1,26 +1,29 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.constants.HardwareDevices;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants;
-
+import frc.util.faults.DeviceFaults;
+import frc.util.faults.DeviceFaults.FaultType;
+import frc.util.loggerUtil.inputs.LoggedMotor.MotorStatusSignalCache;
 
 public class IntakeIOFalcon implements IntakeIO {
     protected final TalonFX motor = HardwareDevices.intakeMotorID.talonFX();
     protected final DigitalInput coralSensor = HardwareDevices.coralSensor.input();
     protected final DigitalInput algaeSensor = HardwareDevices.algaeSensor.input();
+
+    private final VoltageOut voltageRequest = new VoltageOut(0);
+
+    private final MotorStatusSignalCache motorStatusSignalCache;
 
     public IntakeIOFalcon(){
         var motorConfig = new TalonFXConfiguration();
@@ -33,31 +36,53 @@ public class IntakeIOFalcon implements IntakeIO {
             .withStatorCurrentLimitEnable(true)
         ;
 
-        motor.getConfigurator().apply(motorConfig);
+        this.motor.getConfigurator().apply(motorConfig);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            RobotConstants.rioUpdateFrequency,
-            motor.getStatorCurrent()
-        );
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            DriveConstants.odometryLoopFrequency.div(2),
-            motor.getMotorVoltage(),
-            motor.getStatorCurrent(),
-            motor.getDeviceTemp()
-        );
-        motor.optimizeBusUtilization();
+        this.motorStatusSignalCache = MotorStatusSignalCache.from(this.motor);
+
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.rioUpdateFrequency, this.motorStatusSignalCache.getStatusSignals());
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getFaultStatusSignals(this.motor));
+        BaseStatusSignal.setUpdateFrequencyForAll(RobotConstants.deviceFaultUpdateFrequency, FaultType.getStickyFaultStatusSignals(this.motor));
+        this.motor.optimizeBusUtilization();
     }
 
     @Override
-    public void updateInputs(IntakeIOInputs inputs){
-        inputs.motor.updateFrom(motor);
+    public void updateInputs(IntakeIOInputs inputs) {
+        BaseStatusSignal.refreshAll(
+            this.motorStatusSignalCache.appliedVoltage(),
+            this.motorStatusSignalCache.statorCurrent(),
+            this.motorStatusSignalCache.deviceTemperature()
+        );
+        inputs.motorConnected = BaseStatusSignal.isAllGood(
+            this.motorStatusSignalCache.appliedVoltage(),
+            this.motorStatusSignalCache.statorCurrent(),
+            this.motorStatusSignalCache.deviceTemperature()
+        );
+        inputs.motor.updateFrom(this.motorStatusSignalCache);
+        // inputs.motorFaults.updateFrom(this.motor);
 
-        inputs.coralSensor = coralSensor.get() ^ IntakeConstants.coralSensorInverted;
-        inputs.algaeSensor = algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;
+        inputs.coralSensor = this.coralSensor.get() ^ IntakeConstants.coralSensorInverted;
+        inputs.algaeSensor = this.algaeSensor.get() ^ IntakeConstants.algaeSensorInverted;
     }
 
     @Override
-    public void setMotorVoltage(Measure<VoltageUnit> voltage) {
-        motor.setVoltage(voltage.in(Volts));
+    public void setVolts(double volts) {
+        this.motor.setControl(this.voltageRequest
+            .withOutput(volts)
+        );
+    }
+
+    @Override
+    public void clearMotorStickyFaults(long bitmask) {
+        if (bitmask == DeviceFaults.noneMask) {return;}
+        if (bitmask == DeviceFaults.allMask) {
+            this.motor.clearStickyFaults();
+        } else {
+            for (var faultType : FaultType.possibleTalonFXFaults) {
+                if (faultType.isPartOf(bitmask)) {
+                    faultType.clearStickyFaultOn(this.motor);
+                }
+            }
+        }
     }
 }

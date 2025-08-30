@@ -8,15 +8,14 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -25,7 +24,6 @@ import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
-import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
@@ -41,7 +39,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -50,36 +47,42 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
+import frc.robot.RobotState.OdometryObservation;
 import frc.robot.constants.RobotConstants;
-import frc.robot.subsystems.drive.DriveConstants.ModuleConstants;
 import frc.util.LazyOptional;
+import frc.util.LoggedTracer;
+import frc.util.NeutralMode;
+import frc.util.PIDConstants;
 import frc.util.Perspective;
 import frc.util.VirtualSubsystem;
 import frc.util.controllers.Joystick;
 import frc.util.flipping.AllianceFlipUtil;
 import frc.util.geometry.GeomUtil;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 import frc.util.loggerUtil.tunables.LoggedTunableNumber;
 import frc.util.robotStructure.Root;
 
 public class Drive extends VirtualSubsystem {
-    public final Set<Subsystem> subsystems;
+    private final OdometryTimestampIO odometryTimestampIO;
+    private final OdometryTimestampIOInputsAutoLogged odometryTimestamps = new OdometryTimestampIOInputsAutoLogged();
+
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-    private Rotation2d gyroAngle = new Rotation2d();
 
     public final Root structureRoot = new Root();
 
     public final Module[] modules = new Module[DriveConstants.moduleConstants.length];
 
+    private SwerveModulePosition[] lastMeasuredPositions = null;
     private SwerveModuleState[] measuredStates = new SwerveModuleState[] {
         new SwerveModuleState(),
         new SwerveModuleState(),
@@ -89,9 +92,9 @@ public class Drive extends VirtualSubsystem {
     private ChassisSpeeds robotMeasuredSpeeds = new ChassisSpeeds();
     private ChassisSpeeds fieldMeasuredSpeeds = new ChassisSpeeds();
 
-    private static final LoggedTunableNumber rotationCorrection = new LoggedTunableNumber("Drive/Rotation Correction", 0.125);
+    private static final LoggedTunableNumber rotationCorrection = LoggedTunable.from("Drive/Rotation Correction", 0.125);
 
-    private ChassisSpeeds setpointSpeeds = new ChassisSpeeds();
+    private ChassisSpeeds desiredRobotSpeeds = new ChassisSpeeds();
     private Translation2d centerOfRotation = new Translation2d();
     private SwerveModuleState[] setpointStates = new SwerveModuleState[] {
         new SwerveModuleState(),
@@ -100,38 +103,33 @@ public class Drive extends VirtualSubsystem {
         new SwerveModuleState()
     };
 
-    private Twist2d fieldVelocity = new Twist2d();
-
-    public Drive(GyroIO gyroIO, ModuleIO... moduleIOs) {
+    public Drive(OdometryTimestampIO odometryTimestampIO, GyroIO gyroIO, ModuleIO... moduleIOs) {
         System.out.println("[Init Drive] Instantiating Drive");
+        this.odometryTimestampIO = odometryTimestampIO;
         this.gyroIO = gyroIO;
         System.out.println("[Init Drive] Gyro IO: " + this.gyroIO.getClass().getSimpleName());
         for(int i = 0; i < DriveConstants.moduleConstants.length; i++) {
-            ModuleConstants config = DriveConstants.moduleConstants[i];
+            var config = DriveConstants.moduleConstants[i];
             System.out.println("[Init Drive] Instantiating Module " + config.name + " with Module IO: " + moduleIOs[i].getClass().getSimpleName());
             var module = new Module(moduleIOs[i], config);
-            module.setBrakeMode(false);
             module.periodic();
-            modules[i] = module;
+            this.modules[i] = module;
         }
 
-        Pose2d initialPose = new Pose2d();
-        RobotState.getInstance().initializePoseEstimator(DriveConstants.kinematics, getGyroRotation(), getModulePositions(), initialPose);
-        gyroAngle = getPose().getRotation();
+        OdometryThread.getInstance().start();
 
         this.translationSubsystem = new Translational(this);
         this.rotationalSubsystem = new Rotational(this);
-        subsystems = Set.of(translationSubsystem, rotationalSubsystem);
         AutoBuilder.configure(
-            this::getPose,
-            this::setPose,
+            RobotState.getInstance()::getEstimatedGlobalPose,
+            RobotState.getInstance()::resetPose,
             this::getRobotMeasuredSpeeds,
             this::runRobotSpeeds,
             autoConfig(),
             DriveConstants.robotConfig,
             AllianceFlipUtil::shouldFlip,
-            translationSubsystem,
-            rotationalSubsystem
+            this.translationSubsystem,
+            this.rotationalSubsystem
         );
 
         var routine = new SysIdRoutine(
@@ -145,13 +143,13 @@ public class Drive extends VirtualSubsystem {
             ),
             new SysIdRoutine.Mechanism(
                 (volts) -> {
-                    Arrays.stream(modules).forEach((module) -> module.runVoltage(volts, Rotation2d.kZero));
+                    Arrays.stream(this.modules).forEach((module) -> module.runVoltage(volts, Rotation2d.kZero));
                 },
                 (log) -> {
-                    Arrays.stream(modules).forEach((module) -> {
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Position", module.getWheelAngularPosition());
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Velocity", module.getWheelAngularVelocity());
-                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getAppliedVoltage());
+                    Arrays.stream(this.modules).forEach((module) -> {
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Position", module.getWheelAngularPositionRads());
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Velocity", module.getWheelAngularVelocityRadsPerSec());
+                        Logger.recordOutput("SysID/Drive/" + module.config.name + "/Voltage", module.getDriveAppliedVolts());
                     });
                 },
                 this.translationSubsystem
@@ -166,31 +164,73 @@ public class Drive extends VirtualSubsystem {
 
     private static final SwerveModuleState[] emptyStates = new SwerveModuleState[0];
     private static final ChassisSpeeds emptySpeeds = new ChassisSpeeds();
+
+    @Override
     public void periodic() {
-        gyroIO.updateInputs(gyroInputs);
-        Logger.processInputs("Inputs/Drive/Gyro", gyroInputs);
-        Arrays.stream(modules).forEach(Module::periodic);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Before");
+        OdometryThread.getInstance().odometryLock.lock();
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Acquire Odometry Lock");
 
-        measuredStates = Arrays.stream(modules).map(Module::getModuleState).toArray(SwerveModuleState[]::new);
-        Logger.recordOutput("Drive/Swerve States/Measured", measuredStates);
+        this.odometryTimestampIO.updateInputs(this.odometryTimestamps);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Update Timestamp Inputs");
+        Logger.processInputs("Inputs/Drive/Timestamps", this.odometryTimestamps);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Timestamp Inputs");
 
-        // Update odometry
-        // Update field velocity
-        robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(measuredStates);
-        if (gyroInputs.connected) {
-            gyroAngle = getGyroRotation();
-            robotMeasuredSpeeds.omegaRadiansPerSecond = gyroInputs.yawVelocity.in(RadiansPerSecond);
-        } else {
-            // either the gyro is disconnected or we are in a simulation
-            // accumulate a gyro estimate using module kinematics
-            var wheelDeltas = getModulePositionDeltas(); // get change in module positions
-            Twist2d twist = DriveConstants.kinematics.toTwist2d(wheelDeltas); // dtheta will be the estimated change in chassis angle
-            gyroAngle = gyroAngle.plus(Rotation2d.fromRadians(twist.dtheta));
+        this.gyroIO.updateInputs(this.gyroInputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Update Gyro Inputs");
+        Logger.processInputs("Inputs/Drive/Gyro", this.gyroInputs);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Process Gyro Inputs");
+
+        for (var module : this.modules) {
+            module.periodic();
         }
-        Logger.recordOutput("Drive/Chassis Speeds/Measured", robotMeasuredSpeeds);
-        RobotState.getInstance().addDriveMeasurement(gyroAngle, getModulePositions());
-        structureRoot.setPose(getPose());
-        fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotMeasuredSpeeds, gyroAngle);
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Module Periodic");
+
+        OdometryThread.getInstance().odometryLock.unlock();
+
+        var sampleTimestamps = this.odometryTimestamps.timestamps;
+        var modulePositions = new SwerveModulePosition[this.modules.length];
+        for (int sampleI = 0; sampleI < sampleTimestamps.length; sampleI++) {
+            for (int i = 0; i < this.modules.length; i++) {
+                modulePositions[i] = this.modules[i].getModulePositionSamples()[sampleI];
+            }
+
+            if (this.lastMeasuredPositions != null) {
+                RobotState.getInstance().addOdometryObservation(new OdometryObservation(
+                    sampleTimestamps[sampleI],
+                    (this.gyroInputs.connected) ? (
+                        Optional.of(this.gyroInputs.odometryGyroRotation[sampleI])
+                    ) : (
+                        Optional.empty()
+                    ),
+                    this.lastMeasuredPositions,
+                    modulePositions
+                ));
+            } else {
+                this.lastMeasuredPositions = new SwerveModulePosition[modulePositions.length];
+            }
+            for (int i = 0; i < modulePositions.length; i++) {
+                this.lastMeasuredPositions[i] = new SwerveModulePosition(
+                    modulePositions[i].distanceMeters,
+                    modulePositions[i].angle
+                );
+            }
+        }
+
+        for (int i = 0; i < this.modules.length; i++) {
+            this.measuredStates[i] = this.modules[i].getModuleState();
+        }
+        Logger.recordOutput("Drive/Swerve States/Measured", this.measuredStates);
+
+        this.robotMeasuredSpeeds = DriveConstants.kinematics.toChassisSpeeds(this.measuredStates);
+        if (this.gyroInputs.connected) {
+            this.robotMeasuredSpeeds.omegaRadiansPerSecond = this.gyroInputs.yawVelocity.in(RadiansPerSecond);
+        }
+
+        Logger.recordOutput("Drive/Chassis Speeds/Measured", this.robotMeasuredSpeeds);
+        // RobotState.getInstance().addDriveMeasurement(this.gyroAngle, this.getModulePositions());
+
+        // this.fieldMeasuredSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.robotMeasuredSpeeds, this.gyroAngle);
 
         // Skid Detection
         // SwerveModuleState[] rotationalStates = new SwerveModuleState[DriveConstants.modules.length];
@@ -221,45 +261,137 @@ public class Drive extends VirtualSubsystem {
         Logger.recordOutput("Drive/Chassis Speeds/Setpoint", emptySpeeds);
         Logger.recordOutput("Drive/Swerve States/Setpoints", emptyStates);
         Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", emptyStates);
+
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive/Clear Log Fields");
+        LoggedTracer.logEpoch("CommandScheduler Periodic/VirtualSubsystem Periodic/Drive");
     }
 
     public void postCommandPeriodic() {
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive/Before");
         // if (DriverStation.isDisabled()) {
         //     // TODO: UNCOMMENT IF DRIVE MOVES WITH NO COMMAND AFTER ENABLE
         //     // for (var module : modules) {
         //     //     module.stop();
         //     // }
         // } else
-        if (translationSubsystem.needsPostProcessing || rotationalSubsystem.needsPostProcessing) {
-            runRobotSpeeds(setpointSpeeds);
+        if (this.translationSubsystem.needsPostProcessing || this.rotationalSubsystem.needsPostProcessing) {
+            this.runRobotSpeeds(this.desiredRobotSpeeds);
         }
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive/Periodic");
+        LoggedTracer.logEpoch("VirtualSubsystem PostCommandPeriodic/Drive");
     }
 
     public void runSetpoints(SwerveModuleState... states) {
-        translationSubsystem.needsPostProcessing = false;
-        rotationalSubsystem.needsPostProcessing = false;
-        setpointStates = states;
-        Logger.recordOutput("Drive/Swerve States/Setpoints", setpointStates);
-        IntStream.range(0, modules.length).forEach((i) -> modules[i].runSetpoint(setpointStates[i]));
-        Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", setpointStates);
+        this.translationSubsystem.needsPostProcessing = false;
+        this.rotationalSubsystem.needsPostProcessing = false;
+        this.setpointStates = states;
+        Logger.recordOutput("Drive/Swerve States/Setpoints", this.setpointStates);
+        IntStream.range(0, this.modules.length).forEach((i) -> this.modules[i].runSetpoint(this.setpointStates[i]));
+        Logger.recordOutput("Drive/Swerve States/Setpoints Optimized", this.setpointStates);
     }
 
+    private static final LoggedTunable<LinearAcceleration> forwardAccelLimitTunable = LoggedTunable.from("Drive/Accel Limits/Forward Accel Limit", MetersPerSecondPerSecond::of, 5000);
+    private static final LoggedTunable<LinearAcceleration> skidAccelLimitTunable = LoggedTunable.from("Drive/Accel Limits/Skid Accel Limit", MetersPerSecondPerSecond::of, 60);
+
+    public static final LoggedTunable<TiltAccelerationLimits> normalTiltLimitTunable = LoggedTunable.from("Drive/Accel Limits/Tilt Limits/Normal", new TiltAccelerationLimits(500, 500, 500, 500));
+    public static final LoggedTunable<TiltAccelerationLimits> extendedTiltLimitTunable = LoggedTunable.from("Drive/Accel Limits/Tilt Limits/Extended", new TiltAccelerationLimits(10, 12, 20, 20));
+    private TiltAccelerationLimits tiltLimits = new TiltAccelerationLimits(10, 10, 10, 10);
+    public void setTiltLimits(TiltAccelerationLimits tiltLimits) {
+        this.tiltLimits = tiltLimits;
+    }
     public void runRobotSpeeds(ChassisSpeeds robotSpeeds) {
-        setpointSpeeds = robotSpeeds;
-        Logger.recordOutput("Drive/Chassis Speeds/Setpoint", setpointSpeeds);
-        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(setpointSpeeds, rotationCorrection.get());
-        setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, centerOfRotation);
-        SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.maxDriveSpeed);
-        runSetpoints(setpointStates);
+        this.desiredRobotSpeeds = robotSpeeds;
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Speed", this.desiredRobotSpeeds);
+
+        var desiredDelta = this.desiredRobotSpeeds.minus(this.robotMeasuredSpeeds);
+        var desiredAccel = desiredDelta.div(RobotConstants.rioUpdatePeriodSecs);
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Delta", desiredDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Desired Accel", desiredAccel);
+
+        var limitedAccel = desiredAccel;
+
+        // Forward Accel Limit
+        var maxMeasuredModuleSpeed = Math.hypot(this.robotMeasuredSpeeds.vxMetersPerSecond, this.robotMeasuredSpeeds.vyMetersPerSecond) + Math.abs(this.robotMeasuredSpeeds.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
+        var maxDesiredModuleAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond) + Math.abs(limitedAccel.omegaRadiansPerSecond * DriveConstants.driveBaseRadius.in(Meters));
+        var forwardAccelLimit = /* (1 - (maxMeasuredModuleSpeed / DriveConstants.maxModuleSpeed.in(MetersPerSecond))) *  */forwardAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var forwardAccelLimitingFactor = forwardAccelLimit / Math.max(maxDesiredModuleAccel, forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Measured Module Speed", maxMeasuredModuleSpeed);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Max Desired Module Accel", maxDesiredModuleAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Forward Accel Limit", forwardAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Forward Limit/Limiting Factor", forwardAccelLimitingFactor);
+        limitedAccel = limitedAccel.times(forwardAccelLimitingFactor);
+
+        // Tilt Accel Limit
+        var desiredTiltAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond);
+        var desiredTiltAccelHeading = Math.atan2(limitedAccel.vyMetersPerSecond, limitedAccel.vxMetersPerSecond);
+        var tiltAccelLimit = this.tiltLimits.getMaxTiltAccelerationMPSS(desiredTiltAccelHeading);
+        var tiltAccelLimitingFactor = tiltAccelLimit / Math.max(desiredTiltAccel, tiltAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Desired Tilt Accel", desiredTiltAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Desired Tilt Accel Heading", desiredTiltAccelHeading);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Til tAccel Limit", tiltAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Tilt Limit/Limiting Factor", tiltAccelLimitingFactor);
+        limitedAccel = new ChassisSpeeds(
+            limitedAccel.vxMetersPerSecond * tiltAccelLimitingFactor,
+            limitedAccel.vyMetersPerSecond * tiltAccelLimitingFactor,
+            limitedAccel.omegaRadiansPerSecond
+        );
+
+        // Skid Accel Limit
+        var desiredSkidAccel = Math.hypot(limitedAccel.vxMetersPerSecond, limitedAccel.vyMetersPerSecond);
+        var skidAccelLimit = skidAccelLimitTunable.get().in(MetersPerSecondPerSecond);
+        var skidAccelLimitingFactor = skidAccelLimit / Math.max(desiredSkidAccel, skidAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Desired Skid Accel", desiredSkidAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Skid Accel Limit", skidAccelLimit);
+        Logger.recordOutput("Drive/Chassis Speeds/Skid Limit/Limiting Factor", skidAccelLimitingFactor);
+        limitedAccel = new ChassisSpeeds(
+            limitedAccel.vxMetersPerSecond * skidAccelLimitingFactor,
+            limitedAccel.vyMetersPerSecond * skidAccelLimitingFactor,
+            limitedAccel.omegaRadiansPerSecond
+        );
+
+
+        var limitedDelta = limitedAccel.times(RobotConstants.rioUpdatePeriodSecs);
+        var limitedSpeeds = this.robotMeasuredSpeeds.plus(limitedDelta);
+        // Logger.recordOutput("Drive/Chassis Speeds/Limiting Factor", limitingFactor);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Accel", limitedAccel);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Delta", limitedDelta);
+        Logger.recordOutput("Drive/Chassis Speeds/Limited Speed", limitedSpeeds);
+
+        ChassisSpeeds correctedSpeeds = ChassisSpeeds.discretize(limitedSpeeds, rotationCorrection.get());
+        this.setpointStates = DriveConstants.kinematics.toSwerveModuleStates(correctedSpeeds, this.centerOfRotation);
+        SwerveDriveKinematics.desaturateWheelSpeeds(this.setpointStates, DriveConstants.maxDriveSpeed);
+        this.runSetpoints(this.setpointStates);
     }
     public void runFieldSpeeds(ChassisSpeeds fieldSpeeds) {
-        runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation()));
+        this.runRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, RobotState.getInstance().getEstimatedGlobalPose().getRotation()));
+    }
+
+
+    public Command coast() {
+        return new Command() {
+            {
+                addRequirements(translationSubsystem, rotationalSubsystem);
+                setName("Coast");
+            }
+            @Override
+            public void initialize() {
+                Arrays.stream(modules).forEach((module) -> module.stopDrive(Optional.of(NeutralMode.Coast)));
+            }
+            @Override
+            public void end(boolean interrupted) {
+                Arrays.stream(modules).forEach((module) -> module.stopDrive(Optional.of(NeutralMode.Brake)));
+            }
+            @Override
+            public boolean runsWhenDisabled() {
+                return true;
+            }
+        };
     }
 
     public Command followBluePath(PathPlannerPath path) {
         return new FollowPathCommand(
             path,
-            this::getPose,
+            RobotState.getInstance()::getEstimatedGlobalPose,
             this::getRobotMeasuredSpeeds,
             this::drivePPVelocity,
             autoConfig(),
@@ -271,7 +403,7 @@ public class Drive extends VirtualSubsystem {
     public Command followExactPath(PathPlannerPath path) {
         return new FollowPathCommand(
             path,
-            this::getPose,
+            RobotState.getInstance()::getEstimatedGlobalPose,
             this::getRobotMeasuredSpeeds,
             this::drivePPVelocity,
             autoConfig(),
@@ -283,24 +415,20 @@ public class Drive extends VirtualSubsystem {
 
     public void drivePPVelocity(ChassisSpeeds speeds, DriveFeedforwards ff) {
         //TODO: Actually do something with PP ff
-        runRobotSpeeds(speeds);
+        this.runRobotSpeeds(speeds);
     }
 
     public void setCenterOfRotation(Translation2d cor) {
-        centerOfRotation = cor;
-        Logger.recordOutput("Drive/Center of Rotation", getPose().transformBy(new Transform2d(centerOfRotation, Rotation2d.kZero)));
+        this.centerOfRotation = cor;
+        Logger.recordOutput("Drive/Center of Rotation", RobotState.getInstance().getEstimatedGlobalPose().transformBy(new Transform2d(this.centerOfRotation, Rotation2d.kZero)));
     }
-
-    /** Zeros the drive encoders. */
-    // public void zeroEncoders() {
-    //     for(var module : modules) {
-    //         module.zeroEncoders();
-    //     }
-    // }
 
     /** Stops the drive. */
     public void stop() {
-        Arrays.stream(modules).forEach(Module::stop);
+        Arrays.stream(this.modules).forEach((module) -> {
+            module.stopDrive(Optional.empty());
+            module.stopTurn(Optional.empty());
+        });
     }
 
     /**
@@ -311,173 +439,74 @@ public class Drive extends VirtualSubsystem {
      */
     public void stopWithX() {
         IntStream.range(0, DriveConstants.moduleConstants.length).forEach((i) -> {
-            setpointStates[i] = new SwerveModuleState(
+            this.setpointStates[i] = new SwerveModuleState(
                 0,
                 DriveConstants.moduleConstants[i].moduleTranslation.getAngle()
             );
         });
     }
 
-    public void setBrakeMode(boolean enabled) {
-        for (var module : modules) {
-            module.setBrakeMode(enabled);
-        }
-    }
-
-    /** Returns the maximum linear speed in meters per sec. */
-    // public double getMaxLinearSpeedMetersPerSec() {
-    //     return DriveConstants.maxDriveSpeed.in(MetersPerSecond)
-    //         * DriveConstants.maxDriveSpeedEnvCoef.getAsDouble()
-    //     ;
-    // }
-
-    /** Returns the maximum angular speed in radians per sec. */
-    // public double getMaxAngularSpeedRadiansPerSec() {
-    //     return DriveConstants.maxTurnRate.in(RadiansPerSecond)
-    //         * DriveConstants.maxTurnRateEnvCoef.getAsDouble()
-    //     ;
-    // }
-
-    /**
-     * Returns the measured X, Y, and theta field velocities in meters per sec. The
-     * components of the
-     * twist are velocities and NOT changes in position.
-     */
-    public Twist2d getFieldVelocity() {
-        return fieldVelocity;
-    }
-
-    /** Returns the current yaw (Z rotation). */
-    public Rotation2d getGyroRotation() {
-        return gyroInputs.rotation.toRotation2d();
-    }
-
-    /** Returns the current yaw (Z rotation). */
-    public Angle getYaw() {
-        return gyroInputs.rotation.getMeasureZ();
-    }
-
-    /** Returns the current pitch (Y rotation). */
-    public Angle getPitch() {
-        return gyroInputs.rotation.getMeasureY();
-    }
-
-    /** Returns the current roll (X rotation). */
-    public Angle getRoll() {
-        return gyroInputs.rotation.getMeasureX();
-    }
-
     /** Returns the current pitch velocity (Y rotation) in radians per second. */
     public AngularVelocity getYawVelocity() {
-        return gyroInputs.yawVelocity;
+        return this.gyroInputs.yawVelocity;
     }
 
     /** Returns the current pitch velocity (Y rotation) in radians per second. */
     public AngularVelocity getPitchVelocity() {
-        return gyroInputs.pitchVelocity;
+        return this.gyroInputs.pitchVelocity;
     }
 
     /** Returns the current roll velocity (X rotation) in radians per second. */
     public AngularVelocity getRollVelocity() {
-        return gyroInputs.rollVelocity;
+        return this.gyroInputs.rollVelocity;
     }
-
-    /** Returns the current odometry pose. */
-    public Pose2d getPose() {
-        return RobotState.getInstance().getPose();
-    }
-
-    /** Returns the current odometry rotation. */
-    public Rotation2d getRotation() {
-        return getPose().getRotation();
-    }
-
-    /** Resets the current odometry pose. */
-    public void setPose(Pose2d newPose) {
-        gyroIO.resetYaw(newPose.getRotation().getMeasure());
-        RobotState.getInstance().setPose(getGyroRotation(), getModulePositions(), newPose);
-    }
-
-    /** Adds vision data to the pose esimation. */
-    // public void addVisionData(List<TimestampedVisionUpdate> visionData) {
-    // poseEstimator.addVisionData(visionData);
-    // }
 
     /** Returns an array of module positions. */
     public SwerveModulePosition[] getModulePositions() {
-        return Arrays.stream(modules).map(Module::getModulePosition).toArray(SwerveModulePosition[]::new);
-    }
-
-    /** Returns an array of module positions. */
-    public SwerveModulePosition[] getModulePositionDeltas() {
-        return Arrays.stream(modules).map(Module::getModulePositionDelta).toArray(SwerveModulePosition[]::new);
-    }
-
-    /** Returns the average drive distance in radians */
-    public double getAverageModuleDistance() {
-        double avgDist = 0.0;
-        for (int i = 0; i < DriveConstants.moduleConstants.length; i++) {
-            avgDist += Math.abs(modules[i].getWheelAngularPosition().in(Radians));
-        }
-        return avgDist / DriveConstants.moduleConstants.length;
+        return this.lastMeasuredPositions;
     }
 
     public ChassisSpeeds getRobotMeasuredSpeeds() {
-        return robotMeasuredSpeeds;
+        return this.robotMeasuredSpeeds;
     }
 
     public ChassisSpeeds getFieldMeasuredSpeeds() {
-        return fieldMeasuredSpeeds;
+        return this.fieldMeasuredSpeeds;
     }
 
-    /** Returns the average drive velocity in radians/sec. */
-    public double getCharacterizationVelocity() {
-        return Arrays.stream(modules).map(Module::getWheelAngularVelocity).mapToDouble(AngularVelocity::baseUnitMagnitude).average().orElse(0);
-    }
-
-    // public boolean collisionDetected() {
-    //     return currentSpikeTimer.hasElapsed(currentSpikeTime.in(Seconds));
-    // }
-
-    private static final LoggedTunableNumber tP = new LoggedTunableNumber("AutoDrive/tP", 1);
-    private static final LoggedTunableNumber tI = new LoggedTunableNumber("AutoDrive/tI", 0);
-    private static final LoggedTunableNumber tD = new LoggedTunableNumber("AutoDrive/tD", 0);
-    private static final LoggedTunableNumber rP = new LoggedTunableNumber("AutoDrive/rP", 1.5);
-    private static final LoggedTunableNumber rI = new LoggedTunableNumber("AutoDrive/rI", 0);
-    private static final LoggedTunableNumber rD = new LoggedTunableNumber("AutoDrive/rD", 0);
+    private static final LoggedTunable<PIDConstants> autoTranslationalPIDConsts = LoggedTunable.from(
+        "Drive/Autonomous PID/Translational",
+        new PIDConstants(
+            1.0,
+            0.0,
+            0.0
+        )
+    );
+    private static final LoggedTunable<PIDConstants> autoRotationalPIDConsts = LoggedTunable.from(
+        "Drive/Autonomous PID/Rotational",
+        new PIDConstants(
+            1.5,
+            0.0,
+            0.0
+        )
+    );
     public static PPHolonomicDriveController autoConfig() {
         return new PPHolonomicDriveController(
-            new PIDConstants(
-                tP.get(),
-                tI.get(),
-                tD.get()
+            new com.pathplanner.lib.config.PIDConstants(
+                autoTranslationalPIDConsts.get().kP(),
+                autoTranslationalPIDConsts.get().kI(),
+                autoTranslationalPIDConsts.get().kD()
             ),
-            new PIDConstants(
-                rP.get(),
-                rI.get(),
-                rD.get()
+            new com.pathplanner.lib.config.PIDConstants(
+                autoRotationalPIDConsts.get().kP(),
+                autoRotationalPIDConsts.get().kI(),
+                autoRotationalPIDConsts.get().kD()
             )
         );
     }
-    // public static RobotConfig robotConfig() {
-    //     return new RobotConfig(
-    //         RobotConstants.robotWeight,
-    //         RobotConstants.robotMOI,
-    //         new com.pathplanner.lib.config.ModuleConfig(
-    //             DriveConstants.wheelRadius,
-    //             DriveConstants.maxDriveSpeed,
-    //             1.0,
-    //             DCMotor.getFalcon500(1),
-    //             Amps.of(55),
-    //             1
-    //         ),
-    //         DriveConstants.trackWidthX,
-    //         DriveConstants.trackWidthY
-    //     );
-    // }
 
     public final Command simplePIDTo(Supplier<Pose2d> target) {
-        return Commands.parallel(translationSubsystem.simplePIDTo(() -> target.get().getTranslation()), rotationalSubsystem.pidControlledOptionalHeading(() -> Optional.of(target.get().getRotation())));
+        return Commands.parallel(this.translationSubsystem.simplePIDTo(() -> target.get().getTranslation()), this.rotationalSubsystem.pidControlledOptionalHeading(() -> Optional.of(target.get().getRotation())));
     }
 
     public final Translational translationSubsystem;
@@ -487,34 +516,33 @@ public class Drive extends VirtualSubsystem {
         
         private Translational(Drive drive) {
             this.drive = drive;
-            setName("Drive/Translational");
-            SmartDashboard.putData("Subsystems/Drive/Translational", this);
+            this.setName("Drive/Translational");
         }
 
         public void driveVelocity(double vx, double vy) {
-            needsPostProcessing = true;
-            drive.setpointSpeeds.vxMetersPerSecond = vx;
-            drive.setpointSpeeds.vyMetersPerSecond = vy;
+            this.needsPostProcessing = true;
+            this.drive.desiredRobotSpeeds.vxMetersPerSecond = vx;
+            this.drive.desiredRobotSpeeds.vyMetersPerSecond = vy;
         }
         public void driveVelocity(ChassisSpeeds speeds) {
-            driveVelocity(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+            this.driveVelocity(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
         }
 
         public void stop() {
-            needsPostProcessing = false;
-            driveVelocity(0,0);
+            this.needsPostProcessing = false;
+            this.driveVelocity(0,0);
         }
 
         public Command fieldRelative(Supplier<ChassisSpeeds> speeds) {
             var subsystem = this;
             return new Command() {
                 {
-                    addRequirements(subsystem);
-                    setName("Field Relative");
+                    this.addRequirements(subsystem);
+                    this.setName("Field Relative");
                 }
                 @Override
                 public void execute() {
-                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), drive.getRotation()));
+                    driveVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds.get(), RobotState.getInstance().getEstimatedGlobalPose().getRotation()));
                 }
                 @Override
                 public void end(boolean interrupted) {
@@ -522,38 +550,20 @@ public class Drive extends VirtualSubsystem {
                 }
             };
         }
-
-        public static Supplier<ChassisSpeeds> joystickSpectatorToFieldRelative(Joystick translationalJoystick, BooleanSupplier precisionSupplier) {
-            return () -> {
-                var fieldVec = Perspective.getCurrent().toField(
-                    translationalJoystick.toVector()
-                    .times(
-                        DriveConstants.maxDriveSpeed.in(MetersPerSecond) * 
-                        DriveConstants.maxDriveSpeedEnvCoef.getAsDouble() * 
-                        (precisionSupplier.getAsBoolean() ? DriveConstants.precisionLinearMultiplier : 1)
-                    )
-                );
-                return new ChassisSpeeds(
-                    fieldVec.get(0),
-                    fieldVec.get(1),
-                    0
-                );
-            };
-        }
-
+        
         public Command simplePIDTo(Supplier<Translation2d> target) {
             var subsystem = this;
             return new Command() {
-                private static final LoggedTunableNumber driveKP = new LoggedTunableNumber("Drivetest/P", 3);
+                private static final LoggedTunableNumber driveKP = LoggedTunable.from("Drivetest/P", 3);
                 {
-                    addRequirements(subsystem);
-                    setName("Simple PID To");
+                    this.addRequirements(subsystem);
+                    this.setName("Simple PID To");
                 }
                 @Override
                 public void execute() {
                     var targetPose = target.get();
-                    var distTo = drive.getPose().getTranslation().getDistance(targetPose);
-                    var vec = targetPose.minus(drive.getPose().getTranslation());
+                    var distTo = RobotState.getInstance().getEstimatedGlobalPose().getTranslation().getDistance(targetPose);
+                    var vec = targetPose.minus(RobotState.getInstance().getEstimatedGlobalPose().getTranslation());
                     var norm = vec.div(vec.getNorm());
                     var pterm = distTo * driveKP.getAsDouble();
                     var out = norm.times(pterm);
@@ -563,7 +573,7 @@ public class Drive extends VirtualSubsystem {
                             out.getY(),
                             0
                         ),
-                        drive.getRotation()
+                        RobotState.getInstance().getEstimatedGlobalPose().getRotation()
                     ));
                 }
                 @Override
@@ -580,20 +590,19 @@ public class Drive extends VirtualSubsystem {
         
         private Rotational(Drive drive) {
             this.drive = drive;
-            setName("Drive/Rotational");
-            SmartDashboard.putData("Subsystems/Drive/Rotational", this);
+            this.setName("Drive/Rotational");
         }
 
         public void driveVelocity(double omega) {
-            needsPostProcessing = true;
-            drive.setpointSpeeds.omegaRadiansPerSecond = omega;
+            this.needsPostProcessing = true;
+            this.drive.desiredRobotSpeeds.omegaRadiansPerSecond = omega;
         }
         public void driveVelocity(ChassisSpeeds speeds) {
-            driveVelocity(speeds.omegaRadiansPerSecond);
+            this.driveVelocity(speeds.omegaRadiansPerSecond);
         }
         public void stop() {
-            needsPostProcessing = false;
-            driveVelocity(0);
+            this.needsPostProcessing = false;
+            this.driveVelocity(0);
         }
 
         public Command spin(DoubleSupplier omega) {
@@ -604,10 +613,10 @@ public class Drive extends VirtualSubsystem {
             var subsystem = this;
             return new Command() {
                 {
-                    addRequirements(subsystem);
-                    setName("Defense Spin");
+                    this.addRequirements(subsystem);
+                    this.setName("Defense Spin");
                 }
-                private static final LoggedTunableNumber defenseSpinLinearThreshold = new LoggedTunableNumber("Drive/Defense Spin Linear Threshold", 0.125);
+                private static final LoggedTunableNumber defenseSpinLinearThreshold = LoggedTunable.from("Drive/Defense Spin Linear Threshold", 0.125);
                 private static final Matrix<N2, N2> perpendicularMatrix = 
                     MatBuilder.fill(
                         Nat.N2(), Nat.N2(), 
@@ -619,8 +628,8 @@ public class Drive extends VirtualSubsystem {
                 public void execute() {
                     // Leds.getInstance().defenseSpin.setFlag(true);
                     var joyVec = Perspective.getCurrent().toField(joystick.toVector());
-                    var desiredLinear = VecBuilder.fill(drive.setpointSpeeds.vxMetersPerSecond, drive.setpointSpeeds.vyMetersPerSecond);
-                    var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.setpointSpeeds, drive.getRotation());
+                    var desiredLinear = VecBuilder.fill(drive.desiredRobotSpeeds.vxMetersPerSecond, drive.desiredRobotSpeeds.vyMetersPerSecond);
+                    var fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(drive.desiredRobotSpeeds, RobotState.getInstance().getEstimatedGlobalPose().getRotation());
                     var perpendicularLinear = new Vector<N2>(perpendicularMatrix.times(
                         VecBuilder.fill(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond)
                     ));
@@ -662,38 +671,55 @@ public class Drive extends VirtualSubsystem {
             };
         }
 
+        private static final LoggedTunable<PIDConstants> pidConsts = LoggedTunable.from(
+            "Drive/Rotational/PID",
+            new PIDConstants(
+                0.2,
+                0.0,
+                0.0
+            )
+        );
+        private static final LoggedTunable<Angle> headingTolerance = LoggedTunable.from("Drive/Rotational/Heading Tolerance", Degrees::of, 1.0);
+        private static final LoggedTunable<AngularVelocity> omegaTolerance = LoggedTunable.from("Drive/Rotational/Heading Tolerance", DegreesPerSecond::of, 1.0);
+
         public Command pidControlledOptionalHeading(Supplier<Optional<Rotation2d>> headingSupplier) {
             var subsystem = this;
             return new Command() {
                 private final ProfiledPIDController headingPID = new ProfiledPIDController(
-                    DriveConstants.headingKp,
-                    DriveConstants.headingKi,
-                    DriveConstants.headingKd,
+                    pidConsts.get().kP(),
+                    pidConsts.get().kI(),
+                    pidConsts.get().kD(),
                     new Constraints(
                         DriveConstants.maxTurnRate.in(RadiansPerSecond),
                         5000
                     )
                 );
+
                 {
-                    addRequirements(subsystem);
-                    setName("PID Controlled Heading");
-                    headingPID.enableContinuousInput(-Math.PI, Math.PI);
-                    headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
+                    this.addRequirements(subsystem);
+                    this.setName("PID Controlled Heading");
+                    this.headingPID.enableContinuousInput(-Math.PI, Math.PI);
+                    this.headingPID.setTolerance(headingTolerance.get().in(Radians), omegaTolerance.get().in(RadiansPerSecond));
                 }
+
                 private Rotation2d desiredHeading;
                 private boolean headingSet;
+
                 @Override
                 public void initialize() {
-                    desiredHeading = drive.getPose().getRotation();
-                    headingPID.reset(drive.getRotation().getRadians());
+                    this.desiredHeading = RobotState.getInstance().getEstimatedGlobalPose().getRotation();
+                    this.headingPID.reset(this.desiredHeading.getRadians());
+                    this.headingPID.setTolerance(headingTolerance.get().in(Radians), omegaTolerance.get().in(RadiansPerSecond));
+                    pidConsts.get().update(this.headingPID);
                 }
+
                 @Override
                 public void execute() {
                     var heading = headingSupplier.get();
-                    headingSet = heading.isPresent();
+                    this.headingSet = heading.isPresent();
                     heading.ifPresent((r) -> desiredHeading = r);
-                    double turnInput = headingPID.calculate(drive.getRotation().getRadians(), desiredHeading.getRadians());
-                    turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
+                    double turnInput = this.headingPID.calculate(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians(), this.desiredHeading.getRadians());
+                    turnInput = this.headingPID.atSetpoint() ? 0 : turnInput + this.headingPID.getSetpoint().velocity;
                     turnInput = MathUtil.clamp(
                         turnInput, 
                         -0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble(), 
@@ -701,10 +727,12 @@ public class Drive extends VirtualSubsystem {
                     );
                     driveVelocity(turnInput * DriveConstants.maxTurnRate.in(RadiansPerSecond));
                 }
+
                 @Override
                 public void end(boolean interrupted) {
                     stop();
                 }
+                
                 @Override
                 public boolean isFinished() {
                     return !headingSet && headingPID.atSetpoint();
@@ -715,29 +743,34 @@ public class Drive extends VirtualSubsystem {
             var subsystem = this;
             return new Command() {
                 private final ProfiledPIDController headingPID = new ProfiledPIDController(
-                    DriveConstants.headingKp,
-                    DriveConstants.headingKi,
-                    DriveConstants.headingKd,
+                    pidConsts.get().kP(),
+                    pidConsts.get().kI(),
+                    pidConsts.get().kD(),
                     new Constraints(
                         DriveConstants.maxTurnRate.in(RadiansPerSecond),
                         5000
                     )
                 );
+
                 {
-                    addRequirements(subsystem);
-                    setName("PID Controlled Heading");
-                    headingPID.enableContinuousInput(-Math.PI, Math.PI);
-                    headingPID.setTolerance(DriveConstants.headingTolerance.in(Radians), DriveConstants.omegaTolerance.in(RadiansPerSecond));
+                    this.addRequirements(subsystem);
+                    this.setName("PID Controlled Heading");
+                    this.headingPID.enableContinuousInput(-Math.PI, Math.PI);
+                    this.headingPID.setTolerance(headingTolerance.get().in(Radians), omegaTolerance.get().in(RadiansPerSecond));
                 }
+
                 @Override
                 public void initialize() {
-                    headingPID.reset(drive.getRotation().getRadians());
+                    this.headingPID.reset(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians());
+                    this.headingPID.setTolerance(headingTolerance.get().in(Radians), omegaTolerance.get().in(RadiansPerSecond));
+                    pidConsts.get().update(this.headingPID);
                 }
+
                 @Override
                 public void execute() {
                     var desiredHeading = headingSupplier.get();
-                    double turnInput = headingPID.calculate(drive.getRotation().getRadians(), desiredHeading.getRadians());
-                    turnInput = headingPID.atSetpoint() ? 0 : turnInput + headingPID.getSetpoint().velocity;
+                    double turnInput = this.headingPID.calculate(RobotState.getInstance().getEstimatedGlobalPose().getRotation().getRadians(), desiredHeading.getRadians());
+                    turnInput = this.headingPID.atSetpoint() ? 0 : turnInput + this.headingPID.getSetpoint().velocity;
                     turnInput = MathUtil.clamp(
                         turnInput, 
                         -0.5 * DriveConstants.maxTurnRateEnvCoef.getAsDouble(), 
@@ -745,13 +778,10 @@ public class Drive extends VirtualSubsystem {
                     );
                     driveVelocity(turnInput * DriveConstants.maxTurnRate.in(RadiansPerSecond));
                 }
+
                 @Override
                 public void end(boolean interrupted) {
                     stop();
-                }
-                @Override
-                public boolean isFinished() {
-                    return false;
                 }
             };
         }
@@ -792,7 +822,7 @@ public class Drive extends VirtualSubsystem {
         public Command pointTo(Supplier<Optional<Translation2d>> posToPointTo, Supplier<Rotation2d> forward) {
             return pidControlledOptionalHeading(
                 () -> posToPointTo.get().map((pointTo) -> {
-                    var FORR = pointTo.minus(RobotState.getInstance().getPose().getTranslation());
+                    var FORR = pointTo.minus(RobotState.getInstance().getEstimatedGlobalPose().getTranslation());
                     return new Rotation2d(FORR.getX(), FORR.getY()).minus(forward.get());
                 })
             );

@@ -1,218 +1,175 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.ejml.simple.SimpleMatrix;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.DistanceUnit;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.Timer;
-import frc.robot.constants.FieldConstants;
-import frc.robot.constants.FieldConstants.Reef.RackObject;
-import frc.robot.subsystems.vision.apriltag.ApriltagVisionConstants;
-import frc.util.loggerUtil.tunables.LoggedTunableMeasure;
-import frc.util.loggerUtil.tunables.LoggedTunableNumber;
+import frc.robot.subsystems.drive.DriveConstants;
 
 public class RobotState {
     private static RobotState instance;
     public static RobotState getInstance() {if (instance == null) {instance = new RobotState();} return instance;}
 
-    private static final LoggedTunableNumber txTyObservationStaleSecs = new LoggedTunableNumber("RobotState/TxTyObservationStaleSeconds", 0.2);
-    private static final LoggedTunableMeasure<DistanceUnit> minDistanceTagPoseBlend = new LoggedTunableMeasure<>("RobotState/MinDistanceTagPoseBlend", Inches.of(24.0));
-    private static final LoggedTunableMeasure<DistanceUnit> maxDistanceTagPoseBlend = new LoggedTunableMeasure<>("RobotState/MaxDistanceTagPoseBlend", Inches.of(36));
-
-    private SwerveDrivePoseEstimator poseEstimator;
-    private SwerveDrivePoseEstimator odometryPoseEstimator;
-    private Matrix<N3, N1> robotPoseStdDevs = VecBuilder.fill(0,0,0);
+    private Pose2d odometryPose = Pose2d.kZero;
+    private Rotation3d gyroOffset = Rotation3d.kZero;
+    private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
+    private final Matrix<N3, N1> qStdDevs;
     
-    //private Pose2d[] reefObjectivePoses = new Pose2d[4];
+    private static final double poseBufferSizeSecs = 2.0;
+    private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(poseBufferSizeSecs);
+    private Pose2d estimatedGlobalPose = Pose2d.kZero;
 
-    private static final double poseBufferSizeSec = 2.0;
-    private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
+    private final SimpleMatrix forwardKinematics;
 
-    private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
-
-    public void initializePoseEstimator(
-        SwerveDriveKinematics kinematics,
-        Rotation2d gyroAngle,
-        SwerveModulePosition[] modulePositions,
-        Pose2d initialPoseMeters
-    ) {
-        poseEstimator = new SwerveDrivePoseEstimator(kinematics, gyroAngle, modulePositions, initialPoseMeters);
-        odometryPoseEstimator = new SwerveDrivePoseEstimator(kinematics, gyroAngle, modulePositions, initialPoseMeters);
-    }
-
-    public void addDriveMeasurement(Rotation2d rotation, SwerveModulePosition[] modulePositions) {
-        poseEstimator.update(rotation, modulePositions);
-        odometryPoseEstimator.update(rotation, modulePositions);
-        poseBuffer.addSample(Timer.getTimestamp(), getPose());
-    }
-
-    public void addVisionMeasurement(Pose2d pose, Matrix<N3, N1> stdDevs, double timestamp) {
-        poseEstimator.addVisionMeasurement(pose, timestamp, stdDevs);
-        poseBuffer.addSample(Timer.getTimestamp(), getPose());
-    }
-
-    public void addTxTyObservation(TxTyObservation observation) {
-        if (txTyPoses.containsKey(observation.tagId())
-            && txTyPoses.get(observation.tagId()).timestamp >= observation.timestamp()){
-            return;
+    private RobotState() {
+        this.qStdDevs = new Matrix<>(Nat.N3(), Nat.N1());
+        for (int i = 0; i < 3; i++) {
+            this.qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
         }
-
-        var sample = poseBuffer.getSample(observation.timestamp());
-        if (sample.isEmpty()) {
-            return;
+        var inverseKinematics = new SimpleMatrix(DriveConstants.moduleTranslations.length * 2, 3);
+        for (int i = 0; i < DriveConstants.moduleTranslations.length; i++) {
+            inverseKinematics.setRow(i * 2 + 0, 0, 1, 0, -DriveConstants.moduleTranslations[i].getY());
+            inverseKinematics.setRow(i * 2 + 1, 0, 0, 1, +DriveConstants.moduleTranslations[i].getX());
         }
-
-        Rotation2d robotRotation = getPose().transformBy(new Transform2d(getOdometryOnlyPose(), sample.get())).getRotation();
-
-        var camMeta = ApriltagVisionConstants.findApriltagCameraConstantsByID(observation.camera);
-        var tagPose = FieldConstants.apriltagLayout.getTagPose(observation.tagId).get();
-        var cameraMountAngleY = camMeta.mount.getRobotRelative().getRotation().getMeasureY();
-        var cameraMountAngleZ = camMeta.mount.getRobotRelative().getRotation().toRotation2d().rotateBy(robotRotation).getMeasure();
-        var tagTYtoRobot = cameraMountAngleY.plus(observation.ty);
-        var cameraDistanceHorizontalToTarget = Math.cos(tagTYtoRobot.in(Radians)) * observation.distance.in(Meters);
-        var cameraAngleToTarget = tagPose.getRotation().getMeasureZ().minus(Degrees.of(180)).minus(cameraMountAngleZ);
-        var oppositeAngle = cameraAngleToTarget.plus(observation.tx);
-        var cameraToTag = new Transform3d(
-            new Translation3d(
-                Meters.of(cameraDistanceHorizontalToTarget * Math.cos(oppositeAngle.in(Radians))),
-                Meters.of(-1 * cameraDistanceHorizontalToTarget * Math.sin(oppositeAngle.in(Radians))),
-                camMeta.mount.getRobotRelative().getTranslation().getMeasureZ()
-            ),
-            new Rotation3d(
-                camMeta.mount.getRobotRelative().getRotation().getMeasureX(),
-                cameraMountAngleY,
-                cameraMountAngleZ
-            )
-        );
-        var cameraPose = tagPose.transformBy(cameraToTag.inverse());
-        var robotPose = cameraPose.transformBy(camMeta.mount.getRobotRelative().inverse());
-        var robotPose2d = robotPose.toPose2d();
-        txTyPoses.put(
-            observation.tagId(),
-            new TxTyPoseRecord(robotPose2d, observation.distance(), observation.timestamp())
-        );
+        this.forwardKinematics = inverseKinematics.pseudoInverse();
     }
 
     public void log() {
-        Logger.recordOutput("Odometry/Robot", getPose());
-        // Logger.recordOutput("Odometry/Std Devs", robotPoseStdDevs);
+        Logger.recordOutput("RobotState/OdometryPose", this.odometryPose);
+        Logger.recordOutput("RobotState/EstimatedGlobalPose", this.getEstimatedGlobalPose());
     }
 
-    public Pose2d getPose() {
-        return poseEstimator.getEstimatedPosition();
+    public Pose2d getEstimatedGlobalPose() {
+        return this.estimatedGlobalPose;
     }
 
-    public Pose2d getOdometryOnlyPose() {
-        return odometryPoseEstimator.getEstimatedPosition();
+    public void resetPose(Pose2d pose) {
+        var gyroOffsetYaw = this.gyroOffset.toRotation2d();
+        var gyroOffsetNoYaw = this.gyroOffset.minus(new Rotation3d(gyroOffsetYaw));
+
+        this.gyroOffset = new Rotation3d(pose.getRotation().minus(this.odometryPose.getRotation().minus(gyroOffsetYaw))).plus(gyroOffsetNoYaw);
+        this.estimatedGlobalPose = pose;
+        this.odometryPose = pose;
+        this.poseBuffer.clear();
     }
 
-    public Optional<Pose2d> getTxTyPose(int tagID) {
-        if (!txTyPoses.containsKey(tagID)) {
-            return Optional.empty();
+    public void addOdometryObservation(OdometryObservation observation) {
+        var moduleDeltasVector = new SimpleMatrix(DriveConstants.moduleTranslations.length * 2, 1);
+        for (int i = 0; i < DriveConstants.moduleTranslations.length; i++) {
+            var dx = observation.endModulePositions()[i].distanceMeters - observation.startModulePositions()[i].distanceMeters;
+            var dTheta = observation.endModulePositions()[i].angle.minus(observation.startModulePositions()[i].angle);
+
+            double s;
+            double c;
+            if (Math.abs(dTheta.getRadians()) < 1E-9) {
+                s = 1.0 - 1.0 / 6.0 * dTheta.getRadians() * dTheta.getRadians();
+                c = 0.5 * dTheta.getRadians();
+            } else {
+                s = dTheta.getSin() / dTheta.getRadians();
+                c = (1 - dTheta.getCos()) / dTheta.getRadians();
+            }
+
+            var x = dx * s;
+            var y = dx * c;
+
+            var moduleDisplacementX = x * observation.startModulePositions()[i].angle.getCos() - y * observation.startModulePositions()[i].angle.getSin();
+            var moduleDisplacementY = x * observation.startModulePositions()[i].angle.getSin() + y * observation.startModulePositions()[i].angle.getCos();
+
+            moduleDeltasVector.set(i * 2 + 0, 0, moduleDisplacementX);
+            moduleDeltasVector.set(i * 2 + 1, 0, moduleDisplacementY);
         }
-        var data = txTyPoses.get(tagID);
 
-        if (Timer.getTimestamp() - data.timestamp() >= txTyObservationStaleSecs.get()) {
-            return Optional.empty();
+        var chassisDeltaVector = this.forwardKinematics.mult(moduleDeltasVector);
+        var twist = new Twist2d(
+            chassisDeltaVector.get(0, 0),
+            chassisDeltaVector.get(1, 0),
+            chassisDeltaVector.get(2, 0)
+        );
+
+        var lastOdometryPose = this.odometryPose;
+        this.odometryPose = this.odometryPose.exp(twist);
+
+        if (observation.gyroRotation.isPresent()) {
+            this.odometryPose = new Pose2d(this.odometryPose.getTranslation(), observation.gyroRotation.get().plus(this.gyroOffset).toRotation2d());
         }
 
-        var sample = poseBuffer.getSample(data.timestamp());
+        this.poseBuffer.addSample(observation.timestamp(), this.odometryPose);
 
-        return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, getOdometryOnlyPose())));
+        var finalTwist = lastOdometryPose.log(this.odometryPose);
+        this.estimatedGlobalPose = this.estimatedGlobalPose.exp(finalTwist);
     }
 
+    public void addVisionObservation(VisionObservation observation) {
+        try {
+            if (this.poseBuffer.getInternalBuffer().lastKey() - poseBufferSizeSecs > observation.timestamp()) {
+                return;
+            }
+        } catch (NoSuchElementException e) {
+            return;
+        }
+        var sample = this.poseBuffer.getSample(observation.timestamp());
+        if (sample.isEmpty()) {return;}
 
-    public ReefPoseEstimate getReefPose(RackObject rack, Pose2d finalPose) {
-        var tagPose = getTxTyPose(rack.apriltagID);
+        var sampleToOdometryTransform = new Transform2d(sample.get(), this.odometryPose);
+        var odometryToSampleTransform = new Transform2d(this.odometryPose, sample.get());
 
-        if (tagPose.isEmpty()) return new ReefPoseEstimate(getPose(), 0.0);
+        var globalEstimateAtTime = this.estimatedGlobalPose.plus(odometryToSampleTransform);
 
-        final double t = 
-            MathUtil.clamp(
-                (getPose().getTranslation().getDistance(finalPose.getTranslation()) - minDistanceTagPoseBlend.get().in(Meters)) / (maxDistanceTagPoseBlend.get().minus(minDistanceTagPoseBlend.get()).in(Meters)),
-                0.0,
-                1.0);
-
-        return new ReefPoseEstimate(getPose().interpolate(tagPose.get(), 1.0 - t), 1.0 - t);
-    }
-    /*public Pose2d getReefPose() {
-        double totalX = 0;
-        double totalY = 0;
-        double sumSin = 0;
-        double sumCos = 0;
-        int total_valid = 0;
-        
-        for (Pose2d reefObjectivePose : reefObjectivePoses){
-            if (reefObjectivePose != null) {
-                total_valid += 1;
-
-                totalX += reefObjectivePose.getX();
-                totalY += reefObjectivePose.getY();
-
-                double angle = reefObjectivePose.getRotation().getRadians();
-                sumSin += Math.sin(angle);
-                sumCos += Math.cos(angle);
+        var r = new double[3];
+        for (int i = 0; i < 3; i++) {
+            r[i] = observation.stdDevs().get(i, 0) * observation.stdDevs().get(i, 0);
+        }
+        var visionK = new Matrix<>(Nat.N3(), Nat.N3());
+        for (int row = 0; row < 3; row++) {
+            double stdDev = this.qStdDevs.get(row, 0);
+            if (stdDev == 0.0) {
+                visionK.set(row, row, 0.0);
+            } else {
+                visionK.set(row, row, stdDev / (stdDev + Math.sqrt(stdDev * r[row])));
             }
         }
-        if(total_valid != 0){
-            double avgX = totalX / total_valid;
-            double avgY = totalY / total_valid;
-            double avgAngle = Math.atan2(sumSin / total_valid, sumCos / total_valid);
-            return new Pose2d(avgX, avgY, new Rotation2d(avgAngle));
-        } else {
-            return null;
-        }
+
+        var globalEstimateAtTimeToObservation = new Transform2d(globalEstimateAtTime, observation.pose());
+        var kTimesTransform = visionK.times(
+            VecBuilder.fill(
+                globalEstimateAtTimeToObservation.getX(),
+                globalEstimateAtTimeToObservation.getY(),
+                globalEstimateAtTimeToObservation.getRotation().getRadians()
+            )
+        );
+        var scaledTransform = new Transform2d(
+            kTimesTransform.get(0, 0),
+            kTimesTransform.get(1, 0),
+            Rotation2d.fromRadians(kTimesTransform.get(2, 0))
+        );
+
+        this.estimatedGlobalPose = globalEstimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
     }
 
-    public void updateReefPose(int cam_id, Pose2d pose) {
-        reefObjectivePoses[cam_id] = pose;
-    }*/
-
-    public void setPose(
-        Rotation2d rotation,
-        SwerveModulePosition[] modulePositions,
-        Pose2d fieldToVehicle
-    ) {
-        setPose(rotation, modulePositions, fieldToVehicle, VecBuilder.fill(0,0,0));
-    }
-    public void setPose(
-        Rotation2d rotation,
-        SwerveModulePosition[] modulePositions,
-        Pose2d fieldToVehicle,
+    public static record OdometryObservation(
+        double timestamp,
+        Optional<Rotation3d> gyroRotation,
+        SwerveModulePosition[] startModulePositions,
+        SwerveModulePosition[] endModulePositions
+    ) {}
+    public static record VisionObservation(
+        double timestamp,
+        Pose2d pose,
         Matrix<N3, N1> stdDevs
-    ) {
-        poseEstimator.resetPosition(rotation, modulePositions, fieldToVehicle);
-        robotPoseStdDevs = stdDevs;
-    }
-
-    public record TxTyObservation(int tagId, int camera, Angle tx, Angle ty, Distance distance, double timestamp) {};
-
-    public record TxTyPoseRecord(Pose2d pose, Distance distance, double timestamp) {}
-
-    public record ReefPoseEstimate(Pose2d pose, double blend) {}
+    ) {}
 }

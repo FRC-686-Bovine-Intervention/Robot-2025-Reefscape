@@ -15,7 +15,13 @@ public class LinearMech extends Mechanism3d<DistanceUnit> {
     public LinearMech(Transform3d base, Vector<N3> axis) {
         super(base, axis);
     }
+
+    @Override
     public void set(Measure<DistanceUnit> distance) {
-        transform = new Transform3d(new Translation3d(axis.times(distance.in(Meters))), Rotation3d.kZero);
+        this.setMeters(distance.in(Meters));
+    }
+    
+    public void setMeters(double distanceMeters) {
+        this.transform = new Transform3d(new Translation3d(this.axis.times(distanceMeters)), Rotation3d.kZero);
     }
 }
