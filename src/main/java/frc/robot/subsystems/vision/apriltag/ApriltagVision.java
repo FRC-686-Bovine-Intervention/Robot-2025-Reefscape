@@ -29,7 +29,7 @@ public class ApriltagVision {
     private final ApriltagPipeline pipelines[];
 
     private static final LoggedTunable<Angle> gyroTolerance = LoggedTunable.from("Vision/Apriltags/Filtering/Gyro Tolerance", Degrees::of, 10);
-    private static final LoggedTunableNumber xyStdDevCoef = LoggedTunable.from("Vision/Apriltags/Std Devs/XY Coef", 0.4);
+    private static final LoggedTunableNumber xyStdDevCoef = LoggedTunable.from("Vision/Apriltags/Std Devs/XY Coef", 0.01);
     private static final LoggedTunableNumber thetaStdDevCoef = LoggedTunable.from("Vision/Apriltags/Std Devs/Theta Coef", Double.POSITIVE_INFINITY);
 
     public ApriltagVision(ApriltagPipeline... pipelines) {
