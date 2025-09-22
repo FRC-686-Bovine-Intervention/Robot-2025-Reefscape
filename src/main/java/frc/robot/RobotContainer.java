@@ -997,13 +997,15 @@ public class RobotContainer {
                     var wristInTolerance = MathUtil.isNear(scoreCoralObjective.getTargetState().getWristAngleRads(), superstructure.getCurrentMeasuredState().getWristAngleRads(), wristTolerance.in(Radians));
                     var linearInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getTranslation(), RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), linearTolerance);
                     var angularInTolerance = GeomUtil.isNear(scoreCoralObjective.getTargetPose().getOurs().getRotation(), RobotState.getInstance().getEstimatedGlobalPose().getRotation(), angularTolerance);
-                    Logger.recordOutput("Self Record/Coral/Superstructure/Pivot", pivotInTolerance);
-                    Logger.recordOutput("Self Record/Coral/Superstructure/Elevator", elevatorInTolerance);
-                    Logger.recordOutput("Self Record/Coral/Superstructure/Wrist", wristInTolerance);
-                    Logger.recordOutput("Self Record/Coral/Robot/Linear", linearInTolerance);
-                    Logger.recordOutput("Self Record/Coral/Robot/Angular", angularInTolerance);
+                    var tagSeen = scoreCoralObjective.getTargetBranch().isEmpty() || RobotState.getInstance().getRobotPoseFromTag(scoreCoralObjective.getTargetBranch().get().pipe.rack.getOurs().apriltagID).isPresent();
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Pivot", pivotInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Elevator", elevatorInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Superstructure/Wrist", wristInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Robot/Linear", linearInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Robot/Angular", angularInTolerance);
+                    Logger.recordOutput("Auto Eject/Coral/Tag Seen", tagSeen);
 
-                    if (this.debouncer.calculate(pivotInTolerance && elevatorInTolerance && wristInTolerance && linearInTolerance && angularInTolerance)) {
+                    if (this.debouncer.calculate(pivotInTolerance && elevatorInTolerance && wristInTolerance && linearInTolerance && angularInTolerance && tagSeen)) {
                         if (scoreCoralObjective.getTargetBranch().isPresent()) {
                             if (!this.ejectBranch.isScheduled()) {
                                 this.ejectBranch.schedule();

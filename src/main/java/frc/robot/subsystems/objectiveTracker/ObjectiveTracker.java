@@ -282,20 +282,20 @@ public class ObjectiveTracker extends VirtualSubsystem {
 
         // Intake Coral
         this.allIntakeCoralObjectives = Set.of(
-            new IntakeCoralObjective(AllianceFlipped.fromBlue(new Pose2d(new Translation2d(Meters.of(2), FieldConstants.fieldWidth.div(2).plus(RobotConstants.centerToFrontBumper)), Rotation2d.kCCW_90deg)), Direction.Backward),
-            new IntakeCoralObjective(AllianceFlipped.fromBlue(new Pose2d(new Translation2d(Meters.of(2), FieldConstants.fieldWidth.div(2).plus(RobotConstants.centerToFrontBumper)), Rotation2d.kCW_90deg)), Direction.Forward)
-            // new IntakeCoralObjective(FieldConstants.CoralStation.leftStationLeft.map((station) -> station.get(Direction.Forward)), Direction.Forward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.leftStationCenter.map((station) -> station.get(Direction.Forward)), Direction.Forward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.leftStationRight.map((station) -> station.get(Direction.Forward)), Direction.Forward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.leftStationLeft.map((station) -> station.get(Direction.Backward)), Direction.Backward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.leftStationCenter.map((station) -> station.get(Direction.Backward)), Direction.Backward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.leftStationRight.map((station) -> station.get(Direction.Backward)), Direction.Backward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.rightStationLeft.map((station) -> station.get(Direction.Forward)), Direction.Forward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.rightStationCenter.map((station) -> station.get(Direction.Forward)), Direction.Forward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.rightStationRight.map((station) -> station.get(Direction.Forward)), Direction.Forward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.rightStationLeft.map((station) -> station.get(Direction.Backward)), Direction.Backward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.rightStationCenter.map((station) -> station.get(Direction.Backward)), Direction.Backward),
-            // new IntakeCoralObjective(FieldConstants.CoralStation.rightStationRight.map((station) -> station.get(Direction.Backward)), Direction.Backward)
+            // new IntakeCoralObjective(AllianceFlipped.fromBlue(new Pose2d(new Translation2d(Meters.of(2), FieldConstants.fieldWidth.div(2).plus(RobotConstants.centerToFrontBumper)), Rotation2d.kCCW_90deg)), Direction.Backward),
+            // new IntakeCoralObjective(AllianceFlipped.fromBlue(new Pose2d(new Translation2d(Meters.of(2), FieldConstants.fieldWidth.div(2).plus(RobotConstants.centerToFrontBumper)), Rotation2d.kCW_90deg)), Direction.Forward)
+            new IntakeCoralObjective(FieldConstants.CoralStation.leftStationLeft.map((station) -> station.get(Direction.Forward)), Direction.Forward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.leftStationCenter.map((station) -> station.get(Direction.Forward)), Direction.Forward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.leftStationRight.map((station) -> station.get(Direction.Forward)), Direction.Forward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.leftStationLeft.map((station) -> station.get(Direction.Backward)), Direction.Backward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.leftStationCenter.map((station) -> station.get(Direction.Backward)), Direction.Backward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.leftStationRight.map((station) -> station.get(Direction.Backward)), Direction.Backward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.rightStationLeft.map((station) -> station.get(Direction.Forward)), Direction.Forward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.rightStationCenter.map((station) -> station.get(Direction.Forward)), Direction.Forward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.rightStationRight.map((station) -> station.get(Direction.Forward)), Direction.Forward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.rightStationLeft.map((station) -> station.get(Direction.Backward)), Direction.Backward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.rightStationCenter.map((station) -> station.get(Direction.Backward)), Direction.Backward),
+            new IntakeCoralObjective(FieldConstants.CoralStation.rightStationRight.map((station) -> station.get(Direction.Backward)), Direction.Backward)
         );
 
         // Intake Algae
