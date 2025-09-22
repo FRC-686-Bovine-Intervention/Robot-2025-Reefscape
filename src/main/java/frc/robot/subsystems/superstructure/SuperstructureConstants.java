@@ -120,7 +120,7 @@ public class SuperstructureConstants {
     public static final SuperstructureState l1State = SuperstructureState.fromParts(
         PivotConstants.minAngle,
         ElevatorConstants.minLengthPhysical,
-        Degrees.of(20)
+        Degrees.of(25)
     );
     public static SuperstructureState getStateForBranchLevel(BranchLevel branchLevel) {
         return switch (branchLevel) {

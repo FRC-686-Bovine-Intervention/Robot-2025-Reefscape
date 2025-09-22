@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.CoastOut;
@@ -40,11 +41,15 @@ public class ElevatorIOKraken implements ElevatorIO {
     private final CoastOut coastOutRequest = new CoastOut();
     private final StaticBrake staticBrakeRequest = new StaticBrake();
 
+    private double magnetOffsetRots = 0.0;
+
     public ElevatorIOKraken() {
         var encoderConfig = new CANcoderConfiguration();
         this.cancoder.getConfigurator().refresh(encoderConfig.MagnetSensor);
+        this.magnetOffsetRots = encoderConfig.MagnetSensor.MagnetOffset;
         encoderConfig.MagnetSensor
             .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
+            .withAbsoluteSensorDiscontinuityPoint(0.9)
         ;
 
         this.cancoder.getConfigurator().apply(encoderConfig);
@@ -91,6 +96,8 @@ public class ElevatorIOKraken implements ElevatorIO {
             this.motorStatusSignalCache.encoder().velocity(),
             this.motorStatusSignalCache.motor().appliedVoltage(),
             this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().supplyCurrent(),
+            this.motorStatusSignalCache.motor().torqueCurrent(),
             this.motorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.encoderConnected = BaseStatusSignal.isAllGood(
@@ -102,12 +109,15 @@ public class ElevatorIOKraken implements ElevatorIO {
             this.motorStatusSignalCache.encoder().velocity(),
             this.motorStatusSignalCache.motor().appliedVoltage(),
             this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().supplyCurrent(),
+            this.motorStatusSignalCache.motor().torqueCurrent(),
             this.motorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.encoder.updateFrom(this.encoderStatusSignalCache);
         inputs.motor.updateFrom(this.motorStatusSignalCache);
         // inputs.encoderFaults.updateFrom(this.cancoder);
         // inputs.motorFaults.updateFrom(this.motor);
+        inputs.encoderMagnetOffsetRads = Units.rotationsToRadians(this.magnetOffsetRots);
     }
 
     @Override
@@ -138,6 +148,15 @@ public class ElevatorIOKraken implements ElevatorIO {
         this.motor.getConfigurator().refresh(config);
         pidConstants.update(config);
         this.motor.getConfigurator().apply(config);
+    }
+
+    @Override
+    public void configMagnetOffset(double positionRads) {
+        var config = new MagnetSensorConfigs();
+        this.cancoder.getConfigurator().refresh(config);
+        config.withMagnetOffset(Units.radiansToRotations(positionRads));
+        this.cancoder.getConfigurator().apply(config);
+        this.magnetOffsetRots = Units.radiansToRotations(positionRads);
     }
 
     @Override

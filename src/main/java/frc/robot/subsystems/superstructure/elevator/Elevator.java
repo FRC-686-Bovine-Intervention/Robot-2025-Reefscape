@@ -1,9 +1,13 @@
 package frc.robot.subsystems.superstructure.elevator;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.InchesPerSecond;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Optional;
 
@@ -12,7 +16,12 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.constants.RobotConstants;
 import frc.util.FFConstants;
@@ -33,15 +42,15 @@ public class Elevator {
         MetersPerSecond,
         MetersPerSecondPerSecond,
         new TrapezoidProfile.Constraints(
-            80,
+            120,
             240
         )
     );
     private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
         "Superstructure/Elevator/FF",
         new FFConstants(
-            0.2,
-            0.3,
+            0.8,
+            0.4,
             2,
             0
         )
@@ -54,6 +63,12 @@ public class Elevator {
             0
         )
     );
+
+    private static final LoggedTunable<Distance> autoRezeroMaxLength = LoggedTunable.from("Superstructure/Elevator/Auto Rezero/Max Length", Inches::of, 3);
+    private static final LoggedTunable<Current> autoRezeroTorqueCurrentThreshold = LoggedTunable.from("Superstructure/Elevator/Auto Rezero/Torque Current Threshold", Amps::of, -50);
+    private static final LoggedTunable<LinearVelocity> autoRezeroMaxVelo = LoggedTunable.from("Superstructure/Elevator/Auto Rezero/Max Velocity", InchesPerSecond::of, 0.5);
+    private static final LoggedTunable<Time> autoRezeroDebounceTime = LoggedTunable.from("Superstructure/Elevator/Auto Rezero/Debounce Time", Seconds::of, 1);
+    private final Timer autoRezeroDebounceTimer = new Timer();
 
     private TrapezoidProfile motionProfile = new TrapezoidProfile(profileConsts.get());
     private final State measuredState = new State();
@@ -120,6 +135,22 @@ public class Elevator {
         if (pidConsts.hasChanged(hashCode())) {
             this.io.configPID(pidConsts.get());
         }
+
+        if (
+            Math.abs(this.getLengthMeters()) < autoRezeroMaxLength.get().in(Meters)
+            && Math.abs(this.getVelocityMetersPerSec()) < autoRezeroMaxVelo.get().in(MetersPerSecond)
+            && this.inputs.motor.motor.getTorqueCurrentAmps() < autoRezeroTorqueCurrentThreshold.get().in(Amps)
+        ) {
+            this.autoRezeroDebounceTimer.start();
+        } else {
+            this.autoRezeroDebounceTimer.stop();
+            this.autoRezeroDebounceTimer.reset();
+        }
+        if (this.autoRezeroDebounceTimer.hasElapsed(autoRezeroDebounceTime.get().in(Seconds))) {
+            this.io.configMagnetOffset(this.inputs.encoderMagnetOffsetRads - this.inputs.encoder.getPositionRads());
+            this.autoRezeroDebounceTimer.reset();
+        }
+        Logger.recordOutput("Superstructure/Elevator/Auto Rezero Debounce Timer", this.autoRezeroDebounceTimer.get());
 
         // this.motorActiveFaultsAlert.updateFrom(this.inputs.motorFaults.activeFaults);
         // this.motorStickyFaultsAlert.updateFrom(this.inputs.motorFaults.stickyFaults);

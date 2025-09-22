@@ -355,11 +355,11 @@ public class Superstructure extends SubsystemBase {
                     );
                 }
                 
-                if (targetL4) {
-                    this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, true));
-                } else {
+                // if (targetL4) {
+                //     this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, true));
+                // } else {
                     this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, false));
-                }
+                // }
             }
             @Override
             public void execute() {

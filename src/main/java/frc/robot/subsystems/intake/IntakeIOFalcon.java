@@ -51,11 +51,15 @@ public class IntakeIOFalcon implements IntakeIO {
         BaseStatusSignal.refreshAll(
             this.motorStatusSignalCache.appliedVoltage(),
             this.motorStatusSignalCache.statorCurrent(),
+            this.motorStatusSignalCache.supplyCurrent(),
+            this.motorStatusSignalCache.torqueCurrent(),
             this.motorStatusSignalCache.deviceTemperature()
         );
         inputs.motorConnected = BaseStatusSignal.isAllGood(
             this.motorStatusSignalCache.appliedVoltage(),
             this.motorStatusSignalCache.statorCurrent(),
+            this.motorStatusSignalCache.supplyCurrent(),
+            this.motorStatusSignalCache.torqueCurrent(),
             this.motorStatusSignalCache.deviceTemperature()
         );
         inputs.motor.updateFrom(this.motorStatusSignalCache);
