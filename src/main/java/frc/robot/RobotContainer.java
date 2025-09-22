@@ -597,6 +597,8 @@ public class RobotContainer {
                         measuredPose = RobotState.getInstance().getEstimatedGlobalPose().interpolate(specialPose.get(), t);
                     }
                 }
+                Logger.recordOutput("DEBUG/Autoscore measured", measuredPose);
+                Logger.recordOutput("DEBUG/Autoscore target", targetPose);
                 return AutoScore.getTargetPose(
                     measuredPose,
                     targetPose

@@ -26,8 +26,8 @@ public class Pivot {
     private final PivotIO io;
     private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
 
-    private static final LoggedTunable<TrapezoidProfile.Constraints> profileConsts = LoggedTunable.fromDashboardUnits(
-        "Superstructure/Pivot/Profile",
+    private static final LoggedTunable<TrapezoidProfile.Constraints> fastProfileConsts = LoggedTunable.fromDashboardUnits(
+        "Superstructure/Pivot/Fast Profile",
         DegreesPerSecond,
         DegreesPerSecondPerSecond,
         RadiansPerSecond,
@@ -35,6 +35,17 @@ public class Pivot {
         new TrapezoidProfile.Constraints(
             225,
             450
+        )
+    );
+    private static final LoggedTunable<TrapezoidProfile.Constraints> slowProfileConsts = LoggedTunable.fromDashboardUnits(
+        "Superstructure/Pivot/Slow Profile",
+        DegreesPerSecond,
+        DegreesPerSecondPerSecond,
+        RadiansPerSecond,
+        RadiansPerSecondPerSecond,
+        new TrapezoidProfile.Constraints(
+            225,
+            115
         )
     );
     private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
@@ -55,7 +66,8 @@ public class Pivot {
         )
     );
 
-    private TrapezoidProfile motionProfile = new TrapezoidProfile(profileConsts.get());
+    private TrapezoidProfile fastMotionProfile = new TrapezoidProfile(fastProfileConsts.get());
+    private TrapezoidProfile slowMotionProfile = new TrapezoidProfile(slowProfileConsts.get());
     private final State measuredState = new State();
     private final State setpointState = new State();
     private final State goalState = new State();
@@ -110,8 +122,11 @@ public class Pivot {
         Logger.recordOutput("Superstructure/Pivot/Angle/Measured", this.getAngleRads());
         Logger.recordOutput("Superstructure/Pivot/Velocity/Measured", this.getVelocityRadsPerSec());
 
-        if (profileConsts.hasChanged(hashCode())) {
-            this.motionProfile = new TrapezoidProfile(profileConsts.get());
+        if (fastProfileConsts.hasChanged(hashCode())) {
+            this.fastMotionProfile = new TrapezoidProfile(fastProfileConsts.get());
+        }
+        if (slowProfileConsts.hasChanged(hashCode())) {
+            this.slowMotionProfile = new TrapezoidProfile(slowProfileConsts.get());
         }
         if (ffConsts.hasChanged(hashCode())) {
             ffConsts.get().update(this.feedforward);
@@ -160,7 +175,7 @@ public class Pivot {
         this.io.stop(neutralMode);
     }
 
-    public void setAngleGoalRads(double angleRads) {
+    private void setAngleGoalRads(double angleRads, TrapezoidProfile motionProfile) {
         this.goalState.position = angleRads;
         this.goalState.velocity = 0.0;
         if (!this.motionProfiling) {
@@ -168,7 +183,7 @@ public class Pivot {
             this.setpointState.velocity = this.measuredState.velocity;
             this.motionProfiling = true;
         }
-        var newSetpointState = this.motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, this.setpointState, this.goalState);
+        var newSetpointState = motionProfile.calculate(RobotConstants.rioUpdatePeriodSecs, this.setpointState, this.goalState);
         var ffout = this.feedforward.calculateWithVelocities(this.setpointState.position, this.setpointState.velocity, newSetpointState.velocity);
         this.setpointState.position = newSetpointState.position;
         this.setpointState.velocity = newSetpointState.velocity;
@@ -182,5 +197,13 @@ public class Pivot {
         Logger.recordOutput("Superstructure/Pivot/Velocity/Setpoint", this.setpointState.velocity);
         Logger.recordOutput("Superstructure/Pivot/Angle/Goal", this.goalState.position);
         Logger.recordOutput("Superstructure/Pivot/Velocity/Goal", this.goalState.velocity);
+    }
+
+    public void setAngleGoalRadsFast(double angleRads) {
+        this.setAngleGoalRads(angleRads, this.fastMotionProfile);
+    }
+
+    public void setAngleGoalRadsSlow(double angleRads) {
+        this.setAngleGoalRads(angleRads, this.slowMotionProfile);
     }
 }

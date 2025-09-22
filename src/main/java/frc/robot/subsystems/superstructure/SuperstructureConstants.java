@@ -96,7 +96,7 @@ public class SuperstructureConstants {
                 RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
                 FieldConstants.Reef.BranchLevel.Level4.branchTipHeight.plus(Inches.of(4))
             ),
-            Rotation2d.fromDegrees(-15)
+            Rotation2d.fromDegrees(-30)
         )
     );
     public static final SuperstructureState l3State = SuperstructureState.fromCoralTipRobotSpace(
