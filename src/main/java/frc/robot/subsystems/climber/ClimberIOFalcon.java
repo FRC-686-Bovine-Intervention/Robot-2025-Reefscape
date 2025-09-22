@@ -155,6 +155,8 @@ public class ClimberIOFalcon implements ClimberIO {
             this.motorStatusSignalCache.encoder().velocity(),
             this.motorStatusSignalCache.motor().appliedVoltage(),
             this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().supplyCurrent(),
+            this.motorStatusSignalCache.motor().torqueCurrent(),
             this.motorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.motorConnected = BaseStatusSignal.isAllGood(
@@ -162,6 +164,8 @@ public class ClimberIOFalcon implements ClimberIO {
             this.motorStatusSignalCache.encoder().velocity(),
             this.motorStatusSignalCache.motor().appliedVoltage(),
             this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().supplyCurrent(),
+            this.motorStatusSignalCache.motor().torqueCurrent(),
             this.motorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.motor.updateFrom(this.motorStatusSignalCache);

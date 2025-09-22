@@ -85,7 +85,7 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setAngleGoalRads(90);
+                    this.pivot.setAngleGoalRadsFast(90);
                     this.elevator.setVolts(voltage.in(Volts));
                     this.wrist.setAngleGoalRads(0);
                 },
@@ -113,7 +113,7 @@ public class Superstructure extends SubsystemBase {
             ),
             new SysIdRoutine.Mechanism(
                 (voltage) -> {
-                    this.pivot.setAngleGoalRads(90);
+                    this.pivot.setAngleGoalRadsFast(90);
                     this.elevator.setLengthGoalMeters(ElevatorConstants.minLengthPhysical.in(Meters));
                     this.wrist.setVolts(voltage.in(Volts));
                 },
@@ -213,7 +213,7 @@ public class Superstructure extends SubsystemBase {
             }
             @Override
             public void execute() {
-                superstructure.pivot.setAngleGoalRads(setpoint.getPivotAngleRads());
+                superstructure.pivot.setAngleGoalRadsFast(setpoint.getPivotAngleRads());
                 superstructure.elevator.setLengthGoalMeters(setpoint.getElevatorLengthMeters());
                 superstructure.wrist.setAngleGoalRads(setpoint.getWristAngleRads());
             }
@@ -276,7 +276,8 @@ public class Superstructure extends SubsystemBase {
                             ),
                             Units.degreesToRadians(7.5),
                             Units.inchesToMeters(5),
-                            Units.degreesToRadians(15)
+                            Units.degreesToRadians(15),
+                            false
                         )
                     );
                 }
@@ -291,7 +292,8 @@ public class Superstructure extends SubsystemBase {
                             ),
                             Units.degreesToRadians(10),
                             Units.inchesToMeters(10),
-                            Units.degreesToRadians(5)
+                            Units.degreesToRadians(5),
+                            false
                         )
                     );
                     this.steps.add(
@@ -303,7 +305,8 @@ public class Superstructure extends SubsystemBase {
                             ),
                             Units.degreesToRadians(10),
                             Units.inchesToMeters(5),
-                            Units.degreesToRadians(10)
+                            Units.degreesToRadians(10),
+                            false
                         )
                     );
                 }
@@ -317,7 +320,8 @@ public class Superstructure extends SubsystemBase {
                             ),
                             Units.degreesToRadians(10),
                             Units.inchesToMeters(5),
-                            Units.degreesToRadians(10)
+                            Units.degreesToRadians(10),
+                            false
                         )
                     );
                 }
@@ -332,7 +336,8 @@ public class Superstructure extends SubsystemBase {
                             ),
                             Units.degreesToRadians(10),
                             Units.inchesToMeters(10),
-                            Units.degreesToRadians(5)
+                            Units.degreesToRadians(30),
+                            false
                         )
                     );
                     this.steps.add(
@@ -344,12 +349,17 @@ public class Superstructure extends SubsystemBase {
                             ),
                             Units.degreesToRadians(10),
                             Units.inchesToMeters(10),
-                            Units.degreesToRadians(10)
+                            Units.degreesToRadians(10),
+                            false
                         )
                     );
                 }
                 
-                this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0));
+                // if (targetL4) {
+                //     this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, true));
+                // } else {
+                    this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, false));
+                // }
             }
             @Override
             public void execute() {
@@ -361,7 +371,11 @@ public class Superstructure extends SubsystemBase {
                 var pivotSetpoint = currentStep.targetState.getPivotAngleRads();
                 var elevatorSetpoint = currentStep.targetState.getElevatorLengthMeters();
                 var wristSetpoint = currentStep.targetState.getWristAngleRads();
-                superstructure.pivot.setAngleGoalRads(pivotSetpoint);
+                if (currentStep.slowPivot) {
+                    superstructure.pivot.setAngleGoalRadsSlow(pivotSetpoint);
+                } else {
+                    superstructure.pivot.setAngleGoalRadsFast(pivotSetpoint);
+                }
                 superstructure.elevator.setLengthGoalMeters(elevatorSetpoint);
                 superstructure.wrist.setAngleGoalRads(wristSetpoint);
                 Logger.recordOutput("Superstructure/Setpoint/Pivot Setpoint", pivotSetpoint);
@@ -383,12 +397,14 @@ public class Superstructure extends SubsystemBase {
         public final double pivotToleranceRads;
         public final double elevatorToleranceMeters;
         public final double wristToleranceRads;
+        public final boolean slowPivot;
 
-        public SuperstructureStep(SuperstructureState targetState, double pivotToleranceRads, double elevatorToleranceMeters, double wristToleranceRads) {
+        public SuperstructureStep(SuperstructureState targetState, double pivotToleranceRads, double elevatorToleranceMeters, double wristToleranceRads, boolean slowPivot) {
             this.targetState = targetState;
             this.pivotToleranceRads = pivotToleranceRads;
             this.elevatorToleranceMeters = elevatorToleranceMeters;
             this.wristToleranceRads = wristToleranceRads;
+            this.slowPivot = slowPivot;
         }
 
         public boolean closeToTarget(SuperstructureState currentState) {

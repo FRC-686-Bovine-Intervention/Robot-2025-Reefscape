@@ -107,11 +107,15 @@ public class PivotIOFalcon implements PivotIO {
             this.leftMotorStatusSignalCache.encoder().velocity(),
             this.leftMotorStatusSignalCache.motor().appliedVoltage(),
             this.leftMotorStatusSignalCache.motor().statorCurrent(),
+            this.leftMotorStatusSignalCache.motor().supplyCurrent(),
+            this.leftMotorStatusSignalCache.motor().torqueCurrent(),
             this.leftMotorStatusSignalCache.motor().deviceTemperature(),
             this.rightMotorStatusSignalCache.encoder().position(),
             this.rightMotorStatusSignalCache.encoder().velocity(),
             this.rightMotorStatusSignalCache.motor().appliedVoltage(),
             this.rightMotorStatusSignalCache.motor().statorCurrent(),
+            this.rightMotorStatusSignalCache.motor().supplyCurrent(),
+            this.rightMotorStatusSignalCache.motor().torqueCurrent(),
             this.rightMotorStatusSignalCache.motor().deviceTemperature(),
             this.encoderStatusSignalCache.position(),
             this.encoderStatusSignalCache.velocity()
@@ -125,6 +129,8 @@ public class PivotIOFalcon implements PivotIO {
             this.leftMotorStatusSignalCache.encoder().velocity(),
             this.leftMotorStatusSignalCache.motor().appliedVoltage(),
             this.leftMotorStatusSignalCache.motor().statorCurrent(),
+            this.leftMotorStatusSignalCache.motor().supplyCurrent(),
+            this.leftMotorStatusSignalCache.motor().torqueCurrent(),
             this.leftMotorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.rightMotorConnected = BaseStatusSignal.isAllGood(
@@ -132,6 +138,8 @@ public class PivotIOFalcon implements PivotIO {
             this.rightMotorStatusSignalCache.encoder().velocity(),
             this.rightMotorStatusSignalCache.motor().appliedVoltage(),
             this.rightMotorStatusSignalCache.motor().statorCurrent(),
+            this.rightMotorStatusSignalCache.motor().supplyCurrent(),
+            this.rightMotorStatusSignalCache.motor().torqueCurrent(),
             this.rightMotorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.encoder.updateFrom(this.encoderStatusSignalCache);

@@ -10,6 +10,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -28,6 +29,7 @@ import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -585,10 +587,25 @@ public class RobotContainer {
         // Auto Drive
         driveController.leftBumper().and(() -> objectiveTracker.getCurrentObjective().isPresent()).whileTrue(drive.rotationalSubsystem.pidControlledHeading(() -> objectiveTracker.getCurrentObjective().get().getTargetPose().getOurs().getRotation()));
         final Command autoDriveScoreCoral = this.drive.simplePIDTo(
-            () -> AutoScore.getTargetPose(
-                RobotState.getInstance().getEstimatedGlobalPose(),
-                this.objectiveTracker.getScoreCoralObjective().getTargetPose().getOurs()
-            )
+            () -> {
+                var objective = this.objectiveTracker.getScoreCoralObjective();
+                var targetPose = objective.getTargetPose().getOurs();
+                var measuredPose = RobotState.getInstance().getEstimatedGlobalPose();
+                if (objective.getTargetBranch().isPresent()) {
+                    var specialPose = RobotState.getInstance().getRobotPoseFromTag(objective.getTargetBranch().get().pipe.rack.getOurs().apriltagID);
+                    if (specialPose.isPresent()) {
+                        var distanceToTarget = RobotState.getInstance().getEstimatedGlobalPose().getTranslation().getDistance(targetPose.getTranslation());
+                        var t = 1.0 - MathUtil.inverseInterpolate(Units.inchesToMeters(24.0), Units.inchesToMeters(36.0), distanceToTarget);
+                        measuredPose = RobotState.getInstance().getEstimatedGlobalPose().interpolate(specialPose.get(), t);
+                    }
+                }
+                Logger.recordOutput("DEBUG/Autoscore measured", measuredPose);
+                Logger.recordOutput("DEBUG/Autoscore target", targetPose);
+                return AutoScore.getTargetPose(
+                    measuredPose,
+                    targetPose
+                );
+            }
         ).deadlineFor(
             Commands.startEnd(
                 () -> {
@@ -928,10 +945,15 @@ public class RobotContainer {
             private final Command ejectBranch = intake.eject();
             private final Command ejectL1 = intake.ejectL1();
 
-            private final Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising);
+            private static final LoggedTunable<Time> debounceTime = LoggedTunable.from("Auto Eject/Coral/Debounce Time", Seconds::of, 0.25);
+
+            private final Debouncer debouncer = new Debouncer(debounceTime.get().in(Seconds), DebounceType.kRising);
 
             @Override
             public void run() {
+                if (debounceTime.hasChanged(this.hashCode())) {
+                    this.debouncer.setDebounceTime(debounceTime.get().in(Seconds));
+                }
                 if (intake.hasCoral() && !manualOverrides.autoEjectCoralDisabled()) {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
                     final Measure<AngleUnit> pivotTolerance;

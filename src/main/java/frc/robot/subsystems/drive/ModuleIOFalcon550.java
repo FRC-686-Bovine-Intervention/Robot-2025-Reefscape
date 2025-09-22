@@ -121,6 +121,8 @@ public class ModuleIOFalcon550 implements ModuleIO {
             this.driveMotorStatusSignalCache.encoder().velocity(),
             this.driveMotorStatusSignalCache.motor().appliedVoltage(),
             this.driveMotorStatusSignalCache.motor().statorCurrent(),
+            this.driveMotorStatusSignalCache.motor().supplyCurrent(),
+            this.driveMotorStatusSignalCache.motor().torqueCurrent(),
             this.driveMotorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.driveMotorConnected = BaseStatusSignal.isAllGood(
@@ -128,6 +130,8 @@ public class ModuleIOFalcon550 implements ModuleIO {
             this.driveMotorStatusSignalCache.encoder().velocity(),
             this.driveMotorStatusSignalCache.motor().appliedVoltage(),
             this.driveMotorStatusSignalCache.motor().statorCurrent(),
+            this.driveMotorStatusSignalCache.motor().supplyCurrent(),
+            this.driveMotorStatusSignalCache.motor().torqueCurrent(),
             this.driveMotorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.azimuthMotorConnected = true;

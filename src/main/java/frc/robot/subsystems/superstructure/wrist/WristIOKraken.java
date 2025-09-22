@@ -92,6 +92,8 @@ public class WristIOKraken implements WristIO {
             this.motorStatusSignalCache.encoder().velocity(),
             this.motorStatusSignalCache.motor().appliedVoltage(),
             this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().supplyCurrent(),
+            this.motorStatusSignalCache.motor().torqueCurrent(),
             this.motorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.encoderConnected = BaseStatusSignal.isAllGood(
@@ -103,6 +105,8 @@ public class WristIOKraken implements WristIO {
             this.motorStatusSignalCache.encoder().velocity(),
             this.motorStatusSignalCache.motor().appliedVoltage(),
             this.motorStatusSignalCache.motor().statorCurrent(),
+            this.motorStatusSignalCache.motor().supplyCurrent(),
+            this.motorStatusSignalCache.motor().torqueCurrent(),
             this.motorStatusSignalCache.motor().deviceTemperature()
         );
         inputs.encoder.updateFrom(this.encoderStatusSignalCache);

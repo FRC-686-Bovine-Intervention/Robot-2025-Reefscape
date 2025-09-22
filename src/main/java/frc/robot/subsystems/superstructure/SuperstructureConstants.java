@@ -96,7 +96,7 @@ public class SuperstructureConstants {
                 RobotConstants.centerToFrontBumper.plus(Inches.of(2)),
                 FieldConstants.Reef.BranchLevel.Level4.branchTipHeight.plus(Inches.of(4))
             ),
-            Rotation2d.fromDegrees(-15)
+            Rotation2d.fromDegrees(-30)
         )
     );
     public static final SuperstructureState l3State = SuperstructureState.fromCoralTipRobotSpace(
@@ -120,7 +120,7 @@ public class SuperstructureConstants {
     public static final SuperstructureState l1State = SuperstructureState.fromParts(
         PivotConstants.minAngle,
         ElevatorConstants.minLengthPhysical,
-        Degrees.of(20)
+        Degrees.of(25)
     );
     public static SuperstructureState getStateForBranchLevel(BranchLevel branchLevel) {
         return switch (branchLevel) {

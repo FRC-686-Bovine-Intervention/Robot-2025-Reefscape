@@ -1,5 +1,9 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Seconds;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -18,7 +22,11 @@ import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.Timer;
+import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.util.loggerUtil.tunables.LoggedTunable;
 
 public class RobotState {
     private static RobotState instance;
@@ -34,6 +42,9 @@ public class RobotState {
     private Pose2d estimatedGlobalPose = Pose2d.kZero;
 
     private final SimpleMatrix forwardKinematics;
+
+    private static final LoggedTunable<Time> txtyStaleTime = LoggedTunable.from("RobotState/TxTy Stale Time", Seconds::of, 0.2);
+    private final Map<Integer, TxTyObservation> txtyObservations = new HashMap<>(FieldConstants.apriltagLayout.getTags().size());
 
     private RobotState() {
         this.qStdDevs = new Matrix<>(Nat.N3(), Nat.N1());
@@ -51,6 +62,11 @@ public class RobotState {
     public void log() {
         Logger.recordOutput("RobotState/OdometryPose", this.odometryPose);
         Logger.recordOutput("RobotState/EstimatedGlobalPose", this.getEstimatedGlobalPose());
+
+        for (var observation : this.txtyObservations.values()) {
+            Logger.recordOutput("RobotState/TxTyObservations/Timestamps/Tag " + Integer.toString(observation.tagID()), observation.timestamp());
+            Logger.recordOutput("RobotState/TxTyObservations/Poses/Tag " + Integer.toString(observation.tagID()), observation.pose());
+        }
     }
 
     public Pose2d getEstimatedGlobalPose() {
@@ -160,6 +176,34 @@ public class RobotState {
         this.estimatedGlobalPose = globalEstimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
     }
 
+    public void addTxTyObservation(TxTyObservation observation) {
+        var tagID = observation.tagID();
+        var previousObservation = this.txtyObservations.get(tagID);
+        if (previousObservation == null || observation.timestamp() > previousObservation.timestamp()) {
+            this.txtyObservations.put(tagID, observation);
+        }
+    }
+
+    public Optional<Pose2d> getRobotPoseFromTag(int tagID) {
+        var observation = this.txtyObservations.get(tagID);
+
+        if (observation == null) {
+            return Optional.empty();
+        }
+
+        if (Timer.getTimestamp() - observation.timestamp() >= txtyStaleTime.get().in(Seconds)) {
+            return Optional.empty();
+        }
+        
+        var odometrySample = this.poseBuffer.getSample(observation.timestamp());
+
+        if (odometrySample.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(observation.pose().plus(new Transform2d(odometrySample.get(), this.odometryPose)));
+    }
+
     public static record OdometryObservation(
         double timestamp,
         Optional<Rotation3d> gyroRotation,
@@ -170,5 +214,10 @@ public class RobotState {
         double timestamp,
         Pose2d pose,
         Matrix<N3, N1> stdDevs
+    ) {}
+    public static record TxTyObservation(
+        double timestamp,
+        int tagID,
+        Pose2d pose
     ) {}
 }
