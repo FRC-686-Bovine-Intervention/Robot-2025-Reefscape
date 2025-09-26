@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotState;
 import frc.robot.RobotState.TxTyObservation;
 import frc.robot.RobotState.VisionObservation;
@@ -81,11 +82,12 @@ public class ApriltagVision {
                         var cameraToTag = new Transform3d(translationToTarget, tagRotationRelativeToCamera);
                         var cameraPose = tagPose.transformBy(cameraToTag.inverse());
                         var robotPose = cameraPose.transformBy(pipeline.camera.mount.getRobotRelative().inverse());
+                        var correctedObservationTimestamp = Math.min(frame.timestamp, Timer.getTimestamp());
                         
                         allTxTyObservations.put(
                             tagID,
                             new TxTyObservation(
-                                frame.timestamp,
+                                correctedObservationTimestamp,
                                 tagID,
                                 robotPose.toPose2d()
                             )
