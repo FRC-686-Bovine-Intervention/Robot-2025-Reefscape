@@ -64,8 +64,8 @@ public class QuestNav extends VirtualSubsystem {
 
         io.cleanUp();
 
-        notConnectedAlert.set(!inputs.isConnected);
-        lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
+        // notConnectedAlert.set(!inputs.isConnected);
+        // lowBatteryAlert.set(inputs.isConnected && inputs.batteryPercent < 25);
         connectionAnimation.setStatus(inputs.isConnected);
 
         if (!calibrationInProgress && DriverStation.isDisabled()) {
