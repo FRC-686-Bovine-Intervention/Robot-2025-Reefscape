@@ -1,7 +1,6 @@
 package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Radians;
 
@@ -144,12 +143,12 @@ public class SuperstructureConstants {
     );
     public static final SuperstructureState netForwardState = SuperstructureState.fromParts(
         Degrees.of(90),
-        ElevatorConstants.maxLengthSoftware.minus(Feet.of(2)),
+        ElevatorConstants.maxLengthSoftware,
         Degrees.of(60)
     );
     public static final SuperstructureState netBackwardState = SuperstructureState.fromParts(
         Degrees.of(90),
-        ElevatorConstants.maxLengthSoftware.minus(Feet.of(2)),
+        ElevatorConstants.maxLengthSoftware,
         Degrees.of(120)
     );
     public static final SuperstructureState netAutoPrepareState = SuperstructureState.fromParts(
