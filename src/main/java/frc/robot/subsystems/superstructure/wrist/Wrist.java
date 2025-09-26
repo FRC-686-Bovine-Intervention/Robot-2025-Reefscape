@@ -34,7 +34,7 @@ public class Wrist {
         RadiansPerSecondPerSecond,
         new TrapezoidProfile.Constraints(
             1080,
-            2160
+            1080
         )
     );
     private static final LoggedTunable<FFConstants> ffConsts = LoggedTunable.from(
