@@ -416,7 +416,7 @@ public class RobotContainer {
         );
         new Trigger(DriverStation::isDisabled).and(() -> driveJoystick.magnitude() > 0).whileTrue(drive.coast());
 
-        this.superstructure.setDefaultCommand(this.superstructure.goToSetpointSequenced(SuperstructureConstants.idleState));
+        this.superstructure.setDefaultCommand(this.superstructure.goToStatePathfinded(SuperstructureConstants.idleState));
         this.intake.setDefaultCommand(this.intake.idle());
         this.climber.setDefaultCommand(this.climber.idle());
 
@@ -457,8 +457,8 @@ public class RobotContainer {
         // Coral Intake
         final Command coralIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command forwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationForwardState).raceWith(intake.intakeCoral().until(intake::hasCoral));
-                private final Command backwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.coralStationBackwardState).raceWith(intake.intakeCoral().until(intake::hasCoral));
+                private final Command forwardCommand = superstructure.goToStatePathfinded(SuperstructureConstants.coralStationForwardState).raceWith(intake.intakeCoral().until(intake::hasCoral));
+                private final Command backwardCommand = superstructure.goToStatePathfinded(SuperstructureConstants.coralStationBackwardState).raceWith(intake.intakeCoral().until(intake::hasCoral));
                 public Command get() {
                     return switch (objectiveTracker.getIntakeCoralObjective().getTargetDirection()) {
                         case Forward -> this.forwardCommand;
@@ -473,8 +473,8 @@ public class RobotContainer {
         // Algae Intake
         final Command stagedAlgaeIntakeCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command highCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.highAlgaeState).alongWith(intake.intakeAlgae());
-                private final Command lowCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.lowAlgaeState).alongWith(intake.intakeAlgae());
+                private final Command highCommand = superstructure.goToStatePathfinded(SuperstructureConstants.highAlgaeState).alongWith(intake.intakeAlgae());
+                private final Command lowCommand = superstructure.goToStatePathfinded(SuperstructureConstants.lowAlgaeState).alongWith(intake.intakeAlgae());
                 public Command get() {
                     var intakeAlgaeObjective = objectiveTracker.getIntakeAlgaeObjective();
                     if (intakeAlgaeObjective.isEmpty()) {return this.lowCommand;}
@@ -487,7 +487,7 @@ public class RobotContainer {
             Set.of(this.superstructure, this.intake)
         ).deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.IntakeAlgae)).withName("Intake Staged Algae");
         final Command groundAlgaeIntakeCommand = superstructure
-            .goToSetpointSequenced(SuperstructureConstants.groundAlgaeState)
+            .goToStatePathfinded(SuperstructureConstants.groundAlgaeState)
             .alongWith(intake.intakeAlgae())
             .withName("Intake Ground Algae")
         ;
@@ -518,10 +518,10 @@ public class RobotContainer {
         // Extend
         final Command coralScoreCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command l1Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l1State);
-                private final Command l2Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l2State);
-                private final Command l3Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l3State);
-                private final Command l4Command = superstructure.goToSetpointSequenced(SuperstructureConstants.l4State);
+                private final Command l1Command = superstructure.goToStatePathfinded(SuperstructureConstants.l1State);
+                private final Command l2Command = superstructure.goToStatePathfinded(SuperstructureConstants.l2State);
+                private final Command l3Command = superstructure.goToStatePathfinded(SuperstructureConstants.l3State);
+                private final Command l4Command = superstructure.goToStatePathfinded(SuperstructureConstants.l4State);
                 public Command get() {
                     var scoreCoralObjective = objectiveTracker.getScoreCoralObjective();
                     if (scoreCoralObjective.getTargetBranch().isEmpty()) {return this.l1Command;}
@@ -541,8 +541,8 @@ public class RobotContainer {
         ).withName("Extend to Reef");
         final Command netCommand = new ContinuouslySwappingCommand(
             new Supplier<Command>() {
-                private final Command forwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.netForwardState);
-                private final Command backwardCommand = superstructure.goToSetpointSequenced(SuperstructureConstants.netBackwardState);
+                private final Command forwardCommand = superstructure.goToStatePathfinded(SuperstructureConstants.netForwardState);
+                private final Command backwardCommand = superstructure.goToStatePathfinded(SuperstructureConstants.netBackwardState);
                 public Command get() {
                     return switch (objectiveTracker.getScoreNetObjective().getTargetDirection()) {
                         case Forward -> this.forwardCommand;
@@ -553,7 +553,7 @@ public class RobotContainer {
             Set.of(superstructure)
         ).withName("Extend to Net");
         final Command processorCommand = superstructure
-            .goToSetpointSequenced(SuperstructureConstants.processorState)
+            .goToStatePathfinded(SuperstructureConstants.processorState)
             .deadlineFor(objectiveTracker.setTypeOverrideCommand(ObjectiveType.ScoreProcessor))
             .withName("Extend to Processor")
         ;
@@ -665,7 +665,7 @@ public class RobotContainer {
         driveController.start().toggleOnTrue(
             Commands.parallel(
                 this.climber.prepareClimb(),
-                this.superstructure.goToSetpointSequenced(SuperstructureConstants.prepareClimbingState)
+                this.superstructure.goToStatePathfinded(SuperstructureConstants.prepareClimbingState)
             )
             .deadlineFor(
                 this.objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)
@@ -674,7 +674,7 @@ public class RobotContainer {
         this.driveController.back().toggleOnTrue(
             Commands.parallel(
                 this.climber.climb(),
-                this.superstructure.goToSetpointSequenced(SuperstructureConstants.climbingState)
+                this.superstructure.goToStatePathfinded(SuperstructureConstants.climbingState)
             )
             .deadlineFor(
                 this.objectiveTracker.setTypeOverrideCommand(ObjectiveType.Climb)

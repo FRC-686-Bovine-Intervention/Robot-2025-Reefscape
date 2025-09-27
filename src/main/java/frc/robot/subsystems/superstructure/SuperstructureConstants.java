@@ -98,6 +98,11 @@ public class SuperstructureConstants {
             Rotation2d.fromDegrees(-30)
         )
     );
+    public static final SuperstructureState l4PreState = SuperstructureState.newConstrained(
+        l4State.getPivotAngleRads(),
+        l4State.getElevatorLengthMeters(),
+        0
+    );
     public static final SuperstructureState l3State = SuperstructureState.fromCoralTipRobotSpace(
         new Pose2d(
             new Translation2d(
@@ -107,6 +112,11 @@ public class SuperstructureConstants {
             Rotation2d.fromDegrees(-15)
         )
     );
+    public static final SuperstructureState l3l4TransferState = SuperstructureState.newConstrained(
+        l4State.getPivotAngleRads(),
+        l3State.getElevatorLengthMeters(),
+        0
+    );
     public static final SuperstructureState l2State = SuperstructureState.fromCoralTipRobotSpace(
         new Pose2d(
             new Translation2d(
@@ -115,6 +125,11 @@ public class SuperstructureConstants {
             ),
             Rotation2d.fromDegrees(-15)
         )
+    );
+    public static final SuperstructureState l2l4TransferState = SuperstructureState.newConstrained(
+        l4State.getPivotAngleRads(),
+        l2State.getElevatorLengthMeters(),
+        0
     );
     public static final SuperstructureState l1State = SuperstructureState.fromParts(
         PivotConstants.minAngle,
@@ -151,7 +166,22 @@ public class SuperstructureConstants {
         ElevatorConstants.maxLengthSoftware,
         Degrees.of(120)
     );
-    public static final SuperstructureState netAutoPrepareState = SuperstructureState.fromParts(
+    public static final SuperstructureState netForwardPreState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        ElevatorConstants.maxLengthSoftware,
+        Degrees.of(120)
+    );
+    public static final SuperstructureState netBackwardPreState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        ElevatorConstants.maxLengthSoftware,
+        Degrees.of(60)
+    );
+    public static final SuperstructureState highAlgaeHoldState = SuperstructureState.fromParts(
+        Degrees.of(90),
+        Inches.of(12),
+        Degrees.of(90)
+    );
+    public static final SuperstructureState lowAlgaeHoldState = SuperstructureState.fromParts(
         Degrees.of(90),
         Inches.of(12),
         Degrees.of(90)

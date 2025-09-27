@@ -87,7 +87,7 @@ public class AutoCommons {
                 ),
                 Commands.sequence(
                     Commands.waitUntil(() -> GeomUtil.isNear(endTranslation, RobotState.getInstance().getEstimatedGlobalPose().getTranslation(), Feet.of(6))),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + branch.getName()).asProxy()
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to " + branch.getName()).asProxy()
                 ),
                 Commands.sequence(
                     drive.followBluePath(pathToReef).withName("Follow Path to " + branch.getName()).asProxy(),
@@ -148,8 +148,8 @@ public class AutoCommons {
                     )
                 ),
                 Commands.sequence(
-                    superstructure.goToSetpointSequenced(SuperstructureConstants.netAutoPrepareState).until(() -> GeomUtil.isNear(extendPose, RobotState.getInstance().getEstimatedGlobalPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Net").asProxy()
+                    superstructure.goToStatePathfinded(SuperstructureConstants.highAlgaeHoldState).until(() -> GeomUtil.isNear(extendPose, RobotState.getInstance().getEstimatedGlobalPose(), Feet.of(6), Degrees.of(90))).withName("Prepare Net").asProxy(),
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to Net").asProxy()
                 )
             )
         ;
@@ -175,7 +175,7 @@ public class AutoCommons {
                         drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Coral Station").asProxy()
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to Coral Station").asProxy()
                 )
             ;
         } else {
@@ -186,7 +186,7 @@ public class AutoCommons {
                         drive.followBluePath(pathToStation).withName("Follow Path to Coral Station").asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Coral Station").asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to Coral Station").asProxy()
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to Coral Station").asProxy()
                 )
             ;
         }
@@ -211,7 +211,7 @@ public class AutoCommons {
                         drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
                 )
             ;
         } else {
@@ -222,7 +222,7 @@ public class AutoCommons {
                         drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
                 )
             ;
         }
@@ -250,7 +250,7 @@ public class AutoCommons {
                         // drive.followBluePath(pathToReef).withName("Follow Path to Algae " + stagedAlgae.rack.id).asProxy(),
                         // drive.simplePIDTo(() -> end).withName("PID to Algae " + stagedAlgae.rack.id).asProxy()
                     ),
-                    superstructure.goToSetpointSequenced(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
+                    superstructure.goToStatePathfinded(targetState).withName("Extend to " + stagedAlgae.level.name() + " Algae").asProxy()
                 )
             ;
         } else {

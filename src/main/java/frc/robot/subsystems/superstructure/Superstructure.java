@@ -4,17 +4,18 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -39,6 +40,12 @@ public class Superstructure extends SubsystemBase {
     public final Wrist wrist;
 
     private final SuperstructureState measuredState = SuperstructureState.newUnconstrained(0.0, 0.0, 0.0);
+
+    private final Graph<SuperstructureState, Command> graph;
+    private final HashMap<SuperstructureState, HashMap<SuperstructureState, Optional<PathfindingResult>>> graphPathfindingCache;
+
+    private SuperstructureState lastMeasuredGraphVertex;
+    private SuperstructureState targetVertex;
 
     public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         System.out.println("[Init Superstructure] Instantiating Superstructure");
@@ -130,6 +137,90 @@ public class Superstructure extends SubsystemBase {
         SmartDashboard.putData("SysID/Superstructure/Wrist/Quasi Reverse", wristRoutine.quasistatic(SysIdRoutine.Direction.kReverse));
         SmartDashboard.putData("SysID/Superstructure/Wrist/Dynamic Forward", wristRoutine.dynamic(SysIdRoutine.Direction.kForward));
         SmartDashboard.putData("SysID/Superstructure/Wrist/Dynamic Reverse", wristRoutine.dynamic(SysIdRoutine.Direction.kReverse));
+
+
+        this.graph = new DefaultDirectedWeightedGraph<>(Command.class);
+        var allSuperstructureStates = new SuperstructureState[] {
+            SuperstructureConstants.idleState,
+            SuperstructureConstants.coralStationForwardState,
+            SuperstructureConstants.coralStationBackwardState,
+            SuperstructureConstants.l1State,
+            SuperstructureConstants.l2State,
+            SuperstructureConstants.l2l4TransferState,
+            SuperstructureConstants.l3State,
+            SuperstructureConstants.l3l4TransferState,
+            SuperstructureConstants.l4PreState,
+            SuperstructureConstants.l4State,
+            SuperstructureConstants.groundAlgaeState,
+            SuperstructureConstants.lowAlgaeState,
+            SuperstructureConstants.lowAlgaeHoldState,
+            SuperstructureConstants.highAlgaeState,
+            SuperstructureConstants.highAlgaeHoldState,
+            SuperstructureConstants.processorState,
+            SuperstructureConstants.netForwardPreState,
+            SuperstructureConstants.netForwardState,
+            SuperstructureConstants.netBackwardPreState,
+            SuperstructureConstants.netBackwardState,
+            SuperstructureConstants.prepareClimbingState,
+            SuperstructureConstants.climbingState,
+            SuperstructureConstants.selfRightingState,
+        };
+
+        for (var state : allSuperstructureStates) {
+            this.graph.addVertex(state);
+        }
+
+
+        // Graph Edges
+        // | Coral Station Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.coralStationForwardState);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.coralStationBackwardState);
+        this.addBidirectionalEdge(SuperstructureConstants.coralStationForwardState, SuperstructureConstants.coralStationBackwardState);
+        // | Coral Reef Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l1State);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l2State);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l3State);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l4PreState);
+        this.addBidirectionalEdge(SuperstructureConstants.l4PreState, SuperstructureConstants.l4State);
+        this.addBidirectionalEdge(SuperstructureConstants.l2State, SuperstructureConstants.l2l4TransferState);
+        this.addBidirectionalEdge(SuperstructureConstants.l3State, SuperstructureConstants.l3l4TransferState);
+        this.addBidirectionalEdge(SuperstructureConstants.l2l4TransferState, SuperstructureConstants.l4PreState);
+        this.addBidirectionalEdge(SuperstructureConstants.l3l4TransferState, SuperstructureConstants.l4PreState);
+        // | Algae Reef Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.lowAlgaeState);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.highAlgaeState);
+        this.addBidirectionalEdge(SuperstructureConstants.lowAlgaeState, SuperstructureConstants.lowAlgaeHoldState);
+        this.addBidirectionalEdge(SuperstructureConstants.highAlgaeState, SuperstructureConstants.highAlgaeHoldState);
+        // | Algae Net Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.netForwardPreState);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.netBackwardPreState);
+        this.addBidirectionalEdge(SuperstructureConstants.netForwardPreState, SuperstructureConstants.netForwardState);
+        this.addBidirectionalEdge(SuperstructureConstants.netBackwardPreState, SuperstructureConstants.netBackwardState);
+        this.addBidirectionalEdge(SuperstructureConstants.lowAlgaeHoldState, SuperstructureConstants.netForwardPreState);
+        this.addBidirectionalEdge(SuperstructureConstants.lowAlgaeHoldState, SuperstructureConstants.netBackwardPreState);
+        this.addBidirectionalEdge(SuperstructureConstants.highAlgaeState, SuperstructureConstants.netForwardPreState);
+        this.addBidirectionalEdge(SuperstructureConstants.highAlgaeState, SuperstructureConstants.netBackwardPreState);
+        // | Algae Ground Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.groundAlgaeState);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.processorState);
+        this.addBidirectionalEdge(SuperstructureConstants.groundAlgaeState, SuperstructureConstants.processorState);
+        // | Climb Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.prepareClimbingState);
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.climbingState);
+        this.addBidirectionalEdge(SuperstructureConstants.prepareClimbingState, SuperstructureConstants.climbingState);
+        // | Self Right Edges
+        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.selfRightingState);
+
+
+
+        this.graphPathfindingCache = new HashMap<>(allSuperstructureStates.length);
+        for (var fromState : allSuperstructureStates) {
+            var toHashMap = new HashMap<SuperstructureState, Optional<PathfindingResult>>(allSuperstructureStates.length);
+            for (var toState : allSuperstructureStates) {
+                toHashMap.put(toState, this.pathfind(fromState, toState));
+            }
+            this.graphPathfindingCache.put(fromState, toHashMap);
+        }
     }
 
     @Override
@@ -204,18 +295,18 @@ public class Superstructure extends SubsystemBase {
         };
     }
 
-    public Command directToSetpoint(SuperstructureState setpoint) {
+    public Command directToState(SuperstructureState goalState) {
         final var superstructure = this;
         return new Command() {
             {
                 this.addRequirements(superstructure);
-                this.setName("Direct to Setpoint");
+                this.setName("Direct to State");
             }
             @Override
             public void execute() {
-                superstructure.pivot.setAngleGoalRadsFast(setpoint.getPivotAngleRads());
-                superstructure.elevator.setLengthGoalMeters(setpoint.getElevatorLengthMeters());
-                superstructure.wrist.setAngleGoalRads(setpoint.getWristAngleRads());
+                superstructure.pivot.setAngleGoalRadsFast(goalState.getPivotAngleRads());
+                superstructure.elevator.setLengthGoalMeters(goalState.getElevatorLengthMeters());
+                superstructure.wrist.setAngleGoalRads(goalState.getWristAngleRads());
             }
             @Override
             public void end(boolean interrupted) {
@@ -226,163 +317,25 @@ public class Superstructure extends SubsystemBase {
         };
     }
 
-    public Command goToSetpointSequenced(SuperstructureState setpointState) {
+    public Command goToStatePathfinded(SuperstructureState goalState) {
         final var superstructure = this;
         return new Command() {
             {
                 this.addRequirements(superstructure);
-                this.setName("Superstructure Setpoint Sequenced");
+                this.setName("Go To State Pathfinded");
             }
-            private final ArrayList<SuperstructureStep> steps = new ArrayList<>(4);
-            private int currentStepIndex = 0;
+
             @Override
             public void initialize() {
-                this.currentStepIndex = 0;
-                this.steps.clear();
-                final var initialState = superstructure.getCurrentMeasuredState();
+                if (superstructure.targetVertex != superstructure.lastMeasuredGraphVertex) {
+                    var fromTargetPathfindingResult = superstructure.pathfindFromCache(superstructure.targetVertex, goalState);
+                    var fromLastVertexPathfindingResult = superstructure.pathfindFromCache(superstructure.lastMeasuredGraphVertex, goalState);
+                    if (fromTargetPathfindingResult.get().totalWeight() > fromLastVertexPathfindingResult.get().totalWeight()) {
 
-                final var initialVeryLow =   initialState.getElevatorLengthMeters() < +Units.inchesToMeters(13);
-                final var initialLow =       initialState.getElevatorLengthMeters() < +Units.inchesToMeters(25);
-                final var initialHigh =      initialState.getElevatorLengthMeters() > +Units.inchesToMeters(45);
-                final var initialWristUp =   initialState.getWristAngleRads()       > +Units.degreesToRadians(45);
-                final var initialWristDown = initialState.getWristAngleRads()       < -Units.degreesToRadians(60);
-                final var initialClimbing =  initialState.getWristAngleRads() > +Units.degreesToRadians(70) && initialState.getPivotAngleRads() > +Units.degreesToRadians(90);
-                
-                final var targetVeryLow =    setpointState.getElevatorLengthMeters() < +Units.inchesToMeters(13);
-                final var targetLow =        setpointState.getElevatorLengthMeters() < +Units.inchesToMeters(25);
-                final var targetHigh =       setpointState.getElevatorLengthMeters() > +Units.inchesToMeters(45);
-                final var targetWristDown =  setpointState.getWristAngleRads()       < -Units.degreesToRadians(60);
-
-                Logger.recordOutput("Superstructure/Sequencing/initialVeryLow", initialVeryLow);
-                Logger.recordOutput("Superstructure/Sequencing/initialLow", initialLow);
-                Logger.recordOutput("Superstructure/Sequencing/initialHigh", initialHigh);
-                Logger.recordOutput("Superstructure/Sequencing/initialWristUp", initialWristUp);
-                Logger.recordOutput("Superstructure/Sequencing/initialWristDown", initialWristDown);
-                Logger.recordOutput("Superstructure/Sequencing/initialClimbing", initialClimbing);
-                Logger.recordOutput("Superstructure/Sequencing/targetVeryLow", targetVeryLow);
-                Logger.recordOutput("Superstructure/Sequencing/targetLow", targetLow);
-                Logger.recordOutput("Superstructure/Sequencing/targetHigh", targetHigh);
-                Logger.recordOutput("Superstructure/Sequencing/targetWristDown", targetWristDown);
-
-                if (initialClimbing) {
-
-                } else if (initialLow && initialWristUp) { // Remove Coral from station
-                    this.steps.add(
-                        new SuperstructureStep(
-                            SuperstructureState.newConstrained(
-                                Units.degreesToRadians(60),
-                                ElevatorConstants.minLengthPhysical.in(Meters),
-                                initialState.getWristAngleRads()
-                            ),
-                            Units.degreesToRadians(7.5),
-                            Units.inchesToMeters(5),
-                            Units.degreesToRadians(15),
-                            false
-                        )
-                    );
+                    }
                 }
-
-                if (initialLow && targetHigh) { // Extend Safely
-                    this.steps.add(
-                        new SuperstructureStep(
-                            SuperstructureState.fromParts(
-                                MathUtil.clamp(setpointState.getPivotAngleRads(), Units.degreesToRadians(30), Units.degreesToRadians(110)),
-                                initialState.getElevatorLengthMeters(),
-                                MathUtil.clamp(setpointState.getWristAngleRads(), Units.degreesToRadians(80), Units.degreesToRadians(90))
-                            ),
-                            Units.degreesToRadians(10),
-                            Units.inchesToMeters(10),
-                            Units.degreesToRadians(5),
-                            false
-                        )
-                    );
-                    this.steps.add(
-                        new SuperstructureStep(
-                            SuperstructureState.fromParts(
-                                MathUtil.clamp(setpointState.getPivotAngleRads(), Units.degreesToRadians(30), Units.degreesToRadians(110)),
-                                setpointState.getElevatorLengthMeters(),
-                                MathUtil.clamp(setpointState.getWristAngleRads(), Units.degreesToRadians(80), Units.degreesToRadians(90))
-                            ),
-                            Units.degreesToRadians(10),
-                            Units.inchesToMeters(5),
-                            Units.degreesToRadians(10),
-                            false
-                        )
-                    );
-                }
-                if (targetVeryLow && initialVeryLow && !initialWristDown && targetWristDown) {
-                    this.steps.add(
-                        new SuperstructureStep(
-                            SuperstructureState.newConstrained(
-                                setpointState.getPivotAngleRads(),
-                                initialState.getElevatorLengthMeters(),
-                                setpointState.getWristAngleRads()
-                            ),
-                            Units.degreesToRadians(10),
-                            Units.inchesToMeters(5),
-                            Units.degreesToRadians(10),
-                            false
-                        )
-                    );
-                }
-
-                if (initialHigh && targetLow) { // Retract Safely
-                    this.steps.add(
-                        new SuperstructureStep(
-                            SuperstructureState.fromParts(
-                                MathUtil.clamp(initialState.getPivotAngleRads(), Units.degreesToRadians(75), Units.degreesToRadians(90)),
-                                initialState.getElevatorLengthMeters(),
-                                Units.degreesToRadians(90)
-                            ),
-                            Units.degreesToRadians(10),
-                            Units.inchesToMeters(10),
-                            Units.degreesToRadians(30),
-                            false
-                        )
-                    );
-                    this.steps.add(
-                        new SuperstructureStep(
-                            SuperstructureState.fromParts(
-                                MathUtil.clamp(initialState.getPivotAngleRads(), Units.degreesToRadians(75), Units.degreesToRadians(90)),
-                                setpointState.getElevatorLengthMeters(),
-                                Units.degreesToRadians(90)
-                            ),
-                            Units.degreesToRadians(10),
-                            Units.inchesToMeters(10),
-                            Units.degreesToRadians(10),
-                            false
-                        )
-                    );
-                }
-                
-                // if (targetL4) {
-                //     this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, true));
-                // } else {
-                    this.steps.add(new SuperstructureStep(setpointState, 0.0, 0.0, 0.0, false));
-                // }
             }
-            @Override
-            public void execute() {
-                var currentStep = this.steps.get(this.currentStepIndex);
-                if (this.currentStepIndex < this.steps.size() - 1 && currentStep.closeToTarget(superstructure.getCurrentMeasuredState())) {
-                    this.currentStepIndex += 1;
-                    currentStep = this.steps.get(this.currentStepIndex);
-                }
-                var pivotSetpoint = currentStep.targetState.getPivotAngleRads();
-                var elevatorSetpoint = currentStep.targetState.getElevatorLengthMeters();
-                var wristSetpoint = currentStep.targetState.getWristAngleRads();
-                if (currentStep.slowPivot) {
-                    superstructure.pivot.setAngleGoalRadsSlow(pivotSetpoint);
-                } else {
-                    superstructure.pivot.setAngleGoalRadsFast(pivotSetpoint);
-                }
-                superstructure.elevator.setLengthGoalMeters(elevatorSetpoint);
-                superstructure.wrist.setAngleGoalRads(wristSetpoint);
-                Logger.recordOutput("Superstructure/Setpoint/Pivot Setpoint", pivotSetpoint);
-                Logger.recordOutput("Superstructure/Setpoint/Elevator Setpoint", elevatorSetpoint);
-                Logger.recordOutput("Superstructure/Setpoint/Wrist Setpoint", wristSetpoint);
-                Logger.recordOutput("Superstructure/Setpoint/Mech Transforms", currentStep.targetState.getMechTransforms());
-            }
+            
             @Override
             public void end(boolean interrupted) {
                 superstructure.pivot.stop(NeutralMode.DEFAULT);
@@ -390,26 +343,6 @@ public class Superstructure extends SubsystemBase {
                 superstructure.wrist.stop(NeutralMode.DEFAULT);
             }
         };
-    }
-
-    private static class SuperstructureStep {
-        public final SuperstructureState targetState;
-        public final double pivotToleranceRads;
-        public final double elevatorToleranceMeters;
-        public final double wristToleranceRads;
-        public final boolean slowPivot;
-
-        public SuperstructureStep(SuperstructureState targetState, double pivotToleranceRads, double elevatorToleranceMeters, double wristToleranceRads, boolean slowPivot) {
-            this.targetState = targetState;
-            this.pivotToleranceRads = pivotToleranceRads;
-            this.elevatorToleranceMeters = elevatorToleranceMeters;
-            this.wristToleranceRads = wristToleranceRads;
-            this.slowPivot = slowPivot;
-        }
-
-        public boolean closeToTarget(SuperstructureState currentState) {
-            return currentState.isNear(this.targetState, this.pivotToleranceRads, this.elevatorToleranceMeters, this.wristToleranceRads);
-        }
     }
 
     public static enum Direction {
@@ -522,5 +455,39 @@ public class Superstructure extends SubsystemBase {
                 (this.backward == null) ? null : AllianceFlipUtil.flip(this.backward, flipType)
             );
         }
+    }
+
+    private void addEdge(SuperstructureState fromState, SuperstructureState toState) {
+        this.graph.addEdge(fromState, toState, this.directToState(toState));
+    }
+
+    private void addBidirectionalEdge(SuperstructureState fromState, SuperstructureState toState) {
+        this.addEdge(fromState, toState);
+        this.addEdge(toState, fromState);
+    }
+
+    private Optional<PathfindingResult> pathfindFromCache(SuperstructureState fromState, SuperstructureState toState) {
+        var toHashMap = this.graphPathfindingCache.get(fromState);
+        if (toHashMap == null) {
+            return Optional.empty();
+        }
+        var edge = toHashMap.get(toState);
+        if (edge == null) {
+            return Optional.empty();
+        }
+        return edge;
+    }
+
+    private Optional<PathfindingResult> pathfind(SuperstructureState fromState, SuperstructureState toState) {
+
+
+        return Optional.empty();
+    }
+
+    private static record PathfindingResult(
+        double totalWeight,
+        Command[] edgePath
+    ) {
+
     }
 }
