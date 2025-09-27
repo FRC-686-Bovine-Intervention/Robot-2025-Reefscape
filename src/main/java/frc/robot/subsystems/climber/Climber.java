@@ -31,7 +31,7 @@ public class Climber extends SubsystemBase {
 
     private static final LoggedTunable<Voltage> idleVoltage = LoggedTunable.from("Climber/Idle Voltage", Volts::of, -1);
     private static final LoggedTunable<Angle> ratchetEngageAngle = LoggedTunable.from("Climber/Ratchet/Engage Angle", Degrees::of, 55);
-    private static final LoggedTunable<Angle> ratchetDisengageAngle = LoggedTunable.from("Climber/Ratchet/Disengage Angle", Degrees::of, 100);
+    private static final LoggedTunable<Angle> ratchetDisengageAngle = LoggedTunable.from("Climber/Ratchet/Disengage Angle", Degrees::of, 105);
     private static final LoggedTunable<Angle> deployAngle = LoggedTunable.from("Climber/Deploy Angle", Rotations::of, 5.5);
     private static final LoggedTunable<Angle> climbAngle = LoggedTunable.from("Climber/Climb Angle", Rotations::of, 2.65);
     private static final LoggedTunable<Angle> climbTolerance = LoggedTunable.from("Climber/Climb Tolerance", Rotations::of, 0.05);
