@@ -113,8 +113,8 @@ public class ClimberIOFalcon implements ClimberIO {
             .withReverseLimitEnable(true)
             .withReverseLimitSource(ReverseLimitSourceValue.LimitSwitchPin)
             .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen)
-            .withReverseLimitAutosetPositionEnable(true)
-            .withReverseLimitAutosetPositionValue(ClimberConstants.climberMinimumAngle)
+            // .withReverseLimitAutosetPositionEnable(true)
+            // .withReverseLimitAutosetPositionValue(ClimberConstants.climberMinimumAngle)
         ;
 
         motorConfig.Feedback
@@ -237,6 +237,11 @@ public class ClimberIOFalcon implements ClimberIO {
     public void stop(Optional<NeutralMode> neutralMode) {
         var controlRequest = NeutralMode.selectControlRequest(neutralMode, this.neutralOutRequest, this.coastOutRequest, this.staticBrakeRequest);
         this.motor.setControl(controlRequest);
+    }
+
+    @Override
+    public void setMotorEncoderPosRads(double angleRads) {
+        this.motor.setPosition(Units.radiansToRotations(angleRads));
     }
 
     @Override

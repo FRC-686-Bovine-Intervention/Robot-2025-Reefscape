@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.leds.Leds;
+import frc.util.EdgeDetector;
 import frc.util.LoggedTracer;
 import frc.util.NeutralMode;
 import frc.util.loggerUtil.tunables.LoggedTunable;
@@ -49,6 +50,8 @@ public class Climber extends SubsystemBase {
     private final Alert motorDisconnectedAlert = new Alert("Climber/Alerts", "Motor Disconnected", AlertType.kError);
     private final Alert motorDisconnectedGlobalAlert = new Alert("Climber Motor Disconnected!", AlertType.kError);
 
+    private final EdgeDetector zeroSensorEdgeDetector = new EdgeDetector();
+
     private boolean ratchetEngaged = true;
 
     public Climber(ClimberIO io) {
@@ -67,8 +70,15 @@ public class Climber extends SubsystemBase {
         this.angleRads = ClimberConstants.sensorToMechanismRatio.applyUnsigned(this.inputs.motor.encoder.getPositionRads());
         this.velocityRadsPerSec = ClimberConstants.sensorToMechanismRatio.applyUnsigned(this.inputs.motor.encoder.getVelocityRadsPerSec());
 
+        this.zeroSensorEdgeDetector.update(this.inputs.sensor);
+
         Logger.recordOutput("Climber/Position", this.getAngleRads());
         Logger.recordOutput("Climber/Ratchet Engaged", this.ratchetEngaged);
+        Logger.recordOutput("Climber/Zero Sensor", this.inputs.sensor);
+
+        if (this.zeroSensorEdgeDetector.risingEdge()) {
+            this.io.setMotorEncoderPosRads(ClimberConstants.climberMinimumAngle.in(Radians));
+        }
 
         var percentToDeploy = this.getAngleRads() / deployAngle.get().in(Radians);
         this.mech.setRads(percentToDeploy * ClimberConstants.climberMaxAngle.in(Radians));
