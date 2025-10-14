@@ -30,5 +30,7 @@ public interface ClimberIO {
 
     public default void stop(Optional<NeutralMode> neutralMode) {}
 
+    public default void setMotorEncoderPosRads(double angleRads) {}
+
     public default void clearMotorStickyFaults(long bitmask) {}
 }
