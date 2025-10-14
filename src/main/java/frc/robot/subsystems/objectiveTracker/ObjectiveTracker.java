@@ -55,6 +55,8 @@ public class ObjectiveTracker extends VirtualSubsystem {
     private final ReefTrackerIO io;
     private final ReefTrackerIOInputsAutoLogged inputs = new ReefTrackerIOInputsAutoLogged();
 
+    private static final int coralRPThreshold = 5;
+
     public static enum AlgaeGoal {
         NET,
         NET_OPPONENT_SIDE,
@@ -114,7 +116,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var count = 0;
                 for (int i = 24; i < 36; i++) {
                     if (branchStates[i] == true) count++;
-                    if (count >= 7) return true;
+                    if (count >= coralRPThreshold) return true;
                 }
                 return false;
             }
@@ -125,7 +127,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var count = 0;
                 for (int i = 12; i < 24; i++) {
                     if (branchStates[i] == true) count++;
-                    if (count >= 7) return true;
+                    if (count >= coralRPThreshold) return true;
                 }
                 return false;
             }
@@ -136,7 +138,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
                 var count = 0;
                 for (int i = 0; i < 12; i++) {
                     if (branchStates[i] == true) count++;
-                    if (count >= 7) return true;
+                    if (count >= coralRPThreshold) return true;
                 }
                 return false;
             }
@@ -144,7 +146,7 @@ public class ObjectiveTracker extends VirtualSubsystem {
         Level1RP(Optional.empty(), true) {
             @Override
             public boolean isCompleted(boolean[] branchStates, int level1Count) {
-                return level1Count >= 7;
+                return level1Count >= coralRPThreshold;
             }
         },
         ;
