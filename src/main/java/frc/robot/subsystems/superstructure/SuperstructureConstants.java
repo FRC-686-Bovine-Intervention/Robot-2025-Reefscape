@@ -62,6 +62,11 @@ public class SuperstructureConstants {
         ElevatorConstants.minLengthPhysical,
         Degrees.of(148)
     );
+    public static final SuperstructureState coralStationBackwardPulloutState = SuperstructureState.fromParts(
+        Degrees.of(60),
+        ElevatorConstants.minLengthPhysical,
+        Degrees.of(148)
+    );
 
     // Algae Intaking
     public static final SuperstructureState highAlgaeState = SuperstructureState.fromAlgaeCenterRobotSpace(

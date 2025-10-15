@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -41,11 +42,17 @@ public class Superstructure extends SubsystemBase {
 
     private final SuperstructureState measuredState = SuperstructureState.newUnconstrained(0.0, 0.0, 0.0);
 
-    private final Graph<SuperstructureState, Command> graph;
-    private final HashMap<SuperstructureState, HashMap<SuperstructureState, Optional<PathfindingResult>>> graphPathfindingCache;
+    private final Graph<SuperstructureState, Edge> graph;
+    private final HashMap<SuperstructureState, HashMap<SuperstructureState, PathfindingResult[]>> graphPathfindingCache;
+
+    private static final double edgeWeightConstant = 1;
+    private static final double edgeWeightPerPivotRadians = 1;
+    private static final double edgeWeightPerElevatorMeters = 1;
+    private static final double edgeWeightPerWristRadians = 1;
 
     private SuperstructureState lastMeasuredGraphVertex;
     private SuperstructureState targetVertex;
+    private Edge currentEdge;
 
     public Superstructure(Pivot pivot, Elevator elevator, Wrist wrist) {
         System.out.println("[Init Superstructure] Instantiating Superstructure");
@@ -139,7 +146,7 @@ public class Superstructure extends SubsystemBase {
         SmartDashboard.putData("SysID/Superstructure/Wrist/Dynamic Reverse", wristRoutine.dynamic(SysIdRoutine.Direction.kReverse));
 
 
-        this.graph = new DefaultDirectedWeightedGraph<>(Command.class);
+        this.graph = new DefaultDirectedWeightedGraph<>(Edge.class);
         var allSuperstructureStates = new SuperstructureState[] {
             SuperstructureConstants.idleState,
             SuperstructureConstants.coralStationForwardState,
@@ -174,7 +181,9 @@ public class Superstructure extends SubsystemBase {
         // Graph Edges
         // | Coral Station Edges
         this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.coralStationForwardState);
-        this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.coralStationBackwardState);
+        this.addEdge(SuperstructureConstants.idleState, SuperstructureConstants.coralStationBackwardState);
+        this.addEdge(SuperstructureConstants.coralStationBackwardState, SuperstructureConstants.coralStationBackwardPulloutState);
+        this.addEdge(SuperstructureConstants.coralStationBackwardPulloutState, SuperstructureConstants.idleState);
         this.addBidirectionalEdge(SuperstructureConstants.coralStationForwardState, SuperstructureConstants.coralStationBackwardState);
         // | Coral Reef Edges
         this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l1State);
@@ -182,6 +191,8 @@ public class Superstructure extends SubsystemBase {
         this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l3State);
         this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.l4PreState);
         this.addBidirectionalEdge(SuperstructureConstants.l4PreState, SuperstructureConstants.l4State);
+        // TODO Blockable edges
+        // this.addEdge(SuperstructureConstants.l4State, SuperstructureConstants.idleState, true);
         this.addBidirectionalEdge(SuperstructureConstants.l2State, SuperstructureConstants.l2l4TransferState);
         this.addBidirectionalEdge(SuperstructureConstants.l3State, SuperstructureConstants.l3l4TransferState);
         this.addBidirectionalEdge(SuperstructureConstants.l2l4TransferState, SuperstructureConstants.l4PreState);
@@ -196,6 +207,7 @@ public class Superstructure extends SubsystemBase {
         this.addBidirectionalEdge(SuperstructureConstants.idleState, SuperstructureConstants.netBackwardPreState);
         this.addBidirectionalEdge(SuperstructureConstants.netForwardPreState, SuperstructureConstants.netForwardState);
         this.addBidirectionalEdge(SuperstructureConstants.netBackwardPreState, SuperstructureConstants.netBackwardState);
+        this.addBidirectionalEdge(SuperstructureConstants.netForwardState, SuperstructureConstants.netBackwardState);
         this.addBidirectionalEdge(SuperstructureConstants.lowAlgaeHoldState, SuperstructureConstants.netForwardPreState);
         this.addBidirectionalEdge(SuperstructureConstants.lowAlgaeHoldState, SuperstructureConstants.netBackwardPreState);
         this.addBidirectionalEdge(SuperstructureConstants.highAlgaeState, SuperstructureConstants.netForwardPreState);
@@ -215,7 +227,7 @@ public class Superstructure extends SubsystemBase {
 
         this.graphPathfindingCache = new HashMap<>(allSuperstructureStates.length);
         for (var fromState : allSuperstructureStates) {
-            var toHashMap = new HashMap<SuperstructureState, Optional<PathfindingResult>>(allSuperstructureStates.length);
+            var toHashMap = new HashMap<SuperstructureState, PathfindingResult[]>(allSuperstructureStates.length);
             for (var toState : allSuperstructureStates) {
                 toHashMap.put(toState, this.pathfind(fromState, toState));
             }
@@ -325,19 +337,66 @@ public class Superstructure extends SubsystemBase {
                 this.setName("Go To State Pathfinded");
             }
 
+            private PathfindingResult commandPath;
+            private int currentEdgeIndex;
+
             @Override
             public void initialize() {
                 if (superstructure.targetVertex != superstructure.lastMeasuredGraphVertex) {
-                    var fromTargetPathfindingResult = superstructure.pathfindFromCache(superstructure.targetVertex, goalState);
                     var fromLastVertexPathfindingResult = superstructure.pathfindFromCache(superstructure.lastMeasuredGraphVertex, goalState);
-                    if (fromTargetPathfindingResult.get().totalWeight() > fromLastVertexPathfindingResult.get().totalWeight()) {
-
+                    var fromTargetPathfindingResult = superstructure.pathfindFromCache(superstructure.targetVertex, goalState);
+                    if (fromLastVertexPathfindingResult.get().totalWeight() < fromTargetPathfindingResult.get().totalWeight()) {
+                        // Cancel previous command and return to previous state
+                        this.commandPath = fromLastVertexPathfindingResult.get();
+                        superstructure.targetVertex = superstructure.lastMeasuredGraphVertex;
+                        superstructure.currentEdge = null;
+                    } else {
+                        // Continuing previous command
+                        this.commandPath = fromTargetPathfindingResult.get();
                     }
+                    this.currentEdgeIndex = -1;
+                } else {
+                    this.commandPath = superstructure.pathfind(superstructure.targetVertex, goalState).get();
+                    if (this.commandPath.edgePath().length > 0) {
+                        superstructure.currentEdge = this.commandPath.edgePath()[0];
+                    } else {
+                        superstructure.currentEdge = null;
+                    }
+                    this.currentEdgeIndex = 0;
+                }
+                if (superstructure.currentEdge != null) {
+                    // superstructure.currentEdge.initialize();
+                }
+            }
+
+            @Override
+            public void execute() {
+                var firstLoop = true;
+                while (firstLoop || (superstructure.currentEdge == null) ? (superstructure.lastMeasuredGraphVertex == superstructure.targetVertex) : (superstructure.currentEdge.isFinished())) {
+                    if (superstructure.currentEdge == null) {
+                        if (superstructure.measuredState.isNear(superstructure.targetVertex,
+                            Units.degreesToRadians(1.0),
+                            Units.inchesToMeters(1.0),
+                            Units.degreesToRadians(1.0)
+                        )) {
+                            superstructure.lastMeasuredGraphVertex = superstructure.targetVertex;
+                        } else {
+                            superstructure.pivot.setAngleGoalRadsFast(superstructure.targetVertex.getPivotAngleRads());
+                            superstructure.elevator.setLengthGoalMeters(superstructure.targetVertex.getElevatorLengthMeters());
+                            superstructure.wrist.setAngleGoalRads(superstructure.targetVertex.getWristAngleRads());
+                        }
+                    } else {
+                        // superstructure.currentEdge.execute();
+                    }
+                    firstLoop = false;
                 }
             }
             
             @Override
             public void end(boolean interrupted) {
+                if (superstructure.currentEdge != null) {
+                    // superstructure.currentEdge.end(interrupted);
+                }
                 superstructure.pivot.stop(NeutralMode.DEFAULT);
                 superstructure.elevator.stop(NeutralMode.DEFAULT);
                 superstructure.wrist.stop(NeutralMode.DEFAULT);
@@ -458,7 +517,7 @@ public class Superstructure extends SubsystemBase {
     }
 
     private void addEdge(SuperstructureState fromState, SuperstructureState toState) {
-        this.graph.addEdge(fromState, toState, this.directToState(toState));
+        this.graph.addEdge(fromState, toState, new Edge(calculateDefaultEdgeWeight(fromState, toState), false, this.directToState(toState)));
     }
 
     private void addBidirectionalEdge(SuperstructureState fromState, SuperstructureState toState) {
@@ -466,22 +525,22 @@ public class Superstructure extends SubsystemBase {
         this.addEdge(toState, fromState);
     }
 
-    private Optional<PathfindingResult> pathfindFromCache(SuperstructureState fromState, SuperstructureState toState) {
+    private PathfindingResult[] pathfindFromCache(SuperstructureState fromState, SuperstructureState toState) {
         var toHashMap = this.graphPathfindingCache.get(fromState);
         if (toHashMap == null) {
-            return Optional.empty();
+            return new PathfindingResult[0];
         }
-        var edge = toHashMap.get(toState);
-        if (edge == null) {
-            return Optional.empty();
+        var pathfindingResult = toHashMap.get(toState);
+        if (pathfindingResult == null) {
+            return new PathfindingResult[0];
         }
-        return edge;
+        return pathfindingResult;
     }
 
-    private Optional<PathfindingResult> pathfind(SuperstructureState fromState, SuperstructureState toState) {
+    private PathfindingResult[] pathfind(SuperstructureState fromState, SuperstructureState toState) {
 
 
-        return Optional.empty();
+        return new PathfindingResult[0];
     }
 
     private static record PathfindingResult(
@@ -489,5 +548,26 @@ public class Superstructure extends SubsystemBase {
         Command[] edgePath
     ) {
 
+    }
+
+    private static record Edge(
+        double weight,
+        boolean blockable,
+        Command command
+    ) {
+
+    }
+
+    private static double calculateDefaultEdgeWeight(SuperstructureState a, SuperstructureState b) {
+        var pivotAngleDiffRads = Math.abs(a.getPivotAngleRads() - b.getPivotAngleRads());
+        var elevatorLengthDiffMeters = Math.abs(a.getElevatorLengthMeters() - b.getElevatorLengthMeters());
+        var wristAngleDiffRads = Math.abs(a.getWristAngleRads() - b.getWristAngleRads());
+
+        return
+            edgeWeightConstant
+            + pivotAngleDiffRads * edgeWeightPerPivotRadians
+            + elevatorLengthDiffMeters * edgeWeightPerElevatorMeters
+            + wristAngleDiffRads * edgeWeightPerWristRadians
+        ;
     }
 }
